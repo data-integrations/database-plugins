@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2015-2016 Cask Data, Inc.
+  Copyright © 2019 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -47,14 +47,10 @@
     <apache-commons.version>1.2</apache-commons.version>
     <asm.version>5.0.3</asm.version>
     <avro.version>1.7.7</avro.version>
-    <cassandra.version>2.1.0</cassandra.version>
-    <cassandraunit.version>2.0.2.2</cassandraunit.version>
     <commons-codec.version>1.10</commons-codec.version>
     <commons-httpclient.version>3.1</commons-httpclient.version>
     <commons-lang-version>2.6</commons-lang-version>
     <cdap.version>6.0.0-SNAPSHOT</cdap.version>
-    <datastax.version>2.0.5</datastax.version>
-    <dumbster.version>1.6</dumbster.version>
     <es.version>1.6.0</es.version>
     <es-hadoop.version>2.1.0</es-hadoop.version>
     <fastutil.version>6.6.1</fastutil.version>
@@ -63,21 +59,14 @@
     <hadoop.version>2.3.0</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
     <cdh.hive.version>1.1.0-cdh5.5.1</cdh.hive.version>
-    <javamail.version>1.4.1</javamail.version>
     <junit.version>4.11</junit.version>
-    <kafka.version>0.8.2.2</kafka.version>
-    <mockftp.version>2.6</mockftp.version>
     <hydrator.version>2.1.0</hydrator.version>
     <snappy.version>1.1.2</snappy.version>
     <slf4j.version>1.7.5</slf4j.version>
     <twill.version>0.9.0</twill.version>
-    <twitter4j.version>4.0.3</twitter4j.version>
     <zookeeper.version>3.4.5</zookeeper.version>
-    <jython.version>2.5.2</jython.version>
     <json-path.version>2.2.0</json-path.version>
     <json.version>20160212</json.version>
-    <netty.version>4.1.16.Final</netty.version>
-    <netty-http.version>1.1.0</netty-http.version>
   </properties>
 
   <repositories>
@@ -123,38 +112,15 @@
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-api-spark</artifactId>
-        <version>${cdap.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.cdap</groupId>
         <artifactId>cdap-etl-proto</artifactId>
         <version>${cdap.version}</version>
-        <scope>provided</scope>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
         <artifactId>cdap-etl-api</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-etl-api-spark</artifactId>
-        <version>${cdap.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-formats</artifactId>
-        <version>${cdap.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
@@ -184,12 +150,6 @@
         <artifactId>cdap-etl-realtime</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-api</artifactId>
-        <version>${cdap.version}</version>
-        <scope>compile</scope>
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
@@ -370,41 +330,9 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>org.apache.cassandra</groupId>
-        <artifactId>cassandra-all</artifactId>
-        <version>${cassandra.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
         <version>${snappy.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.cassandraunit</groupId>
-        <artifactId>cassandra-unit</artifactId>
-        <version>${cassandraunit.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.datastax.cassandra</groupId>
-        <artifactId>cassandra-driver-core</artifactId>
-        <version>${datastax.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.twitter4j</groupId>
-        <artifactId>twitter4j-core</artifactId>
-        <version>${twitter4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.twitter4j</groupId>
-        <artifactId>twitter4j-stream</artifactId>
-        <version>${twitter4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mockftpserver</groupId>
-        <artifactId>MockFtpServer</artifactId>
-        <version>${mockftp.version}</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.hsqldb</groupId>
@@ -554,75 +482,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka_2.10</artifactId>
-        <version>${kafka.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jdmk</groupId>
-            <artifactId>jmxtools</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jmx</groupId>
-            <artifactId>jmxri</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-compiler</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
         <groupId>org.ow2.asm</groupId>
         <artifactId>asm-all</artifactId>
         <version>${asm.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.python</groupId>
-        <artifactId>jython-standalone</artifactId>
-        <version>${jython.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>dumbster</groupId>
-        <artifactId>dumbster</artifactId>
-        <version>${dumbster.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.activation</groupId>
-            <artifactId>activation</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>javax.mail</groupId>
-        <artifactId>mail</artifactId>
-        <version>${javamail.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-streaming-twitter_2.10</artifactId>
-        <version>1.6.2</version>
-      </dependency>
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-all</artifactId>
-        <version>${netty.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.http</groupId>
-        <artifactId>netty-http</artifactId>
-        <version>${netty-http.version}</version>
-        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -763,7 +625,7 @@
               <consoleOutput>true</consoleOutput>
               <failsOnError>true</failsOnError>
               <includeTestSourceDirectory>true</includeTestSourceDirectory>
-              <excludes>**/org/apache/cassandra/**,**/org/apache/hadoop/**</excludes>
+              <excludes>**/org/apache/hadoop/**</excludes>
             </configuration>
             <goals>
               <goal>check</goal>
