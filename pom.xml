@@ -115,12 +115,6 @@
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-data-streams</artifactId>
-        <version>${cdap.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.cdap</groupId>
         <artifactId>hydrator-test</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
@@ -129,12 +123,6 @@
         <groupId>co.cask.hydrator</groupId>
         <artifactId>hydrator-common</artifactId>
         <version>${hydrator.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-etl-realtime</artifactId>
-        <version>${cdap.version}</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
