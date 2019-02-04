@@ -44,27 +44,14 @@
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- version properties -->
-    <apache-commons.version>1.2</apache-commons.version>
-    <asm.version>5.0.3</asm.version>
-    <commons-codec.version>1.10</commons-codec.version>
-    <commons-httpclient.version>3.1</commons-httpclient.version>
-    <commons-lang-version>2.6</commons-lang-version>
     <cdap.version>6.0.0-SNAPSHOT</cdap.version>
-    <es.version>1.6.0</es.version>
-    <es-hadoop.version>2.1.0</es-hadoop.version>
-    <fastutil.version>6.6.1</fastutil.version>
-    <geronimo-jms.version>1.1.1</geronimo-jms.version>
     <guava.version>13.0.1</guava.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
-    <cdh.hive.version>1.1.0-cdh5.5.1</cdh.hive.version>
     <junit.version>4.11</junit.version>
     <hydrator.version>2.1.0</hydrator.version>
-    <snappy.version>1.1.2</snappy.version>
     <slf4j.version>1.7.5</slf4j.version>
     <twill.version>0.9.0</twill.version>
-    <json-path.version>2.2.0</json-path.version>
-    <json.version>20160212</json.version>
   </properties>
 
   <repositories>
