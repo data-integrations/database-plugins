@@ -16,7 +16,7 @@
 
 package co.cask.db.batch.action;
 
-import co.cask.DatabasePluginTestBase;
+import co.cask.GenericDatabasePluginTestBase;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
@@ -37,7 +37,7 @@ import java.sql.Statement;
 
 /**
  */
-public class DBQueryActionTestRun extends DatabasePluginTestBase {
+public class DBQueryActionTestRun extends GenericDatabasePluginTestBase {
 
   @Test
   public void testAction() throws Exception {
@@ -65,7 +65,7 @@ public class DBQueryActionTestRun extends DatabasePluginTestBase {
         .build(),
       null));
 
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
       .addStage(source)
       .addStage(sink)
       .addPostAction(action)
@@ -77,12 +77,10 @@ public class DBQueryActionTestRun extends DatabasePluginTestBase {
     ApplicationManager appManager = deployApplication(appId, appRequest);
     runETLOnce(appManager, ImmutableMap.of("logical.start.time", "0"));
 
-    try (Connection connection = getConnection()) {
-      try (Statement statement = connection.createStatement()) {
-        try (ResultSet results = statement.executeQuery("select * from \"postActionTest\"")) {
+    try (Connection connection = getConnection();
+         Statement statement = connection.createStatement();
+         ResultSet results = statement.executeQuery("select * from \"postActionTest\"")) {
           Assert.assertFalse(results.next());
-        }
-      }
     }
   }
 }

@@ -22,7 +22,7 @@
         {
           "widget-type": "textbox",
           "label": "Driver Name",
-          "name": "jdbcDriverName",
+          "name": "jdbcPluginName",
           "widget-attributes": {
             "default": "mysql"
           }
