@@ -14,22 +14,18 @@
  * the License.
  */
 
-package co.cask.db.batch.action;
-
-import co.cask.ConnectionConfig;
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
+package co.cask.mysql;
 
 /**
- * Config for Actions running database commands
+ * MySQL Constants.
  */
-public abstract class QueryConfig extends ConnectionConfig {
-
-  @Description("The database command to run.")
-  @Macro
-  public String query;
-
-  public QueryConfig() {
-    super();
+public final class MysqlConstants {
+  private MysqlConstants() {
+    throw new AssertionError("Should not instantiate static utility class.");
   }
+
+  public static final String PLUGIN_NAME = "Mysql";
+  public static final String AUTO_RECONNECT = "autoReconnect";
+  public static final String ALLOW_MULTIPLE_QUERIES = "allowMultiQueries";
+  public static final String MYSQL_CONNECTION_STRING_FORMAT = "jdbc:mysql://%s:%s/%s";
 }

@@ -19,6 +19,7 @@ package co.cask;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.util.DBUtils;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;

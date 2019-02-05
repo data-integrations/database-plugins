@@ -14,22 +14,25 @@
  * the License.
  */
 
-package co.cask.db.batch.action;
+package co.cask.db.batch.config;
 
-import co.cask.ConnectionConfig;
 import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.db.batch.sink.AbstractDBSink;
 
 /**
- * Config for Actions running database commands
+ * Base config class for every database specific sink plugin.
  */
-public abstract class QueryConfig extends ConnectionConfig {
+public abstract class DBSpecificSinkConfig extends AbstractDBSink.DBSinkConfig {
+  @Name(HOST)
+  @Description("Database host")
+  public String host;
 
-  @Description("The database command to run.")
-  @Macro
-  public String query;
+  @Name(PORT)
+  @Description("Specific database port")
+  public Integer port;
 
-  public QueryConfig() {
-    super();
-  }
+  @Name(DATABASE)
+  @Description("Database name to connect to")
+  public String database;
 }

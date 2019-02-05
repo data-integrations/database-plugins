@@ -17,10 +17,10 @@
 package co.cask.db.batch.source;
 
 import co.cask.ConnectionConfig;
-import co.cask.DBUtils;
 import co.cask.JDBCDriverShim;
 import co.cask.db.batch.NoOpCommitConnection;
 import co.cask.db.batch.TransactionIsolationLevel;
+import co.cask.util.DBUtils;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;

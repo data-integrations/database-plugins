@@ -14,22 +14,15 @@
  * the License.
  */
 
-package co.cask.db.batch.action;
-
-import co.cask.ConnectionConfig;
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
+package co.cask.jdbc;
 
 /**
- * Config for Actions running database commands
+ * Database Constants.
  */
-public abstract class QueryConfig extends ConnectionConfig {
-
-  @Description("The database command to run.")
-  @Macro
-  public String query;
-
-  public QueryConfig() {
-    super();
+public final class DatabaseConstants {
+  private DatabaseConstants() {
+    throw new AssertionError("Should not instantiate static utility class.");
   }
+
+  public static final String PLUGIN_NAME = "Database";
 }
