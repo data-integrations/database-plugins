@@ -24,6 +24,7 @@ import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.hydrator.common.KeyValueListParser;
 import com.google.common.base.Strings;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -32,20 +33,22 @@ import javax.annotation.Nullable;
 /**
  * Defines a base {@link PluginConfig} that Database source, sink, and action can all re-use.
  */
-public class ConnectionConfig extends PluginConfig {
+public abstract class ConnectionConfig extends PluginConfig {
   public static final String CONNECTION_STRING = "connectionString";
+  public static final String ENABLE_AUTO_COMMIT = "enableAutoCommit";
   public static final String USER = "user";
+  public static final String HOST = "host";
+  public static final String PORT = "port";
+  public static final String DATABASE = "database";
   public static final String PASSWORD = "password";
   public static final String CONNECTION_ARGUMENTS = "connectionArguments";
   public static final String JDBC_PLUGIN_NAME = "jdbcPluginName";
-  public static final String JDBC_PLUGIN_TYPE = "jdbcPluginType";
-  public static final String COLUMN_NAME_CASE = "columnNameCase";
-  public static final String ENABLE_AUTO_COMMIT = "enableAutoCommit";
+  public static final String JDBC_PLUGIN_TYPE = "jdbc";
 
-  @Name(CONNECTION_STRING)
-  @Description("JDBC connection string including database name.")
-  @Macro
-  public String connectionString;
+  @Name(JDBC_PLUGIN_NAME)
+  @Description("Name of the JDBC driver to use. This is the value of the 'jdbcPluginName' key defined in the JSON " +
+    "file for the JDBC plugin.")
+  public String jdbcPluginName;
 
   @Name(USER)
   @Description("User to use to connect to the specified database. Required for databases that " +
@@ -62,36 +65,12 @@ public class ConnectionConfig extends PluginConfig {
   public String password;
 
   @Name(CONNECTION_ARGUMENTS)
-  @Description("A list of arbitrary string tag/value pairs as connection arguments. This is a semicolon-separated " +
-    "list of key-value pairs, where each pair is separated by a equals '=' and specifies the key and value for the " +
-    "argument. For example, 'key1=value1;key2=value' specifies that the connection will be given arguments 'key1' " +
-    "mapped to 'value1' and the argument 'key2' mapped to 'value2'.")
+  @Description("A list of arbitrary string tag/value pairs as connection arguments.")
   @Nullable
   @Macro
   public String connectionArguments;
 
-  @Name(JDBC_PLUGIN_NAME)
-  @Description("Name of the JDBC plugin to use. This is the value of the 'name' key defined in the JSON file " +
-    "for the JDBC plugin.")
-  public String jdbcPluginName;
-
-  @Name(JDBC_PLUGIN_TYPE)
-  @Description("Type of the JDBC plugin to use. This is the value of the 'type' key defined in the JSON file " +
-    "for the JDBC plugin. Defaults to 'jdbc'.")
-  @Nullable
-  public String jdbcPluginType;
-
-  @Name(ENABLE_AUTO_COMMIT)
-  @Description("Whether to enable auto commit for queries run by this source. Defaults to false. " +
-    "This setting should only matter if you are using a jdbc driver that does not support a false value for " +
-    "auto commit, or a driver that does not support the commit call. For example, the Hive jdbc driver will throw " +
-    "an exception whenever a commit is called. For drivers like that, this should be set to true.")
-  @Nullable
-  public Boolean enableAutoCommit;
-
   public ConnectionConfig() {
-    jdbcPluginType = "jdbc";
-    enableAutoCommit = false;
   }
 
   /**
@@ -116,8 +95,10 @@ public class ConnectionConfig extends PluginConfig {
       connectionArgumentsMap.put("user", user);
       connectionArgumentsMap.put("password", password);
     }
+
     Properties properties = new Properties();
     properties.putAll(connectionArgumentsMap);
+
     return properties;
   }
 
@@ -125,6 +106,14 @@ public class ConnectionConfig extends PluginConfig {
    * @return a {@link Properties} of connection arguments, parsed from the config.
    */
   public Properties getConnectionArguments() {
-    return getConnectionArguments(connectionArguments, user, password);
+    Properties arguments = getConnectionArguments(this.connectionArguments, user, password);
+    arguments.putAll(getDBSpecificArguments());
+    return arguments;
+  }
+
+  public abstract String getConnectionString();
+
+  protected Map<String, String> getDBSpecificArguments() {
+    return Collections.emptyMap();
   }
 }

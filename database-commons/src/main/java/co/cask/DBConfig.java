@@ -17,7 +17,6 @@
 package co.cask;
 
 import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.hydrator.common.Constants;
@@ -27,24 +26,10 @@ import javax.annotation.Nullable;
 /**
  * Defines a base {@link PluginConfig} that Database source and sink can re-use
  */
-public class DBConfig extends ConnectionConfig {
+public abstract class DBConfig extends ConnectionConfig {
   @Name(Constants.Reference.REFERENCE_NAME)
   @Description(Constants.Reference.REFERENCE_NAME_DESCRIPTION)
   public String referenceName;
-
-  @Name(COLUMN_NAME_CASE)
-  @Description("Sets the case of the column names returned from the query. " +
-    "Possible options are upper or lower. By default or for any other input, the column names are not modified and " +
-    "the names returned from the database are used as-is. Note that setting this property provides predictability " +
-    "of column name cases across different databases but might result in column name conflicts if multiple column " +
-    "names are the same when the case is ignored.")
-  @Nullable
-  @Macro
-  public String columnNameCase;
-
-  public Boolean getEnableAutoCommit() {
-    return enableAutoCommit;
-  }
 
   protected String cleanQuery(@Nullable String query) {
     if (query == null) {
@@ -66,5 +51,10 @@ public class DBConfig extends ConnectionConfig {
       return "";
     }
     return query.substring(0, idx + 1);
+  }
+
+  @Nullable
+  public String getTransactionIsolationLevel() {
+    return null;
   }
 }

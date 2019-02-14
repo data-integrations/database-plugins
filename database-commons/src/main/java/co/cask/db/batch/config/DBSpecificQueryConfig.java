@@ -14,22 +14,25 @@
  * the License.
  */
 
-package co.cask.db.batch.action;
+package co.cask.db.batch.config;
 
-import co.cask.ConnectionConfig;
 import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.db.batch.action.QueryConfig;
 
 /**
- * Config for Actions running database commands
+ * Base config class for every database specific action plugin.
  */
-public abstract class QueryConfig extends ConnectionConfig {
+public abstract class DBSpecificQueryConfig extends QueryConfig {
+  @Name(HOST)
+  @Description("Database host")
+  public String host;
 
-  @Description("The database command to run.")
-  @Macro
-  public String query;
+  @Name(PORT)
+  @Description("Specific database port")
+  public Integer port;
 
-  public QueryConfig() {
-    super();
-  }
+  @Name(DATABASE)
+  @Description("Database name to connect to")
+  public String database;
 }
