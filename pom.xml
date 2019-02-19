@@ -28,8 +28,8 @@
 
   <modules>
     <module>database-commons</module>
-    <module>mysql-plugin</module>
     <module>generic-database-plugin</module>
+    <module>mysql-plugin</module>
   </modules>
 
   <licenses>

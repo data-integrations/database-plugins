@@ -21,19 +21,10 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.datapipeline.DataPipelineApp;
-import co.cask.cdap.datapipeline.SmartWorkflow;
-import co.cask.cdap.etl.mock.test.HydratorTestBase;
-import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
-import co.cask.cdap.etl.proto.v2.ETLPlugin;
-import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.WorkflowManager;
+import co.cask.db.batch.DatabasePluginTestBase;
 import co.cask.db.batch.sink.ETLDBOutputFormat;
 import co.cask.db.batch.source.DataDrivenETLDBInputFormat;
 import co.cask.jdbc.DatabaseAction;
@@ -42,12 +33,10 @@ import co.cask.jdbc.DatabaseSink;
 import co.cask.jdbc.DatabaseSource;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.hsqldb.Server;
 import org.hsqldb.jdbc.JDBCDriver;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -64,17 +53,13 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Collections;
-import java.util.Map;
 import java.util.TimeZone;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.sql.rowset.serial.SerialBlob;
 
 /**
  * Database Plugin Tests setup.
  */
-public class DatabasePluginTestBase extends HydratorTestBase {
+public class GenericDatabasePluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final String CLOB_DATA =
@@ -84,7 +69,6 @@ public class DatabasePluginTestBase extends HydratorTestBase {
   private static int startCount;
   private static HSQLDBServer hsqlDBServer;
   protected static Schema schema;
-  //  private static Schema schema;
   static boolean tearDown = true;
 
   @ClassRule
@@ -101,7 +85,7 @@ public class DatabasePluginTestBase extends HydratorTestBase {
 
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
-    addPluginArtifact(NamespaceId.DEFAULT.artifact("database-plugins", "1.4.0"),
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("generic-database-plugin", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
                       DatabaseSource.class, DatabaseSink.class, DBRecord.class, ETLDBOutputFormat.class,
                       DataDrivenETLDBInputFormat.class, DBRecord.class, DatabaseAction.class, DatabasePostAction.class);
@@ -243,54 +227,6 @@ public class DatabasePluginTestBase extends HydratorTestBase {
         }
       }
     }
-  }
-
-  protected static void assertDeploymentFailure(ApplicationId appId, ETLBatchConfig etlConfig,
-                                                String failureMessage) throws Exception {
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(DATAPIPELINE_ARTIFACT, etlConfig);
-    try {
-      deployApplication(appId, appRequest);
-      Assert.fail(failureMessage);
-    } catch (IllegalStateException e) {
-      // expected
-    }
-  }
-
-  protected static void assertRuntimeFailure(ApplicationId appId, ETLBatchConfig etlConfig,
-                                             String failureMessage, int runCount) throws Exception {
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(DATAPIPELINE_ARTIFACT, etlConfig);
-    ApplicationManager appManager = deployApplication(appId, appRequest);
-    final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForRuns(ProgramRunStatus.FAILED, runCount, 3, TimeUnit.MINUTES);
-  }
-
-  protected ApplicationManager deployETL(ETLPlugin sourcePlugin, ETLPlugin sinkPlugin, String appName)
-    throws Exception {
-    ETLStage source = new ETLStage("source", sourcePlugin);
-    ETLStage sink = new ETLStage("sink", sinkPlugin);
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(source)
-      .addStage(sink)
-      .addConnection(source.getName(), sink.getName())
-      .build();
-
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(DATAPIPELINE_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
-    return deployApplication(appId, appRequest);
-  }
-
-  protected void runETLOnce(ApplicationManager appManager) throws TimeoutException,
-    InterruptedException, ExecutionException {
-    runETLOnce(appManager, ImmutableMap.<String, String>of());
-  }
-
-  protected void runETLOnce(ApplicationManager appManager,
-                            Map<String, String> arguments) throws TimeoutException, InterruptedException,
-    ExecutionException {
-    final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start(arguments);
-    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
   }
 
   @AfterClass

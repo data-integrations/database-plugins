@@ -141,12 +141,12 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
     Class<? extends Driver> driverClass =
       pluginContext.loadPluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE,
-                                    request.jdbcDriverName, PluginProperties.builder().build());
+                                    request.jdbcPluginName, PluginProperties.builder().build());
 
     if (driverClass == null) {
       throw new InstantiationException(
         String.format("Unable to load Driver class with plugin type %s and plugin name %s",
-                      ConnectionConfig.JDBC_PLUGIN_TYPE, request.jdbcDriverName));
+                      ConnectionConfig.JDBC_PLUGIN_TYPE, request.jdbcPluginName));
     }
 
     try {
@@ -156,7 +156,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
           request.port,
           request.database);
 
-      return DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, request.jdbcDriverName);
+      return DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, request.jdbcPluginName);
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
       LOG.error("Unable to load or register driver {}", driverClass, e);
       throw e;
@@ -373,6 +373,6 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     public String password;
     public String query;
     @Nullable
-    public String jdbcDriverName;
+    public String jdbcPluginName;
   }
 }

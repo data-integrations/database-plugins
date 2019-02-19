@@ -14,9 +14,8 @@
  * the License.
  */
 
-package co.cask.db.batch.action;
+package co.cask.mysql;
 
-import co.cask.GenericDatabasePluginTestBase;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
@@ -35,32 +34,20 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-/**
- * Test for AbstractDBAction Plugin
- */
-public class DBActionTestRun extends GenericDatabasePluginTestBase {
+public class MysqlActionTestRun extends MysqlPluginTestBase {
 
   @Test
   public void testDBAction() throws Exception {
-    // create a table that the action will truncate at the end of the run
-    try (Connection connection = getConnection()) {
-      try (Statement statement = connection.createStatement()) {
-        statement.execute("create table \"dbActionTest\" (x int, day varchar(10))");
-      }
-      try (Statement statement = connection.createStatement()) {
-        statement.execute("insert into \"dbActionTest\" values (1, '1970-01-01')");
-      }
-    }
 
     ETLStage source = new ETLStage("source", MockSource.getPlugin("actionInput"));
     ETLStage sink = new ETLStage("sink", MockSink.getPlugin("actionOutput"));
     ETLStage action = new ETLStage("action", new ETLPlugin(
-      "Database",
+      UI_NAME,
       Action.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put("connectionString", getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
-        .put("query", "delete from \"dbActionTest\" where day = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
+        .putAll(BASE_PROPS)
+        .put("autoReconnect", "true")
+        .put("query", "delete from dbActionTest where day = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
         .build(),
       null));
 
@@ -77,10 +64,10 @@ public class DBActionTestRun extends GenericDatabasePluginTestBase {
     ApplicationManager appManager = deployApplication(appId, appRequest);
     runETLOnce(appManager, ImmutableMap.of("logical.start.time", "0"));
 
-    try (Connection connection = getConnection();
+    try (Connection connection = createConnection();
          Statement statement = connection.createStatement();
-         ResultSet results = statement.executeQuery("select * from \"dbActionTest\"")) {
-          Assert.assertFalse(results.next());
+         ResultSet results = statement.executeQuery("select * from dbActionTest")) {
+      Assert.assertFalse(results.next());
     }
   }
 }

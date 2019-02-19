@@ -17,7 +17,7 @@
 package co.cask.db.batch.sink;
 
 import co.cask.DBConfig;
-import co.cask.DatabasePluginTestBase;
+import co.cask.GenericDatabasePluginTestBase;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Table;
@@ -54,7 +54,7 @@ import java.util.Set;
 /**
  * Test for ETL using databases.
  */
-public class DBSinkTestRun extends DatabasePluginTestBase {
+public class DBSinkTestRun extends GenericDatabasePluginTestBase {
 
   private final Schema sinkSchema = Schema.recordOf(
     "dbRecord",
@@ -90,7 +90,7 @@ public class DBSinkTestRun extends DatabasePluginTestBase {
                                                          "jdbcPluginName", "hypersql",
                                                          Constants.Reference.REFERENCE_NAME, "DBTest"),
                                          null);
-    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, "testDBSink");
+    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSink");
 
     createInputData(inputDatasetName);
 
@@ -149,7 +149,7 @@ public class DBSinkTestRun extends DatabasePluginTestBase {
         Constants.Reference.REFERENCE_NAME, "DBTestSink"),
       null
     );
-    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, "testNullFields");
+    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testNullFields");
     // if nulls are not handled correctly, the MR program will fail with an NPE
     runETLOnce(appManager);
   }

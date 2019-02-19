@@ -14,11 +14,9 @@
  * the License.
  */
 
-package co.cask.db.batch.sink;
+package co.cask.mysql;
 
-import co.cask.ConnectionConfig;
 import co.cask.DBConfig;
-import co.cask.GenericDatabasePluginTestBase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.table.Table;
@@ -51,35 +49,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Test for ETL using databases.
- */
-public class DBSourceTestRun extends GenericDatabasePluginTestBase {
+public class MysqlSourceTestRun extends MysqlPluginTestBase {
 
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testDBMacroSupport() throws Exception {
-    String importQuery = "SELECT * FROM \"my_table\" WHERE DATE_COL <= '${logicalStartTime(yyyy-MM-dd,1d)}' " +
+    String importQuery = "SELECT * FROM my_table WHERE DATE_COL <= '${logicalStartTime(yyyy-MM-dd,1d)}' " +
       "AND $CONDITIONS";
-    String boundingQuery = "SELECT MIN(ID),MAX(ID) from \"my_table\"";
+    String boundingQuery = "SELECT MIN(ID),MAX(ID) from my_table";
     String splitBy = "ID";
+
+    ImmutableMap<String, String> sourceProps = ImmutableMap.<String, String>builder()
+      .putAll(BASE_PROPS)
+      .put("autoReconnect", "true")
+      .put("maxRows", "0")
+      .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
+      .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
+      .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
+      .put(Constants.Reference.REFERENCE_NAME, "DBTestSource").build();
+
     ETLPlugin sourceConfig = new ETLPlugin(
-      "Database",
+      UI_NAME,
       BatchSource.PLUGIN_TYPE,
-      ImmutableMap.<String, String>builder()
-        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
-        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
-        .put("jdbcPluginName", "hypersql")
-        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
-        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
-        .put(Constants.Reference.REFERENCE_NAME, "DBMacroTest")
-        .build(),
-      null
+      sourceProps
     );
 
     ETLPlugin sinkConfig = MockSink.getPlugin("macroOutputTable");
 
-    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBMacro");
+    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig,
+                                              DATAPIPELINE_ARTIFACT, "testDBMacro");
     runETLOnce(appManager, ImmutableMap.of("logical.start.time", String.valueOf(CURRENT_TS)));
 
     DataSetManager<Table> outputManager = getDataset("macroOutputTable");
@@ -89,18 +87,19 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
-    String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
-      "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, LONGVARBINARY_COL, BLOB_COL, " +
-      "CLOB_COL, CHAR_COL, LONGVARCHAR_COL, VARBINARY_COL FROM \"my_table\"" +
+    String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, MEDIUMINT_COL, SMALL, BIG, FLOAT_COL, " +
+      "REAL_COL, NUMERIC_COL, CHAR_COL, DECIMAL_COL, BIT_COL, BINARY_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, " +
+      "VARBINARY_COL, BLOB_COL, MEDIUMBLOB_COL, TINYBLOB_COL, YEAR_COL, LONGBLOB_COL, TEXT_COL FROM my_table " +
       "WHERE ID < 3 AND $CONDITIONS";
-    String boundingQuery = "SELECT MIN(ID),MAX(ID) from \"my_table\"";
+    String boundingQuery = "SELECT MIN(ID),MAX(ID) from my_table";
     String splitBy = "ID";
     ETLPlugin sourceConfig = new ETLPlugin(
-      "Database",
+      UI_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
+        .putAll(BASE_PROPS)
+        .put("autoReconnect", "true")
+        .put("maxRows", "0")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -112,7 +111,8 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     String outputDatasetName = "output-dbsourcetest";
     ETLPlugin sinkConfig = MockSink.getPlugin(outputDatasetName);
 
-    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSource");
+    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig,
+                                              DATAPIPELINE_ARTIFACT, "testDBSource");
     runETLOnce(appManager);
 
     DataSetManager<Table> outputManager = getDataset(outputDatasetName);
@@ -126,26 +126,28 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     // Verify data
     Assert.assertEquals("user1", row1.get("NAME"));
     Assert.assertEquals("user2", row2.get("NAME"));
-    Assert.assertEquals("longvarchar1", row1.get("LONGVARCHAR_COL"));
-    Assert.assertEquals("longvarchar2", row2.get("LONGVARCHAR_COL"));
+    Assert.assertEquals("user1", row1.get("TEXT_COL"));
+    Assert.assertEquals("user2", row2.get("TEXT_COL"));
     Assert.assertEquals("char1", ((String) row1.get("CHAR_COL")).trim());
     Assert.assertEquals("char2", ((String) row2.get("CHAR_COL")).trim());
-    Assert.assertEquals(124.45, (double) row1.get("SCORE"), 0.000001);
-    Assert.assertEquals(125.45, (double) row2.get("SCORE"), 0.000001);
+    Assert.assertEquals(124.45, row1.get("SCORE"), 0.000001);
+    Assert.assertEquals(125.45, row2.get("SCORE"), 0.000001);
     Assert.assertEquals(false, row1.get("GRADUATED"));
     Assert.assertEquals(true, row2.get("GRADUATED"));
     Assert.assertNull(row1.get("NOT_IMPORTED"));
     Assert.assertNull(row2.get("NOT_IMPORTED"));
-    // TODO: Reading from table as SHORT seems to be giving the wrong value.
+
     Assert.assertEquals(1, (int) row1.get("TINY"));
     Assert.assertEquals(2, (int) row2.get("TINY"));
     Assert.assertEquals(1, (int) row1.get("SMALL"));
     Assert.assertEquals(2, (int) row2.get("SMALL"));
     Assert.assertEquals(1, (long) row1.get("BIG"));
     Assert.assertEquals(2, (long) row2.get("BIG"));
-    // TODO: Reading from table as FLOAT seems to be giving back the wrong value.
-    Assert.assertEquals(124.45, (double) row1.get("FLOAT_COL"), 0.00001);
-    Assert.assertEquals(125.45, (double) row2.get("FLOAT_COL"), 0.00001);
+    Assert.assertEquals(1, (int) row1.get("MEDIUMINT_COL"));
+    Assert.assertEquals(2, (int) row2.get("MEDIUMINT_COL"));
+
+    Assert.assertEquals(124.45, (float) row1.get("FLOAT_COL"), 0.00001);
+    Assert.assertEquals(125.45, (float) row2.get("FLOAT_COL"), 0.00001);
     Assert.assertEquals(124.45, (double) row1.get("REAL_COL"), 0.00001);
     Assert.assertEquals(125.45, (double) row2.get("REAL_COL"), 0.00001);
     Assert.assertEquals(124.45, (double) row1.get("NUMERIC_COL"), 0.000001);
@@ -163,76 +165,37 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     ZonedDateTime expectedTs = date.toInstant().atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC));
     Assert.assertEquals(expectedDate, row1.getDate("DATE_COL"));
     Assert.assertEquals(expectedTime, row1.getTime("TIME_COL"));
+    Assert.assertEquals(expectedDate.getYear(), (int) row1.getDate("YEAR_COL").getYear());
     Assert.assertEquals(expectedTs, row1.getTimestamp("TIMESTAMP_COL", ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
 
     // verify binary columns
     Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("BINARY_COL")).array(), 0, 5));
     Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("BINARY_COL")).array(), 0, 5));
-    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("LONGVARBINARY_COL")).array(), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("LONGVARBINARY_COL")).array(), 0, 5));
     Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("VARBINARY_COL")).array(), 0, 5));
     Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("VARBINARY_COL")).array(), 0, 5));
     Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("BLOB_COL")).array(), 0, 5));
     Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("BLOB_COL")).array(), 0, 5));
-    Assert.assertEquals(CLOB_DATA, row1.get("CLOB_COL"));
-    Assert.assertEquals(CLOB_DATA, row2.get("CLOB_COL"));
-  }
-
-  @Test
-  public void testDBSourceWithLowerCaseColNames() throws Exception {
-    String importQuery = "SELECT ID, NAME FROM \"my_table\" WHERE ID < 3 AND $CONDITIONS";
-    String boundingQuery = "SELECT MIN(ID),MAX(ID) from \"my_table\"";
-    String splitBy = "ID";
-    ETLPlugin sourceConfig = new ETLPlugin(
-      "Database",
-      BatchSource.PLUGIN_TYPE,
-      ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
-        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
-        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
-        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
-        .put(Constants.Reference.REFERENCE_NAME, "DBLowerCaseTest")
-        .build(),
-      null
-    );
-
-    String outputDatasetName = "output-lowercasetest";
-    ETLPlugin sinkConfig = MockSink.getPlugin(outputDatasetName);
-
-    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig,
-                                              DATAPIPELINE_ARTIFACT, "testDBSourceWithLowerCase");
-    runETLOnce(appManager);
-
-    // records should be written
-    DataSetManager<Table> outputManager = getDataset(outputDatasetName);
-    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
-    Assert.assertEquals(2, outputRecords.size());
-    String userid = outputRecords.get(0).get("NAME");
-    StructuredRecord row1 = "user1".equals(userid) ? outputRecords.get(0) : outputRecords.get(1);
-    StructuredRecord row2 = "user1".equals(userid) ? outputRecords.get(1) : outputRecords.get(0);
-    // Verify data
-    Assert.assertEquals("user1", row1.get("NAME"));
-    Assert.assertEquals("user2", row2.get("NAME"));
-    Assert.assertEquals(1, row1.<Integer>get("ID").intValue());
-    Assert.assertEquals(2, row2.<Integer>get("ID").intValue());
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("MEDIUMBLOB_COL")).array(), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("MEDIUMBLOB_COL")).array(), 0, 5));
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("TINYBLOB_COL")).array(), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("TINYBLOB_COL")).array(), 0, 5));
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("LONGBLOB_COL")).array(), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("LONGBLOB_COL")).array(), 0, 5));
   }
 
   @Test
   public void testDbSourceMultipleTables() throws Exception {
-    // have the same data in both tables ('\"my_table\"' and '\"your_table\"'), and select the ID and NAME fields from
-    // separate tables
-    String importQuery = "SELECT \"my_table\".ID, \"your_table\".NAME FROM \"my_table\", \"your_table\"" +
-      "WHERE \"my_table\".ID < 3 and \"my_table\".ID = \"your_table\".ID and $CONDITIONS";
-    String boundingQuery = "SELECT MIN(MIN(\"my_table\".ID), MIN(\"your_table\".ID)), " +
-      "MAX(MAX(\"my_table\".ID), MAX(\"your_table\".ID))";
-    String splitBy = "\"my_table\".ID";
+    String importQuery = "SELECT my_table.ID, your_table.NAME FROM my_table, your_table " +
+      "WHERE my_table.ID < 3 and my_table.ID = your_table.ID and $CONDITIONS ";
+    String boundingQuery = "SELECT LEAST(MIN(my_table.ID), MIN(your_table.ID)), " +
+      "GREATEST(MAX(my_table.ID), MAX(your_table.ID))";
+    String splitBy = "my_table.ID";
     ETLPlugin sourceConfig = new ETLPlugin(
-      "Database",
+      UI_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
+        .putAll(BASE_PROPS)
+        .put("autoReconnect", "true")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -264,15 +227,19 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
 
   @Test
   public void testUserNamePasswordCombinations() throws Exception {
-    String importQuery = "SELECT * FROM \"my_table\" WHERE $CONDITIONS";
-    String boundingQuery = "SELECT MIN(ID),MAX(ID) from \"my_table\"";
+    String importQuery = "SELECT * FROM my_table WHERE $CONDITIONS";
+    String boundingQuery = "SELECT MIN(ID),MAX(ID) from my_table";
     String splitBy = "ID";
 
     ETLPlugin sinkConfig = MockSink.getPlugin("outputTable");
 
     Map<String, String> baseSourceProps = ImmutableMap.<String, String>builder()
-      .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-      .put("jdbcPluginName", "hypersql")
+      .put("host", BASE_PROPS.get("host"))
+      .put("port", BASE_PROPS.get("port"))
+      .put("database", BASE_PROPS.get("database"))
+      .put("autoReconnect", "true")
+      .put("jdbcPluginName", JDBC_DRIVER_NAME)
+      .put("jdbcPluginName", JDBC_DRIVER_NAME)
       .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
       .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
       .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -283,7 +250,7 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
 
     // null user name, null password. Should succeed.
     // as source
-    ETLPlugin dbConfig = new ETLPlugin("Database", BatchSource.PLUGIN_TYPE, baseSourceProps, null);
+    ETLPlugin dbConfig = new ETLPlugin(UI_NAME, BatchSource.PLUGIN_TYPE, baseSourceProps, null);
     ETLStage table = new ETLStage("uniqueTableSink", sinkConfig);
     ETLStage database = new ETLStage("databaseSource", dbConfig);
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
@@ -298,7 +265,7 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     // as source
     Map<String, String> noUser = new HashMap<>(baseSourceProps);
     noUser.put(DBConfig.PASSWORD, "password");
-    database = new ETLStage("databaseSource", new ETLPlugin("Database", BatchSource.PLUGIN_TYPE, noUser, null));
+    database = new ETLStage("databaseSource", new ETLPlugin(UI_NAME, BatchSource.PLUGIN_TYPE, noUser, null));
     etlConfig = ETLBatchConfig.builder()
       .addStage(database)
       .addStage(table)
@@ -310,9 +277,9 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     // non-null username, non-null, but empty password. Should succeed.
     // as source
     Map<String, String> emptyPassword = new HashMap<>(baseSourceProps);
-    emptyPassword.put(DBConfig.USER, "emptyPwdUser");
+    emptyPassword.put(DBConfig.USER, "root");
     emptyPassword.put(DBConfig.PASSWORD, "");
-    database = new ETLStage("databaseSource", new ETLPlugin("Database", BatchSource.PLUGIN_TYPE, emptyPassword, null));
+    database = new ETLStage("databaseSource", new ETLPlugin(UI_NAME, BatchSource.PLUGIN_TYPE, emptyPassword, null));
     etlConfig = ETLBatchConfig.builder()
       .addStage(database)
       .addStage(table)
@@ -328,14 +295,13 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     String importQuery = "SELECT ID, NAME FROM dummy WHERE ID < 3 AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(ID),MAX(ID) FROM dummy";
     String splitBy = "ID";
-    //TODO: Also test for bad connection:
     ETLPlugin sinkConfig = MockSink.getPlugin("table");
     ETLPlugin sourceBadNameConfig = new ETLPlugin(
-      "Database",
+      UI_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
+        .putAll(BASE_PROPS)
+        .put("autoReconnect", "true")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -356,17 +322,21 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
       "non-existent source table.", 1);
 
     // Bad connection
-    String badConnection = String.format("jdbc:hsqldb:hsql://localhost/%sWRONG", getDatabase());
     ETLPlugin sourceBadConnConfig = new ETLPlugin(
-      "Database",
+      UI_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, badConnection)
-        .put("jdbcPluginName", "hypersql")
+        .put("host", BASE_PROPS.get("host"))
+        .put("port", BASE_PROPS.get("port"))
+        .put("database", "dumDB")
+        .put("user", BASE_PROPS.get("user"))
+        .put("password", BASE_PROPS.get("password"))
+        .put("autoReconnect", "true")
+        .put("jdbcPluginName", JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
-        .put(Constants.Reference.REFERENCE_NAME, "HSQLDBTest")
+        .put(Constants.Reference.REFERENCE_NAME, "MySQLTest")
         .build(),
       null);
     ETLStage sourceBadConn = new ETLStage("sourceBadConn", sourceBadConnConfig);

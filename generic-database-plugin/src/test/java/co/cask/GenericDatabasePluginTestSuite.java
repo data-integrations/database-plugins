@@ -36,7 +36,7 @@ import org.junit.runners.Suite;
   DBQueryActionTestRun.class,
   DBActionTestRun.class
 })
-public class DatabasePluginTestSuite extends DatabasePluginTestBase {
+public class GenericDatabasePluginTestSuite extends GenericDatabasePluginTestBase {
 
   @BeforeClass
   public static void setup() {
