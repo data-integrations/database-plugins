@@ -30,6 +30,7 @@
     <module>database-commons</module>
     <module>generic-database-plugin</module>
     <module>mysql-plugin</module>
+    <module>postgresql-plugin</module>
   </modules>
 
   <licenses>
