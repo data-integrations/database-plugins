@@ -31,7 +31,7 @@ import java.util.Map;
  */
 @Plugin(type = PostAction.PLUGIN_TYPE)
 @Name(PostgresConstants.PLUGIN_NAME)
-@Description("Runs a MySQL query after a pipeline run.")
+@Description("Runs a PostgreSQL query after a pipeline run.")
 public class PostgresPostAction extends AbstractQueryAction {
 
   private final PostgresQueryActionConfig postgresQueryActionConfig;

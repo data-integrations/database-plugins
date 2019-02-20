@@ -31,7 +31,7 @@ import java.util.Map;
  */
 @Plugin(type = Action.PLUGIN_TYPE)
 @Name(PostgresConstants.PLUGIN_NAME)
-@Description("Action that runs a MySQL command")
+@Description("Action that runs a PostgreSQL command")
 public class PostgresAction extends AbstractDBAction {
 
   private final PostgresActionConfig postgresActionConfig;

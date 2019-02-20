@@ -11,7 +11,7 @@ Use Case
 This sink is used whenever you need to write to a PostgreSQL table.
 Suppose you periodically build a recommendation model for products on your online store.
 The model is stored in a FileSet and you want to export the contents
-of the FileSet to a Mysql table where it can be served to your users.
+of the FileSet to a PostgreSQL table where it can be served to your users.
 
 Column names would be autodetected from input schema.
 

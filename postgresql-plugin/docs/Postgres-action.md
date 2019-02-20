@@ -22,7 +22,7 @@ Properties
 
 **Port:** Port that PostgreSQL is running on.
 
-**Database:** MySQL database name.
+**Database:** PostgreSQL database name.
 
 **Username:** User identity for connecting to the specified database.
 

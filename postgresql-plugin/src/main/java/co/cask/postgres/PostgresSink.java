@@ -32,7 +32,7 @@ import java.util.Map;
  */
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(PostgresConstants.PLUGIN_NAME)
-@Description("Writes records to a MySQL table. Each record will be written in a row in the table")
+@Description("Writes records to a PostgreSQL table. Each record will be written in a row in the table")
 public class PostgresSink extends AbstractDBSink {
 
   private final PostgresSinkConfig postgresSinkConfig;
