@@ -25,6 +25,7 @@ import co.cask.db.batch.config.DBSpecificQueryConfig;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Action that runs PostgreSQL command.
@@ -50,6 +51,7 @@ public class PostgresAction extends AbstractDBAction {
     @Description("The timeout value used for socket connect operations. If connecting to the server takes longer" +
       " than this value, the connection is broken. " +
       "The timeout is specified in seconds and a value of zero means that it is disabled")
+    @Nullable
     public Integer connectionTimeout;
 
     @Override
