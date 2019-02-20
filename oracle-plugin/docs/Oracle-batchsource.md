@@ -3,7 +3,7 @@
 
 Description
 -----------
-Reads from a Oracle using a configurable SQL query.
+Reads from Oracle table using a configurable SQL query.
 Outputs one record for each row returned by the query.
 
 

@@ -3,7 +3,7 @@
 
 Description
 -----------
-Runs a Oracle query at the end of the pipeline run.
+Runs Oracle query at the end of the pipeline run.
 Can be configured to run only on success, only on failure, or always at the end of the run.
 
 

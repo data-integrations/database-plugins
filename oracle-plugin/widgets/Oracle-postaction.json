@@ -93,7 +93,8 @@
           "label": "Default Batch Value",
           "name": "defaultBatchValue",
           "widget-attributes": {
-            "default": "10"
+            "default": "10",
+            "min": "1"
           }
         }
       ]
