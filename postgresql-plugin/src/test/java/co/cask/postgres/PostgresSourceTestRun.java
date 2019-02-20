@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.mysql;
+package co.cask.postgres;
 
 import co.cask.DBConfig;
 import co.cask.cdap.api.common.Bytes;
@@ -49,20 +49,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MysqlSourceTestRun extends MysqlPluginTestBase {
+public class PostgresSourceTestRun extends PostgresPluginTestBase {
 
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testDBMacroSupport() throws Exception {
-    String importQuery = "SELECT * FROM my_table WHERE DATE_COL <= '${logicalStartTime(yyyy-MM-dd,1d)}' " +
+    String importQuery = "SELECT * FROM my_table WHERE \"DATE_COL\" <= '${logicalStartTime(yyyy-MM-dd,1d)}' " +
       "AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(ID),MAX(ID) from my_table";
     String splitBy = "ID";
 
     ImmutableMap<String, String> sourceProps = ImmutableMap.<String, String>builder()
       .putAll(BASE_PROPS)
-      .put("autoReconnect", "true")
-      .put("maxRows", "0")
       .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
       .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
       .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -87,19 +85,17 @@ public class MysqlSourceTestRun extends MysqlPluginTestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
-    String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, MEDIUMINT_COL, SMALL, BIG, FLOAT_COL, " +
-      "REAL_COL, NUMERIC_COL, CHAR_COL, DECIMAL_COL, BIT_COL, BINARY_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, " +
-      "VARBINARY_COL, BLOB_COL, MEDIUMBLOB_COL, TINYBLOB_COL, YEAR_COL, LONGBLOB_COL, TEXT_COL FROM my_table " +
-      "WHERE ID < 3 AND $CONDITIONS";
-    String boundingQuery = "SELECT MIN(ID),MAX(ID) from my_table";
+    String importQuery = "SELECT \"ID\", \"NAME\", \"SCORE\", \"GRADUATED\", \"SMALLINT_COL\", \"BIG\", " +
+      "\"NUMERIC_COL\", \"CHAR_COL\", \"DECIMAL_COL\", \"BYTEA_COL\", \"DATE_COL\", \"TIME_COL\", \"TIMESTAMP_COL\", " +
+      "\"TEXT_COL\" FROM my_table " +
+      "WHERE \"ID\" < 3 AND $CONDITIONS";
+    String boundingQuery = "SELECT MIN(\"ID\"),MAX(\"ID\") from my_table";
     String splitBy = "ID";
     ETLPlugin sourceConfig = new ETLPlugin(
       UI_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("autoReconnect", "true")
-        .put("maxRows", "0")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -130,32 +126,21 @@ public class MysqlSourceTestRun extends MysqlPluginTestBase {
     Assert.assertEquals("user2", row2.get("TEXT_COL"));
     Assert.assertEquals("char1", ((String) row1.get("CHAR_COL")).trim());
     Assert.assertEquals("char2", ((String) row2.get("CHAR_COL")).trim());
-    Assert.assertEquals(124.45, row1.get("SCORE"), 0.000001);
-    Assert.assertEquals(125.45, row2.get("SCORE"), 0.000001);
+    Assert.assertEquals(124.45f, ((Float) row1.get("SCORE")).doubleValue(), 0.000001);
+    Assert.assertEquals(125.45f, ((Float) row2.get("SCORE")).doubleValue(), 0.000001);
     Assert.assertEquals(false, row1.get("GRADUATED"));
     Assert.assertEquals(true, row2.get("GRADUATED"));
     Assert.assertNull(row1.get("NOT_IMPORTED"));
     Assert.assertNull(row2.get("NOT_IMPORTED"));
 
-    Assert.assertEquals(1, (int) row1.get("TINY"));
-    Assert.assertEquals(2, (int) row2.get("TINY"));
-    Assert.assertEquals(1, (int) row1.get("SMALL"));
-    Assert.assertEquals(2, (int) row2.get("SMALL"));
+    Assert.assertEquals(1, (int) row1.get("SMALLINT_COL"));
+    Assert.assertEquals(2, (int) row2.get("SMALLINT_COL"));
     Assert.assertEquals(1, (long) row1.get("BIG"));
     Assert.assertEquals(2, (long) row2.get("BIG"));
-    Assert.assertEquals(1, (int) row1.get("MEDIUMINT_COL"));
-    Assert.assertEquals(2, (int) row2.get("MEDIUMINT_COL"));
 
-    Assert.assertEquals(124.45, (float) row1.get("FLOAT_COL"), 0.00001);
-    Assert.assertEquals(125.45, (float) row2.get("FLOAT_COL"), 0.00001);
-    Assert.assertEquals(124.45, (double) row1.get("REAL_COL"), 0.00001);
-    Assert.assertEquals(125.45, (double) row2.get("REAL_COL"), 0.00001);
     Assert.assertEquals(124.45, (double) row1.get("NUMERIC_COL"), 0.000001);
     Assert.assertEquals(125.45, (double) row2.get("NUMERIC_COL"), 0.000001);
     Assert.assertEquals(124.45, (double) row1.get("DECIMAL_COL"), 0.000001);
-    Assert.assertNull(row2.get("DECIMAL_COL"));
-    Assert.assertTrue((boolean) row1.get("BIT_COL"));
-    Assert.assertFalse((boolean) row2.get("BIT_COL"));
     // Verify time columns
     java.util.Date date = new java.util.Date(CURRENT_TS);
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -165,37 +150,25 @@ public class MysqlSourceTestRun extends MysqlPluginTestBase {
     ZonedDateTime expectedTs = date.toInstant().atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC));
     Assert.assertEquals(expectedDate, row1.getDate("DATE_COL"));
     Assert.assertEquals(expectedTime, row1.getTime("TIME_COL"));
-    Assert.assertEquals(expectedDate.getYear(), (int) row1.getDate("YEAR_COL").getYear());
     Assert.assertEquals(expectedTs, row1.getTimestamp("TIMESTAMP_COL", ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
 
     // verify binary columns
-    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("BINARY_COL")).array(), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("BINARY_COL")).array(), 0, 5));
-    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("VARBINARY_COL")).array(), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("VARBINARY_COL")).array(), 0, 5));
-    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("BLOB_COL")).array(), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("BLOB_COL")).array(), 0, 5));
-    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("MEDIUMBLOB_COL")).array(), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("MEDIUMBLOB_COL")).array(), 0, 5));
-    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("TINYBLOB_COL")).array(), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("TINYBLOB_COL")).array(), 0, 5));
-    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("LONGBLOB_COL")).array(), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("LONGBLOB_COL")).array(), 0, 5));
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("BYTEA_COL")).array(), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("BYTEA_COL")).array(), 0, 5));
   }
 
   @Test
   public void testDbSourceMultipleTables() throws Exception {
-    String importQuery = "SELECT my_table.ID, your_table.NAME FROM my_table, your_table " +
-      "WHERE my_table.ID < 3 and my_table.ID = your_table.ID and $CONDITIONS ";
-    String boundingQuery = "SELECT LEAST(MIN(my_table.ID), MIN(your_table.ID)), " +
-      "GREATEST(MAX(my_table.ID), MAX(your_table.ID))";
-    String splitBy = "my_table.ID";
+    String importQuery = "SELECT \"my_table\".\"ID\", \"your_table\".\"NAME\" FROM \"my_table\", \"your_table\"" +
+      "WHERE \"my_table\".\"ID\" < 3 and \"my_table\".\"ID\" = \"your_table\".\"ID\" and $CONDITIONS";
+    String boundingQuery = "SELECT MIN(MIN(\"my_table\".\"ID\"), MIN(\"your_table\".\"ID\")), " +
+      "MAX(MAX(\"my_table\".\"ID\"), MAX(\"your_table\".\"ID\"))";
+    String splitBy = "\"my_table\".\"ID\"";
     ETLPlugin sourceConfig = new ETLPlugin(
       UI_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("autoReconnect", "true")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -227,9 +200,9 @@ public class MysqlSourceTestRun extends MysqlPluginTestBase {
 
   @Test
   public void testUserNamePasswordCombinations() throws Exception {
-    String importQuery = "SELECT * FROM my_table WHERE $CONDITIONS";
-    String boundingQuery = "SELECT MIN(ID),MAX(ID) from my_table";
-    String splitBy = "ID";
+    String importQuery = "SELECT * FROM \"my_table\" WHERE $CONDITIONS";
+    String boundingQuery = "SELECT MIN(\"ID\"),MAX(\"ID\") from \"my_table\"";
+    String splitBy = "\"ID\"";
 
     ETLPlugin sinkConfig = MockSink.getPlugin("outputTable");
 
@@ -237,7 +210,6 @@ public class MysqlSourceTestRun extends MysqlPluginTestBase {
       .put("host", BASE_PROPS.get("host"))
       .put("port", BASE_PROPS.get("port"))
       .put("database", BASE_PROPS.get("database"))
-      .put("autoReconnect", "true")
       .put("jdbcPluginName", JDBC_DRIVER_NAME)
       .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
       .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
@@ -291,16 +263,15 @@ public class MysqlSourceTestRun extends MysqlPluginTestBase {
   @Test
   public void testNonExistentDBTable() throws Exception {
     // source
-    String importQuery = "SELECT ID, NAME FROM dummy WHERE ID < 3 AND $CONDITIONS";
-    String boundingQuery = "SELECT MIN(ID),MAX(ID) FROM dummy";
-    String splitBy = "ID";
+    String importQuery = "SELECT \"ID\", \"NAME\" FROM \"dummy\" WHERE ID < 3 AND $CONDITIONS";
+    String boundingQuery = "SELECT MIN(\"ID\"),MAX(\"ID\") FROM \"dummy\"";
+    String splitBy = "\"ID\"";
     ETLPlugin sinkConfig = MockSink.getPlugin("table");
     ETLPlugin sourceBadNameConfig = new ETLPlugin(
       UI_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("autoReconnect", "true")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -330,12 +301,11 @@ public class MysqlSourceTestRun extends MysqlPluginTestBase {
         .put("database", "dumDB")
         .put("user", BASE_PROPS.get("user"))
         .put("password", BASE_PROPS.get("password"))
-        .put("autoReconnect", "true")
         .put("jdbcPluginName", JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
-        .put(Constants.Reference.REFERENCE_NAME, "MySQLTest")
+        .put(Constants.Reference.REFERENCE_NAME, "PostgreSQLTest")
         .build(),
       null);
     ETLStage sourceBadConn = new ETLStage("sourceBadConn", sourceBadConnConfig);
