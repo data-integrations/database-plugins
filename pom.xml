@@ -31,6 +31,7 @@
     <module>generic-database-plugin</module>
     <module>mysql-plugin</module>
     <module>postgresql-plugin</module>
+    <module>mssql-plugin</module>
   </modules>
 
   <licenses>
