@@ -3,17 +3,15 @@
 
 Description
 -----------
-Writes records to Oracle table. Each record will be written to a row in the table.
+Writes records to an Oracle table. Each record will be written to a row in the table.
 
 
 Use Case
 --------
-This sink is used whenever you need to write to a Oracle table.
+This sink is used whenever you need to write to an Oracle table.
 Suppose you periodically build a recommendation model for products on your online store.
 The model is stored in a FileSet and you want to export the contents
-of the FileSet to a Oracle table where it can be served to your users.
-
-Column names would be autodetected from input schema.
+of the FileSet to Oracle table where it can be served to your users.
 
 Properties
 ----------
