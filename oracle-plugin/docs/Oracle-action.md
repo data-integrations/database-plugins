@@ -3,7 +3,7 @@
 
 Description
 -----------
-Action that runs Oracle command.
+Action that runs an Oracle command.
 
 
 Use Case
