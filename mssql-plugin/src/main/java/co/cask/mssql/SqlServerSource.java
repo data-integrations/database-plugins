@@ -64,7 +64,7 @@ public class SqlServerSource extends AbstractDBSource {
     @Description("he number of seconds to wait before a timeout has occurred on a query. The default value is -1, " +
       "which means infinite timeout. Setting this to 0 also implies to wait indefinitely.")
     @Nullable
-    public Integer queryTimeout;
+    public Integer queryTimeout = -1;
 
     @Override
     public String getConnectionString() {
@@ -73,8 +73,13 @@ public class SqlServerSource extends AbstractDBSource {
 
     @Override
     public Map<String, String> getDBSpecificArguments() {
-      return ImmutableMap.of(SqlServerConstants.INSTANCE_NAME, String.valueOf(instanceName),
-                             SqlServerConstants.QUERY_TIMEOUT, String.valueOf(queryTimeout));
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+
+      if (instanceName != null) {
+        builder.put(SqlServerConstants.INSTANCE_NAME, String.valueOf(instanceName));
+      }
+
+      return builder.put(SqlServerConstants.QUERY_TIMEOUT, String.valueOf(queryTimeout)).build();
     }
   }
 }
