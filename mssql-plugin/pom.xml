@@ -49,6 +49,11 @@
 
     <!-- test dependencies -->
     <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <version>7.2.1.jre8</version>
+    </dependency>
+    <dependency>
       <groupId>co.cask</groupId>
       <artifactId>database-commons</artifactId>
       <version>${project.version}</version>
