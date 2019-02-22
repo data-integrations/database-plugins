@@ -61,7 +61,7 @@ public class SqlServerSource extends AbstractDBSource {
     public String instanceName;
 
     @Name(SqlServerConstants.QUERY_TIMEOUT)
-    @Description("he number of seconds to wait before a timeout has occurred on a query. The default value is -1, " +
+    @Description("The number of seconds to wait before a timeout has occurred on a query. The default value is -1, " +
       "which means infinite timeout. Setting this to 0 also implies to wait indefinitely.")
     @Nullable
     public Integer queryTimeout = -1;
