@@ -89,8 +89,8 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
 
     // add sqlServer 3rd party plugin
     PluginClass sqlServerDriver = new PluginClass("jdbc", JDBC_DRIVER_NAME, "sql server driver class",
-                                              SQLServerDriver.class.getName(),
-                                           null, Collections.<String, PluginPropertyField>emptyMap());
+                                                  SQLServerDriver.class.getName(),
+                                                  null, Collections.<String, PluginPropertyField>emptyMap());
     addPluginArtifact(NamespaceId.DEFAULT.artifact("sqlserver-jdbc-connector", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
                       Sets.newHashSet(sqlServerDriver), SQLServerDriver.class);
@@ -166,7 +166,7 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
     }
   }
 
-  private static void populateData(PreparedStatement ...stmts) throws SQLException {
+  private static void populateData(PreparedStatement... stmts) throws SQLException {
     // insert the same data into both tables: my_table and your_table
     for (PreparedStatement pStmt : stmts) {
       for (int i = 1; i <= 5; i++) {
