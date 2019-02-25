@@ -32,6 +32,7 @@
     <module>mysql-plugin</module>
     <module>postgresql-plugin</module>
     <module>mssql-plugin</module>
+    <module>oracle-plugin</module>
   </modules>
 
   <licenses>
