@@ -36,8 +36,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.Date;
@@ -122,6 +120,7 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
       stmt.execute("CREATE TABLE postActionTest (x int, day varchar(10))");
 
       stmt.execute("CREATE TABLE my_table (" +
+                     "  ID INT NOT NULL, " +
                      "  CHAR_COL CHAR(10)," +
                      "  CHARACTER_COL CHARACTER(10)," +
                      "  VARCHAR_COL VARCHAR(10)," +
@@ -136,6 +135,8 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
                      "  REAL_COL REAL," +
                      "  DATE_COL DATE," +
                      "  TIMESTAMP_COL TIMESTAMP," +
+                     "  TIMESTAMPTZ_COL TIMESTAMP WITH TIME ZONE," +
+                     "  TIMESTAMPLTZ_COL TIMESTAMP WITH LOCAL TIME ZONE," +
                      "  INTERVAL_YEAR_TO_MONTH_COL INTERVAL YEAR(3) TO MONTH," +
                      "  INTERVAL_DAY_TO_SECOND_COL INTERVAL DAY(2) TO SECOND," +
                      "  RAW_COL RAW(16)," +
@@ -155,12 +156,12 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
       Statement stmt = conn.createStatement();
       PreparedStatement pStmt1 =
         conn.prepareStatement("INSERT INTO my_table " +
-                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       PreparedStatement pStmt2 =
         conn.prepareStatement("INSERT INTO your_table " +
-                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
 
       stmt.execute("insert into dbActionTest values (1, '1970-01-01')");
       stmt.execute("insert into postActionTest values (1, '1970-01-01')");
@@ -176,29 +177,32 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
         Clob clob = null;
         try {
           String name = "user" + i;
-          pStmt.setString(1, name);
+          pStmt.setInt(1, i);
           pStmt.setString(2, name);
           pStmt.setString(3, name);
           pStmt.setString(4, name);
-          pStmt.setInt(5, 42 + i);
-          pStmt.setInt(6, 24 + i);
-          pStmt.setBigDecimal(7, new BigDecimal(54.56 + i));
-          pStmt.setBigDecimal(8, new BigDecimal(54.65 + i));
-          pStmt.setBigDecimal(9, new BigDecimal(32.65 + i));
-          pStmt.setBigDecimal(10, new BigDecimal(23.65 + i));
-          pStmt.setInt(11, i);
-          pStmt.setFloat(12, (float) 14.45 + i);
-          pStmt.setDate(13, new Date(CURRENT_TS));
-          pStmt.setTimestamp(14, new Timestamp(CURRENT_TS));
-          pStmt.setString(15, "300-5");
-          pStmt.setString(16, "23 3:02:10");
-          pStmt.setBytes(17, name.getBytes());
+          pStmt.setString(5, name);
+          pStmt.setInt(6, 42 + i);
+          pStmt.setInt(7, 24 + i);
+          pStmt.setBigDecimal(8, new BigDecimal(54.56 + i));
+          pStmt.setBigDecimal(9, new BigDecimal(54.65 + i));
+          pStmt.setBigDecimal(10, new BigDecimal(32.65 + i));
+          pStmt.setBigDecimal(11, new BigDecimal(23.65 + i));
+          pStmt.setInt(12, i);
+          pStmt.setFloat(13, (float) 14.45 + i);
+          pStmt.setDate(14, new Date(CURRENT_TS));
+          pStmt.setTimestamp(15, new Timestamp(CURRENT_TS));
+          pStmt.setTimestamp(16, new Timestamp(CURRENT_TS));
+          pStmt.setTimestamp(17, new Timestamp(CURRENT_TS));
+          pStmt.setString(18, "300-5");
+          pStmt.setString(19, "23 3:02:10");
+          pStmt.setBytes(20, name.getBytes());
 
           clob = pStmt.getConnection().createClob();
           clob.setString(1, name);
-          pStmt.setClob(18, clob);
+          pStmt.setClob(21, clob);
 
-          pStmt.setBytes(19, name.getBytes());
+          pStmt.setBytes(22, name.getBytes());
           pStmt.executeUpdate();
         } finally {
           if (Objects.nonNull(clob)) {

@@ -73,8 +73,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   private final DBSinkConfig dbSinkConfig;
   private Class<? extends Driver> driverClass;
   private DriverCleanup driverCleanup;
-  private int[] columnTypes;
-  private List<String> columns;
+  protected int[] columnTypes;
+  protected List<String> columns;
   private String dbColumns;
 
   public AbstractDBSink(DBSinkConfig dbSinkConfig) {

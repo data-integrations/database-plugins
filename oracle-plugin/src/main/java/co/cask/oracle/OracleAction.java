@@ -25,6 +25,7 @@ import co.cask.db.batch.config.DBSpecificQueryConfig;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Action that runs Oracle command.
@@ -47,6 +48,7 @@ public class OracleAction extends AbstractDBAction {
   public static class OracleActionConfig extends DBSpecificQueryConfig {
     @Name(OracleConstants.DEFAULT_BATCH_VALUE)
     @Description("The default batch value that triggers an execution request.")
+    @Nullable
     public Integer defaultBatchValue;
 
     @Override
