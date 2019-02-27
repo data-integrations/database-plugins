@@ -117,7 +117,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   }
 
   protected void setField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field, int sqlType,
-                        int sqlPrecision, int sqlScale) throws SQLException {
+                          int sqlPrecision, int sqlScale) throws SQLException {
     Object o = DBUtils.transformValue(sqlType, sqlPrecision, sqlScale, resultSet, field.getName());
     if (o instanceof Date) {
       recordBuilder.setDate(field.getName(), ((Date) o).toLocalDate());

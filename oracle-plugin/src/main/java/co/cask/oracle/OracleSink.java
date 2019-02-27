@@ -21,18 +21,11 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.db.batch.config.DBSpecificSinkConfig;
 import co.cask.db.batch.sink.AbstractDBSink;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import org.apache.hadoop.io.NullWritable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -53,20 +46,8 @@ public class OracleSink extends AbstractDBSink {
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) throws Exception {
-    List<Schema.Field> outputFields = new ArrayList<>();
-    for (String column : columns) {
-      Schema.Field field = input.getSchema().getField(column);
-      Preconditions.checkNotNull(field, "Missing schema field for column '%s'", column);
-      outputFields.add(field);
-    }
-    StructuredRecord.Builder output = StructuredRecord.builder(
-      Schema.recordOf(input.getSchema().getRecordName(), outputFields));
-    for (String column : columns) {
-      output.set(column, input.get(column));
-    }
-
-    emitter.emit(new KeyValue<>(new OracleDBRecord(output.build(), columnTypes), null));
+  protected DBRecord getDBRecord(StructuredRecord.Builder output) {
+    return new OracleDBRecord(output.build(), columnTypes);
   }
 
   /**
