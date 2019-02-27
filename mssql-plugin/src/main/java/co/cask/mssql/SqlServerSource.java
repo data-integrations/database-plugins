@@ -49,7 +49,7 @@ public class SqlServerSource extends AbstractDBSource {
   }
 
   /**
-   * PosgtreSQL source config.
+   * MSSQL source config.
    */
   public static class SqlServerSourceConfig extends DBSpecificSourceConfig {
 
