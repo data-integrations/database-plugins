@@ -9,5 +9,8 @@ mvn clean test \
 -Dpostgresql.host=localhost -Dpostgresql.port=54032 -Dpostgresql.database=test -Dpostgresql.username=postgres \ 
 -Dpostgresql.password=cdap \
 -Doracle.host=localhost -Doracle.port=1521 -Doracle.username=ora -Doracle.password=cdap -Doracle.database=EE \
--DjdbcDriverJars="oracle.jar" \
+-DjdbcDriversJars="oracle.jar" \
+-Dnetezza.host=localhost -Dnetezza.port=5480 -Dnetezza.database=test -Dnetezza.username=admin \
+-Dnetezza.password=password -DjdbcDriversJars="/jdbc/drivers/jars/som.jar, "
 ```
+ 

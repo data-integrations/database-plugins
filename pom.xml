@@ -34,6 +34,7 @@
     <module>mssql-plugin</module>
     <module>oracle-plugin</module>
     <module>db2-plugin</module>
+    <module>netezza-plugin</module>
   </modules>
 
   <licenses>
@@ -371,7 +372,7 @@
             <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
           </systemPropertyVariables>
           <additionalClasspathElements>
-            <additionalClasspathElement>${jdbcDriverJars}</additionalClasspathElement>
+            <additionalClasspathElement>${jdbcDriversJars}</additionalClasspathElement>
           </additionalClasspathElements>
           <includes>
             <include>**/*TestsSuite.java</include>
