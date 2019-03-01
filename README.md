@@ -7,5 +7,7 @@ corresponding permissions. To run integration tests execute following command in
 mvn clean test \ 
 -Dmysql.host=localhost -Dmysql.port=3306 -Dmysql.database=mydb -Dmysql.username=root -Dmysql.password=root \
 -Dpostgresql.host=localhost -Dpostgresql.port=54032 -Dpostgresql.database=test -Dpostgresql.username=postgres \ 
--Dpostgresql.password=cdap
+-Dpostgresql.password=cdap \
+-Doracle.host=localhost -Doracle.port=1521 -Doracle.username=ora -Doracle.password=cdap -Doracle.database=EE \
+-DjdbcDriverJars="oracle.jar" \
 ```

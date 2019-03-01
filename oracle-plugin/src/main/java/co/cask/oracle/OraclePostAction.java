@@ -25,6 +25,7 @@ import co.cask.db.batch.config.DBSpecificQueryActionConfig;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents Oracle post action.
@@ -47,6 +48,7 @@ public class OraclePostAction extends AbstractQueryAction {
   public static class OracleQueryActionConfig extends DBSpecificQueryActionConfig {
     @Name(OracleConstants.DEFAULT_BATCH_VALUE)
     @Description("The default batch value that triggers an execution request.")
+    @Nullable
     public Integer defaultBatchValue;
 
     @Override

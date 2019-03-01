@@ -49,6 +49,13 @@
 
     <!-- test dependencies -->
     <dependency>
+      <groupId>co.cask</groupId>
+      <artifactId>database-commons</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>hydrator-test</artifactId>
     </dependency>

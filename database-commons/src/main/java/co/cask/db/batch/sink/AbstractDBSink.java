@@ -73,8 +73,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   private final DBSinkConfig dbSinkConfig;
   private Class<? extends Driver> driverClass;
   private DriverCleanup driverCleanup;
-  private int[] columnTypes;
-  private List<String> columns;
+  protected int[] columnTypes;
+  protected List<String> columns;
   private String dbColumns;
 
   public AbstractDBSink(DBSinkConfig dbSinkConfig) {
@@ -148,7 +148,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     List<Schema.Field> outputFields = new ArrayList<>();
     for (String column : columns) {
       Schema.Field field = input.getSchema().getField(column);
-      Preconditions.checkNotNull(field, "Missing schema field for column '%s'", column);
+      Preconditions.checkNotNull(field, "Column '%s' not found in an input record", column);
       outputFields.add(field);
     }
     StructuredRecord.Builder output = StructuredRecord.builder(
@@ -157,7 +157,11 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       output.set(column, input.get(column));
     }
 
-    emitter.emit(new KeyValue<>(new DBRecord(output.build(), columnTypes), null));
+    emitter.emit(new KeyValue<>(getDBRecord(output), null));
+  }
+
+  protected DBRecord getDBRecord(StructuredRecord.Builder output) {
+    return new DBRecord(output.build(), columnTypes);
   }
 
   @Override

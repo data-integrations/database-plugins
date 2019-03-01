@@ -16,15 +16,18 @@
 
 package co.cask.oracle;
 
+import co.cask.DBRecord;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.db.batch.config.DBSpecificSinkConfig;
 import co.cask.db.batch.sink.AbstractDBSink;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 
 /**
@@ -42,12 +45,18 @@ public class OracleSink extends AbstractDBSink {
     this.oracleSinkConfig = oracleSinkConfig;
   }
 
+  @Override
+  protected DBRecord getDBRecord(StructuredRecord.Builder output) {
+    return new OracleDBRecord(output.build(), columnTypes);
+  }
+
   /**
    * Oracle action configuration.
    */
   public static class OracleSinkConfig extends DBSpecificSinkConfig {
     @Name(OracleConstants.DEFAULT_BATCH_VALUE)
     @Description("The default batch value that triggers an execution request.")
+    @Nullable
     public Integer defaultBatchValue;
 
     @Override

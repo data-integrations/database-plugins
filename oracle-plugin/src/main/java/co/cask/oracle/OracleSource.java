@@ -19,12 +19,13 @@ package co.cask.oracle;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.db.batch.config.DBSpecificSourceConfig;
 import co.cask.db.batch.source.AbstractDBSource;
 import com.google.common.collect.ImmutableMap;
+import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Batch source to read from Oracle.
@@ -47,16 +48,23 @@ public class OracleSource extends AbstractDBSource {
     return String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, host, port, database);
   }
 
+  @Override
+  protected Class<? extends DBWritable> getDBRecordType() {
+    return OracleDBRecord.class;
+  }
+
   /**
    * Oracle source config.
    */
   public static class OracleSourceConfig extends DBSpecificSourceConfig {
     @Name(OracleConstants.DEFAULT_BATCH_VALUE)
     @Description("The default batch value that triggers an execution request.")
+    @Nullable
     public Integer defaultBatchValue;
 
     @Name(OracleConstants.DEFAULT_ROW_PREFETCH)
     @Description("The default number of rows to prefetch from the server.")
+    @Nullable
     public Integer defaultRowPrefetch;
 
     @Override

@@ -45,6 +45,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
+import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -200,7 +201,8 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString,
                                   sourceConfig.user, sourceConfig.password);
     }
-    DataDrivenETLDBInputFormat.setInput(hConf, DBRecord.class,
+
+    DataDrivenETLDBInputFormat.setInput(hConf, getDBRecordType(),
                                         sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery(),
                                         false);
 
@@ -230,6 +232,10 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     lineageRecorder.createExternalDataset(sourceConfig.getSchema());
     context.setInput(Input.of(sourceConfig.referenceName,
                               new SourceInputFormatProvider(DataDrivenETLDBInputFormat.class, hConf)));
+  }
+
+  protected Class<? extends DBWritable> getDBRecordType() {
+    return DBRecord.class;
   }
 
   @Override

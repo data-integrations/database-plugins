@@ -52,15 +52,15 @@ import javax.sql.rowset.serial.SerialBlob;
  * @see DBWritable DBWritable
  */
 public class DBRecord implements Writable, DBWritable, Configurable {
-  private StructuredRecord record;
-  private Configuration conf;
+  protected StructuredRecord record;
+  protected Configuration conf;
 
   /**
    * Need to cache {@link ResultSetMetaData} of the record for use during writing to a table.
    * This is because we cannot rely on JDBC drivers to properly set metadata in the {@link PreparedStatement}
    * passed to the #write method in this class.
    */
-  private int[] columnTypes;
+  protected int[] columnTypes;
 
   /**
    * Used to construct a DBRecord from a StructuredRecord in the ETL Pipeline
@@ -105,13 +105,19 @@ public class DBRecord implements Writable, DBWritable, Configurable {
       int sqlType = metadata.getColumnType(i + 1);
       int sqlPrecision = metadata.getPrecision(i + 1);
       int sqlScale = metadata.getScale(i + 1);
-      setField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
+
+      handleField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
     }
     record = recordBuilder.build();
   }
 
-  private void setField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field, int sqlType,
-                        int sqlPrecision, int sqlScale) throws SQLException {
+  protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
+                             int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+    setField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
+  }
+
+  protected void setField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field, int sqlType,
+                          int sqlPrecision, int sqlScale) throws SQLException {
     Object o = DBUtils.transformValue(sqlType, sqlPrecision, sqlScale, resultSet, field.getName());
     if (o instanceof Date) {
       recordBuilder.setDate(field.getName(), ((Date) o).toLocalDate());
