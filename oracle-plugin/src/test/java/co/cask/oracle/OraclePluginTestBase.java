@@ -30,7 +30,6 @@ import co.cask.db.batch.source.DataDrivenETLDBInputFormat;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import oracle.jdbc.driver.OracleDriver;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -54,6 +53,7 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
+  private static final String DRIVER_CLASS = "oracle.jdbc.driver.OracleDriver";
 
   protected static final String JDBC_DRIVER_NAME = "oracle";
   protected static final String UI_NAME = "Oracle";
@@ -95,13 +95,15 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
                       OracleSource.class, OracleSink.class, DBRecord.class, ETLDBOutputFormat.class,
                       DataDrivenETLDBInputFormat.class, DBRecord.class, OraclePostAction.class, OracleAction.class);
 
+    Class<?> driverClass = Class.forName(DRIVER_CLASS);
+
     // add oracle 3rd party plugin
     PluginClass oracleDriver = new PluginClass("jdbc", JDBC_DRIVER_NAME, "oracle driver class",
-                                           OracleDriver.class.getName(),
+                                           driverClass.getName(),
                                            null, Collections.<String, PluginPropertyField>emptyMap());
     addPluginArtifact(NamespaceId.DEFAULT.artifact("oracle-jdbc-connector", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
-                      Sets.newHashSet(oracleDriver), OracleDriver.class);
+                      Sets.newHashSet(oracleDriver), driverClass);
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
@@ -215,7 +217,7 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
 
   public static Connection createConnection() {
     try {
-      Class.forName(OracleDriver.class.getCanonicalName());
+      Class.forName(DRIVER_CLASS);
       return DriverManager.getConnection(connectionUrl, BASE_PROPS.get("user"), BASE_PROPS.get("password"));
     } catch (Exception e) {
       throw Throwables.propagate(e);
