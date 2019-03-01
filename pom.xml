@@ -33,6 +33,7 @@
     <module>postgresql-plugin</module>
     <module>mssql-plugin</module>
     <module>oracle-plugin</module>
+    <module>db2-plugin</module>
   </modules>
 
   <licenses>
