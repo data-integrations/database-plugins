@@ -58,9 +58,11 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -243,7 +245,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     ResultSetMetaData rsMetaData = rs.getMetaData();
 
     Preconditions.checkNotNull(inputSchema.getFields());
-    List<String> invalidFields = new ArrayList<>();
+    Set<String> invalidFields = new HashSet<>();
 
     for (Schema.Field field : inputSchema.getFields()) {
       int columnIndex = rs.findColumn(field.getName());
@@ -251,20 +253,23 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       int precision = rsMetaData.getPrecision(columnIndex);
       int scale = rsMetaData.getScale(columnIndex);
 
-      Schema columnSchema;
-      if (ResultSetMetaData.columnNullable == rsMetaData.isNullable(columnIndex)) {
-        columnSchema = Schema.nullableOf(DBUtils.getSchema(type, precision, scale));
-      } else {
-        columnSchema = DBUtils.getSchema(type, precision, scale);
-      }
+      Schema columnSchema = DBUtils.getSchema(type, precision, scale);
+      boolean isColumnNullable = (ResultSetMetaData.columnNullable == rsMetaData.isNullable(columnIndex));
 
-      // we check for null-assignment compatibility, because schema.isCompatible() doesn't
-      // handle this case correctly
-      boolean isNotNullAssignable = !columnSchema.isNullable() && field.getSchema().isNullable();
-      boolean isNotCompatible = !field.getSchema().isCompatible(columnSchema);
+      Schema.Type columnType = columnSchema.getType();
+      Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
+                                                             : field.getSchema().getType();
+      boolean isNotNullAssignable = !isColumnNullable && field.getSchema().isNullable();
+      boolean isNotCompatible = !Objects.equals(fieldType, columnType);
 
-      if (isNotCompatible || isNotNullAssignable) {
+      if (isNotCompatible) {
         invalidFields.add(field.getName());
+        LOG.error("Can't assign value {} of type {} to column {} of type {}", field.getName(),
+                  field.getSchema().getType(), field.getName(), columnSchema.getType());
+      }
+      if (isNotNullAssignable) {
+        invalidFields.add(field.getName());
+        LOG.error("Can't assign nullable value {} to non-null column {}", field.getName(), field.getName());
       }
     }
 
