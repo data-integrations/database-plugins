@@ -48,9 +48,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -102,21 +102,17 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
               dbSinkConfig.jdbcPluginName,
               connectionString, "columns");
 
+    Schema inputSchema = context.getInputSchema();
+    Objects.requireNonNull(inputSchema, "AbstractDBSink requires a single known schema.");
+
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
-    // make sure that the table exists
+    // make sure that the destination table exists and column types are correct
     try {
-      Preconditions.checkArgument(
-        tableExists(driverClass, dbSinkConfig.tableName),
-        "Table %s does not exist. Please check that the 'tableName' property " +
-          "has been set correctly, and that the connection string %s points to a valid database.",
-        dbSinkConfig.tableName, connectionString);
+      validateSchema(driverClass, dbSinkConfig.tableName, inputSchema);
     } finally {
       DBUtils.cleanup(driverClass);
     }
-
-    Schema inputSchema = context.getInputSchema();
-    Objects.requireNonNull(inputSchema, "AbstractDBSink requires a single known schema.");
 
     setColumnsInfo(inputSchema.getFields());
 
@@ -210,7 +206,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     }
   }
 
-  private boolean tableExists(Class<? extends Driver> jdbcDriverClass, String tableName) {
+  private void validateSchema(Class<? extends Driver> jdbcDriverClass, String tableName,
+                                 Schema inputSchema) {
     String connectionString = dbSinkConfig.getConnectionString();
 
     try {
@@ -221,16 +218,53 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       throw Throwables.propagate(e);
     }
 
-    try (Connection connection = DriverManager.getConnection(connectionString, dbSinkConfig.getConnectionArguments())) {
-      DatabaseMetaData metadata = connection.getMetaData();
-      try (ResultSet rs = metadata.getTables(null, null, tableName, null)) {
-        return rs.next();
+    try (Connection connection = DriverManager.getConnection(connectionString, dbSinkConfig.getConnectionArguments());
+         ResultSet tables = connection.getMetaData().getTables(null, null, tableName, null)) {
+
+      Preconditions.checkArgument(tables.next(), "Table %s does not exist. " +
+                                  "Please check that the 'tableName' property " +
+                                  "has been set correctly, and that the connection string %s " +
+                                  "points to a valid database.",
+                                  tableName, connectionString);
+
+      try (PreparedStatement pStmt = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE 1 = 0");
+           ResultSet rs = pStmt.executeQuery()) {
+        validateFields(inputSchema, rs);
       }
+
     } catch (SQLException e) {
-      LOG.error("Exception while trying to check the existence of database table {} for connection {}.",
+      LOG.error("Exception while trying to validate schema of database table {} for connection {}.",
                 tableName, connectionString, e);
       throw Throwables.propagate(e);
     }
+  }
+
+  private void validateFields(Schema inputSchema, ResultSet rs) throws SQLException {
+    ResultSetMetaData rsMetaData = rs.getMetaData();
+
+    Preconditions.checkNotNull(inputSchema.getFields());
+    List<String> invalidFields = new ArrayList<>();
+
+    for (Schema.Field field : inputSchema.getFields()) {
+      int columnIndex = rs.findColumn(field.getName());
+      int type = rsMetaData.getColumnType(columnIndex);
+      int precision = rsMetaData.getPrecision(columnIndex);
+      int scale = rsMetaData.getScale(columnIndex);
+
+      Schema columnSchema;
+      if (ResultSetMetaData.columnNullable == rsMetaData.isNullable(columnIndex)) {
+        columnSchema = Schema.nullableOf(DBUtils.getSchema(type, precision, scale));
+      } else {
+        columnSchema = DBUtils.getSchema(type, precision, scale);
+      }
+
+      if (!Objects.equals(columnSchema, field.getSchema())) {
+        invalidFields.add(field.getName());
+      }
+    }
+
+    Preconditions.checkArgument(invalidFields.isEmpty(), "Couldn't find matching database column(s) " +
+                                  "for input field(s) %s.", String.join(",", invalidFields));
   }
 
   private void emitLineage(BatchSinkContext context, List<Schema.Field> fields) {
