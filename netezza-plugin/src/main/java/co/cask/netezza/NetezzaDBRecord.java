@@ -27,7 +27,7 @@ import java.sql.Types;
 import java.util.Set;
 
 /**
- * Writable class for Oracle Source/Sink
+ * Writable class for Netezza Source/Sink
  */
 public class NetezzaDBRecord extends DBRecord {
 
@@ -53,25 +53,22 @@ public class NetezzaDBRecord extends DBRecord {
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                              int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
     if (netezzaTypes.contains(sqlType)) {
-      handleOracleSpecificType(resultSet, recordBuilder, field, sqlType);
+      handleNetezzaSpecificType(resultSet, recordBuilder, field, sqlType);
     } else {
       setField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
     }
   }
 
-  private void handleOracleSpecificType(ResultSet resultSet,
-                                        StructuredRecord.Builder recordBuilder, Schema.Field field,
-                                        int sqlType) throws SQLException {
-
-    Object original = resultSet.getObject(field.getName());
+  private void handleNetezzaSpecificType(ResultSet resultSet,
+                                         StructuredRecord.Builder recordBuilder, Schema.Field field,
+                                         int sqlType) throws SQLException {
 
     switch (sqlType) {
       case Types.VARBINARY:
-        original = resultSet.getBytes(field.getName());
-        recordBuilder.set(field.getName(), original);
+        recordBuilder.set(field.getName(), resultSet.getBytes(field.getName()));
         break;
       case INTERVAL:
-        recordBuilder.set(field.getName(), original.toString());
+        recordBuilder.set(field.getName(), resultSet.getString(field.getName()));
         break;
     }
   }

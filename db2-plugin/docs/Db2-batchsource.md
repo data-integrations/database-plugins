@@ -30,7 +30,7 @@ Properties
 You can specify an arbitrary number of columns to import, or import all columns using \*. The Query should
 contain the '$CONDITIONS' string. For example, 'SELECT * FROM table WHERE $CONDITIONS'.
 The '$CONDITIONS' string will be replaced by 'splitBy' field limits specified by the bounding query.
-The '$CONDITIONS' string is not required if numSplits is set to one. (Macro-enabled)
+The '$CONDITIONS' string is not required if numSplits is set to one.
 
 **Bounding Query:** Bounding Query should return the min and max of the values of the 'splitBy' field.
 For example, 'SELECT MIN(id),MAX(id) FROM table'. Not required if numSplits is set to one.
