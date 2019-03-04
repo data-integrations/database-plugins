@@ -258,7 +258,12 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
         columnSchema = DBUtils.getSchema(type, precision, scale);
       }
 
-      if (!Objects.equals(columnSchema, field.getSchema())) {
+      // we check for null-assignment compatibility, because schema.isCompatible() doesn't
+      // handle this case correctly
+      boolean isNotNullAssignable = !columnSchema.isNullable() && field.getSchema().isNullable();
+      boolean isNotCompatible = !field.getSchema().isCompatible(columnSchema);
+
+      if (isNotCompatible || isNotNullAssignable) {
         invalidFields.add(field.getName());
       }
     }
