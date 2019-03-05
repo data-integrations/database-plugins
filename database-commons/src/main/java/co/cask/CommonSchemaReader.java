@@ -87,7 +87,6 @@ public class CommonSchemaReader implements SchemaReader {
     return schemaFields;
   }
 
-  // given a sql type return schema type
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     // Type.STRING covers sql types - VARCHAR,CHAR,CLOB,LONGNVARCHAR,LONGVARCHAR,NCHAR,NCLOB,NVARCHAR
