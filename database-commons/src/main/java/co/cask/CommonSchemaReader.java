@@ -35,15 +35,10 @@ import javax.annotation.Nullable;
  */
 public class CommonSchemaReader implements SchemaReader {
 
-  protected final ResultSet resultSet;
-
-  public CommonSchemaReader(ResultSet resultSet) {
-    this.resultSet = resultSet;
-  }
-
-  public List<Schema.Field> getSchemaFields(@Nullable String schemaStr)
+  @Override
+  public List<Schema.Field> getSchemaFields(ResultSet resultSet, @Nullable String schemaStr)
     throws SQLException {
-    Schema resultsetSchema = Schema.recordOf("resultset", getSchemaFields());
+    Schema resultsetSchema = Schema.recordOf("resultset", getSchemaFields(resultSet));
     Schema schema;
 
     if (!Strings.isNullOrEmpty(schemaStr)) {
@@ -75,7 +70,8 @@ public class CommonSchemaReader implements SchemaReader {
     return resultsetSchema.getFields();
   }
 
-  public List<Schema.Field> getSchemaFields() throws SQLException {
+  @Override
+  public List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
     List<Schema.Field> schemaFields = Lists.newArrayList();
     ResultSetMetaData metadata = resultSet.getMetaData();
     // ResultSetMetadata columns are numbered starting with 1
@@ -92,6 +88,7 @@ public class CommonSchemaReader implements SchemaReader {
   }
 
   // given a sql type return schema type
+  @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     // Type.STRING covers sql types - VARCHAR,CHAR,CLOB,LONGNVARCHAR,LONGVARCHAR,NCHAR,NCLOB,NVARCHAR
 

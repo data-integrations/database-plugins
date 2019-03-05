@@ -97,7 +97,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
    */
   public void readFields(ResultSet resultSet) throws SQLException {
     ResultSetMetaData metadata = resultSet.getMetaData();
-    List<Schema.Field> schemaFields = getSchemaReader(resultSet).getSchemaFields(conf.get(DBUtils.OVERRIDE_SCHEMA));
+    List<Schema.Field> schemaFields = getSchemaReader().getSchemaFields(resultSet, conf.get(DBUtils.OVERRIDE_SCHEMA));
     Schema schema = Schema.recordOf("dbRecord", schemaFields);
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(schema);
     for (int i = 0; i < schemaFields.size(); i++) {
@@ -111,8 +111,8 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     record = recordBuilder.build();
   }
 
-  protected SchemaReader getSchemaReader(ResultSet resultSet) {
-    return new CommonSchemaReader(resultSet);
+  protected SchemaReader getSchemaReader() {
+    return new CommonSchemaReader();
   }
 
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,

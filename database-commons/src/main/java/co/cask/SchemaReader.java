@@ -18,6 +18,7 @@ package co.cask;
 
 import co.cask.cdap.api.data.schema.Schema;
 
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.List;
@@ -28,9 +29,9 @@ import javax.annotation.Nullable;
  */
 public interface SchemaReader {
 
-  List<Schema.Field> getSchemaFields(@Nullable String schemaStr) throws SQLException;
+  List<Schema.Field> getSchemaFields(ResultSet resultSet, @Nullable String schemaStr) throws SQLException;
 
-  List<Schema.Field> getSchemaFields() throws SQLException;
+  List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException;
 
   Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException;
 }

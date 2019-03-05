@@ -128,7 +128,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
           query = removeConditionsClause(query);
         }
         ResultSet resultSet = statement.executeQuery(query);
-        return Schema.recordOf("outputSchema", getSchemaReader(resultSet).getSchemaFields());
+        return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
       } finally {
         driverCleanup.destroy();
       }
@@ -138,8 +138,8 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     }
   }
 
-  protected SchemaReader getSchemaReader(ResultSet resultSet) throws SQLException {
-    return new CommonSchemaReader(resultSet);
+  protected SchemaReader getSchemaReader() throws SQLException {
+    return new CommonSchemaReader();
   }
 
   private DriverCleanup loadPluginClassAndGetDriver(GetSchemaRequest request,
