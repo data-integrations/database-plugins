@@ -116,7 +116,6 @@ public final class DBUtils {
    * @param schemaStr schema string to override resultant schema
    * @return list of schema fields
    * @throws SQLException
-   * @throws IOException
    */
   public static List<Schema.Field> getSchemaFields(ResultSet resultSet, @Nullable String schemaStr)
     throws SQLException {

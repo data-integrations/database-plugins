@@ -97,7 +97,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
    */
   public void readFields(ResultSet resultSet) throws SQLException {
     ResultSetMetaData metadata = resultSet.getMetaData();
-    List<Schema.Field> schemaFields = DBUtils.getSchemaFields(resultSet, conf.get(DBUtils.OVERRIDE_SCHEMA));
+    List<Schema.Field> schemaFields = getSchemaReader(resultSet).getSchemaFields(conf.get(DBUtils.OVERRIDE_SCHEMA));
     Schema schema = Schema.recordOf("dbRecord", schemaFields);
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(schema);
     for (int i = 0; i < schemaFields.size(); i++) {
@@ -109,6 +109,10 @@ public class DBRecord implements Writable, DBWritable, Configurable {
       handleField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
     }
     record = recordBuilder.build();
+  }
+
+  protected SchemaReader getSchemaReader(ResultSet resultSet) {
+    return new CommonSchemaReader(resultSet);
   }
 
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
@@ -128,6 +132,38 @@ public class DBRecord implements Writable, DBWritable, Configurable {
       recordBuilder.setTimestamp(field.getName(), instant.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
     } else {
       recordBuilder.set(field.getName(), o);
+    }
+  }
+
+  protected void setFieldAccordingToSchema(ResultSet resultSet, StructuredRecord.Builder recordBuilder,
+                                           Schema.Field field) throws SQLException {
+
+    Schema.Type fieldType = field.getSchema().getType();
+
+    switch (fieldType) {
+      case NULL:
+        break;
+      case STRING:
+        recordBuilder.set(field.getName(), resultSet.getString(field.getName()));
+        break;
+      case BOOLEAN:
+        recordBuilder.set(field.getName(), resultSet.getBoolean(field.getName()));
+        break;
+      case INT:
+        recordBuilder.set(field.getName(), resultSet.getInt(field.getName()));
+        break;
+      case LONG:
+        recordBuilder.set(field.getName(), resultSet.getLong(field.getName()));
+        break;
+      case FLOAT:
+        recordBuilder.set(field.getName(), resultSet.getFloat(field.getName()));
+        break;
+      case DOUBLE:
+        recordBuilder.set(field.getName(), resultSet.getDouble(field.getName()));
+        break;
+      case BYTES:
+        recordBuilder.set(field.getName(), resultSet.getBytes(field.getName()));
+        break;
     }
   }
 
