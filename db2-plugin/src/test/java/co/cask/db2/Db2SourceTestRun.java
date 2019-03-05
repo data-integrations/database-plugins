@@ -83,8 +83,8 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
   @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
     String importQuery = "SELECT SMALLINT_COL, INTEGER_COL, BIGINT_COL, DECIMAL_COL, NUMERIC_COL, " +
-      " REAL_COL, DOUBLE_COL, CHAR_COL, DECFLOAT_COL, VARCHAR_COL, CHAR_BIT_COL, VARCHAR_BIT_COL, GRAPHIC_COL, CLOB_COL, BLOB_COL," +
-      " DATE_COL, TIME_COL, TIMESTAMP_COL FROM my_table " +
+      " REAL_COL, DOUBLE_COL, CHAR_COL, DECFLOAT_COL, VARCHAR_COL, CHAR_BIT_COL, VARCHAR_BIT_COL, GRAPHIC_COL, " +
+      " CLOB_COL, BLOB_COL, DATE_COL, TIME_COL, TIMESTAMP_COL FROM my_table " +
       " WHERE SMALLINT_COL < 3 AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(SMALLINT_COL),MAX(SMALLINT_COL) from my_table";
     String splitBy = "SMALLINT_COL";
@@ -164,17 +164,16 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
 
   @Test
   public void testDbSourceMultipleTables() throws Exception {
-    String importQuery = "SELECT my_table.ID, your_table.VARCHAR_COL FROM my_table, your_table " +
-      "WHERE my_table.ID < 3 and my_table.ID = your_table.ID and $CONDITIONS ";
-    String boundingQuery = "SELECT LEAST(MIN(my_table.ID), MIN(your_table.ID)), " +
-      "GREATEST(MAX(my_table.ID), MAX(your_table.ID))";
-    String splitBy = "my_table.ID";
+    String importQuery = "SELECT my_table.SMALLINT_COL, your_table.VARCHAR_COL FROM my_table, your_table " +
+      "WHERE my_table.SMALLINT_COL < 3 and my_table.SMALLINT_COL = your_table.SMALLINT_COL and $CONDITIONS ";
+    String boundingQuery = "SELECT LEAST(MIN(my_table.SMALLINT_COL), MIN(your_table.SMALLINT_COL)), " +
+      "GREATEST(MAX(my_table.SMALLINT_COL), MAX(your_table.SMALLINT_COL))";
+    String splitBy = "my_table.SMALLINT_COL";
     ETLPlugin sourceConfig = new ETLPlugin(
       UI_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("defaultRowPrefetch", "40")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -200,8 +199,8 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
     // Verify data
     Assert.assertEquals("user1", row1.get("VARCHAR_COL"));
     Assert.assertEquals("user2", row2.get("VARCHAR_COL"));
-    Assert.assertEquals(1, (long) row1.get("INTEGER_COL"));
-    Assert.assertEquals(2, (long) row2.get("INTEGER_COL"));
+    Assert.assertEquals(1, (int) row1.get("SMALLINT_COL"));
+    Assert.assertEquals(2, (int) row2.get("SMALLINT_COL"));
   }
 
   @Test
