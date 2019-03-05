@@ -35,8 +35,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
 import java.math.BigDecimal;
-import java.sql.Blob;
-import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -48,7 +46,6 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TimeZone;
 import javax.sql.rowset.serial.SerialBlob;
 import javax.sql.rowset.serial.SerialClob;
@@ -128,9 +125,9 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
                      "  SMALLINT_COL SMALLINT," +
                      "  INTEGER_COL INTEGER," +
                      "  BIGINT_COL BIGINT," +
-                     "  DECIMAL_COL DECIMAL," +
-                     "  NUMERIC_COL NUMERIC," +
-//                     "  DECFLOAT_COL DECFLOAT," +
+                     "  DECIMAL_COL DECIMAL(10, 2)," +
+                     "  NUMERIC_COL NUMERIC(10, 2)," +
+                     "  DECFLOAT_COL DECFLOAT," +
                      "  REAL_COL REAL," +
                      "  DOUBLE_COL DOUBLE," +
                      "  CHAR_COL CHAR(10)," +
@@ -156,11 +153,11 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
       PreparedStatement pStmt1 =
         conn.prepareStatement("INSERT INTO my_table " +
                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?)");
+                                "       ?, ?, ?, ?, ?, ?, ?, ?)");
       PreparedStatement pStmt2 =
         conn.prepareStatement("INSERT INTO your_table " +
                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?)")) {
+                                "       ?, ?, ?, ?, ?, ?, ?, ?)")) {
 
       stmt.execute("insert into dbActionTest values (1, '1970-01-01')");
       stmt.execute("insert into postActionTest values (1, '1970-01-01')");
@@ -177,23 +174,21 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
           pStmt.setShort(1, (short) i);
           pStmt.setInt(2, i);
           pStmt.setLong(3, (long) i);
-          pStmt.setBigDecimal(4, new BigDecimal(i));
-          pStmt.setBigDecimal(5, new BigDecimal(i));
-//          pStmt.setBigDecimal(6, new BigDecimal(i));
-          pStmt.setFloat(6, (float) i);
-          pStmt.setDouble(7, (double) i);
-          pStmt.setString(8, name);
+          pStmt.setBigDecimal(4, new BigDecimal(i + 3.14));
+          pStmt.setBigDecimal(5, new BigDecimal(i + 3.14));
+          pStmt.setBigDecimal(6, new BigDecimal(i + 3.14));
+          pStmt.setFloat(7, i + 3.14f);
+          pStmt.setDouble(8, i + 3.14);
           pStmt.setString(9, name);
-          pStmt.setBytes(10, name.getBytes());
+          pStmt.setString(10, name);
           pStmt.setBytes(11, name.getBytes());
-          pStmt.setString(12, name);
-          pStmt.setClob(13, new SerialClob(name.toCharArray()));
-          pStmt.setBlob(14, new SerialBlob(name.getBytes()));
-//          pStmt.setClob(14, (Clob) null);
-//          pStmt.setBlob(15, (Blob) null);
-          pStmt.setDate(15, new Date(CURRENT_TS));
-          pStmt.setTime(16, new Time(CURRENT_TS));
-          pStmt.setTimestamp(17, new Timestamp(CURRENT_TS));
+          pStmt.setBytes(12, name.getBytes());
+          pStmt.setString(13, name);
+          pStmt.setClob(14, new SerialClob(name.toCharArray()));
+          pStmt.setBlob(15, new SerialBlob(name.getBytes()));
+          pStmt.setDate(16, new Date(CURRENT_TS));
+          pStmt.setTime(17, new Time(CURRENT_TS));
+          pStmt.setTimestamp(18, new Timestamp(CURRENT_TS));
 
           pStmt.executeUpdate();
       }

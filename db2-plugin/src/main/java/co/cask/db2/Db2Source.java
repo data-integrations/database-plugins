@@ -22,10 +22,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.db.batch.config.DBSpecificSourceConfig;
 import co.cask.db.batch.source.AbstractDBSource;
-import com.google.common.collect.ImmutableMap;
-
-import java.util.Map;
-import javax.annotation.Nullable;
+import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 /**
  * Batch source to read from DB2.
@@ -41,6 +38,11 @@ public class Db2Source extends AbstractDBSource {
   public Db2Source(Db2SourceConfig db2SourceConfig) {
     super(db2SourceConfig);
     this.db2SourceConfig = db2SourceConfig;
+  }
+
+  @Override
+  protected Class<? extends DBWritable> getDBRecordType() {
+    return DB2Record.class;
   }
 
   @Override
