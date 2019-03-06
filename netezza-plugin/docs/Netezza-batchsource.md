@@ -1,15 +1,15 @@
-# PostgreSQL Batch Source
+# Netezza Batch Source
 
 
 Description
 -----------
-Reads from a PostgreSQL using a configurable SQL query.
+Reads from a Netezza using a configurable SQL query.
 Outputs one record for each row returned by the query.
 
 
 Use Case
 --------
-The source is used whenever you need to read from a PostgreSQL. For example, you may want
+The source is used whenever you need to read from a Netezza. For example, you may want
 to create daily snapshots of a database table by using this source and writing to
 a TimePartitionedFileSet.
 
@@ -20,11 +20,11 @@ Properties
 
 **Driver Name:** Name of the JDBC driver to use.
 
-**Host:** Host that PostgreSQL is running on.
+**Host:** Host that Netezza is running on.
 
-**Port:** Port that PostgreSQL is running on.
+**Port:** Port that Netezza is running on.
 
-**Database:** PostgreSQL database name.
+**Database:** Netezza database name.
 
 **Import Query:** The SELECT query to use to import data from the specified table.
 You can specify an arbitrary number of columns to import, or import all columns using \*. The Query should
@@ -46,10 +46,6 @@ For example, 'SELECT MIN(id),MAX(id) FROM table'. Not required if numSplits is s
 **Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
 will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
 
-**Connection Timeout** The timeout value used for socket connect operations. If connecting to the server takes longer
-than this value, the connection is broken.The timeout is specified in seconds and a value of zero means that it is 
-disabled.
-
 **Schema:** The schema of records output by the source. This will be used in place of whatever schema comes
 back from the query. However, it must match the schema that comes back from the query,
 except it can mark fields as nullable and can contain a subset of the fields.
@@ -57,21 +53,21 @@ except it can mark fields as nullable and can contain a subset of the fields.
 
 Example
 ------
-Suppose you want to read data from PostgreSQL database named "prod" that is running on "localhost" port 5432,
-as "postgres" user with "postgres" password (Ensure that the driver for PostgreSQL is installed. You can also provide 
-driver name for some specific driver, otherwise "postgresql" will be used),  then configure plugin with: 
+Suppose you want to read data from Netezza database named "prod" that is running on "localhost" port 5480,
+as "test" user with "testpwsd" password (Ensure that the driver for Netezza is installed. You can also provide 
+driver name for some specific driver, otherwise "netezza" will be used),  then configure plugin with: 
 
 
 ```
 Reference Name: "src1"
-Driver Name: "postgresql"
+Driver Name: "netezza"
 Host: "localhost"
-Port: 5432
+Port: 5480
 Database: "prod"
 Import Query: "select id, name, email, phone from users;"
 Number of Splits to Generate: 1
-Username: "postgres"
-Password: "postgres"
+Username: "test"
+Password: "testpwsd"
 ```  
 
 For example, if the 'id' column is a primary key of type int and the other columns are
