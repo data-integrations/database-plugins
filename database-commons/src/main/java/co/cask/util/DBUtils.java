@@ -181,7 +181,7 @@ public final class DBUtils {
   }
 
   // given a sql type return schema type
-  private static Schema getSchema(int sqlType, int precision, int scale) throws SQLException {
+  public static Schema getSchema(int sqlType, int precision, int scale) throws SQLException {
     // Type.STRING covers sql types - VARCHAR,CHAR,CLOB,LONGNVARCHAR,LONGVARCHAR,NCHAR,NCLOB,NVARCHAR
     Schema.Type type = Schema.Type.STRING;
     switch (sqlType) {
