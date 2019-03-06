@@ -152,12 +152,13 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       DBUtils.ensureJDBCDriverIsAvailable(driverClass, dbSinkConfig.getConnectionString(), dbSinkConfig.jdbcPluginName);
       try (Connection connection = DriverManager.getConnection(dbSinkConfig.getConnectionString(),
                                                                dbSinkConfig.getConnectionArguments());
-          Statement statement = connection.createStatement();
-          ResultSet rs = statement.executeQuery("SELECT * FROM " + dbSinkConfig.tableName + " WHERE 1 = 0")) {
+           Statement statement = connection.createStatement();
+           ResultSet rs = statement.executeQuery("SELECT * FROM " + dbSinkConfig.tableName + " WHERE 1 = 0")) {
         inferredFields.addAll(DBUtils.getSchemaFields(rs));
       }
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
-      LOG.error("Error occurred while trying to infer input schema for DBSink[referenceName={}].", dbSinkConfig.referenceName);
+      LOG.error("Error occurred while trying to infer input schema for DBSink[referenceName={}].",
+                dbSinkConfig.referenceName);
     }
     return Schema.recordOf("inferredSchema", inferredFields);
   }
@@ -230,8 +231,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     }
   }
 
-  private void validateSchema(Class<? extends Driver> jdbcDriverClass, String tableName,
-                                 Schema inputSchema) {
+  private void validateSchema(Class<? extends Driver> jdbcDriverClass, String tableName, Schema inputSchema) {
     String connectionString = dbSinkConfig.getConnectionString();
 
     try {
@@ -286,17 +286,17 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
       if (isNotCompatible) {
         invalidFields.add(field.getName());
-        LOG.error("Can't assign value {} of type {} to column {} of type {}", field.getName(),
-                  field.getSchema().getType(), field.getName(), columnSchema.getType());
+        LOG.error("Field {} was given as type {} but the database column is actually of type {}.", field.getName(),
+                  field.getSchema().getType(), columnSchema.getType());
       }
       if (isNotNullAssignable) {
         invalidFields.add(field.getName());
-        LOG.error("Can't assign nullable value {} to non-null column {}", field.getName(), field.getName());
+        LOG.error("Field {} was given as nullable but the database column is not nullable", field.getName());
       }
     }
 
     Preconditions.checkArgument(invalidFields.isEmpty(), "Couldn't find matching database column(s) " +
-                                  "for input field(s) %s.", String.join(",", invalidFields));
+                                "for input field(s) %s.", String.join(",", invalidFields));
   }
 
   private void emitLineage(BatchSinkContext context, List<Schema.Field> fields) {
