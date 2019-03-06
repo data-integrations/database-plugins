@@ -62,6 +62,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -105,13 +106,16 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
               connectionString, "columns");
 
     Schema inputSchema = context.getInputSchema();
-    Objects.requireNonNull(inputSchema, "AbstractDBSink requires a single known schema.");
 
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     // make sure that the destination table exists and column types are correct
     try {
-      validateSchema(driverClass, dbSinkConfig.tableName, inputSchema);
+      if (Objects.nonNull(context.getInputSchema())) {
+        validateSchema(driverClass, dbSinkConfig.tableName, inputSchema);
+      } else {
+        inputSchema = inferSchema(driverClass);
+      }
     } finally {
       DBUtils.cleanup(driverClass);
     }
@@ -136,8 +140,26 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     driverClass = context.loadPluginClass(getJDBCPluginId());
-    setColumnsInfo(context.getInputSchema().getFields());
+    Schema inputSchema = Optional.ofNullable(context.getInputSchema()).orElse(inferSchema(driverClass));
+
+    setColumnsInfo(inputSchema.getFields());
     setResultSetMetadata();
+  }
+
+  private Schema inferSchema(Class<? extends Driver> driverClass) {
+    List<Schema.Field> inferredFields = new ArrayList<>();
+    try {
+      DBUtils.ensureJDBCDriverIsAvailable(driverClass, dbSinkConfig.getConnectionString(), dbSinkConfig.jdbcPluginName);
+      try (Connection connection = DriverManager.getConnection(dbSinkConfig.getConnectionString(),
+                                                               dbSinkConfig.getConnectionArguments());
+          Statement statement = connection.createStatement();
+          ResultSet rs = statement.executeQuery("SELECT * FROM " + dbSinkConfig.tableName + " WHERE 1 = 0")) {
+        inferredFields.addAll(DBUtils.getSchemaFields(rs));
+      }
+    } catch (IllegalAccessException | InstantiationException | SQLException e) {
+      LOG.error("Error occurred while trying to infer input schema for DBSink[referenceName={}].", dbSinkConfig.referenceName);
+    }
+    return Schema.recordOf("inferredSchema", inferredFields);
   }
 
   @Override
