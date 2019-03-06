@@ -17,6 +17,7 @@
 package co.cask.db2;
 
 import co.cask.DBRecord;
+import co.cask.SchemaReader;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -54,5 +55,10 @@ public class Db2Sink extends AbstractDBSink {
   @Override
   protected DBRecord getDBRecord(StructuredRecord.Builder output) {
     return new DB2Record(output.build(), columnTypes);
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new DB2SchemaReader();
   }
 }

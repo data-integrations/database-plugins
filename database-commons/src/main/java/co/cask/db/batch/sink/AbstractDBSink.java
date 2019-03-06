@@ -16,9 +16,11 @@
 
 package co.cask.db.batch.sink;
 
+import co.cask.CommonSchemaReader;
 import co.cask.ConnectionConfig;
 import co.cask.DBConfig;
 import co.cask.DBRecord;
+import co.cask.SchemaReader;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
@@ -154,7 +156,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
                                                                dbSinkConfig.getConnectionArguments());
            Statement statement = connection.createStatement();
            ResultSet rs = statement.executeQuery("SELECT * FROM " + dbSinkConfig.tableName + " WHERE 1 = 0")) {
-        inferredFields.addAll(DBUtils.getSchemaFields(rs));
+        inferredFields.addAll(getSchemaReader().getSchemaFields(rs));
       }
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
       LOG.error("Error occurred while trying to infer input schema for DBSink[referenceName={}].",
@@ -183,6 +185,10 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
   protected DBRecord getDBRecord(StructuredRecord.Builder output) {
     return new DBRecord(output.build(), columnTypes);
+  }
+
+  protected SchemaReader getSchemaReader() {
+    return new CommonSchemaReader();
   }
 
   @Override

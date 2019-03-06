@@ -60,7 +60,7 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
   protected static final String UI_NAME = "Db2";
 
   protected static String connectionUrl;
-  protected static final int YEAR;
+  protected static int year;
   protected static boolean tearDown = true;
   private static int startCount;
 
@@ -70,7 +70,7 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
   static {
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(new Date(CURRENT_TS));
-    YEAR = calendar.get(Calendar.YEAR);
+    year = calendar.get(Calendar.YEAR);
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
@@ -84,10 +84,15 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
 
   @BeforeClass
   public static void setupTest() throws Exception {
+
     if (startCount++ > 0) {
       return;
     }
 
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(new Date(CURRENT_TS));
+    year = calendar.get(Calendar.YEAR);
+    
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
     addPluginArtifact(NamespaceId.DEFAULT.artifact(JDBC_DRIVER_NAME, "1.0.0"),
@@ -147,7 +152,6 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static void prepareTestData(Connection conn) throws SQLException {
-
     try (
       Statement stmt = conn.createStatement();
       PreparedStatement pStmt1 =

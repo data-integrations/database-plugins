@@ -29,7 +29,6 @@ import java.sql.Types;
 import java.util.List;
 import javax.annotation.Nullable;
 
-
 /**
  * Common schema reader for mapping non specific DB types.
  */
@@ -163,6 +162,4 @@ public class CommonSchemaReader implements SchemaReader {
 
     return Schema.of(type);
   }
-
-
 }

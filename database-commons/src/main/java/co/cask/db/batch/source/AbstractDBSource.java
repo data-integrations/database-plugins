@@ -138,7 +138,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     }
   }
 
-  protected SchemaReader getSchemaReader() throws SQLException {
+  protected SchemaReader getSchemaReader() {
     return new CommonSchemaReader();
   }
 
