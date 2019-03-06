@@ -61,8 +61,6 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
 
     ImmutableMap<String, String> sourceProps = ImmutableMap.<String, String>builder()
       .putAll(BASE_PROPS)
-      .put("autoReconnect", "true")
-      .put("maxRows", "0")
       .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
       .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
       .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -287,7 +285,6 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("autoReconnect", "true")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -317,12 +314,11 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
         .put("database", "dumDB")
         .put("user", BASE_PROPS.get("user"))
         .put("password", BASE_PROPS.get("password"))
-        .put("autoReconnect", "true")
         .put("jdbcPluginName", JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
-        .put(Constants.Reference.REFERENCE_NAME, "MySQLTest")
+        .put(Constants.Reference.REFERENCE_NAME, "NetezzaTest")
         .build(),
       null);
     ETLStage sourceBadConn = new ETLStage("sourceBadConn", sourceBadConnConfig);
