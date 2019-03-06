@@ -120,7 +120,6 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
       // create a table that the action will truncate at the end of the run
       stmt.execute("CREATE TABLE post_action_test (x int, day varchar(10))");
 
-
       stmt.execute("CREATE TABLE my_table (" +
                      "ID INT NOT NULL," +
                      "NAME VARCHAR(40) NOT NULL," +

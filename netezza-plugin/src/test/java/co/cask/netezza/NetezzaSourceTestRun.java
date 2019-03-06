@@ -164,7 +164,6 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("ST_GEOMETRY_COL")).array(), 0, 5));
     Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("ST_GEOMETRY_COL")).array(), 0, 5));
 
-
     // Netezza specific types
     Assert.assertEquals("2 years 3 mons 1 day", row1.get("INTERVAL_COL"));
     Assert.assertEquals("2 years 3 mons 2 days", row2.get("INTERVAL_COL"));
