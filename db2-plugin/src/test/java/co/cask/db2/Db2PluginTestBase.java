@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.oracle;
+package co.cask.db2;
 
 import co.cask.DBRecord;
 import co.cask.cdap.api.artifact.ArtifactSummary;
@@ -35,31 +35,32 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
 import java.math.BigDecimal;
-import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TimeZone;
+import javax.sql.rowset.serial.SerialBlob;
+import javax.sql.rowset.serial.SerialClob;
 
-public class OraclePluginTestBase extends DatabasePluginTestBase {
+public class Db2PluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
-  private static final String DRIVER_CLASS = "oracle.jdbc.driver.OracleDriver";
+  private static final String DRIVER_CLASS = "com.ibm.db2.jcc.DB2Driver";
 
-  protected static final String JDBC_DRIVER_NAME = "oracle";
-  protected static final String UI_NAME = "Oracle";
+  protected static final String JDBC_DRIVER_NAME = "db211";
+  protected static final String UI_NAME = "Db2";
 
   protected static String connectionUrl;
-  protected static final int YEAR;
+  protected static int year;
   protected static boolean tearDown = true;
   private static int startCount;
 
@@ -69,46 +70,50 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
   static {
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(new Date(CURRENT_TS));
-    YEAR = calendar.get(Calendar.YEAR);
+    year = calendar.get(Calendar.YEAR);
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put("host", System.getProperty("oracle.host"))
-    .put("port", System.getProperty("oracle.port"))
-    .put("database", System.getProperty("oracle.database"))
-    .put("user", System.getProperty("oracle.username"))
-    .put("password", System.getProperty("oracle.password"))
+    .put("host", System.getProperty("db2.host"))
+    .put("port", System.getProperty("db2.port"))
+    .put("database", System.getProperty("db2.database"))
+    .put("user", System.getProperty("db2.username"))
+    .put("password", System.getProperty("db2.password"))
     .put("jdbcPluginName", JDBC_DRIVER_NAME)
-    .put(OracleConstants.DEFAULT_BATCH_VALUE, "10")
     .build();
 
   @BeforeClass
   public static void setupTest() throws Exception {
+
     if (startCount++ > 0) {
       return;
     }
 
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(new Date(CURRENT_TS));
+    year = calendar.get(Calendar.YEAR);
+    
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
     addPluginArtifact(NamespaceId.DEFAULT.artifact(JDBC_DRIVER_NAME, "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
-                      OracleSource.class, OracleSink.class, DBRecord.class, ETLDBOutputFormat.class,
-                      DataDrivenETLDBInputFormat.class, DBRecord.class, OraclePostAction.class, OracleAction.class);
+                      Db2Source.class, Db2Sink.class, DBRecord.class, ETLDBOutputFormat.class,
+                      DataDrivenETLDBInputFormat.class, DBRecord.class, Db2PostAction.class, Db2Action.class);
 
     Class<?> driverClass = Class.forName(DRIVER_CLASS);
 
     // add oracle 3rd party plugin
-    PluginClass oracleDriver = new PluginClass("jdbc", JDBC_DRIVER_NAME, "oracle driver class",
+    PluginClass oracleDriver = new PluginClass("jdbc", JDBC_DRIVER_NAME, "DB2 driver class",
                                            driverClass.getName(),
                                            null, Collections.<String, PluginPropertyField>emptyMap());
-    addPluginArtifact(NamespaceId.DEFAULT.artifact("oracle-jdbc-connector", "1.0.0"),
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("db2-jdbc-connector", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
                       Sets.newHashSet(oracleDriver), driverClass);
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
-    connectionUrl = "jdbc:oracle:thin:@" + BASE_PROPS.get("host") + ":" +
-      BASE_PROPS.get("port") + ":" + BASE_PROPS.get("database");
+    connectionUrl = "jdbc:db2://" + BASE_PROPS.get("host") + ":" +
+      BASE_PROPS.get("port") + "/" + BASE_PROPS.get("database");
     Connection conn = createConnection();
     createTestTables(conn);
     prepareTestData(conn);
@@ -122,48 +127,41 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
       stmt.execute("CREATE TABLE postActionTest (x int, day varchar(10))");
 
       stmt.execute("CREATE TABLE my_table (" +
-                     "  ID INT NOT NULL, " +
-                     "  CHAR_COL CHAR(10)," +
-                     "  CHARACTER_COL CHARACTER(10)," +
-                     "  VARCHAR_COL VARCHAR(10)," +
-                     "  VARCHAR2_COL VARCHAR2(10)," +
-                     "  INT_COL INT," +
-                     "  INTEGER_COL INTEGER," +
-                     "  DEC_COL DEC," +
-                     "  DECIMAL_COL DECIMAL(10, 2)," +
-                     "  NUMBER_COL NUMBER(10, 2)," +
-                     "  NUMERIC_COL NUMERIC(10, 2)," +
                      "  SMALLINT_COL SMALLINT," +
+                     "  INTEGER_COL INTEGER," +
+                     "  BIGINT_COL BIGINT," +
+                     "  DECIMAL_COL DECIMAL(10, 2)," +
+                     "  NUMERIC_COL NUMERIC(10, 2)," +
+                     "  DECFLOAT_COL DECFLOAT," +
                      "  REAL_COL REAL," +
-                     "  DATE_COL DATE," +
-                     "  TIMESTAMP_COL TIMESTAMP," +
-                     "  TIMESTAMPTZ_COL TIMESTAMP WITH TIME ZONE," +
-                     "  TIMESTAMPLTZ_COL TIMESTAMP WITH LOCAL TIME ZONE," +
-                     "  INTERVAL_YEAR_TO_MONTH_COL INTERVAL YEAR(3) TO MONTH," +
-                     "  INTERVAL_DAY_TO_SECOND_COL INTERVAL DAY(2) TO SECOND," +
-                     "  RAW_COL RAW(16)," +
+                     "  DOUBLE_COL DOUBLE," +
+                     "  CHAR_COL CHAR(10)," +
+                     "  VARCHAR_COL VARCHAR(10)," +
+                     "  CHAR_BIT_COL CHAR(10) FOR BIT DATA," +
+                     "  VARCHAR_BIT_COL VARCHAR(10) FOR BIT DATA," +
+                     "  GRAPHIC_COL GRAPHIC(10)," +
                      "  CLOB_COL CLOB," +
-                     "  BLOB_COL BLOB" +
+                     "  BLOB_COL BLOB," +
+                     "  DATE_COL DATE," +
+                     "  TIME_COL TIME," +
+                     "  TIMESTAMP_COL TIMESTAMP" +
                      ")");
-      stmt.execute("CREATE TABLE MY_DEST_TABLE AS " +
-                     "SELECT * FROM my_table");
-      stmt.execute("CREATE TABLE your_table AS " +
-                     "SELECT * FROM my_table");
+      stmt.execute("CREATE TABLE MY_DEST_TABLE LIKE my_table");
+      stmt.execute("CREATE TABLE your_table LIKE my_table");
     }
   }
 
   protected static void prepareTestData(Connection conn) throws SQLException {
-
     try (
       Statement stmt = conn.createStatement();
       PreparedStatement pStmt1 =
         conn.prepareStatement("INSERT INTO my_table " +
-                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?, ?, ?, ?, ?, ?, ?)");
       PreparedStatement pStmt2 =
         conn.prepareStatement("INSERT INTO your_table " +
-                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?, ?, ?, ?, ?, ?, ?)")) {
 
       stmt.execute("insert into dbActionTest values (1, '1970-01-01')");
       stmt.execute("insert into postActionTest values (1, '1970-01-01')");
@@ -176,41 +174,27 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
     // insert the same data into both tables: my_table and your_table
     for (PreparedStatement pStmt : stmts) {
       for (int i = 1; i <= 5; i++) {
-        Clob clob = null;
-        try {
           String name = "user" + i;
-          pStmt.setInt(1, i);
-          pStmt.setString(2, name);
-          pStmt.setString(3, name);
-          pStmt.setString(4, name);
-          pStmt.setString(5, name);
-          pStmt.setInt(6, 42 + i);
-          pStmt.setInt(7, 24 + i);
-          pStmt.setBigDecimal(8, new BigDecimal(54.56 + i));
-          pStmt.setBigDecimal(9, new BigDecimal(54.65 + i));
-          pStmt.setBigDecimal(10, new BigDecimal(32.65 + i));
-          pStmt.setBigDecimal(11, new BigDecimal(23.65 + i));
-          pStmt.setInt(12, i);
-          pStmt.setFloat(13, (float) 14.45 + i);
-          pStmt.setDate(14, new Date(CURRENT_TS));
-          pStmt.setTimestamp(15, new Timestamp(CURRENT_TS));
-          pStmt.setTimestamp(16, new Timestamp(CURRENT_TS));
-          pStmt.setTimestamp(17, new Timestamp(CURRENT_TS));
-          pStmt.setString(18, "300-5");
-          pStmt.setString(19, "23 3:02:10");
-          pStmt.setBytes(20, name.getBytes());
+          pStmt.setShort(1, (short) i);
+          pStmt.setInt(2, i);
+          pStmt.setLong(3, (long) i);
+          pStmt.setBigDecimal(4, new BigDecimal(i + 3.14));
+          pStmt.setBigDecimal(5, new BigDecimal(i + 3.14));
+          pStmt.setBigDecimal(6, new BigDecimal(i + 3.14));
+          pStmt.setFloat(7, i + 3.14f);
+          pStmt.setDouble(8, i + 3.14);
+          pStmt.setString(9, name);
+          pStmt.setString(10, name);
+          pStmt.setBytes(11, name.getBytes());
+          pStmt.setBytes(12, name.getBytes());
+          pStmt.setString(13, name);
+          pStmt.setClob(14, new SerialClob(name.toCharArray()));
+          pStmt.setBlob(15, new SerialBlob(name.getBytes()));
+          pStmt.setDate(16, new Date(CURRENT_TS));
+          pStmt.setTime(17, new Time(CURRENT_TS));
+          pStmt.setTimestamp(18, new Timestamp(CURRENT_TS));
 
-          clob = pStmt.getConnection().createClob();
-          clob.setString(1, name);
-          pStmt.setClob(21, clob);
-
-          pStmt.setBytes(22, name.getBytes());
           pStmt.executeUpdate();
-        } finally {
-          if (Objects.nonNull(clob)) {
-            clob.free();
-          }
-        }
       }
     }
   }

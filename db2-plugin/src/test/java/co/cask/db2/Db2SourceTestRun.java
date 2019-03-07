@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.oracle;
+package co.cask.db2;
 
 import co.cask.DBConfig;
 import co.cask.cdap.api.common.Bytes;
@@ -37,6 +37,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -44,7 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class OracleSourceTestRun extends OraclePluginTestBase {
+public class Db2SourceTestRun extends Db2PluginTestBase {
 
   @Test
   @SuppressWarnings("ConstantConditions")
@@ -57,7 +58,6 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
 
     ImmutableMap<String, String> sourceProps = ImmutableMap.<String, String>builder()
       .putAll(BASE_PROPS)
-      .put(OracleConstants.DEFAULT_ROW_PREFETCH, "40")
       .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
       .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
       .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -82,9 +82,9 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
-    String importQuery = "SELECT CHAR_COL, VARCHAR_COL, INT_COL, INTEGER_COL, DEC_COL, DECIMAL_COL, NUMBER_COL," +
-      " NUMERIC_COL, SMALLINT_COL, REAL_COL, DATE_COL, TIMESTAMP_COL, INTERVAL_YEAR_TO_MONTH_COL, " +
-      "INTERVAL_DAY_TO_SECOND_COL, RAW_COL, CLOB_COL, BLOB_COL FROM my_table " +
+    String importQuery = "SELECT SMALLINT_COL, INTEGER_COL, BIGINT_COL, DECIMAL_COL, NUMERIC_COL, " +
+      " REAL_COL, DOUBLE_COL, CHAR_COL, DECFLOAT_COL, VARCHAR_COL, CHAR_BIT_COL, VARCHAR_BIT_COL, GRAPHIC_COL, " +
+      " CLOB_COL, BLOB_COL, DATE_COL, TIME_COL, TIMESTAMP_COL FROM my_table " +
       " WHERE SMALLINT_COL < 3 AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(SMALLINT_COL),MAX(SMALLINT_COL) from my_table";
     String splitBy = "SMALLINT_COL";
@@ -93,7 +93,6 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("defaultRowPrefetch", "40")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -118,40 +117,45 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
     StructuredRecord row2 = "user1".equals(userid) ? outputRecords.get(1) : outputRecords.get(0);
 
     // Verify data
+    Assert.assertEquals(1, (int) row1.get("SMALLINT_COL"));
+    Assert.assertEquals(2, (int) row2.get("SMALLINT_COL"));
+    Assert.assertEquals(1, (int) row1.get("INTEGER_COL"));
+    Assert.assertEquals(2, (int) row2.get("INTEGER_COL"));
+    Assert.assertEquals(1, (long) row1.get("BIGINT_COL"));
+    Assert.assertEquals(2, (long) row2.get("BIGINT_COL"));
+    Assert.assertEquals(4.14, row1.get("DECIMAL_COL"), 0.00001);
+    Assert.assertEquals(5.14, row2.get("DECIMAL_COL"), 0.00001);
+    Assert.assertEquals(4.14, row1.get("NUMERIC_COL"), 0.00001);
+    Assert.assertEquals(5.14, row2.get("NUMERIC_COL"), 0.00001);
+    Assert.assertEquals(4.14, row1.get("DECFLOAT_COL"), 0.00001);
+    Assert.assertEquals(5.14, row2.get("DECFLOAT_COL"), 0.00001);
+    Assert.assertEquals(4.14f, row1.get("REAL_COL"), 0.00001f);
+    Assert.assertEquals(5.14f, row2.get("REAL_COL"), 0.00001f);
+    Assert.assertEquals(4.14, row1.get("DOUBLE_COL"), 0.00001);
+    Assert.assertEquals(5.14, row2.get("DOUBLE_COL"), 0.00001);
     Assert.assertEquals("user1", row1.get("CHAR_COL").toString().trim());
     Assert.assertEquals("user2", row2.get("CHAR_COL").toString().trim());
     Assert.assertEquals("user1", row1.get("VARCHAR_COL"));
     Assert.assertEquals("user2", row2.get("VARCHAR_COL"));
-    Assert.assertEquals(43, (long) row1.get("INT_COL"));
-    Assert.assertEquals(44, (long) row2.get("INT_COL"));
-    Assert.assertEquals(25, (long) row1.get("INTEGER_COL"));
-    Assert.assertEquals(26, (long) row2.get("INTEGER_COL"));
-    Assert.assertEquals(56, (long) row1.get("DEC_COL"));
-    Assert.assertEquals(57, (long) row2.get("DEC_COL"));
-    Assert.assertEquals(55.65, row1.get("DECIMAL_COL"), 0.00001);
-    Assert.assertEquals(56.65, row2.get("DECIMAL_COL"), 0.00001);
-    Assert.assertEquals(33.65, row1.get("NUMBER_COL"), 0.000001);
-    Assert.assertEquals(34.65, row2.get("NUMBER_COL"), 0.000001);
-    Assert.assertEquals(24.65, row1.get("NUMERIC_COL"), 0.000001);
-    Assert.assertEquals(25.65, row2.get("NUMERIC_COL"), 0.000001);
-    Assert.assertEquals(1, (long) row1.get("SMALLINT_COL"));
-    Assert.assertEquals(2, (long) row2.get("SMALLINT_COL"));
-    Assert.assertEquals(15.45, row1.get("REAL_COL"), 0.000001);
-    Assert.assertEquals(16.45, row2.get("REAL_COL"), 0.000001);
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("CHAR_BIT_COL")).array(), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("CHAR_BIT_COL")).array(), 0, 5));
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("VARCHAR_BIT_COL")).array(), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("VARCHAR_BIT_COL")).array(), 0, 5));
+    Assert.assertEquals("user1", row1.get("GRAPHIC_COL").toString().trim());
+    Assert.assertEquals("user2", row2.get("GRAPHIC_COL").toString().trim());
+
     // Verify time columns
     java.util.Date date = new java.util.Date(CURRENT_TS);
+    LocalDate expectedDate = date.toInstant()
+      .atZone(ZoneId.systemDefault())
+      .toLocalDate();
 
     ZonedDateTime expectedTs = date.toInstant().atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC));
-    Assert.assertEquals(expectedTs.withNano(0), row1.getTimestamp("DATE_COL"));
+    Assert.assertEquals(expectedDate, row1.getDate("DATE_COL"));
+    Assert.assertEquals(expectedTs.toLocalTime().withNano(0), row1.getTime("TIME_COL"));
     Assert.assertEquals(expectedTs, row1.getTimestamp("TIMESTAMP_COL", ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
 
-    // Oracle specific types
-    Assert.assertEquals("300-5", row1.get("INTERVAL_YEAR_TO_MONTH_COL").toString().trim());
-    Assert.assertEquals("23 3:2:10.0", row1.get("INTERVAL_DAY_TO_SECOND_COL").toString().trim());
-
     // verify binary columns
-    Assert.assertEquals("user1", Bytes.toString((ByteBuffer) row1.get("RAW_COL")));
-    Assert.assertEquals("user2", Bytes.toString((ByteBuffer) row2.get("RAW_COL")));
     Assert.assertEquals("user1", row1.get("CLOB_COL"));
     Assert.assertEquals("user2", row2.get("CLOB_COL"));
     Assert.assertEquals("user1", Bytes.toString((ByteBuffer) row1.get("BLOB_COL")));
@@ -160,17 +164,16 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
 
   @Test
   public void testDbSourceMultipleTables() throws Exception {
-    String importQuery = "SELECT my_table.ID, your_table.VARCHAR_COL FROM my_table, your_table " +
-      "WHERE my_table.ID < 3 and my_table.ID = your_table.ID and $CONDITIONS ";
-    String boundingQuery = "SELECT LEAST(MIN(my_table.ID), MIN(your_table.ID)), " +
-      "GREATEST(MAX(my_table.ID), MAX(your_table.ID))";
-    String splitBy = "my_table.ID";
+    String importQuery = "SELECT my_table.SMALLINT_COL, your_table.VARCHAR_COL FROM my_table, your_table " +
+      "WHERE my_table.SMALLINT_COL < 3 and my_table.SMALLINT_COL = your_table.SMALLINT_COL and $CONDITIONS ";
+    String boundingQuery = "SELECT LEAST(MIN(my_table.SMALLINT_COL), MIN(your_table.SMALLINT_COL)), " +
+      "GREATEST(MAX(my_table.SMALLINT_COL), MAX(your_table.SMALLINT_COL))";
+    String splitBy = "my_table.SMALLINT_COL";
     ETLPlugin sourceConfig = new ETLPlugin(
       UI_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("defaultRowPrefetch", "40")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -196,8 +199,8 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
     // Verify data
     Assert.assertEquals("user1", row1.get("VARCHAR_COL"));
     Assert.assertEquals("user2", row2.get("VARCHAR_COL"));
-    Assert.assertEquals(1, (long) row1.get("ID"));
-    Assert.assertEquals(2, (long) row2.get("ID"));
+    Assert.assertEquals(1, (int) row1.get("SMALLINT_COL"));
+    Assert.assertEquals(2, (int) row2.get("SMALLINT_COL"));
   }
 
   @Test
@@ -212,8 +215,6 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
       .put("host", BASE_PROPS.get("host"))
       .put("port", BASE_PROPS.get("port"))
       .put("database", BASE_PROPS.get("database"))
-      .put("defaultRowPrefetch", "40")
-      .put("defaultBatchValue", "40")
       .put("jdbcPluginName", JDBC_DRIVER_NAME)
       .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
       .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
@@ -276,7 +277,6 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("defaultRowPrefetch", "40")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -307,12 +307,10 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
         .put("user", BASE_PROPS.get("user"))
         .put("password", BASE_PROPS.get("password"))
         .put("jdbcPluginName", JDBC_DRIVER_NAME)
-        .put("defaultRowPrefetch", "40")
-        .put("defaultBatchValue", "40")
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
-        .put(Constants.Reference.REFERENCE_NAME, "MySQLTest")
+        .put(Constants.Reference.REFERENCE_NAME, "DB2Test")
         .build(),
       null);
     ETLStage sourceBadConn = new ETLStage("sourceBadConn", sourceBadConnConfig);

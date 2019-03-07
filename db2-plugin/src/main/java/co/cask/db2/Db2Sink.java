@@ -16,16 +16,15 @@
 
 package co.cask.db2;
 
+import co.cask.DBRecord;
+import co.cask.SchemaReader;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.db.batch.config.DBSpecificSinkConfig;
 import co.cask.db.batch.sink.AbstractDBSink;
-import com.google.common.collect.ImmutableMap;
-
-import java.util.Map;
-import javax.annotation.Nullable;
 
 
 /**
@@ -51,5 +50,15 @@ public class Db2Sink extends AbstractDBSink {
     public String getConnectionString() {
       return String.format(Db2Constants.DB2_CONNECTION_STRING_FORMAT, host, port, database);
     }
+  }
+
+  @Override
+  protected DBRecord getDBRecord(StructuredRecord.Builder output) {
+    return new DB2Record(output.build(), columnTypes);
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new DB2SchemaReader();
   }
 }

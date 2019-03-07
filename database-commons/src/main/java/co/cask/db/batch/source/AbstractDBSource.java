@@ -16,9 +16,11 @@
 
 package co.cask.db.batch.source;
 
+import co.cask.CommonSchemaReader;
 import co.cask.ConnectionConfig;
 import co.cask.DBConfig;
 import co.cask.DBRecord;
+import co.cask.SchemaReader;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
@@ -126,7 +128,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
           query = removeConditionsClause(query);
         }
         ResultSet resultSet = statement.executeQuery(query);
-        return Schema.recordOf("outputSchema", DBUtils.getSchemaFields(resultSet));
+        return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
       } finally {
         driverCleanup.destroy();
       }
@@ -134,6 +136,10 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       LOG.error("Exception while performing getSchema", e);
       throw e;
     }
+  }
+
+  protected SchemaReader getSchemaReader() {
+    return new CommonSchemaReader();
   }
 
   private DriverCleanup loadPluginClassAndGetDriver(GetSchemaRequest request,
