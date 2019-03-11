@@ -52,12 +52,11 @@ public class SqlServerSinkTestRun extends SqlServerPluginTestBase {
 
   @Test
   public void testDBSink() throws Exception {
-
     String inputDatasetName = "input-dbsinktest";
 
     ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
     ETLPlugin sinkConfig = new ETLPlugin(
-      UI_NAME,
+      SqlServerConstants.PLUGIN_NAME,
       BatchSink.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
