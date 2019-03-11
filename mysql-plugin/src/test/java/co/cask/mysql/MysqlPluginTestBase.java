@@ -16,6 +16,7 @@
 
 package co.cask.mysql;
 
+import co.cask.ConnectionConfig;
 import co.cask.DBRecord;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -57,7 +58,6 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
   protected static final long CURRENT_TS = System.currentTimeMillis();
 
   protected static final String JDBC_DRIVER_NAME = "mysql";
-  protected static final String UI_NAME = "Mysql";
 
   protected static String connectionUrl;
   protected static final int YEAR;
@@ -74,12 +74,12 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put("host", System.getProperty("mysql.host"))
-    .put("port", System.getProperty("mysql.port"))
-    .put("database", System.getProperty("mysql.database"))
-    .put("user", System.getProperty("mysql.username"))
-    .put("password", System.getProperty("mysql.password"))
-    .put("jdbcPluginName", JDBC_DRIVER_NAME)
+    .put(ConnectionConfig.HOST, System.getProperty("mysql.host"))
+    .put(ConnectionConfig.PORT, System.getProperty("mysql.port"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("mysql.database"))
+    .put(ConnectionConfig.USER, System.getProperty("mysql.username"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("mysql.password"))
+    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 
   @BeforeClass
@@ -105,8 +105,8 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
-    connectionUrl = "jdbc:mysql://" + BASE_PROPS.get("host") + ":" +
-      BASE_PROPS.get("port") + "/" + BASE_PROPS.get("database");
+    connectionUrl = "jdbc:mysql://" + BASE_PROPS.get(ConnectionConfig.HOST) + ":" +
+      BASE_PROPS.get(ConnectionConfig.PORT) + "/" + BASE_PROPS.get(ConnectionConfig.DATABASE);
     Connection conn = createConnection();
     createTestTables(conn);
     prepareTestData(conn);
@@ -159,7 +159,6 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static void prepareTestData(Connection conn) throws SQLException {
-
     try (
       Statement stmt = conn.createStatement();
       PreparedStatement pStmt1 =
@@ -226,7 +225,8 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
   public static Connection createConnection() {
     try {
       Class.forName(Driver.class.getCanonicalName());
-      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get("user"), BASE_PROPS.get("password"));
+      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get(ConnectionConfig.USER),
+                                         BASE_PROPS.get(ConnectionConfig.PASSWORD));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

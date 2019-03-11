@@ -52,16 +52,15 @@ public class MysqlSinkTestRun extends MysqlPluginTestBase {
 
   @Test
   public void testDBSink() throws Exception {
-
     String inputDatasetName = "input-dbsinktest";
 
     ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
     ETLPlugin sinkConfig = new ETLPlugin(
-      UI_NAME,
+      MysqlConstants.PLUGIN_NAME,
       BatchSink.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("autoReconnect", "true")
+        .put(MysqlConstants.AUTO_RECONNECT, "true")
         .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
         .put(Constants.Reference.REFERENCE_NAME, "DBTest")
         .build(),
