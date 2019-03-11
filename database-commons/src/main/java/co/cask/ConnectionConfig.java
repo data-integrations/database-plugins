@@ -111,8 +111,16 @@ public abstract class ConnectionConfig extends PluginConfig {
     return arguments;
   }
 
+  /**
+   * Constructs a connection string from host, port and database properties in a database-specific format.
+   * @return connection string specific to a particular database.
+   */
   public abstract String getConnectionString();
 
+  /**
+   * Provides support for database-specific configuration properties.
+   * @return {@link Map} of additional connection arguments.
+   */
   protected Map<String, String> getDBSpecificArguments() {
     return Collections.emptyMap();
   }
