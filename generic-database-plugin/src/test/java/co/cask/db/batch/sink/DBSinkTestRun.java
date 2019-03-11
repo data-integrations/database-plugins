@@ -16,7 +16,7 @@
 
 package co.cask.db.batch.sink;
 
-import co.cask.DBConfig;
+import co.cask.ConnectionConfig;
 import co.cask.GenericDatabasePluginTestBase;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
@@ -29,6 +29,7 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.db.batch.source.AbstractDBSource;
 import co.cask.hydrator.common.Constants;
+import co.cask.jdbc.DatabaseConstants;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -83,11 +84,11 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
 
 
     ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName, sinkSchema);
-    ETLPlugin sinkConfig = new ETLPlugin("Database",
+    ETLPlugin sinkConfig = new ETLPlugin(DatabaseConstants.PLUGIN_NAME,
                                          BatchSink.PLUGIN_TYPE,
-                                         ImmutableMap.of(DBConfig.CONNECTION_STRING, getConnectionURL(),
+                                         ImmutableMap.of(ConnectionConfig.CONNECTION_STRING, getConnectionURL(),
                                                          AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE",
-                                                         "jdbcPluginName", "hypersql",
+                                                         ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME,
                                                          Constants.Reference.REFERENCE_NAME, "DBTest"),
                                          null);
     ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSink");
@@ -126,11 +127,11 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
     String boundingQuery = "SELECT MIN(A),MAX(A) from INPUT";
     String splitBy = "A";
     ETLPlugin sourceConfig = new ETLPlugin(
-      "Database",
+      DatabaseConstants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -140,12 +141,12 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
       null
     );
     ETLPlugin sinkConfig = new ETLPlugin(
-      "Database",
+      DatabaseConstants.PLUGIN_NAME,
       BatchSink.PLUGIN_TYPE,
       ImmutableMap.of(
-        DBConfig.CONNECTION_STRING, getConnectionURL(),
+        ConnectionConfig.CONNECTION_STRING, getConnectionURL(),
         AbstractDBSink.DBSinkConfig.TABLE_NAME, "OUTPUT",
-        "jdbcPluginName", "hypersql",
+        ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME,
         Constants.Reference.REFERENCE_NAME, "DBTestSink"),
       null
     );

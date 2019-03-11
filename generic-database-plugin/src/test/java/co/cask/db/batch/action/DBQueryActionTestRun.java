@@ -16,6 +16,7 @@
 
 package co.cask.db.batch.action;
 
+import co.cask.ConnectionConfig;
 import co.cask.GenericDatabasePluginTestBase;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.mock.batch.MockSink;
@@ -27,6 +28,8 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
+import co.cask.hydrator.common.batch.action.Condition;
+import co.cask.jdbc.DatabaseConstants;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
@@ -54,14 +57,14 @@ public class DBQueryActionTestRun extends GenericDatabasePluginTestBase {
     ETLStage source = new ETLStage("source", MockSource.getPlugin("actionInput"));
     ETLStage sink = new ETLStage("sink", MockSink.getPlugin("actionOutput"));
     ETLStage action = new ETLStage("action", new ETLPlugin(
-      "DatabaseQuery",
+      DatabaseConstants.PLUGIN_NAME,
       PostAction.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put("connectionString", getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
-        .put("query", "delete from \"postActionTest\" where day = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
-        .put("enableAutoCommit", "false")
-        .put("runCondition", "success")
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(QueryConfig.QUERY, "delete from \"postActionTest\" where day = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
+        .put(ConnectionConfig.ENABLE_AUTO_COMMIT, "false")
+        .put(QueryActionConfig.RUN_CONDITION, Condition.SUCCESS.name())
         .build(),
       null));
 

@@ -24,6 +24,7 @@ import co.cask.cdap.api.annotation.Macro;
  * Config for Actions running database commands
  */
 public abstract class QueryConfig extends ConnectionConfig {
+  public static final String QUERY = "query";
 
   @Description("The database command to run.")
   @Macro

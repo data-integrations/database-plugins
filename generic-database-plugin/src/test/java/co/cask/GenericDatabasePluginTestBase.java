@@ -65,6 +65,7 @@ public class GenericDatabasePluginTestBase extends DatabasePluginTestBase {
   protected static final String CLOB_DATA =
     "this is a long string with line separators \n that can be used as \n a clob";
   protected static final long CURRENT_TS = System.currentTimeMillis();
+  protected static final String JDBC_DRIVER_NAME = "hypersql";
 
   private static int startCount;
   private static HSQLDBServer hsqlDBServer;
@@ -91,8 +92,8 @@ public class GenericDatabasePluginTestBase extends DatabasePluginTestBase {
                       DataDrivenETLDBInputFormat.class, DBRecord.class, DatabaseAction.class, DatabasePostAction.class);
 
     // add hypersql 3rd party plugin
-    PluginClass hypersql = new PluginClass("jdbc", "hypersql", "hypersql jdbc driver", JDBCDriver.class.getName(),
-                                           null, Collections.<String, PluginPropertyField>emptyMap());
+    PluginClass hypersql = new PluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME, "hypersql jdbc driver",
+                                           JDBCDriver.class.getName(), null, Collections.emptyMap());
     addPluginArtifact(NamespaceId.DEFAULT.artifact("hsql-jdbc", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
                       Sets.newHashSet(hypersql), JDBCDriver.class);
