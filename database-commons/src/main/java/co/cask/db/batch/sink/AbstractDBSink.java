@@ -101,11 +101,11 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   public void prepareRun(BatchSinkContext context) {
     String connectionString = dbSinkConfig.getConnectionString();
 
-    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; columns = {};",
+    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {};",
               dbSinkConfig.tableName,
               ConnectionConfig.JDBC_PLUGIN_TYPE,
               dbSinkConfig.jdbcPluginName,
-              connectionString, "columns");
+              connectionString);
 
     Schema inputSchema = context.getInputSchema();
 
