@@ -16,6 +16,7 @@
 
 package co.cask.oracle;
 
+import co.cask.ConnectionConfig;
 import co.cask.DBRecord;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -56,7 +57,6 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
   private static final String DRIVER_CLASS = "oracle.jdbc.driver.OracleDriver";
 
   protected static final String JDBC_DRIVER_NAME = "oracle";
-  protected static final String UI_NAME = "Oracle";
 
   protected static String connectionUrl;
   protected static final int YEAR;
@@ -73,12 +73,12 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put("host", System.getProperty("oracle.host"))
-    .put("port", System.getProperty("oracle.port"))
-    .put("database", System.getProperty("oracle.database"))
-    .put("user", System.getProperty("oracle.username"))
-    .put("password", System.getProperty("oracle.password"))
-    .put("jdbcPluginName", JDBC_DRIVER_NAME)
+    .put(ConnectionConfig.HOST, System.getProperty("oracle.host"))
+    .put(ConnectionConfig.PORT, System.getProperty("oracle.port"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("oracle.database"))
+    .put(ConnectionConfig.USER, System.getProperty("oracle.username"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("oracle.password"))
+    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .put(OracleConstants.DEFAULT_BATCH_VALUE, "10")
     .build();
 
@@ -98,17 +98,17 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
     Class<?> driverClass = Class.forName(DRIVER_CLASS);
 
     // add oracle 3rd party plugin
-    PluginClass oracleDriver = new PluginClass("jdbc", JDBC_DRIVER_NAME, "oracle driver class",
-                                           driverClass.getName(),
-                                           null, Collections.<String, PluginPropertyField>emptyMap());
+    PluginClass oracleDriver = new PluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME,
+                                               "oracle driver class", driverClass.getName(),
+                                               null, Collections.emptyMap());
     addPluginArtifact(NamespaceId.DEFAULT.artifact("oracle-jdbc-connector", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
                       Sets.newHashSet(oracleDriver), driverClass);
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
-    connectionUrl = "jdbc:oracle:thin:@" + BASE_PROPS.get("host") + ":" +
-      BASE_PROPS.get("port") + ":" + BASE_PROPS.get("database");
+    connectionUrl = "jdbc:oracle:thin:@" + BASE_PROPS.get(ConnectionConfig.HOST) + ":" +
+      BASE_PROPS.get(ConnectionConfig.PORT) + ":" + BASE_PROPS.get(ConnectionConfig.DATABASE);
     Connection conn = createConnection();
     createTestTables(conn);
     prepareTestData(conn);
@@ -218,7 +218,8 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
   public static Connection createConnection() {
     try {
       Class.forName(DRIVER_CLASS);
-      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get("user"), BASE_PROPS.get("password"));
+      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get(ConnectionConfig.USER),
+                                         BASE_PROPS.get(ConnectionConfig.PASSWORD));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

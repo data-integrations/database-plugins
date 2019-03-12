@@ -49,7 +49,8 @@ public class PostgresPostActionTestRun extends PostgresPluginTestBase {
       PostAction.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put(QueryConfig.QUERY, "delete from \"postActionTest\" where \"day\" = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
+        .put(QueryConfig.QUERY, "delete from \"postActionTest\" where " +
+          "\"day\" = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
         .put(ConnectionConfig.ENABLE_AUTO_COMMIT, "false")
         .put(QueryActionConfig.RUN_CONDITION, "success")
         .build(),
