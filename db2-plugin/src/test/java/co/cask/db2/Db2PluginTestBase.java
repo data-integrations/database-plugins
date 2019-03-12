@@ -16,6 +16,7 @@
 
 package co.cask.db2;
 
+import co.cask.ConnectionConfig;
 import co.cask.DBRecord;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -55,9 +56,7 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
   private static final String DRIVER_CLASS = "com.ibm.db2.jcc.DB2Driver";
-
   protected static final String JDBC_DRIVER_NAME = "db211";
-  protected static final String UI_NAME = "Db2";
 
   protected static String connectionUrl;
   protected static int year;
@@ -74,12 +73,12 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put("host", System.getProperty("db2.host"))
-    .put("port", System.getProperty("db2.port"))
-    .put("database", System.getProperty("db2.database"))
-    .put("user", System.getProperty("db2.username"))
-    .put("password", System.getProperty("db2.password"))
-    .put("jdbcPluginName", JDBC_DRIVER_NAME)
+    .put(ConnectionConfig.HOST, System.getProperty("db2.host"))
+    .put(ConnectionConfig.PORT, System.getProperty("db2.port"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("db2.database"))
+    .put(ConnectionConfig.USER, System.getProperty("db2.username"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("db2.password"))
+    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 
   @BeforeClass
@@ -102,18 +101,18 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
 
     Class<?> driverClass = Class.forName(DRIVER_CLASS);
 
-    // add oracle 3rd party plugin
-    PluginClass oracleDriver = new PluginClass("jdbc", JDBC_DRIVER_NAME, "DB2 driver class",
+    // add DB2 3rd party plugin
+    PluginClass oracleDriver = new PluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME, "DB2 driver class",
                                            driverClass.getName(),
-                                           null, Collections.<String, PluginPropertyField>emptyMap());
+                                           null, Collections.emptyMap());
     addPluginArtifact(NamespaceId.DEFAULT.artifact("db2-jdbc-connector", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
                       Sets.newHashSet(oracleDriver), driverClass);
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
-    connectionUrl = "jdbc:db2://" + BASE_PROPS.get("host") + ":" +
-      BASE_PROPS.get("port") + "/" + BASE_PROPS.get("database");
+    connectionUrl = "jdbc:db2://" + BASE_PROPS.get(ConnectionConfig.HOST) + ":" +
+      BASE_PROPS.get(ConnectionConfig.PORT) + "/" + BASE_PROPS.get(ConnectionConfig.DATABASE);
     Connection conn = createConnection();
     createTestTables(conn);
     prepareTestData(conn);
@@ -202,7 +201,8 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
   public static Connection createConnection() {
     try {
       Class.forName(DRIVER_CLASS);
-      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get("user"), BASE_PROPS.get("password"));
+      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get(ConnectionConfig.USER),
+                                         BASE_PROPS.get(ConnectionConfig.PASSWORD));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

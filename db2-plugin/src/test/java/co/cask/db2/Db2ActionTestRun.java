@@ -26,6 +26,7 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
+import co.cask.db.batch.action.QueryConfig;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
@@ -42,11 +43,11 @@ public class Db2ActionTestRun extends Db2PluginTestBase {
     ETLStage source = new ETLStage("source", MockSource.getPlugin("actionInput"));
     ETLStage sink = new ETLStage("sink", MockSink.getPlugin("actionOutput"));
     ETLStage action = new ETLStage("action", new ETLPlugin(
-      UI_NAME,
+      Db2Constants.PLUGIN_NAME,
       Action.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("query", "delete from dbActionTest where day = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
+        .put(QueryConfig.QUERY, "delete from dbActionTest where day = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
         .build(),
       null));
 

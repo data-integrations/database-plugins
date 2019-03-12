@@ -55,7 +55,7 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
 
     ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
     ETLPlugin sinkConfig = new ETLPlugin(
-      UI_NAME,
+      Db2Constants.PLUGIN_NAME,
       BatchSink.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
@@ -94,7 +94,7 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
       Schema.Field.of("BIGINT_COL", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("DECIMAL_COL", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("NUMERIC_COL", Schema.of(Schema.Type.DOUBLE)),
-//      Schema.Field.of("DECFLOAT_COL", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("DECFLOAT_COL", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("REAL_COL", Schema.of(Schema.Type.FLOAT)),
       Schema.Field.of("DOUBLE_COL", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("CHAR_COL", Schema.of(Schema.Type.STRING)),
@@ -118,7 +118,7 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
                          .set("BIGINT_COL", (long) i)
                          .set("DECIMAL_COL", (double) i)
                          .set("NUMERIC_COL", .31 + i)
-//                         .set("DECFLOAT_COL", .42 + i)
+                         .set("DECFLOAT_COL", .42 + i)
                          .set("REAL_COL", 24f + i)
                          .set("DOUBLE_COL", 3.456)
                          .set("CHAR_COL", name)

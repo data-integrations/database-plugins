@@ -32,7 +32,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import com.mysql.jdbc.Driver;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -56,7 +55,7 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
-
+  protected static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
   protected static final String JDBC_DRIVER_NAME = "mysql";
 
   protected static String connectionUrl;
@@ -95,13 +94,15 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
                       MysqlSource.class, MysqlSink.class, DBRecord.class, ETLDBOutputFormat.class,
                       DataDrivenETLDBInputFormat.class, DBRecord.class, MysqlPostAction.class, MysqlAction.class);
 
+    Class<?> driverClass = Class.forName(DRIVER_CLASS);
+
     // add mysql 3rd party plugin
-    PluginClass mysqlDriver = new PluginClass("jdbc", JDBC_DRIVER_NAME, "mysql driver class",
-                                           Driver.class.getName(),
-                                           null, Collections.<String, PluginPropertyField>emptyMap());
+    PluginClass mysqlDriver = new PluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME, "mysql driver class",
+                                              driverClass.getName(),
+                                              null, Collections.emptyMap());
     addPluginArtifact(NamespaceId.DEFAULT.artifact("mysql-jdbc-connector", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
-                      Sets.newHashSet(mysqlDriver), Driver.class);
+                      Sets.newHashSet(mysqlDriver), driverClass);
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
@@ -224,7 +225,7 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
 
   public static Connection createConnection() {
     try {
-      Class.forName(Driver.class.getCanonicalName());
+      Class.forName(DRIVER_CLASS);
       return DriverManager.getConnection(connectionUrl, BASE_PROPS.get(ConnectionConfig.USER),
                                          BASE_PROPS.get(ConnectionConfig.PASSWORD));
     } catch (Exception e) {
