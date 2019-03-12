@@ -56,7 +56,7 @@ public class PostgresSinkTestRun extends PostgresPluginTestBase {
 
     ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
     ETLPlugin sinkConfig = new ETLPlugin(
-      UI_NAME,
+      PostgresConstants.PLUGIN_NAME,
       BatchSink.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
