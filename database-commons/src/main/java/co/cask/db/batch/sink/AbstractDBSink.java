@@ -318,7 +318,6 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
    * {@link PluginConfig} for {@link AbstractDBSink}
    */
   public abstract static class DBSinkConfig extends DBConfig {
-    public static final String COLUMNS = "columns";
     public static final String TABLE_NAME = "tableName";
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
 
