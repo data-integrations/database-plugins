@@ -29,14 +29,6 @@
           "widget-type": "textbox",
           "label": "Table Name",
           "name": "tableName"
-        },
-        {
-          "widget-type": "csv",
-          "label": "Columns",
-          "name": "columns",
-          "widget-attributes": {
-            "delimiter": ","
-          }
         }
       ]
     },

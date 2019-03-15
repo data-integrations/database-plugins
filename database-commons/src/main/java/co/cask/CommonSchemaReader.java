@@ -163,3 +163,4 @@ public class CommonSchemaReader implements SchemaReader {
     return Schema.of(type);
   }
 }
+
