@@ -84,7 +84,7 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
   public void testDBSource() throws Exception {
     String importQuery = "SELECT CHAR_COL, VARCHAR_COL, INT_COL, INTEGER_COL, DEC_COL, DECIMAL_COL, NUMBER_COL," +
       " NUMERIC_COL, SMALLINT_COL, REAL_COL, DATE_COL, TIMESTAMP_COL, INTERVAL_YEAR_TO_MONTH_COL, " +
-      "INTERVAL_DAY_TO_SECOND_COL, RAW_COL, CLOB_COL, BLOB_COL FROM my_table " +
+      "INTERVAL_DAY_TO_SECOND_COL, RAW_COL, TIMESTAMPTZ_COL, TIMESTAMPLTZ_COL, CLOB_COL, BLOB_COL FROM my_table " +
       " WHERE SMALLINT_COL < 3 AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(SMALLINT_COL),MAX(SMALLINT_COL) from my_table";
     String splitBy = "SMALLINT_COL";
