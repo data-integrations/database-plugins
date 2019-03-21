@@ -2,7 +2,7 @@
   "metadata": {
     "spec-version": "1.5"
   },
-  "display-name": "Database",
+  "display-name": "Database Execute",
   "configuration-groups": [
     {
       "label": "Basic",

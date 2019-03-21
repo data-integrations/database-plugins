@@ -2,7 +2,7 @@
   "metadata": {
     "spec-version": "1.5"
   },
-  "display-name": "PostgreSQL",
+  "display-name": "PostgreSQL Execute",
   "configuration-groups": [
     {
       "label": "Basic",

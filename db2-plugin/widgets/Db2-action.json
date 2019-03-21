@@ -2,7 +2,7 @@
   "metadata": {
     "spec-version": "1.5"
   },
-  "display-name": "IBM DB2",
+  "display-name": "IBM DB2 Execute",
   "configuration-groups": [
     {
       "label": "Basic",
