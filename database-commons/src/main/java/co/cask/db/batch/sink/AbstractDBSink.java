@@ -34,6 +34,7 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.api.validation.InvalidStageException;
 import co.cask.db.batch.TransactionIsolationLevel;
 import co.cask.hydrator.common.LineageRecorder;
 import co.cask.hydrator.common.ReferenceBatchSink;
@@ -132,9 +133,10 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   }
 
   /**
-   * Extracts column info from input schema. It is then used for metadata retrieval
-   * and insert query generation. Override this method if you need to escape column names
+   * Extracts column info from input schema. Later it is used for metadata retrieval
+   * and insert during query generation. Override this method if you need to escape column names
    * for databases with case-sensitive identifiers
+   *
    * @param fields input schema fields
    */
   protected void setColumnsInfo(List<Schema.Field> fields) {
@@ -165,11 +167,11 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
            ResultSet rs = statement.executeQuery("SELECT * FROM " + dbSinkConfig.tableName + " WHERE 1 = 0")) {
         inferredFields.addAll(getSchemaReader().getSchemaFields(rs));
       } catch (SQLException e) {
-        LOG.error("Error reading table metadata:", e);
+        throw new InvalidStageException("Error while reading table metadata", e);
+
       }
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
-      LOG.error("Error occurred while trying to infer input schema for DBSink[referenceName={}].",
-                dbSinkConfig.referenceName);
+      throw new InvalidStageException("JDBC Driver unavailable: " + dbSinkConfig.jdbcPluginName, e);
     }
     return Schema.recordOf("inferredSchema", inferredFields);
   }
@@ -178,8 +180,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) {
     // Create StructuredRecord that only has the columns in this.columns
     List<Schema.Field> outputFields = new ArrayList<>();
-    for (Schema.Field field: input.getSchema().getFields()) {
-      Preconditions.checkArgument(columns.contains(field.getName()), "Column not found for input field '%s'",
+    for (Schema.Field field : input.getSchema().getFields()) {
+      Preconditions.checkArgument(columns.contains(field.getName()), "Input field '%s' is not found in columns",
                                   field.getName());
       outputFields.add(field);
     }
@@ -260,9 +262,9 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
          ResultSet tables = connection.getMetaData().getTables(null, null, tableName, null)) {
 
       Preconditions.checkArgument(tables.next(), "Table %s does not exist. " +
-                                  "Please check that the 'tableName' property " +
-                                  "has been set correctly, and that the connection string %s " +
-                                  "points to a valid database.",
+                                    "Please check that the 'tableName' property " +
+                                    "has been set correctly, and that the connection string %s " +
+                                    "points to a valid database.",
                                   tableName, connectionString);
 
       try (PreparedStatement pStmt = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE 1 = 0");
@@ -294,7 +296,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
       Schema.Type columnType = columnSchema.getType();
       Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
-                                                             : field.getSchema().getType();
+        : field.getSchema().getType();
       boolean isNotNullAssignable = !isColumnNullable && field.getSchema().isNullable();
       boolean isNotCompatible = !Objects.equals(fieldType, columnType);
 
@@ -310,7 +312,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     }
 
     Preconditions.checkArgument(invalidFields.isEmpty(), "Couldn't find matching database column(s) " +
-                                "for input field(s) %s.", String.join(",", invalidFields));
+      "for input field(s) %s.", String.join(",", invalidFields));
   }
 
   private void emitLineage(BatchSinkContext context, List<Schema.Field> fields) {
