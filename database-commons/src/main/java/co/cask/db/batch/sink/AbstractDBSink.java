@@ -80,7 +80,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   private DriverCleanup driverCleanup;
   protected int[] columnTypes;
   protected List<String> columns;
-  private String dbColumns;
+  protected String dbColumns;
+  private Schema outputSchema;
 
   public AbstractDBSink(DBSinkConfig dbSinkConfig) {
     super(new ReferencePluginConfig(dbSinkConfig.referenceName));
@@ -107,30 +108,36 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
               dbSinkConfig.jdbcPluginName,
               connectionString, "columns");
 
-    Schema inputSchema = context.getInputSchema();
+    outputSchema = context.getInputSchema();
 
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     // make sure that the destination table exists and column types are correct
     try {
       if (Objects.nonNull(context.getInputSchema())) {
-        validateSchema(driverClass, dbSinkConfig.tableName, inputSchema);
+        validateSchema(driverClass, dbSinkConfig.tableName, outputSchema);
       } else {
-        inputSchema = inferSchema(driverClass);
+        outputSchema = inferSchema(driverClass);
       }
     } finally {
       DBUtils.cleanup(driverClass);
     }
 
-    setColumnsInfo(inputSchema.getFields());
+    setColumnsInfo(outputSchema.getFields());
 
-    emitLineage(context, inputSchema.getFields());
+    emitLineage(context, outputSchema.getFields());
 
-    context.addOutput(Output.of(dbSinkConfig.referenceName,
-                                new DBOutputFormatProvider(dbSinkConfig, connectionString, dbColumns, driverClass)));
+    context.addOutput(Output.of(dbSinkConfig.referenceName, new DBOutputFormatProvider(
+      dbSinkConfig, connectionString, dbColumns, driverClass)));
   }
 
-  private void setColumnsInfo(List<Schema.Field> fields) {
+  /**
+   * Extracts column info from input schema. It is then used for metadata retrieval
+   * and insert query generation. Override this method if you need to escape column names
+   * for databases with case-sensitive identifiers
+   * @param fields input schema fields
+   */
+  protected void setColumnsInfo(List<Schema.Field> fields) {
     columns = fields.stream()
       .map(Schema.Field::getName)
       .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
@@ -142,9 +149,9 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     driverClass = context.loadPluginClass(getJDBCPluginId());
-    Schema inputSchema = Optional.ofNullable(context.getInputSchema()).orElse(inferSchema(driverClass));
+    outputSchema = Optional.ofNullable(context.getInputSchema()).orElse(inferSchema(driverClass));
 
-    setColumnsInfo(inputSchema.getFields());
+    setColumnsInfo(outputSchema.getFields());
     setResultSetMetadata();
   }
 
@@ -157,6 +164,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
            Statement statement = connection.createStatement();
            ResultSet rs = statement.executeQuery("SELECT * FROM " + dbSinkConfig.tableName + " WHERE 1 = 0")) {
         inferredFields.addAll(getSchemaReader().getSchemaFields(rs));
+      } catch (SQLException e) {
+        LOG.error("Error reading table metadata:", e);
       }
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
       LOG.error("Error occurred while trying to infer input schema for DBSink[referenceName={}].",
@@ -166,16 +175,15 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) {
     // Create StructuredRecord that only has the columns in this.columns
     List<Schema.Field> outputFields = new ArrayList<>();
-    for (String column : columns) {
-      Schema.Field field = input.getSchema().getField(column);
-      Preconditions.checkNotNull(field, "Column '%s' not found in an input record", column);
+    for (Schema.Field field: input.getSchema().getFields()) {
+      Preconditions.checkArgument(columns.contains(field.getName()), "Column not found for input field '%s'",
+                                  field.getName());
       outputFields.add(field);
     }
-    StructuredRecord.Builder output = StructuredRecord.builder(
-      Schema.recordOf(input.getSchema().getRecordName(), outputFields));
+    StructuredRecord.Builder output = StructuredRecord.builder(outputSchema);
     for (String column : columns) {
       output.set(column, input.get(column));
     }
@@ -293,7 +301,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       if (isNotCompatible) {
         invalidFields.add(field.getName());
         LOG.error("Field {} was given as type {} but the database column is actually of type {}.", field.getName(),
-                  field.getSchema().getType(), columnSchema.getType());
+                  fieldType, columnSchema.getType());
       }
       if (isNotNullAssignable) {
         invalidFields.add(field.getName());
