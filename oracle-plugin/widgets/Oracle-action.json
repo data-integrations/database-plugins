@@ -2,7 +2,7 @@
   "metadata": {
     "spec-version": "1.5"
   },
-  "display-name": "Oracle",
+  "display-name": "Oracle Execute",
   "configuration-groups": [
     {
       "label": "Basic",

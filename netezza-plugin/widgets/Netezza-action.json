@@ -2,7 +2,7 @@
   "metadata": {
     "spec-version": "1.5"
   },
-  "display-name": "Netezza",
+  "display-name": "Netezza Execute",
   "configuration-groups": [
     {
       "label": "Basic",

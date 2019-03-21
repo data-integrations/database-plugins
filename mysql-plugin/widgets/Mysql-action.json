@@ -2,7 +2,7 @@
   "metadata": {
     "spec-version": "1.5"
   },
-  "display-name": "Mysql",
+  "display-name": "MySQL Execute",
   "configuration-groups": [
     {
       "label": "Basic",
