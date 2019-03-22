@@ -55,9 +55,6 @@ public class OracleSchemaReader extends CommonSchemaReader {
         case TIMESTAMP_LTZ:
         case TIMESTAMP_TZ:
           return Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
-        default:
-          throw new SQLException(new UnsupportedTypeException(
-            String.format("Unsupported SQL Type: '%s' Column: '%s'", sqlType, sqlColumnName)));
       }
     } else {
       return super.getSchema(metadata, index);
