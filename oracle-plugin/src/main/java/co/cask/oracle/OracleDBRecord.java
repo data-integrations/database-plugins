@@ -17,26 +17,20 @@
 package co.cask.oracle;
 
 import co.cask.DBRecord;
+import co.cask.SchemaReader;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import com.google.common.collect.ImmutableSet;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 /**
  * Writable class for Oracle Source/Sink
  */
 public class OracleDBRecord extends DBRecord {
-
-  private static final int INTERVAL_YM = -103;
-  private static final int INTERVAL_DS = -104;
-
-  private static final Set<Integer> oracleTypes = ImmutableSet.of(
-    INTERVAL_DS,
-    INTERVAL_YM
-  );
 
   public OracleDBRecord(StructuredRecord record, int[] columnTypes) {
     this.record = record;
@@ -47,12 +41,18 @@ public class OracleDBRecord extends DBRecord {
    * Used in map-reduce. Do not remove.
    */
   @SuppressWarnings("unused")
-  public OracleDBRecord() {}
+  public OracleDBRecord() {
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new OracleSchemaReader();
+  }
 
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                              int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
-    if (oracleTypes.contains(sqlType)) {
+    if (OracleSchemaReader.ORACLE_TYPES.contains(sqlType)) {
       handleOracleSpecificType(resultSet, recordBuilder, field, sqlType);
     } else {
       setField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
@@ -63,12 +63,15 @@ public class OracleDBRecord extends DBRecord {
                                         StructuredRecord.Builder recordBuilder, Schema.Field field,
                                         int sqlType) throws SQLException {
 
-    Object original = resultSet.getObject(field.getName());
-
     switch (sqlType) {
-      case INTERVAL_YM:
-      case INTERVAL_DS:
-        recordBuilder.set(field.getName(), original.toString());
+      case OracleSchemaReader.INTERVAL_YM:
+      case OracleSchemaReader.INTERVAL_DS:
+        recordBuilder.set(field.getName(), resultSet.getString(field.getName()));
+        break;
+      case OracleSchemaReader.TIMESTAMP_LTZ:
+      case OracleSchemaReader.TIMESTAMP_TZ:
+        Instant instant = resultSet.getTimestamp(field.getName()).toInstant();
+        recordBuilder.setTimestamp(field.getName(), instant.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
         break;
     }
   }
