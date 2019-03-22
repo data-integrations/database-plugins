@@ -16,7 +16,7 @@
 
 package co.cask.db2;
 
-import co.cask.DBConfig;
+import co.cask.ConnectionConfig;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.table.Table;
@@ -64,7 +64,7 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
       .put(Constants.Reference.REFERENCE_NAME, "DBTestSource").build();
 
     ETLPlugin sourceConfig = new ETLPlugin(
-      UI_NAME,
+      Db2Constants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       sourceProps
     );
@@ -89,7 +89,7 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
     String boundingQuery = "SELECT MIN(SMALLINT_COL),MAX(SMALLINT_COL) from my_table";
     String splitBy = "SMALLINT_COL";
     ETLPlugin sourceConfig = new ETLPlugin(
-      UI_NAME,
+      Db2Constants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
@@ -170,7 +170,7 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
       "GREATEST(MAX(my_table.SMALLINT_COL), MAX(your_table.SMALLINT_COL))";
     String splitBy = "my_table.SMALLINT_COL";
     ETLPlugin sourceConfig = new ETLPlugin(
-      UI_NAME,
+      Db2Constants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
@@ -212,10 +212,10 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
     ETLPlugin sinkConfig = MockSink.getPlugin("outputTable");
 
     Map<String, String> baseSourceProps = ImmutableMap.<String, String>builder()
-      .put("host", BASE_PROPS.get("host"))
-      .put("port", BASE_PROPS.get("port"))
-      .put("database", BASE_PROPS.get("database"))
-      .put("jdbcPluginName", JDBC_DRIVER_NAME)
+      .put(ConnectionConfig.HOST, BASE_PROPS.get(ConnectionConfig.HOST))
+      .put(ConnectionConfig.PORT, BASE_PROPS.get(ConnectionConfig.PORT))
+      .put(ConnectionConfig.DATABASE, BASE_PROPS.get(ConnectionConfig.DATABASE))
+      .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
       .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
       .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
       .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -226,7 +226,7 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
 
     // null user name, null password. Should succeed.
     // as source
-    ETLPlugin dbConfig = new ETLPlugin(UI_NAME, BatchSource.PLUGIN_TYPE, baseSourceProps, null);
+    ETLPlugin dbConfig = new ETLPlugin(Db2Constants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, baseSourceProps, null);
     ETLStage table = new ETLStage("uniqueTableSink", sinkConfig);
     ETLStage database = new ETLStage("databaseSource", dbConfig);
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
@@ -240,8 +240,9 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
     // null user name, non-null password. Should fail.
     // as source
     Map<String, String> noUser = new HashMap<>(baseSourceProps);
-    noUser.put(DBConfig.PASSWORD, "password");
-    database = new ETLStage("databaseSource", new ETLPlugin(UI_NAME, BatchSource.PLUGIN_TYPE, noUser, null));
+    noUser.put(ConnectionConfig.PASSWORD, "password");
+    database = new ETLStage("databaseSource", new ETLPlugin(Db2Constants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE,
+                                                            noUser, null));
     etlConfig = ETLBatchConfig.builder()
       .addStage(database)
       .addStage(table)
@@ -253,9 +254,10 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
     // non-null username, non-null, but empty password. Should succeed.
     // as source
     Map<String, String> emptyPassword = new HashMap<>(baseSourceProps);
-    emptyPassword.put(DBConfig.USER, "root");
-    emptyPassword.put(DBConfig.PASSWORD, "");
-    database = new ETLStage("databaseSource", new ETLPlugin(UI_NAME, BatchSource.PLUGIN_TYPE, emptyPassword, null));
+    emptyPassword.put(ConnectionConfig.USER, "root");
+    emptyPassword.put(ConnectionConfig.PASSWORD, "");
+    database = new ETLStage("databaseSource", new ETLPlugin(Db2Constants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE,
+                                                            emptyPassword, null));
     etlConfig = ETLBatchConfig.builder()
       .addStage(database)
       .addStage(table)
@@ -273,7 +275,7 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
     String splitBy = "ID";
     ETLPlugin sinkConfig = MockSink.getPlugin("table");
     ETLPlugin sourceBadNameConfig = new ETLPlugin(
-      UI_NAME,
+      Db2Constants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
@@ -298,15 +300,15 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
 
     // Bad connection
     ETLPlugin sourceBadConnConfig = new ETLPlugin(
-      UI_NAME,
+      Db2Constants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put("host", BASE_PROPS.get("host"))
-        .put("port", BASE_PROPS.get("port"))
-        .put("database", "dumDB")
-        .put("user", BASE_PROPS.get("user"))
-        .put("password", BASE_PROPS.get("password"))
-        .put("jdbcPluginName", JDBC_DRIVER_NAME)
+        .put(ConnectionConfig.HOST, BASE_PROPS.get(ConnectionConfig.HOST))
+        .put(ConnectionConfig.PORT, BASE_PROPS.get(ConnectionConfig.PORT))
+        .put(ConnectionConfig.DATABASE, "dumDB")
+        .put(ConnectionConfig.USER, BASE_PROPS.get(ConnectionConfig.USER))
+        .put(ConnectionConfig.PASSWORD, BASE_PROPS.get(ConnectionConfig.PASSWORD))
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)

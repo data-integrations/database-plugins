@@ -34,6 +34,7 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.db.batch.source.AbstractDBSource;
 import co.cask.hydrator.common.Constants;
+import co.cask.jdbc.DatabaseConstants;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
@@ -64,12 +65,12 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     String boundingQuery = "SELECT MIN(ID),MAX(ID) from \"my_table\"";
     String splitBy = "ID";
     ETLPlugin sourceConfig = new ETLPlugin(
-      "Database",
+      DatabaseConstants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
-        .put("jdbcPluginName", "hypersql")
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
         .put(Constants.Reference.REFERENCE_NAME, "DBMacroTest")
@@ -96,11 +97,11 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     String boundingQuery = "SELECT MIN(ID),MAX(ID) from \"my_table\"";
     String splitBy = "ID";
     ETLPlugin sourceConfig = new ETLPlugin(
-      "Database",
+      DatabaseConstants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -184,11 +185,11 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     String boundingQuery = "SELECT MIN(ID),MAX(ID) from \"my_table\"";
     String splitBy = "ID";
     ETLPlugin sourceConfig = new ETLPlugin(
-      "Database",
+      DatabaseConstants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -231,8 +232,8 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
       "Database",
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -271,8 +272,8 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     ETLPlugin sinkConfig = MockSink.getPlugin("outputTable");
 
     Map<String, String> baseSourceProps = ImmutableMap.<String, String>builder()
-      .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-      .put("jdbcPluginName", "hypersql")
+      .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+      .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
       .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
       .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
       .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -283,7 +284,7 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
 
     // null user name, null password. Should succeed.
     // as source
-    ETLPlugin dbConfig = new ETLPlugin("Database", BatchSource.PLUGIN_TYPE, baseSourceProps, null);
+    ETLPlugin dbConfig = new ETLPlugin(DatabaseConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, baseSourceProps, null);
     ETLStage table = new ETLStage("uniqueTableSink", sinkConfig);
     ETLStage database = new ETLStage("databaseSource", dbConfig);
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
@@ -297,8 +298,9 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     // null user name, non-null password. Should fail.
     // as source
     Map<String, String> noUser = new HashMap<>(baseSourceProps);
-    noUser.put(DBConfig.PASSWORD, "password");
-    database = new ETLStage("databaseSource", new ETLPlugin("Database", BatchSource.PLUGIN_TYPE, noUser, null));
+    noUser.put(ConnectionConfig.PASSWORD, "password");
+    database = new ETLStage("databaseSource",
+                            new ETLPlugin(DatabaseConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, noUser, null));
     etlConfig = ETLBatchConfig.builder()
       .addStage(database)
       .addStage(table)
@@ -310,9 +312,10 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     // non-null username, non-null, but empty password. Should succeed.
     // as source
     Map<String, String> emptyPassword = new HashMap<>(baseSourceProps);
-    emptyPassword.put(DBConfig.USER, "emptyPwdUser");
-    emptyPassword.put(DBConfig.PASSWORD, "");
-    database = new ETLStage("databaseSource", new ETLPlugin("Database", BatchSource.PLUGIN_TYPE, emptyPassword, null));
+    emptyPassword.put(ConnectionConfig.USER, "emptyPwdUser");
+    emptyPassword.put(ConnectionConfig.PASSWORD, "");
+    database = new ETLStage("databaseSource",
+                            new ETLPlugin(DatabaseConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, emptyPassword, null));
     etlConfig = ETLBatchConfig.builder()
       .addStage(database)
       .addStage(table)
@@ -331,11 +334,11 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     //TODO: Also test for bad connection:
     ETLPlugin sinkConfig = MockSink.getPlugin("table");
     ETLPlugin sourceBadNameConfig = new ETLPlugin(
-      "Database",
+      DatabaseConstants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, getConnectionURL())
-        .put("jdbcPluginName", "hypersql")
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
@@ -358,11 +361,11 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     // Bad connection
     String badConnection = String.format("jdbc:hsqldb:hsql://localhost/%sWRONG", getDatabase());
     ETLPlugin sourceBadConnConfig = new ETLPlugin(
-      "Database",
+      DatabaseConstants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
-        .put(DBConfig.CONNECTION_STRING, badConnection)
-        .put("jdbcPluginName", "hypersql")
+        .put(ConnectionConfig.CONNECTION_STRING, badConnection)
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
         .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)

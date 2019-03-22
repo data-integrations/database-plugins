@@ -59,7 +59,7 @@ public class OracleSinkTestRun extends OraclePluginTestBase {
 
     ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
     ETLPlugin sinkConfig = new ETLPlugin(
-      UI_NAME,
+      OracleConstants.PLUGIN_NAME,
       BatchSink.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)

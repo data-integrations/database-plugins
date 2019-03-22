@@ -16,6 +16,7 @@
 
 package co.cask.mssql;
 
+import co.cask.ConnectionConfig;
 import co.cask.DBRecord;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -31,7 +32,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import com.microsoft.sqlserver.jdbc.SQLServerDriver;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -54,9 +54,8 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
-
+  protected static final String DRIVER_CLASS = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
   protected static final String JDBC_DRIVER_NAME = "sqlserver42";
-  protected static final String UI_NAME = "SqlServer";
 
   protected static String connectionUrl;
   protected static boolean tearDown = true;
@@ -66,12 +65,12 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put("host", System.getProperty("mssql.host"))
-    .put("port", System.getProperty("mssql.port"))
-    .put("database", System.getProperty("mssql.database"))
-    .put("user", System.getProperty("mssql.username"))
-    .put("password", System.getProperty("mssql.password"))
-    .put("jdbcPluginName", JDBC_DRIVER_NAME)
+    .put(ConnectionConfig.HOST, System.getProperty("mssql.host"))
+    .put(ConnectionConfig.PORT, System.getProperty("mssql.port"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("mssql.database"))
+    .put(ConnectionConfig.USER, System.getProperty("mssql.username"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("mssql.password"))
+    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 
   @BeforeClass
@@ -87,18 +86,20 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
                       SqlServerSource.class, SqlServerSink.class, DBRecord.class, ETLDBOutputFormat.class,
                       DataDrivenETLDBInputFormat.class, SqlServerPostAction.class, SqlServerAction.class);
 
-    // add sqlServer 3rd party plugin
-    PluginClass sqlServerDriver = new PluginClass("jdbc", JDBC_DRIVER_NAME, "sql server driver class",
-                                                  SQLServerDriver.class.getName(),
-                                                  null, Collections.<String, PluginPropertyField>emptyMap());
+    Class<?> driverClass = Class.forName(DRIVER_CLASS);
+
+    // add SqlServer 3rd party plugin
+    PluginClass sqlServerDriver = new PluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME,
+                                                  "sql server driver class", driverClass.getName(),
+                                                  null, Collections.emptyMap());
     addPluginArtifact(NamespaceId.DEFAULT.artifact("sqlserver-jdbc-connector", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
-                      Sets.newHashSet(sqlServerDriver), SQLServerDriver.class);
+                      Sets.newHashSet(sqlServerDriver), driverClass);
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
-    connectionUrl = "jdbc:sqlserver://" + BASE_PROPS.get("host") + ":" +
-      BASE_PROPS.get("port") + ";databaseName=" + BASE_PROPS.get("database");
+    connectionUrl = "jdbc:sqlserver://" + BASE_PROPS.get(ConnectionConfig.HOST) + ":" +
+      BASE_PROPS.get(ConnectionConfig.PORT) + ";databaseName=" + BASE_PROPS.get(ConnectionConfig.DATABASE);
     Connection conn = createConnection();
     createTestTables(conn);
     prepareTestData(conn);
@@ -210,8 +211,9 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
 
   public static Connection createConnection() {
     try {
-      Class.forName(SQLServerDriver.class.getCanonicalName());
-      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get("user"), BASE_PROPS.get("password"));
+      Class.forName(DRIVER_CLASS);
+      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get(ConnectionConfig.USER),
+                                         BASE_PROPS.get(ConnectionConfig.PASSWORD));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

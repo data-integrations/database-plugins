@@ -16,10 +16,10 @@
 
 package co.cask.postgres;
 
+import co.cask.ConnectionConfig;
 import co.cask.DBRecord;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.datapipeline.DataPipelineApp;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -55,7 +55,6 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
   protected static final long CURRENT_TS = System.currentTimeMillis();
 
   protected static final String JDBC_DRIVER_NAME = "postrgesql";
-  protected static final String UI_NAME = "Postgres";
 
   protected static String connectionUrl;
   protected static final int YEAR;
@@ -72,12 +71,12 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put("host", System.getProperty("postgresql.host"))
-    .put("port", System.getProperty("postgresql.port"))
-    .put("database", System.getProperty("postgresql.database"))
-    .put("user", System.getProperty("postgresql.username"))
-    .put("password", System.getProperty("postgresql.password"))
-    .put("jdbcPluginName", JDBC_DRIVER_NAME)
+    .put(ConnectionConfig.HOST, System.getProperty("postgresql.host"))
+    .put(ConnectionConfig.PORT, System.getProperty("postgresql.port"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("postgresql.database"))
+    .put(ConnectionConfig.USER, System.getProperty("postgresql.username"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("postgresql.password"))
+    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 
   @BeforeClass
@@ -94,17 +93,17 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
                       DataDrivenETLDBInputFormat.class, DBRecord.class, PostgresPostAction.class, PostgresAction.class);
 
     // add mysql 3rd party plugin
-    PluginClass mysqlDriver = new PluginClass("jdbc", JDBC_DRIVER_NAME, "postrgesql driver class",
-                                           Driver.class.getName(),
-                                           null, Collections.<String, PluginPropertyField>emptyMap());
+    PluginClass mysqlDriver = new PluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME,
+                                              "postrgesql driver class", Driver.class.getName(),
+                                              null, Collections.emptyMap());
     addPluginArtifact(NamespaceId.DEFAULT.artifact("postrgesql-jdbc-connector", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
                       Sets.newHashSet(mysqlDriver), Driver.class);
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
-    connectionUrl = "jdbc:postgresql://" + BASE_PROPS.get("host") + ":" +
-      BASE_PROPS.get("port") + "/" + BASE_PROPS.get("database");
+    connectionUrl = "jdbc:postgresql://" + BASE_PROPS.get(ConnectionConfig.HOST) + ":" +
+      BASE_PROPS.get(ConnectionConfig.PORT) + "/" + BASE_PROPS.get(ConnectionConfig.DATABASE);
     Connection conn = createConnection();
     createTestTables(conn);
     prepareTestData(conn);
@@ -192,7 +191,8 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
   public static Connection createConnection() {
     try {
       Class.forName(Driver.class.getCanonicalName());
-      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get("user"), BASE_PROPS.get("password"));
+      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get(ConnectionConfig.USER),
+                                         BASE_PROPS.get(ConnectionConfig.PASSWORD));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

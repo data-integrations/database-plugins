@@ -16,6 +16,7 @@
 
 package co.cask.netezza;
 
+import co.cask.ConnectionConfig;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
@@ -26,6 +27,9 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
+import co.cask.db.batch.action.QueryActionConfig;
+import co.cask.db.batch.action.QueryConfig;
+import co.cask.hydrator.common.batch.action.Condition;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
@@ -42,13 +46,13 @@ public class NetezzaPostActionTestRun extends NetezzaPluginTestBase {
     ETLStage source = new ETLStage("source", MockSource.getPlugin("actionInput"));
     ETLStage sink = new ETLStage("sink", MockSink.getPlugin("actionOutput"));
     ETLStage action = new ETLStage("action", new ETLPlugin(
-      UI_NAME,
+      NetezzaConstants.PLUGIN_NAME,
       PostAction.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
-        .put("query", "delete from post_action_test where day = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
-        .put("enableAutoCommit", "false")
-        .put("runCondition", "success")
+        .put(QueryConfig.QUERY, "delete from post_action_test where day = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
+        .put(ConnectionConfig.ENABLE_AUTO_COMMIT, "false")
+        .put(QueryActionConfig.RUN_CONDITION, Condition.SUCCESS.name())
         .build(),
       null));
 

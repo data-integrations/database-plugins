@@ -16,6 +16,7 @@
 
 package co.cask.netezza;
 
+import co.cask.ConnectionConfig;
 import co.cask.DBRecord;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -55,7 +56,6 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
   protected static final long CURRENT_TS = System.currentTimeMillis();
 
   protected static final String JDBC_DRIVER_NAME = "netezza";
-  protected static final String UI_NAME = "Netezza";
 
   protected static String connectionUrl;
   protected static final int YEAR;
@@ -72,12 +72,12 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put("host", System.getProperty("netezza.host"))
-    .put("port", System.getProperty("netezza.port"))
-    .put("database", System.getProperty("netezza.database"))
-    .put("user", System.getProperty("netezza.username"))
-    .put("password", System.getProperty("netezza.password"))
-    .put("jdbcPluginName", JDBC_DRIVER_NAME)
+    .put(ConnectionConfig.HOST, System.getProperty("netezza.host"))
+    .put(ConnectionConfig.PORT, System.getProperty("netezza.port"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("netezza.database"))
+    .put(ConnectionConfig.USER, System.getProperty("netezza.username"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("netezza.password"))
+    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 
   @BeforeClass
@@ -93,15 +93,15 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
                       NetezzaSource.class, NetezzaSink.class, DBRecord.class, ETLDBOutputFormat.class,
                       DataDrivenETLDBInputFormat.class, DBRecord.class, NetezzaPostAction.class, NetezzaAction.class);
 
-    connectionUrl = "jdbc:netezza://" + BASE_PROPS.get("host") + ":" +
-      BASE_PROPS.get("port") + "/" + BASE_PROPS.get("database");
+    connectionUrl = "jdbc:netezza://" + BASE_PROPS.get(ConnectionConfig.HOST) + ":" +
+      BASE_PROPS.get(ConnectionConfig.PORT) + "/" + BASE_PROPS.get(ConnectionConfig.DATABASE);
 
     Class<?> aClass = Class.forName("org.netezza.Driver");
 
     // add netezza 3rd party plugin
-    PluginClass netezzaDriver = new PluginClass("jdbc", JDBC_DRIVER_NAME, "netezza driver class",
-                                           aClass.getCanonicalName(),
-                                           null, Collections.<String, PluginPropertyField>emptyMap());
+    PluginClass netezzaDriver = new PluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME,
+                                                "netezza driver class", aClass.getCanonicalName(),
+                                                null, Collections.emptyMap());
     addPluginArtifact(NamespaceId.DEFAULT.artifact("netezza-jdbc-connector", "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID,
                       Sets.newHashSet(netezzaDriver), aClass);
@@ -154,7 +154,6 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static void prepareTestData(Connection conn) throws SQLException {
-
     try (
       Statement stmt = conn.createStatement();
       PreparedStatement pStmt1 =
@@ -214,7 +213,8 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
   public static Connection createConnection() {
     try {
       Class.forName(Driver.class.getCanonicalName());
-      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get("user"), BASE_PROPS.get("password"));
+      return DriverManager.getConnection(connectionUrl, BASE_PROPS.get(ConnectionConfig.USER),
+                                         BASE_PROPS.get(ConnectionConfig.PASSWORD));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

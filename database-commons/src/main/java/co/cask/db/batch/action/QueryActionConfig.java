@@ -28,6 +28,8 @@ import javax.annotation.Nullable;
  * Base config for database post-actions {@link AbstractQueryAction}
  */
 public abstract class QueryActionConfig extends QueryConfig {
+  public static final String RUN_CONDITION = "runCondition";
+
   @Nullable
   @Description("When to run the action. Must be 'completion', 'success', or 'failure'. Defaults to 'success'. " +
     "If set to 'completion', the action will be executed regardless of whether the pipeline run succeeded or " +
