@@ -137,7 +137,6 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
    * and insert during query generation. Override this method if you need to escape column names
    * for databases with case-sensitive identifiers
    *
-   * @param fields input schema fields
    */
   protected void setColumnsInfo(List<Schema.Field> fields) {
     columns = fields.stream()
@@ -261,7 +260,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     try (Connection connection = DriverManager.getConnection(connectionString, dbSinkConfig.getConnectionArguments());
          ResultSet tables = connection.getMetaData().getTables(null, null, tableName, null)) {
 
-      Preconditions.checkArgument(tables.next(), "Table %s does not exist. " +
+      Preconditions.checkArgument(tables.next(),
+                                  "Table %s does not exist. " +
                                     "Please check that the 'tableName' property " +
                                     "has been set correctly, and that the connection string %s " +
                                     "points to a valid database.",
@@ -311,8 +311,9 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       }
     }
 
-    Preconditions.checkArgument(invalidFields.isEmpty(), "Couldn't find matching database column(s) " +
-      "for input field(s) %s.", String.join(",", invalidFields));
+    Preconditions.checkArgument(invalidFields.isEmpty(),
+                                "Couldn't find matching database column(s) for input field(s) %s.",
+                                String.join(",", invalidFields));
   }
 
   private void emitLineage(BatchSinkContext context, List<Schema.Field> fields) {
