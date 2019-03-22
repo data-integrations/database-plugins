@@ -34,6 +34,7 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.api.validation.InvalidStageException;
 import co.cask.db.batch.TransactionIsolationLevel;
 import co.cask.hydrator.common.LineageRecorder;
 import co.cask.hydrator.common.ReferenceBatchSink;
@@ -80,7 +81,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   private DriverCleanup driverCleanup;
   protected int[] columnTypes;
   protected List<String> columns;
-  private String dbColumns;
+  protected String dbColumns;
+  private Schema outputSchema;
 
   public AbstractDBSink(DBSinkConfig dbSinkConfig) {
     super(new ReferencePluginConfig(dbSinkConfig.referenceName));
@@ -107,30 +109,36 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
               dbSinkConfig.jdbcPluginName,
               connectionString);
 
-    Schema inputSchema = context.getInputSchema();
+    outputSchema = context.getInputSchema();
 
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     // make sure that the destination table exists and column types are correct
     try {
       if (Objects.nonNull(context.getInputSchema())) {
-        validateSchema(driverClass, dbSinkConfig.tableName, inputSchema);
+        validateSchema(driverClass, dbSinkConfig.tableName, outputSchema);
       } else {
-        inputSchema = inferSchema(driverClass);
+        outputSchema = inferSchema(driverClass);
       }
     } finally {
       DBUtils.cleanup(driverClass);
     }
 
-    setColumnsInfo(inputSchema.getFields());
+    setColumnsInfo(outputSchema.getFields());
 
-    emitLineage(context, inputSchema.getFields());
+    emitLineage(context, outputSchema.getFields());
 
-    context.addOutput(Output.of(dbSinkConfig.referenceName,
-                                new DBOutputFormatProvider(dbSinkConfig, connectionString, dbColumns, driverClass)));
+    context.addOutput(Output.of(dbSinkConfig.referenceName, new DBOutputFormatProvider(
+      dbSinkConfig, connectionString, dbColumns, driverClass)));
   }
 
-  private void setColumnsInfo(List<Schema.Field> fields) {
+  /**
+   * Extracts column info from input schema. Later it is used for metadata retrieval
+   * and insert during query generation. Override this method if you need to escape column names
+   * for databases with case-sensitive identifiers
+   *
+   */
+  protected void setColumnsInfo(List<Schema.Field> fields) {
     columns = fields.stream()
       .map(Schema.Field::getName)
       .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
@@ -142,9 +150,9 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     driverClass = context.loadPluginClass(getJDBCPluginId());
-    Schema inputSchema = Optional.ofNullable(context.getInputSchema()).orElse(inferSchema(driverClass));
+    outputSchema = Optional.ofNullable(context.getInputSchema()).orElse(inferSchema(driverClass));
 
-    setColumnsInfo(inputSchema.getFields());
+    setColumnsInfo(outputSchema.getFields());
     setResultSetMetadata();
   }
 
@@ -157,25 +165,26 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
            Statement statement = connection.createStatement();
            ResultSet rs = statement.executeQuery("SELECT * FROM " + dbSinkConfig.tableName + " WHERE 1 = 0")) {
         inferredFields.addAll(getSchemaReader().getSchemaFields(rs));
+      } catch (SQLException e) {
+        throw new InvalidStageException("Error while reading table metadata", e);
+
       }
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
-      LOG.error("Error occurred while trying to infer input schema for DBSink[referenceName={}].",
-                dbSinkConfig.referenceName);
+      throw new InvalidStageException("JDBC Driver unavailable: " + dbSinkConfig.jdbcPluginName, e);
     }
     return Schema.recordOf("inferredSchema", inferredFields);
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) {
     // Create StructuredRecord that only has the columns in this.columns
     List<Schema.Field> outputFields = new ArrayList<>();
-    for (String column : columns) {
-      Schema.Field field = input.getSchema().getField(column);
-      Preconditions.checkNotNull(field, "Column '%s' not found in an input record", column);
+    for (Schema.Field field : input.getSchema().getFields()) {
+      Preconditions.checkArgument(columns.contains(field.getName()), "Input field '%s' is not found in columns",
+                                  field.getName());
       outputFields.add(field);
     }
-    StructuredRecord.Builder output = StructuredRecord.builder(
-      Schema.recordOf(input.getSchema().getRecordName(), outputFields));
+    StructuredRecord.Builder output = StructuredRecord.builder(outputSchema);
     for (String column : columns) {
       output.set(column, input.get(column));
     }
@@ -251,10 +260,11 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     try (Connection connection = DriverManager.getConnection(connectionString, dbSinkConfig.getConnectionArguments());
          ResultSet tables = connection.getMetaData().getTables(null, null, tableName, null)) {
 
-      Preconditions.checkArgument(tables.next(), "Table %s does not exist. " +
-                                  "Please check that the 'tableName' property " +
-                                  "has been set correctly, and that the connection string %s " +
-                                  "points to a valid database.",
+      Preconditions.checkArgument(tables.next(),
+                                  "Table %s does not exist. " +
+                                    "Please check that the 'tableName' property " +
+                                    "has been set correctly, and that the connection string %s " +
+                                    "points to a valid database.",
                                   tableName, connectionString);
 
       try (PreparedStatement pStmt = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE 1 = 0");
@@ -286,14 +296,14 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
       Schema.Type columnType = columnSchema.getType();
       Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
-                                                             : field.getSchema().getType();
+        : field.getSchema().getType();
       boolean isNotNullAssignable = !isColumnNullable && field.getSchema().isNullable();
       boolean isNotCompatible = !Objects.equals(fieldType, columnType);
 
       if (isNotCompatible) {
         invalidFields.add(field.getName());
         LOG.error("Field {} was given as type {} but the database column is actually of type {}.", field.getName(),
-                  field.getSchema().getType(), columnSchema.getType());
+                  fieldType, columnSchema.getType());
       }
       if (isNotNullAssignable) {
         invalidFields.add(field.getName());
@@ -301,8 +311,9 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       }
     }
 
-    Preconditions.checkArgument(invalidFields.isEmpty(), "Couldn't find matching database column(s) " +
-                                "for input field(s) %s.", String.join(",", invalidFields));
+    Preconditions.checkArgument(invalidFields.isEmpty(),
+                                "Couldn't find matching database column(s) for input field(s) %s.",
+                                String.join(",", invalidFields));
   }
 
   private void emitLineage(BatchSinkContext context, List<Schema.Field> fields) {
