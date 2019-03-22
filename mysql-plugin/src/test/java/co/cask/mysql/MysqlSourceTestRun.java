@@ -326,6 +326,7 @@ public class MysqlSourceTestRun extends MysqlPluginTestBase {
       BatchSource.PLUGIN_TYPE,
       ImmutableMap.<String, String>builder()
         .put(MysqlConstants.AUTO_RECONNECT, "true")
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
         .put(ConnectionConfig.HOST, BASE_PROPS.get(ConnectionConfig.HOST))
         .put(ConnectionConfig.PORT, BASE_PROPS.get(ConnectionConfig.PORT))
         .put(ConnectionConfig.DATABASE, "dumDB")

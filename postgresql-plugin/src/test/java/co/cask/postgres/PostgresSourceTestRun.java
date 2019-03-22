@@ -211,7 +211,7 @@ public class PostgresSourceTestRun extends PostgresPluginTestBase {
       .put(ConnectionConfig.HOST, BASE_PROPS.get(ConnectionConfig.HOST))
       .put(ConnectionConfig.PORT, BASE_PROPS.get(ConnectionConfig.PORT))
       .put(ConnectionConfig.DATABASE, BASE_PROPS.get(ConnectionConfig.DATABASE))
-      .put(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME)
+      .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
       .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
       .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
       .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
