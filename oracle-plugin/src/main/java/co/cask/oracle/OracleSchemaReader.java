@@ -18,7 +18,6 @@ package co.cask.oracle;
 
 import co.cask.CommonSchemaReader;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.collect.ImmutableSet;
 
 import java.sql.ResultSetMetaData;
@@ -29,7 +28,9 @@ import java.util.Set;
  * Oracle schema reader.
  */
 public class OracleSchemaReader extends CommonSchemaReader {
-
+  /**
+   *  Oracle type constants, from Oracle JDBC Implementation.
+   */
   public static final int INTERVAL_YM = -103;
   public static final int INTERVAL_DS = -104;
   public static final int TIMESTAMP_TZ = -101;
@@ -48,14 +49,10 @@ public class OracleSchemaReader extends CommonSchemaReader {
     String sqlColumnName = metadata.getColumnName(index);
 
     if (ORACLE_TYPES.contains(sqlType)) {
-      switch (sqlType) {
-        case INTERVAL_DS:
-        case INTERVAL_YM:
-          return Schema.of(Schema.Type.STRING);
-        case TIMESTAMP_LTZ:
-        case TIMESTAMP_TZ:
-          return Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
+      if (sqlType == TIMESTAMP_LTZ || sqlType == TIMESTAMP_TZ) {
+        return Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
       }
+      return Schema.of(Schema.Type.STRING);
     } else {
       return super.getSchema(metadata, index);
     }
