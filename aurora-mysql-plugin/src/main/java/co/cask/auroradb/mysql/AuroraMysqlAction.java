@@ -21,7 +21,7 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.db.batch.action.AbstractDBAction;
-import co.cask.db.batch.config.DBSpecificQueryActionConfig;
+import co.cask.db.batch.config.DBSpecificQueryConfig;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -45,7 +45,7 @@ public class AuroraMysqlAction extends AbstractDBAction {
   /**
    * Aurora DB MySQL Action Config.
    */
-  public static class AuroraMysqlActionConfig extends DBSpecificQueryActionConfig {
+  public static class AuroraMysqlActionConfig extends DBSpecificQueryConfig {
 
     @Name(AuroraMysqlConstants.AUTO_RECONNECT)
     @Description("Should the driver try to re-establish stale and/or dead connections")
