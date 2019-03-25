@@ -1,4 +1,4 @@
-# DB2 Query Post-run Action
+# Aurora DB MySQL Query Post-run Action
 
 
 Description

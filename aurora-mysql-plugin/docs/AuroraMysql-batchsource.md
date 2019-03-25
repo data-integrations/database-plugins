@@ -1,4 +1,4 @@
-# DB2 Batch Source
+# Aurora DB MySQL Batch Source
 
 
 Description

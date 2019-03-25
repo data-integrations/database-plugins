@@ -1,4 +1,4 @@
-# DB2 Batch Sink
+# Aurora DB MySQL Batch Sink
 
 
 Description
