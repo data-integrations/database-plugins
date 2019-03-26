@@ -1,9 +1,9 @@
-# Mysql Query Post-run Action
+# MySQL Query Post-run Action
 
 
 Description
 -----------
-Runs a Mysql query at the end of the pipeline run.
+Runs a MySQL query at the end of the pipeline run.
 Can be configured to run only on success, only on failure, or always at the end of the run.
 
 
@@ -30,7 +30,7 @@ If set to 'failure', the action will only be executed if the pipeline run failed
 
 **Port:** Port that MySQL is running on.
 
-**Database:** Mysql database name.
+**Database:** MySQL database name.
 
 **Username:** User identity for connecting to the specified database.
 

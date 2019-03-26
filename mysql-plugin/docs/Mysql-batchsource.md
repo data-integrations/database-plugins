@@ -3,13 +3,13 @@
 
 Description
 -----------
-Reads from a Mysql using a configurable SQL query.
+Reads from a MySQL instance using a configurable SQL query.
 Outputs one record for each row returned by the query.
 
 
 Use Case
 --------
-The source is used whenever you need to read from a Mysql. For example, you may want
+The source is used whenever you need to read from a MySQL instance. For example, you may want
 to create daily snapshots of a database table by using this source and writing to
 a TimePartitionedFileSet.
 
