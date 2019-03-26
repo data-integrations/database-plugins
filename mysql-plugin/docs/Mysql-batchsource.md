@@ -3,7 +3,7 @@
 
 Description
 -----------
-Reads from a Mysql using a configurable SQL query.
+Reads from a MySQL instance using a configurable SQL query.
 Outputs one record for each row returned by the query.
 
 
