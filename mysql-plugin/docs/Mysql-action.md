@@ -8,7 +8,7 @@ Action that runs a MySQL command.
 
 Use Case
 --------
-The action can be used whenever you want to run a Mysql command before or after a data pipeline.
+The action can be used whenever you want to run a MySQL command before or after a data pipeline.
 For example, you may want to run a sql update command on a database before the pipeline source pulls data from tables.
 
 
