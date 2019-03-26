@@ -12,5 +12,7 @@ mvn clean test \
 -Ddb2.host=localhost -Ddb2.port=50000 -Ddb2.database=SAMPLE -Ddb2.username=DB2INST -Db2.password=DB2INST1-pwd \
 -Dnetezza.host=localhost -Dnetezza.port=5480 -Dnetezza.database=test -Dnetezza.username=admin \
 -Dnetezza.password=password \
+-DauroraMysql.clusterEndpoint=cdap-cluster.xyz.eu-central-1.rds.amazonaws.com -DauroraMysql.port=3306 \
+-DauroraMysql.database=cdapdb -DauroraMysql.username=cdap -DauroraMysql.password=cdap \
 -DjdbcDriversJars="/jdbc/drivers/jars/som.jar, "
 ```
