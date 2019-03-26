@@ -43,8 +43,8 @@ For example, 'SELECT MIN(id),MAX(id) FROM table'. Not required if numSplits is s
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
-will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
+**Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
+will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 **Auto Reconnect:** Should the driver try to re-establish stale and/or dead connections.
 
