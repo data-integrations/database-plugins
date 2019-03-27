@@ -36,8 +36,8 @@ If set to 'failure', the action will only be executed if the pipeline run failed
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
-will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
+**Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
+will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 **Enable Auto-Commit:** Whether to enable auto-commit for queries run by this source. Defaults to 'false'.
 Normally this setting does not matter. It only matters if you are using a jdbc driver -- like the Hive
@@ -48,7 +48,7 @@ set to false. For drivers like those, you will need to set this to 'true'.
 Example
 -------
 Suppose you want to delete all records from Netezza table "userEvents" of database "prod" running on localhost, port 5480,
-without authentication using driver "netezza" if pipeline completes successfully (Ensure that the driver for Netezza is 
+without authentication using driver "netezza" if the pipeline completes successfully (Ensure that the driver for Netezza is 
 installed. You can also driver name for some specific driver, otherwise "netezza" will be used ), 
 then configure the plugin with:
 

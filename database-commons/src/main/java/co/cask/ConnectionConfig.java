@@ -65,7 +65,7 @@ public abstract class ConnectionConfig extends PluginConfig {
   public String password;
 
   @Name(CONNECTION_ARGUMENTS)
-  @Description("A list of arbitrary string tag/value pairs as connection arguments.")
+  @Description("A list of arbitrary string key/value pairs as connection arguments.")
   @Nullable
   @Macro
   public String connectionArguments;

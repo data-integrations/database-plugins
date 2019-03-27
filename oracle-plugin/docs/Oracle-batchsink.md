@@ -31,8 +31,8 @@ Properties
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
-will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
+**Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
+will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 **Default Batch Value:** The default batch value that triggers an execution request.
 

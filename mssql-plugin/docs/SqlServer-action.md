@@ -31,8 +31,8 @@ error is thrown if it does not match the port.
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
-will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
+**Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
+will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 **Instance Name** The SQL Server instance name to connect to. When it is not specified, a 
 connection is made to the default instance. For the case where both the instanceName and port are specified, 

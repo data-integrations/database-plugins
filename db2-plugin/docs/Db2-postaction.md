@@ -36,13 +36,13 @@ If set to 'failure', the action will only be executed if the pipeline run failed
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
-will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
+**Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
+will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 Example
 -------
 Suppose you want to delete all records from DB2 table "userEvents" of database "prod" running on "localhost", port 50000,
-without authentication using driver "db211" if pipeline completes successfully (Ensure that the driver for DB2 is 
+without authentication using driver "db211" if the pipeline completes successfully (Ensure that the driver for DB2 is 
 installed. You can also driver name for some specific driver, otherwise "db211" will be used ), 
 then configure the plugin with:
 

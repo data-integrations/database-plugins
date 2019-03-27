@@ -39,8 +39,8 @@ error is thrown if it does not match the port.
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
-will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
+**Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
+will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 **Enable Auto-Commit:** Whether to enable auto-commit for queries run by this source. Defaults to 'false'.
 Normally this setting does not matter. It only matters if you are using a jdbc driver -- like the Hive
@@ -58,7 +58,7 @@ which means infinite timeout. Setting this to 0 also implies to wait indefinitel
 Example
 -------
 Suppose you want to delete all records from SQL Server table "userEvents" of database "prod" running on localhost, port 1433,
-without authentication using driver "sqlserver42" if pipeline completes successfully (Ensure that the driver for SQL Server is 
+without authentication using driver "sqlserver42" if the pipeline completes successfully (Ensure that the driver for SQL Server is 
 installed. You can also driver name for some specific driver, otherwise "sqlserver42" will be used ), 
 then configure the plugin with:
 
