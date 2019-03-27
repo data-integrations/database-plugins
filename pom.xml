@@ -36,6 +36,7 @@
     <module>db2-plugin</module>
     <module>netezza-plugin</module>
     <module>aurora-mysql-plugin</module>
+    <module>aurora-postgresql-plugin</module>
   </modules>
 
   <licenses>
