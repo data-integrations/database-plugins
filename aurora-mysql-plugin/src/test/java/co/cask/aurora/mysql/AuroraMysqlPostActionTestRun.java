@@ -43,7 +43,6 @@ public class AuroraMysqlPostActionTestRun extends AuroraMysqlPluginTestBase {
 
   @Test
   public void testAction() throws Exception {
-
     ETLStage source = new ETLStage("source", MockSource.getPlugin("actionInput"));
     ETLStage sink = new ETLStage("sink", MockSink.getPlugin("actionOutput"));
     ETLStage action = new ETLStage("action", new ETLPlugin(

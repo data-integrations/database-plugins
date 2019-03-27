@@ -69,7 +69,6 @@ public class AuroraMysqlSinkTestRun extends AuroraMysqlPluginTestBase {
     deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSink");
     createInputData(inputDatasetName);
 
-
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement();
          ResultSet resultSet = stmt.executeQuery("SELECT * FROM my_table")) {
@@ -83,7 +82,6 @@ public class AuroraMysqlSinkTestRun extends AuroraMysqlPluginTestBase {
       Assert.assertTrue(resultSet.next());
       users.add(resultSet.getString("NAME"));
       Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
-
     }
   }
 
