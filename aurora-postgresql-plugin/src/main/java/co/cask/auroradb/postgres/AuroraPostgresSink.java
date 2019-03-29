@@ -19,12 +19,17 @@ package co.cask.auroradb.postgres;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.db.batch.config.DBSpecificSinkConfig;
 import co.cask.db.batch.sink.AbstractDBSink;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
@@ -41,6 +46,20 @@ public class AuroraPostgresSink extends AbstractDBSink {
   public AuroraPostgresSink(AuroraPostgresSinkConfig auroraPostgresSinkConfig) {
     super(auroraPostgresSinkConfig);
     this.auroraPostgresSinkConfig = auroraPostgresSinkConfig;
+  }
+
+  @Override
+  protected void setColumnsInfo(List<Schema.Field> fields) {
+    List<String> columnsList = new ArrayList<>();
+    StringJoiner columnsJoiner = new StringJoiner(",");
+
+    for (Schema.Field field : fields) {
+      columnsList.add(field.getName());
+      columnsJoiner.add("\"" + field.getName() + "\"");
+    }
+
+    super.columns = Collections.unmodifiableList(columnsList);
+    super.dbColumns = columnsJoiner.toString();
   }
 
   /**

@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.db.batch.config.DBSpecificSourceConfig;
 import co.cask.db.batch.source.AbstractDBSource;
 import com.google.common.collect.ImmutableMap;
+import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -52,6 +53,11 @@ public class PostgresSource extends AbstractDBSource {
   @Override
   protected SchemaReader getSchemaReader() {
     return new PostgresSchemaReader();
+  }
+
+  @Override
+  protected Class<? extends DBWritable> getDBRecordType() {
+    return PostgresDBRecord.class;
   }
 
   /**

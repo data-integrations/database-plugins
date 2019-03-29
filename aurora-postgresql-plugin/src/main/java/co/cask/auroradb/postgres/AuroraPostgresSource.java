@@ -16,6 +16,7 @@
 
 package co.cask.auroradb.postgres;
 
+import co.cask.SchemaReader;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -23,6 +24,7 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.db.batch.config.DBSpecificSourceConfig;
 import co.cask.db.batch.source.AbstractDBSource;
 import com.google.common.collect.ImmutableMap;
+import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -46,6 +48,16 @@ public class AuroraPostgresSource extends AbstractDBSource {
   @Override
   protected String createConnectionString(String host, Integer port, String database) {
     return String.format(AuroraPostgresConstants.AURORA_POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new AuroraPostgresSchemaReader();
+  }
+
+  @Override
+  protected Class<? extends DBWritable> getDBRecordType() {
+    return AuroraPostgresDBRecord.class;
   }
 
   /**

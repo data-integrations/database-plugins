@@ -32,7 +32,7 @@ Properties
 will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 **Connection Timeout** The timeout value used for socket connect operations. If connecting to the server takes longer
-than this value, the connection is broken.The timeout is specified in seconds and a value of zero means that it is 
+than this value, the connection is broken. The timeout is specified in seconds and a value of zero means that it is 
 disabled.
 
 Example
