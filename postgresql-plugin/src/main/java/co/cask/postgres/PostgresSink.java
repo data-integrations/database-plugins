@@ -40,6 +40,7 @@ import javax.annotation.Nullable;
 @Name(PostgresConstants.PLUGIN_NAME)
 @Description("Writes records to a PostgreSQL table. Each record will be written in a row in the table")
 public class PostgresSink extends AbstractDBSink {
+  private static final Character ESCAPE_CHAR = '"';
 
   private final PostgresSinkConfig postgresSinkConfig;
 
@@ -55,7 +56,7 @@ public class PostgresSink extends AbstractDBSink {
 
     for (Schema.Field field : fields) {
       columnsList.add(field.getName());
-      columnsJoiner.add("\"" + field.getName() + "\"");
+      columnsJoiner.add(ESCAPE_CHAR + field.getName() + ESCAPE_CHAR);
     }
 
     super.columns = Collections.unmodifiableList(columnsList);
@@ -77,6 +78,11 @@ public class PostgresSink extends AbstractDBSink {
     @Override
     public String getConnectionString() {
       return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
+    }
+
+    @Override
+    protected String getEscapedTableName() {
+      return ESCAPE_CHAR + tableName + ESCAPE_CHAR;
     }
 
     @Override
