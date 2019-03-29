@@ -43,8 +43,8 @@ For example, 'SELECT MIN(id),MAX(id) FROM table'. Not required if numSplits is s
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
-will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
+**Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
+will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 **Schema:** The schema of records output by the source. This will be used in place of whatever schema comes
 back from the query. However, it must match the schema that comes back from the query,

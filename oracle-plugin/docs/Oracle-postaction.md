@@ -36,8 +36,8 @@ If set to 'failure', the action will only be executed if the pipeline run failed
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
-will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
+**Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
+will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 **Default Batch Value:** The default batch value that triggers an execution request.
 
@@ -50,7 +50,7 @@ set to false. For drivers like those, you will need to set this to 'true'.
 Example
 -------
 Suppose you want to delete all records from Oracle table "userEvents" of database "XE" running on localhost, port 3306,
-without authentication using driver "oracle" if pipeline completes successfully (Ensure that the driver for Oracle is 
+without authentication using driver "oracle" if the pipeline completes successfully (Ensure that the driver for Oracle is 
 installed. You can also driver name for some specific driver, otherwise "oracle" will be used ), 
 then configure the plugin with:
 

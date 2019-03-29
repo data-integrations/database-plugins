@@ -36,8 +36,8 @@ If set to 'failure', the action will only be executed if the pipeline run failed
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
-will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
+**Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
+will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 **Auto Reconnect** Should the driver try to re-establish stale and/or dead connections.
 
@@ -50,7 +50,7 @@ set to false. For drivers like those, you will need to set this to 'true'.
 Example
 -------
 Suppose you want to delete all records from MySQL table "userEvents" of database "prod" running on localhost, port 3306,
-without authentication using driver "mariadb" if pipeline completes successfully (Ensure that the driver for MySQL is 
+without authentication using driver "mariadb" if the pipeline completes successfully (Ensure that the driver for MySQL is 
 installed. You can also driver name for some specific driver, otherwise "mysql" will be used ), 
 then configure the plugin with:
 

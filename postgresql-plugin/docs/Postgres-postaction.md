@@ -36,8 +36,8 @@ If set to 'failure', the action will only be executed if the pipeline run failed
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
-will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
+**Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
+will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
 **Connection Timeout** The timeout value used for socket connect operations. If connecting to the server takes longer
 than this value, the connection is broken.The timeout is specified in seconds and a value of zero means that it is 
@@ -52,7 +52,7 @@ set to false. For drivers like those, you will need to set this to 'true'.
 Example
 -------
 Suppose you want to delete all records from PostgreSQL table "userEvents" of database "prod" running on localhost, 
-port 5432, without authentication using driver "postgresql" if pipeline completes successfully 
+port 5432, without authentication using driver "postgresql" if the pipeline completes successfully 
 (Ensure that the driver for PostgreSQL is installed. You can also driver name for some specific driver, 
 otherwise "postgresql" will be used ), then configure the plugin with:
 
