@@ -48,9 +48,7 @@ public class AuroraPostgresAction extends AbstractDBAction {
   public static class AuroraPostgresActionConfig extends DBSpecificQueryConfig {
 
     @Name(AuroraPostgresConstants.CONNECTION_TIMEOUT)
-    @Description("The timeout value used for socket connect operations. If connecting to the server takes longer" +
-      " than this value, the connection is broken. " +
-      "The timeout is specified in seconds and a value of zero means that it is disabled")
+    @Description(AuroraPostgresConstants.CONNECTION_TIMEOUT_DESCRIPTION)
     @Nullable
     public Integer connectionTimeout;
 

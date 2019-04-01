@@ -28,4 +28,8 @@ public final class AuroraPostgresConstants {
   public static final String PLUGIN_NAME = "AuroraPostgres";
   public static final String AURORA_POSTGRES_CONNECTION_STRING_FORMAT = "jdbc:postgresql://%s:%s/%s";
   public static final String CONNECTION_TIMEOUT = "connectionTimeout";
+  public static final String CONNECTION_TIMEOUT_DESCRIPTION =
+    "The timeout value used for socket connect operations. If connecting to the server takes longer" +
+    " than this value, the connection is broken. " +
+    "The timeout is specified in seconds and a value of zero means that it is disabled.";
 }
