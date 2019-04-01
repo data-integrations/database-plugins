@@ -16,14 +16,14 @@
 
 package io.cdap.plugin.util;
 
+import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
-import io.cdap.cdap.api.plugin.PluginProperties;
-import io.cdap.cdap.etl.api.PipelineConfigurer;
-import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.JDBCDriverShim;
 import org.slf4j.Logger;

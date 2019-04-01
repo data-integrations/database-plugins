@@ -16,25 +16,25 @@
 
 package io.cdap.plugin.db.batch.source;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Macro;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.plugin.EndpointPluginContext;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.hydrator.common.LineageRecorder;
+import co.cask.hydrator.common.ReferenceBatchSource;
+import co.cask.hydrator.common.ReferencePluginConfig;
+import co.cask.hydrator.common.SourceInputFormatProvider;
 import com.google.common.base.Strings;
-import io.cdap.cdap.api.annotation.Description;
-import io.cdap.cdap.api.annotation.Macro;
-import io.cdap.cdap.api.annotation.Name;
-import io.cdap.cdap.api.data.batch.Input;
-import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.dataset.lib.KeyValue;
-import io.cdap.cdap.api.plugin.EndpointPluginContext;
-import io.cdap.cdap.api.plugin.PluginConfig;
-import io.cdap.cdap.api.plugin.PluginProperties;
-import io.cdap.cdap.etl.api.Emitter;
-import io.cdap.cdap.etl.api.PipelineConfigurer;
-import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
-import io.cdap.cdap.etl.api.batch.BatchSourceContext;
-import io.cdap.plugin.common.LineageRecorder;
-import io.cdap.plugin.common.ReferenceBatchSource;
-import io.cdap.plugin.common.ReferencePluginConfig;
-import io.cdap.plugin.common.SourceInputFormatProvider;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBConfig;
@@ -43,11 +43,11 @@ import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.MRJobConfig;
-import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+import org.apache.sqoop.mapreduce.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +72,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
   protected final DBSourceConfig sourceConfig;
   protected Class<? extends Driver> driverClass;
+  protected FieldCase fieldCase;
 
   public AbstractDBSource(DBSourceConfig sourceConfig) {
     super(new ReferencePluginConfig(sourceConfig.referenceName));
@@ -115,7 +116,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   @Path("getSchema")
   public Schema getSchema(GetSchemaRequest request,
                           EndpointPluginContext pluginContext) throws IllegalAccessException,
-    SQLException, InstantiationException {
+    SQLException, InstantiationException, ClassNotFoundException {
     DriverCleanup driverCleanup;
     try {
 
@@ -144,7 +145,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
   private DriverCleanup loadPluginClassAndGetDriver(GetSchemaRequest request,
                                                     EndpointPluginContext pluginContext)
-    throws IllegalAccessException, InstantiationException, SQLException {
+    throws IllegalAccessException, InstantiationException, SQLException, ClassNotFoundException {
 
     Class<? extends Driver> driverClass =
       pluginContext.loadPluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE,
@@ -196,16 +197,18 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
               ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.jdbcPluginName,
               connectionString,
               sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery());
-    Configuration hConf = new Configuration();
+    JobConf hConf = new JobConf();
     hConf.clear();
 
+    int fetchSize = 1000;
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     if (sourceConfig.user == null && sourceConfig.password == null) {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString);
+      DBConfiguration.configureDB(hConf, driverClass.getName(), sourceConfig.connectionString, fetchSize);
     } else {
       DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString,
-                                  sourceConfig.user, sourceConfig.password);
+                                  sourceConfig.user, sourceConfig.password, fetchSize);
+      hConf.set("co.cask.cdap.jdbc.passwd", sourceConfig.password);
     }
 
     DataDrivenETLDBInputFormat.setInput(hConf, getDBRecordType(),
@@ -247,12 +250,13 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
-    driverClass = context.loadPluginClass(getJDBCPluginId());
+    driverClass = context.loadPluginClass(getJDBCPluginId());;
+    fieldCase = FieldCase.toFieldCase(sourceConfig.columnNameCase);
   }
 
   @Override
   public void transform(KeyValue<LongWritable, DBRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(input.getValue().getRecord());
+    emitter.emit(StructuredRecordUtils.convertCase(input.getValue().getRecord(), fieldCase));
   }
 
   @Override

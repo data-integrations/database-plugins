@@ -20,7 +20,6 @@ import com.google.common.base.Throwables;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.JDBCDriverShim;
 import io.cdap.plugin.db.batch.NoOpCommitConnection;
-import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -49,6 +48,7 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
   private static final Logger LOG = LoggerFactory.getLogger(DataDrivenETLDBInputFormat.class);
   private Driver driver;
   private JDBCDriverShim driverShim;
+  private Connection connection;
 
   static void setInput(Configuration conf,
                        Class<? extends DBWritable> inputClass,
@@ -92,7 +92,7 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
         Properties properties =
           ConnectionConfig.getConnectionArguments(conf.get(DBUtils.CONNECTION_ARGUMENTS),
                                                   conf.get(DBConfiguration.USERNAME_PROPERTY),
-                                                  conf.get(DBConfiguration.PASSWORD_PROPERTY));
+                                                  conf.get("co.cask.cdap.jdbc.passwd"));
         connection = DriverManager.getConnection(url, properties);
 
 
@@ -103,9 +103,11 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
         } else {
           this.connection.setAutoCommit(false);
         }
-        String level = conf.get(TransactionIsolationLevel.CONF_KEY);
-        LOG.debug("Transaction isolation level: {}", level);
-        connection.setTransactionIsolation(TransactionIsolationLevel.getLevel(level));
+        this.connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+//
+//        String level = conf.get(TransactionIsolationLevel.CONF_KEY);
+//        LOG.debug("Transaction isolation level: {}", level);
+//        connection.setTransactionIsolation(TransactionIsolationLevel.getLevel(level));
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
