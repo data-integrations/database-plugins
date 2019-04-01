@@ -77,54 +77,54 @@ Connection timeout: 100
 
 Mapping of PostgreSQL types to CDAP schema:
 
-    +==========================================+
-    |  sql type              | type            |
-    +==========================================+
-    | integer                | int             |
-    | real                   | float           |
-    | boolean                | boolean         |
-    | character              | varying(30)     |
-    | smallint               | int             |
-    | bigint                 | long            |
-    | numeric(10,2)          | double          |
-    | numeric(10,2)          | double          |
-    | double precision       | double          |
-    | date                   | date            |
-    | time without time zone | time            |
-    | timestamp(3) without   |                 |
-    | time zone              | timestamp       |
-    | text                   | string          |
-    | character(100)         | string          |
-    | bytea                  | bytes           |    
-    | varying(255)           | string          |
-    | interval               | string          |
-    | int4range              | string          |
-    | int8range              | string          |
-    | numrange               | string          |
-    | tsrange                | string          |
-    | tstzrange              | string          |
-    | daterange              | string          |
-    | bit varying(5)         | string          |
-    | uuid                   | string          |
-    | tsvector               | string          |
-    | cidr                   | string          |
-    | inet                   | string          |
-    | macaddr                | string          |
-    | point                  | string          |
-    | line                   | string          |
-    | lseg                   | string          |
-    | box                    | string          |
-    | path                   | string          |
-    | polygon                | string          |
-    | circle                 | string          |
-    | public.type_name       | string          |
-    | xml                    | string          |
-    | json                   | string          |
-    | integer[]              | string          |
-    | text[]                 | string          |
-    | text[]                 | string          |
-    | double precision[]     | string          |
-    | double precision[]     | string          |
-    | double precision[]     | string          |
-    | bigint[]               | string          |
-    +==========================================+
+    +==================================================================================================================+
+    |  sql type              | schema type     | representation                                                        | 
+    +==================================================================================================================+
+    | integer                | int             |                                                                       |
+    | real                   | float           |                                                                       |
+    | boolean                | boolean         |                                                                       |
+    | character              | varying(30)     |                                                                       |
+    | smallint               | int             |                                                                       |
+    | bigint                 | long            |                                                                       |
+    | numeric(10,2)          | double          |                                                                       |
+    | numeric(10,2)          | double          |                                                                       |
+    | double precision       | double          |                                                                       |
+    | date                   | date            |                                                                       |
+    | time without time zone | time            |                                                                       |
+    | timestamp(3) without   |                 |                                                                       |
+    | time zone              | timestamp       |                                                                       |
+    | text                   | string          |                                                                       |
+    | character(100)         | string          |                                                                       |
+    | bytea                  | bytes           |                                                                       |
+    | varying(255)           | string          |                                                                       |
+    | interval               | string          | '3 days 04:05:06'                                                     |
+    | int4range              | string          | '[2,12)'                                                              |
+    | int8range              | string          | '[21,30)'                                                             |
+    | numrange               | string          | '(20,30)'                                                             |
+    | tsrange                | string          | '["2014-07-16 00:00:00",)'                                            |
+    | tstzrange              | string          | '["2014-07-16 00:00:00+00","2014-07-18 00:00:00+00")'                 |
+    | daterange              | string          | '[2014-07-16,2014-07-18)'                                             |
+    | bit varying(5)         | string          | '101'                                                                 |
+    | uuid                   | string          | 'ab2589a4-5394-9866-0aa3-27b6fd8483c5'                                |
+    | tsvector               | string          | ''a' 'and' 'ate' 'cat' 'fat' 'mat' 'on' 'rat' 'sat''                  |
+    | cidr                   | string          | '192.168.100.128/25'                                                  |
+    | inet                   | string          | '192.168.100.128/25'                                                  |
+    | macaddr                | string          | '08:00:2b:01:02:03'                                                   | 
+    | point                  | string          | '(10,10)'                                                             |
+    | line                   | string          | '{1,-1,0}'                                                            |
+    | lseg                   | string          | '[(10,10),(15,15)]'                                                   |
+    | box                    | string          | '(15,15),(10,10)'                                                     |
+    | path                   | string          | '[(10,10),(15,15)]'                                                   |
+    | polygon                | string          | '((10,10),(15,15))'                                                   |
+    | circle                 | string          | '<(1,123),10>'                                                        |
+    | public.enum_type       | string          |                                                                       |
+    | xml                    | string          | '<book><title>Manual</title><chapter>...</chapter></book>'            |
+    | json                   | string          | '{"firstName": "John"}'                                               |
+    | integer[]              | string          | '{1,2,4,5}'                                                           |
+    | text[]                 | string          | '{'testset','esrs'}'                                                  |
+    | double precision[]     | string          | '{12.23000000000000000,1245.12300000000000000,21.42100000000000000}'  |
+    | bigint[]               | string          | '{12,12412214214214,21512}'                                           |
+    +==================================================================================================================+
+    
+    
+    

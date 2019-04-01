@@ -78,7 +78,7 @@ Mapping of MySQL types to CDAP schema:
     +===================================+
     | sql type           | schema type  |
     +===================================+
-    | INT,               | int          |
+    | INT                | int          |
     | TINYINT            | boolean      |
     | BOOL,BOOLEAN       | boolean      |
     | INTEGER            | int          |
