@@ -16,13 +16,13 @@
 
 package io.cdap.plugin.db2;
 
-import io.cdap.cdap.api.annotation.Description;
-import io.cdap.cdap.api.annotation.Name;
-import io.cdap.cdap.api.annotation.Plugin;
-import io.cdap.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
-import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+import org.apache.sqoop.mapreduce.DBWritable;
 
 
 /**
