@@ -75,14 +75,56 @@ Password: "Test11"
 Connection timeout: 100
 ```  
 
-For example, if the 'id' column is a primary key of type int and the other columns are
-non-nullable varchars, output records will have this schema:
+Mapping of PostgreSQL types to CDAP schema:
 
-    +======================================+
-    | field name     | type                |
-    +======================================+
-    | id             | int                 |
-    | name           | string              |
-    | email          | string              |
-    | phone          | string              |
-    +======================================+
+    +==========================================+
+    |  sql type              | type            |
+    +==========================================+
+    | integer                | int             |
+    | real                   | float           |
+    | boolean                | boolean         |
+    | character              | varying(30)     |
+    | smallint               | int             |
+    | bigint                 | long            |
+    | numeric(10,2)          | double          |
+    | numeric(10,2)          | double          |
+    | double precision       | double          |
+    | date                   | date            |
+    | time without time zone | time            |
+    | timestamp(3) without   |                 |
+    | time zone              | timestamp       |
+    | text                   | string          |
+    | character(100)         | string          |
+    | bytea                  | bytes           |    
+    | varying(255)           | string          |
+    | interval               | string          |
+    | int4range              | string          |
+    | int8range              | string          |
+    | numrange               | string          |
+    | tsrange                | string          |
+    | tstzrange              | string          |
+    | daterange              | string          |
+    | bit varying(5)         | string          |
+    | uuid                   | string          |
+    | tsvector               | string          |
+    | cidr                   | string          |
+    | inet                   | string          |
+    | macaddr                | string          |
+    | point                  | string          |
+    | line                   | string          |
+    | lseg                   | string          |
+    | box                    | string          |
+    | path                   | string          |
+    | polygon                | string          |
+    | circle                 | string          |
+    | public.type_name       | string          |
+    | xml                    | string          |
+    | json                   | string          |
+    | integer[]              | string          |
+    | text[]                 | string          |
+    | text[]                 | string          |
+    | double precision[]     | string          |
+    | double precision[]     | string          |
+    | double precision[]     | string          |
+    | bigint[]               | string          |
+    +==========================================+
