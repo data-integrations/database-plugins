@@ -20,7 +20,9 @@ import co.cask.CommonSchemaReader;
 import co.cask.ConnectionConfig;
 import co.cask.DBConfig;
 import co.cask.DBRecord;
+import co.cask.FieldCase;
 import co.cask.SchemaReader;
+import co.cask.StructuredRecordUtils;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
@@ -43,11 +45,11 @@ import co.cask.hydrator.common.SourceInputFormatProvider;
 import co.cask.util.DBUtils;
 import co.cask.util.DriverCleanup;
 import com.google.common.base.Strings;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.MRJobConfig;
-import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+import org.apache.sqoop.mapreduce.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +74,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
   protected final DBSourceConfig sourceConfig;
   protected Class<? extends Driver> driverClass;
+  protected FieldCase fieldCase;
 
   public AbstractDBSource(DBSourceConfig sourceConfig) {
     super(new ReferencePluginConfig(sourceConfig.referenceName));
@@ -115,7 +118,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   @Path("getSchema")
   public Schema getSchema(GetSchemaRequest request,
                           EndpointPluginContext pluginContext) throws IllegalAccessException,
-    SQLException, InstantiationException {
+    SQLException, InstantiationException, ClassNotFoundException {
     DriverCleanup driverCleanup;
     try {
 
@@ -144,7 +147,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
   private DriverCleanup loadPluginClassAndGetDriver(GetSchemaRequest request,
                                                     EndpointPluginContext pluginContext)
-    throws IllegalAccessException, InstantiationException, SQLException {
+    throws IllegalAccessException, InstantiationException, SQLException, ClassNotFoundException {
 
     Class<? extends Driver> driverClass =
       pluginContext.loadPluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE,
@@ -196,16 +199,18 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
               ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.jdbcPluginName,
               connectionString,
               sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery());
-    Configuration hConf = new Configuration();
+    JobConf hConf = new JobConf();
     hConf.clear();
 
+    int fetchSize = 1000;
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     if (sourceConfig.user == null && sourceConfig.password == null) {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString);
+      DBConfiguration.configureDB(hConf, driverClass.getName(), sourceConfig.connectionString, fetchSize);
     } else {
       DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString,
-                                  sourceConfig.user, sourceConfig.password);
+                                  sourceConfig.user, sourceConfig.password, fetchSize);
+      hConf.set("co.cask.cdap.jdbc.passwd", sourceConfig.password);
     }
 
     DataDrivenETLDBInputFormat.setInput(hConf, getDBRecordType(),
@@ -247,12 +252,13 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
-    driverClass = context.loadPluginClass(getJDBCPluginId());
+    driverClass = context.loadPluginClass(getJDBCPluginId());;
+    fieldCase = FieldCase.toFieldCase(sourceConfig.columnNameCase);
   }
 
   @Override
   public void transform(KeyValue<LongWritable, DBRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(input.getValue().getRecord());
+    emitter.emit(StructuredRecordUtils.convertCase(input.getValue().getRecord(), fieldCase));
   }
 
   @Override

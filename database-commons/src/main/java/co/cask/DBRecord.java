@@ -51,10 +51,11 @@ import javax.sql.rowset.serial.SerialBlob;
  * @see org.apache.hadoop.mapreduce.lib.db.DBOutputFormat DBOutputFormat
  * @see DBWritable DBWritable
  */
-public class DBRecord implements Writable, DBWritable, Configurable {
+public class DBRecord implements Writable, org.apache.sqoop.mapreduce.DBWritable, Configurable {
   protected StructuredRecord record;
   protected Configuration conf;
-
+  protected List<Schema.Field> schemaFields;
+  protected Schema schema;
   /**
    * Need to cache {@link ResultSetMetaData} of the record for use during writing to a table.
    * This is because we cannot rely on JDBC drivers to properly set metadata in the {@link PreparedStatement}
@@ -97,8 +98,10 @@ public class DBRecord implements Writable, DBWritable, Configurable {
    */
   public void readFields(ResultSet resultSet) throws SQLException {
     ResultSetMetaData metadata = resultSet.getMetaData();
-    List<Schema.Field> schemaFields = getSchemaReader().getSchemaFields(resultSet, conf.get(DBUtils.OVERRIDE_SCHEMA));
-    Schema schema = Schema.recordOf("dbRecord", schemaFields);
+    if (schemaFields == null) {
+      schemaFields = DBUtils.getSchemaFields(resultSet, conf.get(DBUtils.OVERRIDE_SCHEMA));
+      schema = Schema.recordOf("dbRecord", schemaFields);
+    }
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(schema);
     for (int i = 0; i < schemaFields.size(); i++) {
       Schema.Field field = schemaFields.get(i);

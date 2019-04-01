@@ -61,6 +61,7 @@
     <twill.version>0.9.0</twill.version>
     <!-- For plugins that don't require jdbc driver for tests -->
     <jdbcDriversJars></jdbcDriversJars>
+    <sqoop.version>1.4.7</sqoop.version>
   </properties>
 
   <repositories>
@@ -227,6 +228,21 @@
             <groupId>org.slf4j</groupId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.sqoop</groupId>
+        <artifactId>sqoop</artifactId>
+        <classifier>hadoop260</classifier>
+        <version>${sqoop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jcl-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>log4j-over-slf4j</artifactId>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
