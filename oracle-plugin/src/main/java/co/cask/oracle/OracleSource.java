@@ -22,7 +22,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.db.batch.config.DBSpecificSourceConfig;
 import co.cask.db.batch.source.AbstractDBSource;
 import com.google.common.collect.ImmutableMap;
-import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+import org.apache.sqoop.mapreduce.DBWritable;
 
 import java.util.Map;
 import javax.annotation.Nullable;

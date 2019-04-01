@@ -25,10 +25,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
-import org.apache.hadoop.mapreduce.lib.db.DBInputFormat;
-import org.apache.hadoop.mapreduce.lib.db.DBWritable;
-import org.apache.hadoop.mapreduce.lib.db.DataDrivenDBInputFormat;
+import org.apache.sqoop.mapreduce.DBWritable;
+import org.apache.sqoop.mapreduce.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +40,7 @@ import java.util.Properties;
 /**
  * Class that extends {@link DBInputFormat} to load the database driver class correctly.
  */
-public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
+public class DataDrivenETLDBInputFormat extends org.apache.sqoop.mapreduce.db.DataDrivenDBInputFormat {
   public static final String AUTO_COMMIT_ENABLED = "co.cask.hydrator.db.autocommit.enabled";
 
   private static final Logger LOG = LoggerFactory.getLogger(DataDrivenETLDBInputFormat.class);

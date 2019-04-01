@@ -22,7 +22,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.db.batch.config.DBSpecificSourceConfig;
 import co.cask.db.batch.source.AbstractDBSource;
-import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+import org.apache.sqoop.mapreduce.DBWritable;
 
 /**
  * Batch source to read from DB2.

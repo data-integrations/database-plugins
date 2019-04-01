@@ -206,7 +206,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     if (sourceConfig.user == null && sourceConfig.password == null) {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), sourceConfig.connectionString, fetchSize);
+      DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString, fetchSize);
     } else {
       DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString,
                                   sourceConfig.user, sourceConfig.password, fetchSize);
@@ -245,7 +245,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
                               new SourceInputFormatProvider(DataDrivenETLDBInputFormat.class, hConf)));
   }
 
-  protected Class<? extends DBWritable> getDBRecordType() {
+  protected Class<? extends org.apache.sqoop.mapreduce.DBWritable> getDBRecordType() {
     return DBRecord.class;
   }
 
@@ -282,6 +282,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     public static final String NUM_SPLITS = "numSplits";
     public static final String SCHEMA = "schema";
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
+    public static final String COLUMN_NAME_CASE = "columnCase";
 
     @Name(IMPORT_QUERY)
     @Description("The SELECT query to use to import data from the specified table. " +
@@ -320,6 +321,17 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       "back from the query. This should only be used if there is a bug in your jdbc driver. For example, if a column " +
       "is not correctly getting marked as nullable.")
     public String schema;
+
+
+    @Name(COLUMN_NAME_CASE)
+    @Description("Sets the case of the column names returned from the query. " +
+      "Possible options are upper or lower. By default or for any other input, the column names are not modified and " +
+      "the names returned from the database are used as-is. Note that setting this property provides predictability " +
+      "of column name cases across different databases but might result in column name conflicts if multiple column " +
+      "names are the same when the case is ignored.")
+    @Nullable
+    public String columnNameCase;
+
 
     private String getImportQuery() {
       return cleanQuery(importQuery);
