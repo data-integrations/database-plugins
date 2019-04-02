@@ -163,7 +163,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       try (Connection connection = DriverManager.getConnection(dbSinkConfig.getConnectionString(),
                                                                dbSinkConfig.getConnectionArguments());
            Statement statement = connection.createStatement();
-           ResultSet rs = statement.executeQuery("SELECT * FROM " + dbSinkConfig.tableName + " WHERE 1 = 0")) {
+           ResultSet rs = statement.executeQuery("SELECT * FROM " + dbSinkConfig.getEscapedTableName()
+                                                   + " WHERE 1 = 0")) {
         inferredFields.addAll(getSchemaReader().getSchemaFields(rs));
       } catch (SQLException e) {
         throw new InvalidStageException("Error while reading table metadata", e);
@@ -226,7 +227,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
            // that can be used to construct DBRecord objects to sink to the database table.
            ResultSet rs = statement.executeQuery(String.format("SELECT %s FROM %s WHERE 1 = 0",
                                                                dbColumns,
-                                                               dbSinkConfig.tableName))
+                                                               dbSinkConfig.getEscapedTableName()))
       ) {
         ResultSetMetaData resultSetMetadata = rs.getMetaData();
         // JDBC driver column indices start with 1
@@ -267,7 +268,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
                                     "points to a valid database.",
                                   tableName, connectionString);
 
-      try (PreparedStatement pStmt = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE 1 = 0");
+      try (PreparedStatement pStmt = connection.prepareStatement("SELECT * FROM " + dbSinkConfig.getEscapedTableName()
+                                                                   + " WHERE 1 = 0");
            ResultSet rs = pStmt.executeQuery()) {
         validateFields(inputSchema, rs);
       }
@@ -336,6 +338,16 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     @Description("Name of the database table to write to.")
     @Macro
     public String tableName;
+
+    /**
+     * Adds escape characters (back quotes, double quotes, etc.) to the table name for
+     * databases with case-sensitive identifiers.
+     * @return tableName with leading and trailing escape characters appended.
+     * Default implementation returns unchanged table name string.
+     */
+    protected String getEscapedTableName() {
+      return tableName;
+    }
   }
 
   private static class DBOutputFormatProvider implements OutputFormatProvider {
@@ -360,7 +372,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       if (dbSinkConfig.password != null) {
         conf.put(DBConfiguration.PASSWORD_PROPERTY, dbSinkConfig.password);
       }
-      conf.put(DBConfiguration.OUTPUT_TABLE_NAME_PROPERTY, dbSinkConfig.tableName);
+      conf.put(DBConfiguration.OUTPUT_TABLE_NAME_PROPERTY, dbSinkConfig.getEscapedTableName());
       conf.put(DBConfiguration.OUTPUT_FIELD_NAMES_PROPERTY, dbColumns);
     }
 

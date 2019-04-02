@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.postgres;
+package co.cask.auroradb.postgres;
 
 import co.cask.SchemaReader;
 import co.cask.cdap.api.annotation.Description;
@@ -30,56 +30,58 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Batch source to read from PostgreSQL.
+ * Batch source to read from Aurora DB PostgreSQL type cluster.
  */
 @Plugin(type = BatchSource.PLUGIN_TYPE)
-@Name(PostgresConstants.PLUGIN_NAME)
+@Name(AuroraPostgresConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class PostgresSource extends AbstractDBSource {
+public class AuroraPostgresSource extends AbstractDBSource {
 
-  private final PostgresSourceConfig postgresSourceConfig;
+  private final AuroraPostgresSourceConfig auroraPostgresSourceConfig;
 
-  public PostgresSource(PostgresSourceConfig postgresSourceConfig) {
-    super(postgresSourceConfig);
-    this.postgresSourceConfig = postgresSourceConfig;
+  public AuroraPostgresSource(AuroraPostgresSourceConfig auroraPostgresSourceConfig) {
+    super(auroraPostgresSourceConfig);
+    this.auroraPostgresSourceConfig = auroraPostgresSourceConfig;
   }
 
   @Override
   protected String createConnectionString(String host, Integer port, String database) {
-    return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
+    return String.format(AuroraPostgresConstants.AURORA_POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
   }
 
   @Override
   protected SchemaReader getSchemaReader() {
-    return new PostgresSchemaReader();
+    return new AuroraPostgresSchemaReader();
   }
 
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
-    return PostgresDBRecord.class;
+    return AuroraPostgresDBRecord.class;
   }
 
   /**
-   * PosgtreSQL source config.
+   * Aurora DB PostgreSQL source config.
    */
-  public static class PostgresSourceConfig extends DBSpecificSourceConfig {
+  public static class AuroraPostgresSourceConfig extends DBSpecificSourceConfig {
 
-    @Name(PostgresConstants.CONNECTION_TIMEOUT)
-    @Description("The timeout value used for socket connect operations. If connecting to the server takes longer" +
-      " than this value, the connection is broken. " +
-      "The timeout is specified in seconds and a value of zero means that it is disabled")
+    @Name(AuroraPostgresConstants.CONNECTION_TIMEOUT)
+    @Description(AuroraPostgresConstants.CONNECTION_TIMEOUT_DESCRIPTION)
     @Nullable
     public Integer connectionTimeout;
 
     @Override
     public String getConnectionString() {
-      return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
+      return String.format(AuroraPostgresConstants.AURORA_POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
     }
 
     @Override
     public Map<String, String> getDBSpecificArguments() {
-      return ImmutableMap.of(PostgresConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
+      if (connectionTimeout != null) {
+        return ImmutableMap.of(AuroraPostgresConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
+      } else {
+        return ImmutableMap.of();
+      }
     }
   }
 }

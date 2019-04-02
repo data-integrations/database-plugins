@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.postgres;
+package co.cask.auroradb.postgres;
 
 import co.cask.DBRecord;
 import co.cask.SchemaReader;
@@ -25,11 +25,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * Writable class for PostgreSQL Source/Sink
+ * Writable class for Aurora DB PostgreSQL Source/Sink
  */
-public class PostgresDBRecord extends DBRecord {
+public class AuroraPostgresDBRecord extends DBRecord {
 
-  public PostgresDBRecord(StructuredRecord record, int[] columnTypes) {
+  public AuroraPostgresDBRecord(StructuredRecord record, int[] columnTypes) {
     super(record, columnTypes);
   }
 
@@ -37,12 +37,12 @@ public class PostgresDBRecord extends DBRecord {
    * Used in map-reduce. Do not remove.
    */
   @SuppressWarnings("unused")
-  public PostgresDBRecord() {}
+  public AuroraPostgresDBRecord() {}
 
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                              int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
-    if (PostgresSchemaReader.POSTGRES_TYPES.contains(sqlType)) {
+    if (AuroraPostgresSchemaReader.POSTGRES_TYPES.contains(sqlType)) {
       handleSpecificType(resultSet, recordBuilder, field);
     } else {
       setField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
@@ -56,6 +56,6 @@ public class PostgresDBRecord extends DBRecord {
 
   @Override
   protected SchemaReader getSchemaReader() {
-    return new PostgresSchemaReader();
+    return new AuroraPostgresSchemaReader();
   }
 }

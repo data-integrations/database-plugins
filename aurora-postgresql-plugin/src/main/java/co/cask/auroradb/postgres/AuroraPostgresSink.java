@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.postgres;
+package co.cask.auroradb.postgres;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
@@ -32,21 +32,21 @@ import java.util.Map;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
-
 /**
- * Sink support for a PostgreSQL database.
+ * Sink support for an Aurora DB PostgreSQL database.
  */
 @Plugin(type = BatchSink.PLUGIN_TYPE)
-@Name(PostgresConstants.PLUGIN_NAME)
-@Description("Writes records to a PostgreSQL table. Each record will be written in a row in the table")
-public class PostgresSink extends AbstractDBSink {
+@Name(AuroraPostgresConstants.PLUGIN_NAME)
+@Description("Writes records to a table of Aurora DB PostgreSQL cluster. " +
+  "Each record will be written in a row in the table.")
+public class AuroraPostgresSink extends AbstractDBSink {
   private static final Character ESCAPE_CHAR = '"';
 
-  private final PostgresSinkConfig postgresSinkConfig;
+  private final AuroraPostgresSinkConfig auroraPostgresSinkConfig;
 
-  public PostgresSink(PostgresSinkConfig postgresSinkConfig) {
-    super(postgresSinkConfig);
-    this.postgresSinkConfig = postgresSinkConfig;
+  public AuroraPostgresSink(AuroraPostgresSinkConfig auroraPostgresSinkConfig) {
+    super(auroraPostgresSinkConfig);
+    this.auroraPostgresSinkConfig = auroraPostgresSinkConfig;
   }
 
   @Override
@@ -64,20 +64,18 @@ public class PostgresSink extends AbstractDBSink {
   }
 
   /**
-   * PostgreSQL action configuration.
+   * Aurora DB PostgreSQL action configuration.
    */
-  public static class PostgresSinkConfig extends DBSpecificSinkConfig {
+  public static class AuroraPostgresSinkConfig extends DBSpecificSinkConfig {
 
-    @Name(PostgresConstants.CONNECTION_TIMEOUT)
-    @Description("The timeout value used for socket connect operations. If connecting to the server takes longer" +
-      " than this value, the connection is broken. " +
-      "The timeout is specified in seconds and a value of zero means that it is disabled")
+    @Name(AuroraPostgresConstants.CONNECTION_TIMEOUT)
+    @Description(AuroraPostgresConstants.CONNECTION_TIMEOUT_DESCRIPTION)
     @Nullable
     public Integer connectionTimeout;
 
     @Override
     public String getConnectionString() {
-      return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
+      return String.format(AuroraPostgresConstants.AURORA_POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
     }
 
     @Override
@@ -87,7 +85,11 @@ public class PostgresSink extends AbstractDBSink {
 
     @Override
     public Map<String, String> getDBSpecificArguments() {
-      return ImmutableMap.of(PostgresConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
+      if (connectionTimeout != null) {
+        return ImmutableMap.of(AuroraPostgresConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
+      } else {
+        return ImmutableMap.of();
+      }
     }
   }
 }

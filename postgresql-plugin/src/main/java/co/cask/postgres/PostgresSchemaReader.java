@@ -37,13 +37,9 @@ public class PostgresSchemaReader extends CommonSchemaReader {
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     if (POSTGRES_TYPES.contains(metadata.getColumnType(index))) {
-      return readSchema(metadata.getColumnTypeName(index), metadata.getColumnType(index));
+      return Schema.of(Schema.Type.STRING);
     }
 
     return super.getSchema(metadata, index);
-  }
-
-  private Schema readSchema(String columnTypeName, int sqlType) throws SQLException {
-      return Schema.of(Schema.Type.STRING);
   }
 }

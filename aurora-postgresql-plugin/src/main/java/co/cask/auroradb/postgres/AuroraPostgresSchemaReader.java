@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.oracle;
+package co.cask.auroradb.postgres;
 
 import co.cask.CommonSchemaReader;
 import co.cask.cdap.api.data.schema.Schema;
@@ -22,38 +22,23 @@ import com.google.common.collect.ImmutableSet;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Set;
 
 /**
- * Oracle schema reader.
+ * Aurora DB PostgreSQL schema reader.
  */
-public class OracleSchemaReader extends CommonSchemaReader {
-  /**
-   *  Oracle type constants, from Oracle JDBC Implementation.
-   */
-  public static final int INTERVAL_YM = -103;
-  public static final int INTERVAL_DS = -104;
-  public static final int TIMESTAMP_TZ = -101;
-  public static final int TIMESTAMP_LTZ = -102;
+public class AuroraPostgresSchemaReader extends CommonSchemaReader {
 
-  public static final Set<Integer> ORACLE_TYPES = ImmutableSet.of(
-    INTERVAL_DS,
-    INTERVAL_YM,
-    TIMESTAMP_TZ,
-    TIMESTAMP_LTZ
+  public static final Set<Integer> POSTGRES_TYPES = ImmutableSet.of(
+    Types.OTHER, Types.ARRAY, Types.SQLXML
   );
 
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
-    int sqlType = metadata.getColumnType(index);
-
-    if (ORACLE_TYPES.contains(sqlType)) {
-      if (sqlType == TIMESTAMP_LTZ || sqlType == TIMESTAMP_TZ) {
-        return Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
-      }
+    if (POSTGRES_TYPES.contains(metadata.getColumnType(index))) {
       return Schema.of(Schema.Type.STRING);
-    } else {
-      return super.getSchema(metadata, index);
     }
+    return super.getSchema(metadata, index);
   }
 }

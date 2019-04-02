@@ -16,6 +16,7 @@
 
 package co.cask.oracle;
 
+import co.cask.SchemaReader;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -46,6 +47,11 @@ public class OracleSource extends AbstractDBSource {
   @Override
   protected String createConnectionString(String host, Integer port, String database) {
     return String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, host, port, database);
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new OracleSchemaReader();
   }
 
   @Override
