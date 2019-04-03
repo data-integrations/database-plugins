@@ -51,7 +51,6 @@ public class AuroraPostgresSinkTestRun extends AuroraPostgresPluginTestBase {
 
   @Test
   public void testDBSink() throws Exception {
-
     String inputDatasetName = "input-dbsinktest";
 
     ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
@@ -67,7 +66,6 @@ public class AuroraPostgresSinkTestRun extends AuroraPostgresPluginTestBase {
 
     deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSink");
     createInputData(inputDatasetName);
-
 
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement();

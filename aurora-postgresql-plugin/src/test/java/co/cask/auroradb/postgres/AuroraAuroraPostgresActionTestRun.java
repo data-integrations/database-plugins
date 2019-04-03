@@ -39,7 +39,6 @@ public class AuroraAuroraPostgresActionTestRun extends AuroraPostgresPluginTestB
 
   @Test
   public void testDBAction() throws Exception {
-
     ETLStage source = new ETLStage("source", MockSource.getPlugin("actionInput"));
     ETLStage sink = new ETLStage("sink", MockSink.getPlugin("actionOutput"));
     ETLStage action = new ETLStage("action", new ETLPlugin(

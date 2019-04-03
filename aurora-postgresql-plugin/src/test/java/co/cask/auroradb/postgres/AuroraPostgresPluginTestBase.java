@@ -142,7 +142,6 @@ public class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static void prepareTestData(Connection conn) throws SQLException {
-
     try (
       Statement stmt = conn.createStatement();
       PreparedStatement pStmt1 =
