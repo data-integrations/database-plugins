@@ -14,5 +14,7 @@ mvn clean test \
 -Dnetezza.password=password \
 -DauroraMysql.clusterEndpoint=cdap-cluster.xyz.eu-central-1.rds.amazonaws.com -DauroraMysql.port=3306 \
 -DauroraMysql.database=cdapdb -DauroraMysql.username=cdap -DauroraMysql.password=cdap \
--DjdbcDriversJars="/jdbc/drivers/jars/som.jar, "
+-DauroraPostgresql.clusterEndpoint=pginstance.cxywmbgwp60k.eu-central-1.rds.amazonaws.com -DauroraPostgresql.port=5432 \
+-DauroraPostgresql.database=cdappg -DauroraPostgresql.username=cdap -DauroraPostgresql.password=cdap
+-DjdbcDriversJars="/jdbc/drivers/jars/some.jar, "
 ```
