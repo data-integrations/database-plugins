@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2019 Cask Data, Inc.
+  Copyright © 2019 CDAP
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -19,27 +19,27 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>database-plugins</artifactId>
-    <groupId>co.cask</groupId>
-    <version>1.0.0-SNAPSHOT</version>
+    <groupId>io.cdap.plugin</groupId>
+    <version>1.1.0</version>
   </parent>
 
   <name>Microsoft SQL Server plugin</name>
   <artifactId>mssql-plugin</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.1.0</version>
   <modelVersion>4.0.0</modelVersion>
 
   <dependencies>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>co.cask</groupId>
+      <groupId>io.cdap.plugin</groupId>
       <artifactId>database-commons</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.hydrator</groupId>
+      <groupId>io.cdap.plugin</groupId>
       <artifactId>hydrator-common</artifactId>
     </dependency>
     <dependency>
@@ -49,18 +49,18 @@
 
     <!-- test dependencies -->
     <dependency>
-      <groupId>co.cask</groupId>
+      <groupId>io.cdap.plugin</groupId>
       <artifactId>database-commons</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>hydrator-test</artifactId>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-data-pipeline</artifactId>
     </dependency>
     <dependency>
@@ -68,7 +68,7 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api</artifactId>
       <scope>provided</scope>
     </dependency>
@@ -90,7 +90,7 @@
         <configuration>
           <instructions>
             <_exportcontents>
-              co.cask.*;
+              io.cdap.plugin.*;
               org.apache.commons.lang;
               org.apache.commons.logging.*;
               org.codehaus.jackson.*
@@ -110,7 +110,7 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>co.cask</groupId>
+        <groupId>io.cdap</groupId>
         <artifactId>cdap-maven-plugin</artifactId>
       </plugin>
     </plugins>
