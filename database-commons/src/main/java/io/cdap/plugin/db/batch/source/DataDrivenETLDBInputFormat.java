@@ -42,7 +42,7 @@ import java.util.Properties;
  * Class that extends {@link DBInputFormat} to load the database driver class correctly.
  */
 public class DataDrivenETLDBInputFormat extends org.apache.sqoop.mapreduce.db.DataDrivenDBInputFormat {
-  public static final String AUTO_COMMIT_ENABLED = "co.cask.hydrator.db.autocommit.enabled";
+  public static final String AUTO_COMMIT_ENABLED = "io.cdap.plugin.db.autocommit.enabled";
 
   private static final Logger LOG = LoggerFactory.getLogger(DataDrivenETLDBInputFormat.class);
   private Driver driver;
@@ -91,7 +91,7 @@ public class DataDrivenETLDBInputFormat extends org.apache.sqoop.mapreduce.db.Da
         Properties properties =
           ConnectionConfig.getConnectionArguments(conf.get(DBUtils.CONNECTION_ARGUMENTS),
                                                   conf.get(DBConfiguration.USERNAME_PROPERTY),
-                                                  conf.get("co.cask.cdap.jdbc.passwd"));
+                                                  conf.get("io.cdap.cdap.jdbc.passwd"));
         connection = DriverManager.getConnection(url, properties);
 
 

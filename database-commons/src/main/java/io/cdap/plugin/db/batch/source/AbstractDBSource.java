@@ -16,37 +16,38 @@
 
 package io.cdap.plugin.db.batch.source;
 
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.plugin.EndpointPluginContext;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.etl.api.batch.BatchSourceContext;
-import co.cask.hydrator.common.LineageRecorder;
-import co.cask.hydrator.common.ReferenceBatchSource;
-import co.cask.hydrator.common.ReferencePluginConfig;
-import co.cask.hydrator.common.SourceInputFormatProvider;
 import com.google.common.base.Strings;
+import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.plugin.EndpointPluginContext;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
+import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.ReferenceBatchSource;
+import io.cdap.plugin.common.ReferencePluginConfig;
+import io.cdap.plugin.common.SourceInputFormatProvider;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBConfig;
 import io.cdap.plugin.db.DBRecord;
+import io.cdap.plugin.db.FieldCase;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.db.StructuredRecordUtils;
 import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.MRJobConfig;
-import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 import org.apache.sqoop.mapreduce.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -208,7 +209,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     } else {
       DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString,
                                   sourceConfig.user, sourceConfig.password, fetchSize);
-      hConf.set("co.cask.cdap.jdbc.passwd", sourceConfig.password);
+      hConf.set("io.cdap.cdap.jdbc.passwd", sourceConfig.password);
     }
 
     DataDrivenETLDBInputFormat.setInput(hConf, getDBRecordType(),
