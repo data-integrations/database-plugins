@@ -39,15 +39,16 @@ import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBConfig;
 import io.cdap.plugin.db.DBRecord;
+import io.cdap.plugin.db.FieldCase;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.db.StructuredRecordUtils;
 import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.MRJobConfig;
-import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
-import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+import org.apache.sqoop.mapreduce.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +73,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
   protected final DBSourceConfig sourceConfig;
   protected Class<? extends Driver> driverClass;
+  protected FieldCase fieldCase;
 
   public AbstractDBSource(DBSourceConfig sourceConfig) {
     super(new ReferencePluginConfig(sourceConfig.referenceName));
@@ -115,7 +117,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   @Path("getSchema")
   public Schema getSchema(GetSchemaRequest request,
                           EndpointPluginContext pluginContext) throws IllegalAccessException,
-    SQLException, InstantiationException {
+    SQLException, InstantiationException, ClassNotFoundException {
     DriverCleanup driverCleanup;
     try {
 
@@ -144,7 +146,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
   private DriverCleanup loadPluginClassAndGetDriver(GetSchemaRequest request,
                                                     EndpointPluginContext pluginContext)
-    throws IllegalAccessException, InstantiationException, SQLException {
+    throws IllegalAccessException, InstantiationException, SQLException, ClassNotFoundException {
 
     Class<? extends Driver> driverClass =
       pluginContext.loadPluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE,
@@ -196,16 +198,18 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
               ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.jdbcPluginName,
               connectionString,
               sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery());
-    Configuration hConf = new Configuration();
+    JobConf hConf = new JobConf();
     hConf.clear();
 
+    int fetchSize = 1000;
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     if (sourceConfig.user == null && sourceConfig.password == null) {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString);
+      DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString, fetchSize);
     } else {
       DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString,
-                                  sourceConfig.user, sourceConfig.password);
+                                  sourceConfig.user, sourceConfig.password, fetchSize);
+      hConf.set("io.cdap.cdap.jdbc.passwd", sourceConfig.password);
     }
 
     DataDrivenETLDBInputFormat.setInput(hConf, getDBRecordType(),
@@ -240,19 +244,20 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
                               new SourceInputFormatProvider(DataDrivenETLDBInputFormat.class, hConf)));
   }
 
-  protected Class<? extends DBWritable> getDBRecordType() {
+  protected Class<? extends org.apache.sqoop.mapreduce.DBWritable> getDBRecordType() {
     return DBRecord.class;
   }
 
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
-    driverClass = context.loadPluginClass(getJDBCPluginId());
+    driverClass = context.loadPluginClass(getJDBCPluginId());;
+    fieldCase = FieldCase.toFieldCase(sourceConfig.columnNameCase);
   }
 
   @Override
   public void transform(KeyValue<LongWritable, DBRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(input.getValue().getRecord());
+    emitter.emit(StructuredRecordUtils.convertCase(input.getValue().getRecord(), fieldCase));
   }
 
   @Override
@@ -276,6 +281,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     public static final String NUM_SPLITS = "numSplits";
     public static final String SCHEMA = "schema";
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
+    public static final String COLUMN_NAME_CASE = "columnCase";
 
     @Name(IMPORT_QUERY)
     @Description("The SELECT query to use to import data from the specified table. " +
@@ -314,6 +320,17 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       "back from the query. This should only be used if there is a bug in your jdbc driver. For example, if a column " +
       "is not correctly getting marked as nullable.")
     public String schema;
+
+
+    @Name(COLUMN_NAME_CASE)
+    @Description("Sets the case of the column names returned from the query. " +
+      "Possible options are upper or lower. By default or for any other input, the column names are not modified and " +
+      "the names returned from the database are used as-is. Note that setting this property provides predictability " +
+      "of column name cases across different databases but might result in column name conflicts if multiple column " +
+      "names are the same when the case is ignored.")
+    @Nullable
+    public String columnNameCase;
+
 
     private String getImportQuery() {
       return cleanQuery(importQuery);

@@ -99,7 +99,10 @@
               io.cdap.plugin.*;
               org.apache.commons.lang;
               org.apache.commons.logging.*;
-              org.codehaus.jackson.*
+              org.codehaus.jackson.*;
+              org.apache.sqoop.*;
+              com.cloudera.sqoop.*;
+              org.apache.log4j.*
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>

@@ -20,16 +20,14 @@ import com.google.common.base.Throwables;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.JDBCDriverShim;
 import io.cdap.plugin.db.batch.NoOpCommitConnection;
-import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
-import org.apache.hadoop.mapreduce.lib.db.DBInputFormat;
-import org.apache.hadoop.mapreduce.lib.db.DBWritable;
-import org.apache.hadoop.mapreduce.lib.db.DataDrivenDBInputFormat;
+import org.apache.sqoop.mapreduce.DBWritable;
+import org.apache.sqoop.mapreduce.db.DBConfiguration;
+import org.apache.sqoop.mapreduce.db.DBInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +41,13 @@ import java.util.Properties;
 /**
  * Class that extends {@link DBInputFormat} to load the database driver class correctly.
  */
-public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
+public class DataDrivenETLDBInputFormat extends org.apache.sqoop.mapreduce.db.DataDrivenDBInputFormat {
   public static final String AUTO_COMMIT_ENABLED = "io.cdap.plugin.db.autocommit.enabled";
 
   private static final Logger LOG = LoggerFactory.getLogger(DataDrivenETLDBInputFormat.class);
   private Driver driver;
   private JDBCDriverShim driverShim;
+  private Connection connection;
 
   static void setInput(Configuration conf,
                        Class<? extends DBWritable> inputClass,
@@ -92,7 +91,7 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
         Properties properties =
           ConnectionConfig.getConnectionArguments(conf.get(DBUtils.CONNECTION_ARGUMENTS),
                                                   conf.get(DBConfiguration.USERNAME_PROPERTY),
-                                                  conf.get(DBConfiguration.PASSWORD_PROPERTY));
+                                                  conf.get("io.cdap.cdap.jdbc.passwd"));
         connection = DriverManager.getConnection(url, properties);
 
 
@@ -103,9 +102,11 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
         } else {
           this.connection.setAutoCommit(false);
         }
-        String level = conf.get(TransactionIsolationLevel.CONF_KEY);
-        LOG.debug("Transaction isolation level: {}", level);
-        connection.setTransactionIsolation(TransactionIsolationLevel.getLevel(level));
+        this.connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+//
+//        String level = conf.get(TransactionIsolationLevel.CONF_KEY);
+//        LOG.debug("Transaction isolation level: {}", level);
+//        connection.setTransactionIsolation(TransactionIsolationLevel.getLevel(level));
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }

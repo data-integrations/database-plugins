@@ -78,6 +78,14 @@
       <version>RELEASE</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>log4j-over-slf4j</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -93,7 +101,10 @@
               io.cdap.plugin.*;
               org.apache.commons.lang;
               org.apache.commons.logging.*;
-              org.codehaus.jackson.*
+              org.codehaus.jackson.*;
+              org.apache.sqoop.*;
+              com.cloudera.sqoop.*;
+              org.apache.log4j.*
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>

@@ -23,7 +23,7 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
-import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+import org.apache.sqoop.mapreduce.DBWritable;
 
 import java.util.Map;
 import javax.annotation.Nullable;
