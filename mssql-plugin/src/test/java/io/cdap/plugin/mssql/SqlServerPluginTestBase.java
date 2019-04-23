@@ -99,9 +99,17 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
 
     connectionUrl = "jdbc:sqlserver://" + BASE_PROPS.get(ConnectionConfig.HOST) + ":" +
       BASE_PROPS.get(ConnectionConfig.PORT) + ";databaseName=" + BASE_PROPS.get(ConnectionConfig.DATABASE);
-    Connection conn = createConnection();
-    createTestTables(conn);
-    prepareTestData(conn);
+    try (Connection conn = createConnection()) {
+      conn.setAutoCommit(false);
+      try {
+        createTestTables(conn);
+        prepareTestData(conn);
+        conn.commit();
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
+    }
   }
 
   protected static void createTestTables(Connection conn) throws SQLException {
@@ -174,7 +182,7 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
         pStmt.setInt(1, i);
         pStmt.setString(2, name);
         pStmt.setString(3, name);
-        pStmt.setShort(4, (short) i);
+        pStmt.setByte(4, (byte) i);
         pStmt.setShort(5, (short) i);
         pStmt.setLong(6, (long) i);
         pStmt.setDouble(7, 123.45 + i);
@@ -195,7 +203,7 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
         pStmt.setTime(15, new Time(CURRENT_TS));
         pStmt.setBytes(16, name.getBytes());
         pStmt.setBigDecimal(17, new BigDecimal(123.45f + i));
-        pStmt.setBigDecimal(18, new BigDecimal(123.45f + i));
+        pStmt.setFloat(18, 123.45f + (short) i);
         pStmt.setString(19, name);
         pStmt.setString(20, name);
         pStmt.setString(21, name);
@@ -203,8 +211,12 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
         pStmt.setString(23, "char" + i);
         pStmt.setBytes(24, name.getBytes(Charsets.UTF_8));
         pStmt.setBytes(25, name.getBytes(Charsets.UTF_8));
-        pStmt.executeUpdate();
+        pStmt.addBatch();
+        if (i % 1000 == 0) {
+          pStmt.executeBatch();
+        }
       }
+      pStmt.executeBatch();
     }
   }
 

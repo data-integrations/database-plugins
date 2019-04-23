@@ -17,10 +17,12 @@
 package io.cdap.plugin.db;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.Lazy;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
@@ -54,6 +56,7 @@ import javax.sql.rowset.serial.SerialBlob;
 public class DBRecord implements Writable, DBWritable, Configurable {
   protected StructuredRecord record;
   protected Configuration conf;
+  private final Lazy<Schema> schema = new Lazy<>(this::computeSchema);
 
   /**
    * Need to cache {@link ResultSetMetaData} of the record for use during writing to a table.
@@ -96,12 +99,11 @@ public class DBRecord implements Writable, DBWritable, Configurable {
    * @param resultSet the {@link ResultSet} to build the {@link StructuredRecord} from
    */
   public void readFields(ResultSet resultSet) throws SQLException {
+    Schema schema = getSchema();
     ResultSetMetaData metadata = resultSet.getMetaData();
-    List<Schema.Field> schemaFields = getSchemaReader().getSchemaFields(resultSet, conf.get(DBUtils.OVERRIDE_SCHEMA));
-    Schema schema = Schema.recordOf("dbRecord", schemaFields);
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(schema);
-    for (int i = 0; i < schemaFields.size(); i++) {
-      Schema.Field field = schemaFields.get(i);
+    for (int i = 0; i < schema.getFields().size(); i++) {
+      Schema.Field field = schema.getFields().get(i);
       int sqlType = metadata.getColumnType(i + 1);
       int sqlPrecision = metadata.getPrecision(i + 1);
       int sqlScale = metadata.getScale(i + 1);
@@ -109,6 +111,22 @@ public class DBRecord implements Writable, DBWritable, Configurable {
       handleField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
     }
     record = recordBuilder.build();
+  }
+
+  private Schema getSchema() {
+    return schema.getOrCompute();
+  }
+
+  private Schema computeSchema() {
+    String schemaStr = conf.get(DBUtils.OVERRIDE_SCHEMA);
+    if (schemaStr == null) {
+      throw new IllegalStateException("Schema was not provided");
+    }
+    try {
+      return Schema.parseJson(schemaStr);
+    } catch (IOException e) {
+      throw new IllegalStateException(String.format("Unable to parse schema string %s", schemaStr), e);
+    }
   }
 
   protected SchemaReader getSchemaReader() {

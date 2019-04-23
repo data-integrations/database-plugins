@@ -35,41 +35,6 @@ import javax.annotation.Nullable;
 public class CommonSchemaReader implements SchemaReader {
 
   @Override
-  public List<Schema.Field> getSchemaFields(ResultSet resultSet, @Nullable String schemaStr)
-    throws SQLException {
-    Schema resultsetSchema = Schema.recordOf("resultset", getSchemaFields(resultSet));
-    Schema schema;
-
-    if (!Strings.isNullOrEmpty(schemaStr)) {
-      try {
-        schema = Schema.parseJson(schemaStr);
-      } catch (IOException e) {
-        throw new IllegalArgumentException(String.format("Unable to parse schema string %s", schemaStr), e);
-      }
-      for (Schema.Field field : schema.getFields()) {
-        Schema.Field resultsetField = resultsetSchema.getField(field.getName());
-        if (resultsetField == null) {
-          throw new IllegalArgumentException(String.format("Schema field %s is not present in input record",
-                                                           field.getName()));
-        }
-        Schema resultsetFieldSchema = resultsetField.getSchema().isNullable() ?
-          resultsetField.getSchema().getNonNullable() : resultsetField.getSchema();
-        Schema simpleSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-
-        if (!resultsetFieldSchema.equals(simpleSchema)) {
-          throw new IllegalArgumentException(String.format("Schema field %s has type %s but in input record found " +
-                                                             "type %s ",
-                                                           field.getName(), simpleSchema.getType(),
-                                                           resultsetFieldSchema.getType()));
-        }
-      }
-      return schema.getFields();
-
-    }
-    return resultsetSchema.getFields();
-  }
-
-  @Override
   public List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
     List<Schema.Field> schemaFields = Lists.newArrayList();
     ResultSetMetaData metadata = resultSet.getMetaData();

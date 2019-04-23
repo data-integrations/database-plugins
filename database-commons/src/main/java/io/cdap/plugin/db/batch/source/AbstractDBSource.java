@@ -31,6 +31,8 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSource;
 import io.cdap.plugin.common.ReferencePluginConfig;
@@ -69,6 +71,7 @@ import javax.ws.rs.Path;
 public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable, DBRecord, StructuredRecord> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDBSource.class);
+  private static final SchemaTypeAdapter SCHEMA_TYPE_ADAPTER = new SchemaTypeAdapter();
 
   protected final DBSourceConfig sourceConfig;
   protected Class<? extends Driver> driverClass;
@@ -122,19 +125,39 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       driverCleanup = loadPluginClassAndGetDriver(request, pluginContext);
       try (Connection connection = getConnection(request)) {
         String query = request.query;
-        Statement statement = connection.createStatement();
-        statement.setMaxRows(1);
-        if (query.contains("$CONDITIONS")) {
-          query = removeConditionsClause(query);
-        }
-        ResultSet resultSet = statement.executeQuery(query);
-        return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
+        return loadSchemaFromDB(connection, query);
       } finally {
         driverCleanup.destroy();
       }
     } catch (Exception e) {
       LOG.error("Exception while performing getSchema", e);
       throw e;
+    }
+  }
+
+  private Schema loadSchemaFromDB(Connection connection, String query) throws SQLException {
+    Statement statement = connection.createStatement();
+    statement.setMaxRows(1);
+    if (query.contains("$CONDITIONS")) {
+      query = removeConditionsClause(query);
+    }
+    ResultSet resultSet = statement.executeQuery(query);
+    return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
+  }
+
+  private Schema loadSchemaFromDB(Class<? extends Driver> driverClass)
+    throws SQLException, IllegalAccessException, InstantiationException {
+    String connectionString = sourceConfig.getConnectionString();
+    DriverCleanup driverCleanup
+      = DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.jdbcPluginName);
+
+    Properties properties = ConnectionConfig.getConnectionArguments(sourceConfig.connectionArguments, sourceConfig.user,
+                                                                    sourceConfig.password);
+
+    try (Connection connection = DriverManager.getConnection(connectionString, properties)) {
+      return loadSchemaFromDB(connection, sourceConfig.importQuery);
+    } finally {
+      driverCleanup.destroy();
     }
   }
 
@@ -231,8 +254,15 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     if (sourceConfig.numSplits != null) {
       hConf.setInt(MRJobConfig.NUM_MAPS, sourceConfig.numSplits);
     }
+
+    DBConfiguration dbConfiguration = new DBConfiguration(hConf);
+    Schema schemaFromDB = loadSchemaFromDB(driverClass);
     if (sourceConfig.schema != null) {
+      sourceConfig.validateSchema(schemaFromDB);
       hConf.set(DBUtils.OVERRIDE_SCHEMA, sourceConfig.schema);
+    } else {
+      String schemaStr = SCHEMA_TYPE_ADAPTER.toJson(schemaFromDB);
+      hConf.set(DBUtils.OVERRIDE_SCHEMA, schemaStr);
     }
     LineageRecorder lineageRecorder = new LineageRecorder(context, sourceConfig.referenceName);
     lineageRecorder.createExternalDataset(sourceConfig.getSchema());
@@ -354,10 +384,34 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
     }
 
+    private void validateSchema(Schema actualSchema) {
+      Schema schema = getSchema();
+      if (schema == null) {
+        throw new InvalidConfigPropertyException("Schema should not be null or empty", SCHEMA);
+      }
+      for (Schema.Field field : schema.getFields()) {
+        Schema.Field actualField = actualSchema.getField(field.getName());
+        if (actualField == null) {
+          throw new InvalidConfigPropertyException(String.format("Schema field '%s' is not present in actual record",
+                                                           field.getName()), SCHEMA);
+        }
+        Schema actualFieldSchema = actualField.getSchema().isNullable() ?
+          actualField.getSchema().getNonNullable() : actualField.getSchema();
+        Schema expectedFieldSchema = field.getSchema().isNullable() ?
+          field.getSchema().getNonNullable() : field.getSchema();
+
+        if (!actualFieldSchema.equals(expectedFieldSchema)) {
+          throw new IllegalArgumentException(
+            String.format("Schema field '%s' has type '%s' but found '%s' in input record",
+                          field.getName(), expectedFieldSchema.getType(), actualFieldSchema.getType()));
+        }
+      }
+    }
+
     @Nullable
     private Schema getSchema() {
       try {
-        return schema == null ? null : Schema.parseJson(schema);
+        return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
       } catch (IOException e) {
         throw new IllegalArgumentException(String.format("Unable to parse schema '%s'. Reason: %s",
                                                          schema, e.getMessage()), e);
