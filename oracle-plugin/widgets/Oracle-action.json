@@ -32,8 +32,27 @@
           }
         },
         {
+          "name": "connectionType",
+          "label": "Connection Type",
+          "widget-type": "radio-group",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "SID",
+            "options": [
+              {
+                "id": "SID",
+                "label": "SID"
+              },
+              {
+                "id": "service",
+                "label": "Service Name"
+              }
+            ]
+          }
+        },
+        {
           "widget-type": "textbox",
-          "label": "Database",
+          "label": "SID/Service Name",
           "name": "database"
         },
         {

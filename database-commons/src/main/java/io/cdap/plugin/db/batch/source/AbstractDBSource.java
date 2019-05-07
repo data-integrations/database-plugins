@@ -422,7 +422,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   /**
    * Request schema class.
    */
-  public class GetSchemaRequest {
+  public static class GetSchemaRequest {
     @Nullable
     public String host;
     @Nullable

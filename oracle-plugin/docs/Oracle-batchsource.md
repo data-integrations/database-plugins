@@ -24,7 +24,9 @@ Properties
 
 **Port:** Port that Oracle is running on.
 
-**Database:** Oracle database name.
+**SID/Service Name:** Oracle connection point (Database name or Service name).
+
+**Connection Type** Whether to use an SID or Service Name when connecting to the database.
 
 **Import Query:** The SELECT query to use to import data from the specified table.
 You can specify an arbitrary number of columns to import, or import all columns using \*. The Query should

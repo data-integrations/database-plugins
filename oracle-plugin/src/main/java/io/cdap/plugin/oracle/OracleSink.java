@@ -58,8 +58,15 @@ public class OracleSink extends AbstractDBSink {
     @Nullable
     public Integer defaultBatchValue;
 
+    @Name("connectionType")
+    @Description("Whether to use an SID or Service Name when connecting to the database.")
+    public String connectionType;
+
     @Override
     public String getConnectionString() {
+      if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(this.connectionType)) {
+        return String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT, host, port, database);
+      }
       return String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, host, port, database);
     }
 

@@ -30,7 +30,9 @@ If set to 'failure', the action will only be executed if the pipeline run failed
 
 **Port:** Port that Oracle is running on.
 
-**Database:** Oracle database name.
+**SID/Service Name:** Oracle connection point (Database name or Service name).
+
+**Connection Type** Whether to use an SID or Service Name when connecting to the database.
 
 **Username:** User identity for connecting to the specified database.
 
