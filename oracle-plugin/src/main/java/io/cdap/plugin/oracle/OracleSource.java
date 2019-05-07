@@ -20,17 +20,13 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
-import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.plugin.EndpointPluginContext;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
-import java.sql.SQLException;
 import java.util.Map;
 import javax.annotation.Nullable;
-import javax.ws.rs.Path;
 
 /**
  * Batch source to read from Oracle.
@@ -42,7 +38,6 @@ import javax.ws.rs.Path;
 public class OracleSource extends AbstractDBSource {
 
   private final OracleSourceConfig oracleSourceConfig;
-  private String connectionType;
 
   public OracleSource(OracleSourceConfig oracleSourceConfig) {
     super(oracleSourceConfig);
@@ -51,21 +46,22 @@ public class OracleSource extends AbstractDBSource {
 
   @Override
   protected String createConnectionString(String host, Integer port, String database) {
-    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(this.connectionType)) {
+    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(oracleSourceConfig.connectionType)) {
       return String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT, host, port, database);
     }
 
     return String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, host, port, database);
   }
 
-  @Path("getOracleSchema")
-  public Schema getOracleSchema(OracleSchemaRequest request,
-                                EndpointPluginContext pluginContext) throws IllegalAccessException,
-    SQLException, InstantiationException {
+  @Override
+  protected String createConnectionString() {
+    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(oracleSourceConfig.connectionType)) {
+      return String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT,
+                           oracleSourceConfig.host, oracleSourceConfig.port, oracleSourceConfig.database);
+    }
 
-    this.connectionType = request.connectionType;
-
-    return getSchema(request, pluginContext);
+    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, oracleSourceConfig.host,
+                         oracleSourceConfig.port, oracleSourceConfig.database);
   }
 
   @Override
