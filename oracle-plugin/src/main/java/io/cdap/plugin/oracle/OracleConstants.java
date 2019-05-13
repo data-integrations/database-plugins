@@ -26,6 +26,8 @@ public final class OracleConstants {
 
   public static final String PLUGIN_NAME = "Oracle";
   public static final String ORACLE_CONNECTION_STRING_FORMAT = "jdbc:oracle:thin:@%s:%s:%s";
+  public static final String ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT = "jdbc:oracle:thin:@//%s:%s/%s";
   public static final String DEFAULT_BATCH_VALUE = "defaultBatchValue";
   public static final String DEFAULT_ROW_PREFETCH = "defaultRowPrefetch";
+  public static final String SERVICE_CONNECTION_TYPE = "service";
 }

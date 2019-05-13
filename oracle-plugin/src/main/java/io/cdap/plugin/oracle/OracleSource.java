@@ -20,13 +20,17 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.EndpointPluginContext;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.sql.SQLException;
 import java.util.Map;
 import javax.annotation.Nullable;
+import javax.ws.rs.Path;
 
 /**
  * Batch source to read from Oracle.
@@ -38,6 +42,7 @@ import javax.annotation.Nullable;
 public class OracleSource extends AbstractDBSource {
 
   private final OracleSourceConfig oracleSourceConfig;
+  private String connectionType;
 
   public OracleSource(OracleSourceConfig oracleSourceConfig) {
     super(oracleSourceConfig);
@@ -46,7 +51,21 @@ public class OracleSource extends AbstractDBSource {
 
   @Override
   protected String createConnectionString(String host, Integer port, String database) {
+    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(this.connectionType)) {
+      return String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT, host, port, database);
+    }
+
     return String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, host, port, database);
+  }
+
+  @Path("getOracleSchema")
+  public Schema getOracleSchema(OracleSchemaRequest request,
+                                EndpointPluginContext pluginContext) throws IllegalAccessException,
+    SQLException, InstantiationException {
+
+    this.connectionType = request.connectionType;
+
+    return getSchema(request, pluginContext);
   }
 
   @Override
@@ -73,8 +92,15 @@ public class OracleSource extends AbstractDBSource {
     @Nullable
     public Integer defaultRowPrefetch;
 
+    @Name("connectionType")
+    @Description("Whether to use an SID or Service Name when connecting to the database.")
+    public String connectionType;
+
     @Override
     public String getConnectionString() {
+      if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(this.connectionType)) {
+        return String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT, host, port, database);
+      }
       return String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, host, port, database);
     }
 
@@ -87,5 +113,13 @@ public class OracleSource extends AbstractDBSource {
 
       return builder.build();
     }
+  }
+
+  /**
+   * Oracle specific schema request.
+   */
+  private static class OracleSchemaRequest extends GetSchemaRequest {
+    @Nullable
+    public String connectionType;
   }
 }
