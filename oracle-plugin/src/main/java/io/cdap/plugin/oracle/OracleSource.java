@@ -45,15 +45,6 @@ public class OracleSource extends AbstractDBSource {
   }
 
   @Override
-  protected String createConnectionString(String host, Integer port, String database) {
-    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(oracleSourceConfig.connectionType)) {
-      return String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT, host, port, database);
-    }
-
-    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, host, port, database);
-  }
-
-  @Override
   protected String createConnectionString() {
     if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(oracleSourceConfig.connectionType)) {
       return String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT,

@@ -24,14 +24,13 @@ import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
-import io.cdap.cdap.api.plugin.EndpointPluginContext;
 import io.cdap.cdap.api.plugin.PluginConfig;
-import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
+import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSource;
@@ -60,10 +59,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Objects;
 import java.util.Properties;
 import javax.annotation.Nullable;
-import javax.ws.rs.Path;
 
 /**
  * Batch source to read from a DB table
@@ -99,32 +96,32 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     DBUtils.validateJDBCPluginPipeline(pipelineConfigurer, sourceConfig, getJDBCPluginId());
+
+    Class<? extends Driver> driverClass = DBUtils.getDriverClass(
+      pipelineConfigurer, sourceConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
+
     sourceConfig.validate();
     if (!Strings.isNullOrEmpty(sourceConfig.schema)) {
       pipelineConfigurer.getStageConfigurer().setOutputSchema(sourceConfig.getSchema());
+    } else if (sourceConfig.query != null) {
+      try {
+        pipelineConfigurer.getStageConfigurer().setOutputSchema(getSchema(driverClass));
+      } catch (IllegalAccessException | InstantiationException e) {
+        throw new InvalidStageException("Unable to instantiate JDBC driver: " + e.getMessage(), e);
+      } catch (SQLException e) {
+        throw new IllegalArgumentException("SQL error while getting query schema: " + e.getMessage(), e);
+      }
     }
   }
 
-  /**
-   * Endpoint method to get the output schema of a query.
-   *
-   * @param request       {@link GetSchemaRequest} containing information required for connection and query to execute.
-   * @param pluginContext context to create plugins
-   * @return schema of fields
-   * @throws SQLException
-   * @throws InstantiationException
-   * @throws IllegalAccessException
-   */
-  @Path("getSchema")
-  public Schema getSchema(GetSchemaRequest request,
-                          EndpointPluginContext pluginContext) throws IllegalAccessException,
+  public Schema getSchema(Class<? extends Driver> driverClass) throws IllegalAccessException,
     SQLException, InstantiationException {
     DriverCleanup driverCleanup;
     try {
 
-      driverCleanup = loadPluginClassAndGetDriver(request, pluginContext);
-      try (Connection connection = getConnection(request)) {
-        String query = request.query;
+      driverCleanup = loadPluginClassAndGetDriver(driverClass);
+      try (Connection connection = getConnection()) {
+        String query = sourceConfig.query;
         return loadSchemaFromDB(connection, query);
       } finally {
         driverCleanup.destroy();
@@ -165,46 +162,32 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     return new CommonSchemaReader();
   }
 
-  private DriverCleanup loadPluginClassAndGetDriver(GetSchemaRequest request,
-                                                    EndpointPluginContext pluginContext)
+  private DriverCleanup loadPluginClassAndGetDriver(Class<? extends Driver> driverClass)
     throws IllegalAccessException, InstantiationException, SQLException {
-
-    Class<? extends Driver> driverClass =
-      pluginContext.loadPluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE,
-                                    request.jdbcPluginName, PluginProperties.builder().build());
 
     if (driverClass == null) {
       throw new InstantiationException(
         String.format("Unable to load Driver class with plugin type %s and plugin name %s",
-                      ConnectionConfig.JDBC_PLUGIN_TYPE, request.jdbcPluginName));
+                      ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.jdbcPluginName));
     }
 
     try {
-      String connectionString =
-        Objects.nonNull(request.connectionString) ? request.connectionString : createConnectionString(
-          request.host,
-          request.port,
-          request.database);
+      String connectionString = createConnectionString();
 
-      return DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, request.jdbcPluginName);
+      return DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.jdbcPluginName);
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
       LOG.error("Unable to load or register driver {}", driverClass, e);
       throw e;
     }
   }
 
-  private Connection getConnection(GetSchemaRequest getSchemaRequest) throws SQLException {
+  private Connection getConnection() throws SQLException {
     Properties properties =
-      ConnectionConfig.getConnectionArguments(getSchemaRequest.connectionArguments,
-                                              getSchemaRequest.user,
-                                              getSchemaRequest.password);
+      ConnectionConfig.getConnectionArguments(sourceConfig.connectionArguments,
+                                              sourceConfig.user,
+                                              sourceConfig.password);
 
-    String connectionString =
-      Objects.nonNull(getSchemaRequest.connectionString) ? getSchemaRequest.connectionString : createConnectionString(
-        getSchemaRequest.host,
-        getSchemaRequest.port,
-        getSchemaRequest.database);
-
+    String connectionString = createConnectionString();
     return DriverManager.getConnection(connectionString, properties);
   }
 
@@ -234,7 +217,6 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     DataDrivenETLDBInputFormat.setInput(hConf, getDBRecordType(),
                                         sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery(),
                                         false);
-
 
 
     if (sourceConfig.getTransactionIsolationLevel() != null) {
@@ -294,7 +276,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     return String.format("%s.%s.%s", "source", ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.jdbcPluginName);
   }
 
-  protected abstract String createConnectionString(String host, Integer port, String database);
+  protected abstract String createConnectionString();
 
   /**
    * {@link PluginConfig} for {@link AbstractDBSource}
@@ -307,6 +289,12 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     public static final String SCHEMA = "schema";
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
 
+    // this is a hidden property, only used to fetch schema
+    @Nullable
+    String query;
+
+    // only nullable for get schema button
+    @Nullable
     @Name(IMPORT_QUERY)
     @Description("The SELECT query to use to import data from the specified table. " +
       "You can specify an arbitrary number of columns to import, or import all columns using *. " +
@@ -393,7 +381,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
         Schema.Field actualField = actualSchema.getField(field.getName());
         if (actualField == null) {
           throw new InvalidConfigPropertyException(String.format("Schema field '%s' is not present in actual record",
-                                                           field.getName()), SCHEMA);
+                                                                 field.getName()), SCHEMA);
         }
         Schema actualFieldSchema = actualField.getSchema().isNullable() ?
           actualField.getSchema().getNonNullable() : actualField.getSchema();

@@ -22,7 +22,6 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
-import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nullable;
 
@@ -43,8 +42,8 @@ public class DatabaseSource extends AbstractDBSource {
   }
 
   @Override
-  protected String createConnectionString(String host, Integer port, String database) {
-    return StringUtils.EMPTY;
+  protected String createConnectionString() {
+    return databaseSourceConfig.connectionString;
   }
 
   /**

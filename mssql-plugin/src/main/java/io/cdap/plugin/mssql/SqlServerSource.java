@@ -44,8 +44,9 @@ public class SqlServerSource extends AbstractDBSource {
   }
 
   @Override
-  protected String createConnectionString(String host, Integer port, String database) {
-    return String.format(SqlServerConstants.SQL_SERVER_CONNECTION_STRING_FORMAT, host, port, database);
+  protected String createConnectionString() {
+    return String.format(SqlServerConstants.SQL_SERVER_CONNECTION_STRING_FORMAT,
+                         sqlServerSourceConfig.host, sqlServerSourceConfig.port, sqlServerSourceConfig.database);
   }
 
   /**

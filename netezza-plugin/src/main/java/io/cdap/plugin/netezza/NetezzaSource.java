@@ -47,8 +47,9 @@ public class NetezzaSource extends AbstractDBSource {
   }
 
   @Override
-  protected String createConnectionString(String host, Integer port, String database) {
-    return String.format(NetezzaConstants.NETEZZA_CONNECTION_STRING_FORMAT, host, port, database);
+  protected String createConnectionString() {
+    return String.format(NetezzaConstants.NETEZZA_CONNECTION_STRING_FORMAT, netezzaSourceConfig.host,
+                         netezzaSourceConfig.port, netezzaSourceConfig.database);
   }
 
   /**

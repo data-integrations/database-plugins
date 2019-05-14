@@ -339,15 +339,20 @@ public final class DBUtils {
         "database requires authentication. If not, please remove password and retry.");
     }
 
-    Class<? extends Driver> jdbcDriverClass = pipelineConfigurer.usePluginClass(
-      ConnectionConfig.JDBC_PLUGIN_TYPE,
-      config.jdbcPluginName,
-      jdbcPluginId, PluginProperties.builder().build());
+    Class<? extends Driver> jdbcDriverClass = getDriverClass(pipelineConfigurer, config, jdbcPluginId);
     Preconditions.checkArgument(
       jdbcDriverClass != null, "Unable to load JDBC Driver class for plugin name '%s'. Please make sure " +
         "that the plugin '%s' of type '%s' containing the driver has been installed correctly.",
       config.jdbcPluginName,
       config.jdbcPluginName, ConnectionConfig.JDBC_PLUGIN_TYPE);
+  }
+
+  public static Class<? extends Driver> getDriverClass(PipelineConfigurer pipelineConfigurer, ConnectionConfig config,
+                                                       String jdbcPluginId) {
+    return pipelineConfigurer.usePluginClass(
+      ConnectionConfig.JDBC_PLUGIN_TYPE,
+      config.jdbcPluginName,
+      jdbcPluginId, PluginProperties.builder().build());
   }
 
   /**

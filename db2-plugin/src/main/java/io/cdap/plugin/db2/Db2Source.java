@@ -47,8 +47,9 @@ public class Db2Source extends AbstractDBSource {
   }
 
   @Override
-  protected String createConnectionString(String host, Integer port, String database) {
-    return String.format(Db2Constants.DB2_CONNECTION_STRING_FORMAT, host, port, database);
+  protected String createConnectionString() {
+    return String.format(Db2Constants.DB2_CONNECTION_STRING_FORMAT, db2SourceConfig.host, db2SourceConfig.port,
+                         db2SourceConfig.database);
   }
 
   /**

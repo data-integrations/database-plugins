@@ -43,8 +43,9 @@ public class MysqlSource extends AbstractDBSource {
   }
 
   @Override
-  protected String createConnectionString(String host, Integer port, String database) {
-    return String.format(MysqlConstants.MYSQL_CONNECTION_STRING_FORMAT, host, port, database);
+  protected String createConnectionString() {
+    return String.format(MysqlConstants.MYSQL_CONNECTION_STRING_FORMAT,
+                         mysqlSourceConfig.host, mysqlSourceConfig.port, mysqlSourceConfig.database);
   }
 
   /**

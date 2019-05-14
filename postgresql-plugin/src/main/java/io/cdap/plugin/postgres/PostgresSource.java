@@ -46,8 +46,9 @@ public class PostgresSource extends AbstractDBSource {
   }
 
   @Override
-  protected String createConnectionString(String host, Integer port, String database) {
-    return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
+  protected String createConnectionString() {
+    return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, postgresSourceConfig.host,
+                         postgresSourceConfig.port, postgresSourceConfig.database);
   }
 
   @Override
