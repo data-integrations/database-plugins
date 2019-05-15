@@ -75,48 +75,46 @@ Auto Reconnect: "true"
 
 Mapping of MySQL types to CDAP schema:
 
-    +===================================+
-    | sql type           | schema type  |
-    +===================================+
-    | INT                | int          |
-    | TINYINT            | boolean      |
-    | BOOL,BOOLEAN       | boolean      |
-    | INTEGER            | int          |
-    | VARCHAR(40)        | string       |
-    | DOUBLE             | double       |
-    | BOOLEAN            | boolean      |
-    | VARCHAR(30)        | string       |
-    | TINYINT            | int          |
-    | SMALLINT           | int          |
-    | MEDIUMINT          | int          |
-    | BIGINT             | long         |
-    | FLOAT              | float        |
-    | REAL               | double       |
-    | NUMERIC(10,2)      | double       |
-    | DECIMAL(10,2)      | double       |
-    | BIT                | boolean      | 
-    | DATE               | date         |
-    | TIME               | time         |
-    | YEAR               | date         |
-    | TIMESTAMP(3)       | timestamp    |
-    | TEXT               | string       |
-    | TINYTEXT           | string       |
-    | MEDIUMTEXT         | string       |
-    | LONGTEXT           | string       |
-    | CHAR(100)          | string       |
-    | BINARY(100)        | bytes        |
-    | VARBINARY(20)      | bytes        |
-    | TINYBLOB           | bytes        |
-    | BLOB(100)          | bytes        |
-    | MEDIUMBLOB         | bytes        |
-    | LONGBLOB           | bytes        |
-    | GEOMETRY           | bytes        |
-    | POINT              | bytes        |
-    | LINESTRING         | bytes        |
-    | POLYGON            | bytes        |
-    | MULTIPOINT         | bytes        |
-    | MULTILINESTRING    | bytes        |
-    | MULTIPOLYGON       | bytes        |
-    | GEOMETRYCOLLECTION | bytes        |
-    | JSON               | string       |
-    +===================================+
+| sql type           | schema type  |
+| ------------------ | ------------ |
+| INT                | int          |
+| TINYINT            | boolean      |
+| BOOL,BOOLEAN       | boolean      |
+| INTEGER            | int          |
+| VARCHAR(40)        | string       |
+| DOUBLE             | double       |
+| BOOLEAN            | boolean      |
+| VARCHAR(30)        | string       |
+| TINYINT            | int          |
+| SMALLINT           | int          |
+| MEDIUMINT          | int          |
+| BIGINT             | long         |
+| FLOAT              | float        |
+| REAL               | double       |
+| NUMERIC(10,2)      | double       |
+| DECIMAL(10,2)      | double       |
+| BIT                | boolean      | 
+| DATE               | date         |
+| TIME               | time         |
+| YEAR               | date         |
+| TIMESTAMP(3)       | timestamp    |
+| TEXT               | string       |
+| TINYTEXT           | string       |
+| MEDIUMTEXT         | string       |
+| LONGTEXT           | string       |
+| CHAR(100)          | string       |
+| BINARY(100)        | bytes        |
+| VARBINARY(20)      | bytes        |
+| TINYBLOB           | bytes        |
+| BLOB(100)          | bytes        |
+| MEDIUMBLOB         | bytes        |
+| LONGBLOB           | bytes        |
+| GEOMETRY           | bytes        |
+| POINT              | bytes        |
+| LINESTRING         | bytes        |
+| POLYGON            | bytes        |
+| MULTIPOINT         | bytes        |
+| MULTILINESTRING    | bytes        |
+| MULTIPOLYGON       | bytes        |
+| GEOMETRYCOLLECTION | bytes        |
+| JSON               | string       |
