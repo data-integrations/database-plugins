@@ -44,8 +44,9 @@ public class AuroraMysqlSource extends AbstractDBSource {
   }
 
   @Override
-  protected String createConnectionString(String host, Integer port, String database) {
-    return String.format(AuroraMysqlConstants.AURORA_MYSQL_CONNECTION_STRING_FORMAT, host, port, database);
+  protected String createConnectionString() {
+    return String.format(AuroraMysqlConstants.AURORA_MYSQL_CONNECTION_STRING_FORMAT,
+                         auroraMysqlSourceConfig.host, auroraMysqlSourceConfig.port, auroraMysqlSourceConfig.database);
   }
 
   /**

@@ -46,8 +46,10 @@ public class AuroraPostgresSource extends AbstractDBSource {
   }
 
   @Override
-  protected String createConnectionString(String host, Integer port, String database) {
-    return String.format(AuroraPostgresConstants.AURORA_POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
+  protected String createConnectionString() {
+    return String.format(AuroraPostgresConstants.AURORA_POSTGRES_CONNECTION_STRING_FORMAT,
+                         auroraPostgresSourceConfig.host, auroraPostgresSourceConfig.port,
+                         auroraPostgresSourceConfig.database);
   }
 
   @Override
