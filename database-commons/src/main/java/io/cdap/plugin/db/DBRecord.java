@@ -17,7 +17,6 @@
 package io.cdap.plugin.db;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -104,11 +103,12 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(schema);
     for (int i = 0; i < schema.getFields().size(); i++) {
       Schema.Field field = schema.getFields().get(i);
-      int sqlType = metadata.getColumnType(i + 1);
-      int sqlPrecision = metadata.getPrecision(i + 1);
-      int sqlScale = metadata.getScale(i + 1);
+      int columnIndex = i + 1;
+      int sqlType = metadata.getColumnType(columnIndex);
+      int sqlPrecision = metadata.getPrecision(columnIndex);
+      int sqlScale = metadata.getScale(columnIndex);
 
-      handleField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
+      handleField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     }
     record = recordBuilder.build();
   }
@@ -134,13 +134,13 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   }
 
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
-                             int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
-    setField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
+                             int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+    setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
   }
 
-  protected void setField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field, int sqlType,
-                          int sqlPrecision, int sqlScale) throws SQLException {
-    Object o = DBUtils.transformValue(sqlType, sqlPrecision, sqlScale, resultSet, field.getName());
+  protected void setField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
+                          int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+    Object o = DBUtils.transformValue(sqlType, sqlPrecision, sqlScale, resultSet, columnIndex);
     if (o instanceof Date) {
       recordBuilder.setDate(field.getName(), ((Date) o).toLocalDate());
     } else if (o instanceof Time) {
@@ -154,7 +154,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   }
 
   protected void setFieldAccordingToSchema(ResultSet resultSet, StructuredRecord.Builder recordBuilder,
-                                           Schema.Field field) throws SQLException {
+                                           Schema.Field field, int columnIndex) throws SQLException {
 
     Schema.Type fieldType = field.getSchema().getType();
 
@@ -162,25 +162,25 @@ public class DBRecord implements Writable, DBWritable, Configurable {
       case NULL:
         break;
       case STRING:
-        recordBuilder.set(field.getName(), resultSet.getString(field.getName()));
+        recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
         break;
       case BOOLEAN:
-        recordBuilder.set(field.getName(), resultSet.getBoolean(field.getName()));
+        recordBuilder.set(field.getName(), resultSet.getBoolean(columnIndex));
         break;
       case INT:
-        recordBuilder.set(field.getName(), resultSet.getInt(field.getName()));
+        recordBuilder.set(field.getName(), resultSet.getInt(columnIndex));
         break;
       case LONG:
-        recordBuilder.set(field.getName(), resultSet.getLong(field.getName()));
+        recordBuilder.set(field.getName(), resultSet.getLong(columnIndex));
         break;
       case FLOAT:
-        recordBuilder.set(field.getName(), resultSet.getFloat(field.getName()));
+        recordBuilder.set(field.getName(), resultSet.getFloat(columnIndex));
         break;
       case DOUBLE:
-        recordBuilder.set(field.getName(), resultSet.getDouble(field.getName()));
+        recordBuilder.set(field.getName(), resultSet.getDouble(columnIndex));
         break;
       case BYTES:
-        recordBuilder.set(field.getName(), resultSet.getBytes(field.getName()));
+        recordBuilder.set(field.getName(), resultSet.getBytes(columnIndex));
         break;
     }
   }

@@ -51,26 +51,26 @@ public class OracleDBRecord extends DBRecord {
 
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
-                             int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+                             int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
     if (OracleSchemaReader.ORACLE_TYPES.contains(sqlType)) {
-      handleOracleSpecificType(resultSet, recordBuilder, field, sqlType);
+      handleOracleSpecificType(resultSet, recordBuilder, field, columnIndex, sqlType);
     } else {
-      setField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
+      setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     }
   }
 
   private void handleOracleSpecificType(ResultSet resultSet,
                                         StructuredRecord.Builder recordBuilder, Schema.Field field,
-                                        int sqlType) throws SQLException {
+                                        int columnIndex, int sqlType) throws SQLException {
 
     switch (sqlType) {
       case OracleSchemaReader.INTERVAL_YM:
       case OracleSchemaReader.INTERVAL_DS:
-        recordBuilder.set(field.getName(), resultSet.getString(field.getName()));
+        recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
         break;
       case OracleSchemaReader.TIMESTAMP_LTZ:
       case OracleSchemaReader.TIMESTAMP_TZ:
-        Instant instant = resultSet.getTimestamp(field.getName()).toInstant();
+        Instant instant = resultSet.getTimestamp(columnIndex).toInstant();
         recordBuilder.setTimestamp(field.getName(), instant.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
         break;
     }

@@ -48,24 +48,24 @@ public class DB2Record extends DBRecord {
 
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
-                             int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+                             int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
     if (DB2SchemaReader.DB2_TYPES.contains(sqlType)) {
-      handleSpecificType(resultSet, recordBuilder, field,  resultSet.findColumn(field.getName()));
+      handleSpecificType(resultSet, recordBuilder, field, columnIndex);
     } else {
-      setField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
+      setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     }
   }
 
   private void handleSpecificType(ResultSet resultSet,
                                   StructuredRecord.Builder recordBuilder,
-                                  Schema.Field field, int index) throws SQLException {
+                                  Schema.Field field, int columnIndex) throws SQLException {
 
     ResultSetMetaData metaData = resultSet.getMetaData();
 
-    String columnTypeName = metaData.getColumnTypeName(index);
+    String columnTypeName = metaData.getColumnTypeName(columnIndex);
 
     if (DB2SchemaReader.DB2_DECFLOAT.equals(columnTypeName)) {
-      recordBuilder.set(field.getName(), resultSet.getBigDecimal("DECFLOAT_COL").doubleValue());
+      recordBuilder.set(field.getName(), resultSet.getBigDecimal(columnIndex).doubleValue());
     }
   }
 }

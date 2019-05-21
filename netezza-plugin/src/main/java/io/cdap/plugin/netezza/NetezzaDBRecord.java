@@ -51,24 +51,23 @@ public class NetezzaDBRecord extends DBRecord {
 
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
-                             int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+                             int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
     if (netezzaTypes.contains(sqlType)) {
-      handleNetezzaSpecificType(resultSet, recordBuilder, field, sqlType);
+      handleNetezzaSpecificType(resultSet, recordBuilder, field, columnIndex, sqlType);
     } else {
-      setField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
+      setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     }
   }
 
-  private void handleNetezzaSpecificType(ResultSet resultSet,
-                                         StructuredRecord.Builder recordBuilder, Schema.Field field,
-                                         int sqlType) throws SQLException {
+  private void handleNetezzaSpecificType(ResultSet resultSet, StructuredRecord.Builder recordBuilder,
+                                         Schema.Field field, int columnIndex, int sqlType) throws SQLException {
 
     switch (sqlType) {
       case Types.VARBINARY:
-        recordBuilder.set(field.getName(), resultSet.getBytes(field.getName()));
+        recordBuilder.set(field.getName(), resultSet.getBytes(columnIndex));
         break;
       case INTERVAL:
-        recordBuilder.set(field.getName(), resultSet.getString(field.getName()));
+        recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
         break;
     }
   }
