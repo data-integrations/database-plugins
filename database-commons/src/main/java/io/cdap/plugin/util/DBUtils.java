@@ -254,8 +254,8 @@ public final class DBUtils {
 
   @Nullable
   public static Object transformValue(int sqlType, int precision, int scale,
-                                      ResultSet resultSet, String fieldName) throws SQLException {
-    Object original = resultSet.getObject(fieldName);
+                                      ResultSet resultSet, int columnIndex) throws SQLException {
+    Object original = resultSet.getObject(columnIndex);
     if (original != null) {
       switch (sqlType) {
         case Types.SMALLINT:
@@ -274,27 +274,19 @@ public final class DBUtils {
             return decimal.intValue();
           }
         case Types.DATE:
-          return resultSet.getDate(fieldName);
+          return resultSet.getDate(columnIndex);
         case Types.TIME:
-          return resultSet.getTime(fieldName);
+          return resultSet.getTime(columnIndex);
         case Types.TIMESTAMP:
-          return resultSet.getTimestamp(fieldName);
+          return resultSet.getTimestamp(columnIndex);
         case Types.ROWID:
-          return resultSet.getString(fieldName);
+          return resultSet.getString(columnIndex);
         case Types.BLOB:
           Blob blob = (Blob) original;
-          try {
-            return blob.getBytes(1, (int) blob.length());
-          } finally {
-            blob.free();
-          }
+          return blob.getBytes(1, (int) blob.length());
         case Types.CLOB:
           Clob clob = (Clob) original;
-          try {
-            return clob.getSubString(1, (int) clob.length());
-          } finally {
-            clob.free();
-          }
+          return clob.getSubString(1, (int) clob.length());
       }
     }
     return original;

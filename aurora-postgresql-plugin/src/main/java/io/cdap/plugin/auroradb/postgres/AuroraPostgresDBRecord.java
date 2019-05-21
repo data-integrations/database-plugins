@@ -41,17 +41,17 @@ public class AuroraPostgresDBRecord extends DBRecord {
 
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
-                             int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+                             int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
     if (AuroraPostgresSchemaReader.POSTGRES_TYPES.contains(sqlType)) {
-      handleSpecificType(resultSet, recordBuilder, field);
+      handleSpecificType(resultSet, recordBuilder, field, columnIndex);
     } else {
-      setField(resultSet, recordBuilder, field, sqlType, sqlPrecision, sqlScale);
+      setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     }
   }
 
-  private void handleSpecificType(ResultSet resultSet,
-                                  StructuredRecord.Builder recordBuilder, Schema.Field field) throws SQLException {
-    setFieldAccordingToSchema(resultSet, recordBuilder, field);
+  private void handleSpecificType(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
+                                  int columnIndex) throws SQLException {
+    setFieldAccordingToSchema(resultSet, recordBuilder, field, columnIndex);
   }
 
   @Override
