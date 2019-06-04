@@ -89,8 +89,8 @@ public class AuroraMysqlSourceTestRun extends AuroraMysqlPluginTestBase {
   public void testDBSource() throws Exception {
     String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, MEDIUMINT_COL, SMALL, BIG, FLOAT_COL, " +
       "REAL_COL, NUMERIC_COL, CHAR_COL, DECIMAL_COL, BIT_COL, BINARY_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, " +
-      "VARBINARY_COL, BLOB_COL, MEDIUMBLOB_COL, TINYBLOB_COL, YEAR_COL, LONGBLOB_COL, TEXT_COL FROM my_table " +
-      "WHERE ID < 3 AND $CONDITIONS";
+      "VARBINARY_COL, BLOB_COL, MEDIUMBLOB_COL, TINYBLOB_COL, YEAR_COL, LONGBLOB_COL, TEXT_COL, TINYTEXT_COL, " +
+      "MEDIUMTEXT_COL, LONGTEXT_COL FROM my_table WHERE ID < 3 AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(ID),MAX(ID) from my_table";
     String splitBy = "ID";
     ETLPlugin sourceConfig = new ETLPlugin(
@@ -127,6 +127,12 @@ public class AuroraMysqlSourceTestRun extends AuroraMysqlPluginTestBase {
     Assert.assertEquals("user2", row2.get("NAME"));
     Assert.assertEquals("user1", row1.get("TEXT_COL"));
     Assert.assertEquals("user2", row2.get("TEXT_COL"));
+    Assert.assertEquals("user1", row1.get("TINYTEXT_COL"));
+    Assert.assertEquals("user2", row2.get("TINYTEXT_COL"));
+    Assert.assertEquals("user1", row1.get("MEDIUMTEXT_COL"));
+    Assert.assertEquals("user2", row2.get("MEDIUMTEXT_COL"));
+    Assert.assertEquals("user1", row1.get("LONGTEXT_COL"));
+    Assert.assertEquals("user2", row2.get("LONGTEXT_COL"));
     Assert.assertEquals("char1", ((String) row1.get("CHAR_COL")).trim());
     Assert.assertEquals("char2", ((String) row2.get("CHAR_COL")).trim());
     Assert.assertEquals(124.45, row1.get("SCORE"), 0.000001);

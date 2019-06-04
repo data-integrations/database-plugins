@@ -19,6 +19,7 @@ package io.cdap.plugin.aurora.mysql;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
@@ -80,6 +81,10 @@ public class AuroraMysqlSinkTestRun extends AuroraMysqlPluginTestBase {
       Assert.assertEquals(new Timestamp(CURRENT_TS),
                           resultSet.getTimestamp("TIMESTAMP_COL"));
       Assert.assertTrue(resultSet.next());
+      Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("BLOB_COL"), 0, 5));
+      Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("TINYBLOB_COL"), 0, 5));
+      Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("MEDIUMBLOB_COL"), 0, 5));
+      Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("LONGBLOB_COL"), 0, 5));
       users.add(resultSet.getString("NAME"));
       Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
     }
@@ -106,7 +111,14 @@ public class AuroraMysqlSinkTestRun extends AuroraMysqlPluginTestBase {
       Schema.Field.of("TIME_COL", Schema.of(Schema.LogicalType.TIME_MICROS)),
       Schema.Field.of("TIMESTAMP_COL", Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)),
       Schema.Field.of("BINARY_COL", Schema.of(Schema.Type.BYTES)),
-      Schema.Field.of("BLOB_COL", Schema.of(Schema.Type.BYTES))
+      Schema.Field.of("BLOB_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("TINYBLOB_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("MEDIUMBLOB_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("LONGBLOB_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("TEXT_COL", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("TINYTEXT_COL", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("MEDIUMTEXT_COL", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("LONGTEXT_COL", Schema.of(Schema.Type.STRING))
     );
     List<StructuredRecord> inputRecords = new ArrayList<>();
     LocalDateTime localDateTime = new Timestamp(CURRENT_TS).toLocalDateTime();
@@ -130,6 +142,13 @@ public class AuroraMysqlSinkTestRun extends AuroraMysqlPluginTestBase {
                          .setTimestamp("TIMESTAMP_COL", localDateTime.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)))
                          .set("BINARY_COL", name.getBytes(Charsets.UTF_8))
                          .set("BLOB_COL", name.getBytes(Charsets.UTF_8))
+                         .set("TINYBLOB_COL", name.getBytes(Charsets.UTF_8))
+                         .set("MEDIUMBLOB_COL", name.getBytes(Charsets.UTF_8))
+                         .set("LONGBLOB_COL", name.getBytes(Charsets.UTF_8))
+                         .set("TEXT_COL", name)
+                         .set("TINYTEXT_COL", name)
+                         .set("MEDIUMTEXT_COL", name)
+                         .set("LONGTEXT_COL", name)
                          .build());
     }
     MockSource.writeInput(inputManager, inputRecords);

@@ -58,7 +58,7 @@ public class OracleSink extends AbstractDBSink {
     @Nullable
     public Integer defaultBatchValue;
 
-    @Name("connectionType")
+    @Name(OracleConstants.CONNECTION_TYPE)
     @Description("Whether to use an SID or Service Name when connecting to the database.")
     public String connectionType;
 

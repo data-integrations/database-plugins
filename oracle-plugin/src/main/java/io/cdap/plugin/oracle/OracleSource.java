@@ -79,7 +79,7 @@ public class OracleSource extends AbstractDBSource {
     @Nullable
     public Integer defaultRowPrefetch;
 
-    @Name("connectionType")
+    @Name(OracleConstants.CONNECTION_TYPE)
     @Description("Whether to use an SID or Service Name when connecting to the database.")
     public String connectionType;
 

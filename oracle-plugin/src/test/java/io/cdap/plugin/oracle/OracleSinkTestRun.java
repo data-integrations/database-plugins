@@ -16,9 +16,9 @@
 
 package io.cdap.plugin.oracle;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
@@ -35,13 +35,9 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.sql.Time;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -80,6 +76,9 @@ public class OracleSinkTestRun extends OraclePluginTestBase {
       users.add(resultSet.getString("VARCHAR_COL"));
       Assert.assertEquals(new Date(CURRENT_TS).toString(), resultSet.getDate("DATE_COL").toString());
       Assert.assertTrue(resultSet.next());
+      Assert.assertEquals("user2", resultSet.getString("CLOB_COL"));
+      Assert.assertEquals("user2", resultSet.getString("NCLOB_COL"));
+      Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("BLOB_COL"), 0, 5));
       users.add(resultSet.getString("VARCHAR_COL"));
       Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
 
@@ -109,6 +108,7 @@ public class OracleSinkTestRun extends OraclePluginTestBase {
       Schema.Field.of("INTERVAL_DAY_TO_SECOND_COL", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("RAW_COL", Schema.of(Schema.Type.BYTES)),
       Schema.Field.of("CLOB_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("NCLOB_COL", Schema.of(Schema.Type.BYTES)),
       Schema.Field.of("BLOB_COL", Schema.of(Schema.Type.BYTES))
     );
     List<StructuredRecord> inputRecords = new ArrayList<>();
@@ -134,6 +134,7 @@ public class OracleSinkTestRun extends OraclePluginTestBase {
                          .set("INTERVAL_DAY_TO_SECOND_COL", "23 3:02:10")
                          .set("RAW_COL", name.getBytes())
                          .set("CLOB_COL", name.getBytes())
+                         .set("NCLOB_COL", name.getBytes())
                          .set("BLOB_COL", name.getBytes())
                          .build());
     }

@@ -19,6 +19,7 @@ package io.cdap.plugin.mssql;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
@@ -80,6 +81,7 @@ public class SqlServerSinkTestRun extends SqlServerPluginTestBase {
       Assert.assertEquals(new Timestamp(CURRENT_TS),
                           resultSet.getTimestamp("DATETIME_COL"));
       Assert.assertTrue(resultSet.next());
+      Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("BINARY_COL"), 0, 5));
       users.add(resultSet.getString("NAME"));
       Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
 

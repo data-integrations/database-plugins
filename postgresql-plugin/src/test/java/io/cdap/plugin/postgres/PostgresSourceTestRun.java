@@ -88,7 +88,7 @@ public class PostgresSourceTestRun extends PostgresPluginTestBase {
   public void testDBSource() throws Exception {
     String importQuery = "SELECT \"ID\", \"NAME\", \"SCORE\", \"GRADUATED\", \"SMALLINT_COL\", \"BIG\", " +
       "\"NUMERIC_COL\", \"CHAR_COL\", \"DECIMAL_COL\", \"BYTEA_COL\", \"DATE_COL\", \"TIME_COL\", \"TIMESTAMP_COL\", " +
-      "\"TEXT_COL\" FROM my_table " +
+      "\"TEXT_COL\", \"DOUBLE_PREC_COL\" FROM my_table " +
       "WHERE \"ID\" < 3 AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(\"ID\"),MAX(\"ID\") from my_table";
     String splitBy = "ID";
@@ -142,6 +142,9 @@ public class PostgresSourceTestRun extends PostgresPluginTestBase {
     Assert.assertEquals(124.45, (double) row1.get("NUMERIC_COL"), 0.000001);
     Assert.assertEquals(125.45, (double) row2.get("NUMERIC_COL"), 0.000001);
     Assert.assertEquals(124.45, (double) row1.get("DECIMAL_COL"), 0.000001);
+
+    Assert.assertEquals(124.45, (double) row1.get("DOUBLE_PREC_COL"), 0.000001);
+    Assert.assertEquals(125.45, (double) row2.get("DOUBLE_PREC_COL"), 0.000001);
     // Verify time columns
     java.util.Date date = new java.util.Date(CURRENT_TS);
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");

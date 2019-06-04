@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.GenericDatabasePluginTestBase;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
@@ -109,6 +110,8 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
         Assert.assertEquals(new Timestamp(CURRENT_TS).toString(),
                             resultSet.getTimestamp("TIMESTAMP_COL").toString());
         Assert.assertTrue(resultSet.next());
+        Assert.assertEquals("user2", resultSet.getString("CLOB_COL"));
+        Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("BLOB_COL"), 0, 5));
         users.add(resultSet.getString("NAME"));
         Assert.assertFalse(resultSet.next());
         Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
