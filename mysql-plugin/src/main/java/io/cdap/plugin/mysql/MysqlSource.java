@@ -16,13 +16,15 @@
 
 package io.cdap.plugin.mysql;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -58,18 +60,70 @@ public class MysqlSource extends AbstractDBSource {
     @Nullable
     public Boolean autoReconnect;
 
+    @Name(MysqlConstants.USE_COMPRESSION)
+    @Description("Select this option for WAN connections")
+    @Nullable
+    public Boolean useCompression;
+
+    @Name(MysqlConstants.SQL_MODE)
+    @Description("Override the default SQL_MODE session variable used by the server")
+    @Nullable
+    public String sqlMode;
+
+    @Name(MysqlConstants.USE_SSL)
+    @Description("Turns on SSL encryption. Connection will fail if SSL is not available")
+    @Nullable
+    public String useSSL;
+
+    @Name(MysqlConstants.USE_ANSI_QUOTES)
+    @Description("Treats \" as an identifier quote character and not as a string quote character")
+    @Nullable
+    public Boolean useAnsiQuotes;
+
+    @Name(MysqlConstants.CLIENT_CERT_KEYSTORE_URL)
+    @Description("URL to the client certificate KeyStore (if not specified, use defaults)")
+    @Nullable
+    public String clientCertificateKeyStoreUrl;
+
+    @Name(MysqlConstants.CLIENT_CERT_KEYSTORE_PASSWORD)
+    @Description("Password for the client certificates KeyStore")
+    @Nullable
+    public String clientCertificateKeyStorePassword;
+
+    @Name(MysqlConstants.TRUST_CERT_KEYSTORE_URL)
+    @Description("URL to the trusted root certificate KeyStore (if not specified, use defaults)")
+    @Nullable
+    public String trustCertificateKeyStoreUrl;
+
+    @Name(MysqlConstants.TRUST_CERT_KEYSTORE_PASSWORD)
+    @Description("Password for the trusted root certificates KeyStore")
+    @Nullable
+    public String trustCertificateKeyStorePassword;
+
     @Override
     public String getConnectionString() {
-      return String.format(MysqlConstants.MYSQL_CONNECTION_STRING_FORMAT, host, port, database);
+      return MysqlUtil.getConnectionString(host, port, database);
     }
 
     @Override
     public Map<String, String> getDBSpecificArguments() {
-      if (autoReconnect != null) {
-        return ImmutableMap.of(MysqlConstants.AUTO_RECONNECT, String.valueOf(autoReconnect));
-      } else {
-        return ImmutableMap.of();
+      return MysqlUtil.composeDbSpecificArgumentsMap(autoReconnect, useCompression, useSSL,
+                                                     clientCertificateKeyStoreUrl,
+                                                     clientCertificateKeyStorePassword,
+                                                     trustCertificateKeyStoreUrl,
+                                                     trustCertificateKeyStorePassword);
+    }
+
+    @Override
+    public List<String> getInitQueries() {
+      List<String> initQueries = new ArrayList<>();
+      if (useAnsiQuotes != null && useAnsiQuotes) {
+        initQueries.add(MysqlConstants.ANSI_QUOTES_QUERY);
       }
+      if (!Strings.isNullOrEmpty(sqlMode)) {
+        initQueries.add(String.format(MysqlConstants.SET_SQL_MODE_QUERY_FORMAT, sqlMode));
+      }
+      return initQueries;
     }
   }
 }

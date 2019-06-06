@@ -26,8 +26,8 @@ import io.cdap.plugin.common.KeyValueListParser;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import javax.annotation.Nullable;
 
 /**
@@ -74,14 +74,39 @@ public abstract class ConnectionConfig extends PluginConfig {
   }
 
   /**
-   * Parses connection arguments into a {@link Properties}.
+   * Parses connection arguments into a {@link Map}.
+   * @return a {@link Map} of connection arguments, parsed from the config.
+   */
+  public Map<String, String> getConnectionArguments() {
+    Map<String, String> arguments = getConnectionArguments(this.connectionArguments, user, password);
+    arguments.putAll(getDBSpecificArguments());
+    return arguments;
+  }
+
+  /**
+   * Constructs a connection string from host, port and database properties in a database-specific format.
+   * @return connection string specific to a particular database.
+   */
+  public abstract String getConnectionString();
+
+  /**
+   * Returns list of initialization queries. Initialization queries supposed to be executed preserving order right after
+   * connection establishing. In the case when there are no initialization queries, an empty list will be returned.
+   * @return list of initialization queries.
+   */
+  public List<String> getInitQueries() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * Parses connection arguments into a {@link Map}.
    *
    * @param connectionArguments See {@link ConnectionConfig#connectionArguments}.
    * @param user                See {@link ConnectionConfig#user}.
    * @param password            See {@link ConnectionConfig#password}.
    */
-  public static Properties getConnectionArguments(@Nullable String connectionArguments,
-                                                  @Nullable String user, @Nullable String password) {
+  protected static Map<String, String> getConnectionArguments(@Nullable String connectionArguments,
+                                                              @Nullable String user, @Nullable String password) {
     KeyValueListParser kvParser = new KeyValueListParser("\\s*;\\s*", "=");
 
     Map<String, String> connectionArgumentsMap = new HashMap<>();
@@ -96,26 +121,8 @@ public abstract class ConnectionConfig extends PluginConfig {
       connectionArgumentsMap.put("password", password);
     }
 
-    Properties properties = new Properties();
-    properties.putAll(connectionArgumentsMap);
-
-    return properties;
+    return connectionArgumentsMap;
   }
-
-  /**
-   * @return a {@link Properties} of connection arguments, parsed from the config.
-   */
-  public Properties getConnectionArguments() {
-    Properties arguments = getConnectionArguments(this.connectionArguments, user, password);
-    arguments.putAll(getDBSpecificArguments());
-    return arguments;
-  }
-
-  /**
-   * Constructs a connection string from host, port and database properties in a database-specific format.
-   * @return connection string specific to a particular database.
-   */
-  public abstract String getConnectionString();
 
   /**
    * Provides support for database-specific configuration properties.
@@ -124,4 +131,5 @@ public abstract class ConnectionConfig extends PluginConfig {
   protected Map<String, String> getDBSpecificArguments() {
     return Collections.emptyMap();
   }
+
 }

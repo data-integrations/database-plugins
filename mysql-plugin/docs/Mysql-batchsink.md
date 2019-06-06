@@ -36,7 +36,27 @@ Properties
 **Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
 will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
-**Auto Reconnect** Should the driver try to re-establish stale and/or dead connections.
+**Auto Reconnect:** Should the driver try to re-establish stale and/or dead connections.
+
+**Use SSL:** Turns on SSL encryption. The connection will fail if SSL is not available.
+
+**Keystore URL:** URL to the client certificate KeyStore (if not specified, use defaults). Must be accessible at the
+same location on host where CDAP Master is running and all hosts on which at least one HDFS, MapReduce, or YARN daemon
+role is running.
+
+**Keystore Password:** Password for the client certificates KeyStore.
+
+**Truststore URL:** URL to the trusted root certificate KeyStore (if not specified, use defaults). Must be accessible at
+the same location on host where CDAP Master is running and all hosts on which at least one HDFS, MapReduce, or YARN
+daemon role is running.
+
+**Truststore Password:** Password for the trusted root certificates KeyStore
+
+**Use Compression:** Use zlib compression when communicating with the server. Select this option for WAN
+connections.
+
+**SQL_MODE:** Override the default SQL_MODE session variable used by the server.
+
 
 Example
 -------
