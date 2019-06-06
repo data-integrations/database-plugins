@@ -38,13 +38,13 @@ import io.cdap.plugin.common.ReferencePluginConfig;
 import io.cdap.plugin.common.SourceInputFormatProvider;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
+import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.DBConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
@@ -59,7 +59,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -79,14 +81,14 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   }
 
   private static String removeConditionsClause(String importQueryString) {
-    importQueryString = importQueryString.replaceAll("\\s{2,}", " ").toUpperCase();
-    if (importQueryString.contains("WHERE $CONDITIONS AND")) {
-      importQueryString = importQueryString.replace("$CONDITIONS AND", "");
-    } else if (importQueryString.contains("WHERE $CONDITIONS")) {
-      importQueryString = importQueryString.replace("WHERE $CONDITIONS", "");
-    } else if (importQueryString.contains("AND $CONDITIONS")) {
-      importQueryString = importQueryString.replace("AND $CONDITIONS", "");
-    } else if (importQueryString.contains("$CONDITIONS")) {
+    importQueryString = importQueryString.replaceAll("\\s{2,}", " ");
+    if (importQueryString.toUpperCase().contains("WHERE $CONDITIONS AND")) {
+      importQueryString = importQueryString.replaceAll("(?i)" + Pattern.quote("$CONDITIONS AND"), "");
+    } else if (importQueryString.toUpperCase().contains("WHERE $CONDITIONS")) {
+      importQueryString = importQueryString.replaceAll("(?i)"  + Pattern.quote("WHERE $CONDITIONS"), "");
+    } else if (importQueryString.toUpperCase().contains("AND $CONDITIONS")) {
+      importQueryString = importQueryString.replaceAll("(?i)" + Pattern.quote("AND $CONDITIONS"), "");
+    } else if (importQueryString.toUpperCase().contains("$CONDITIONS")) {
       throw new IllegalArgumentException("Please remove the $CONDITIONS clause when fetching the input schema.");
     }
     return importQueryString;
@@ -121,6 +123,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
       driverCleanup = loadPluginClassAndGetDriver(driverClass);
       try (Connection connection = getConnection()) {
+        executeInitQueries(connection, sourceConfig.getInitQueries());
         String query = sourceConfig.query;
         return loadSchemaFromDB(connection, query);
       } finally {
@@ -148,13 +151,21 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     DriverCleanup driverCleanup
       = DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.jdbcPluginName);
 
-    Properties properties = ConnectionConfig.getConnectionArguments(sourceConfig.connectionArguments, sourceConfig.user,
-                                                                    sourceConfig.password);
-
-    try (Connection connection = DriverManager.getConnection(connectionString, properties)) {
+    Properties connectionProperties = new Properties();
+    connectionProperties.putAll(sourceConfig.getConnectionArguments());
+    try (Connection connection = DriverManager.getConnection(connectionString, connectionProperties)) {
+      executeInitQueries(connection, sourceConfig.getInitQueries());
       return loadSchemaFromDB(connection, sourceConfig.importQuery);
     } finally {
       driverCleanup.destroy();
+    }
+  }
+
+  private void executeInitQueries(Connection connection, List<String> initQueries) throws SQLException {
+    for (String query : initQueries) {
+      try (Statement statement = connection.createStatement()) {
+        statement.execute(query);
+      }
     }
   }
 
@@ -182,13 +193,10 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   }
 
   private Connection getConnection() throws SQLException {
-    Properties properties =
-      ConnectionConfig.getConnectionArguments(sourceConfig.connectionArguments,
-                                              sourceConfig.user,
-                                              sourceConfig.password);
-
     String connectionString = createConnectionString();
-    return DriverManager.getConnection(connectionString, properties);
+    Properties connectionProperties = new Properties();
+    connectionProperties.putAll(sourceConfig.getConnectionArguments());
+    return DriverManager.getConnection(connectionString, connectionProperties);
   }
 
   @Override
@@ -202,54 +210,50 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
               ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.jdbcPluginName,
               connectionString,
               sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery());
-    Configuration hConf = new Configuration();
-    hConf.clear();
+    ConnectionConfigAccessor connectionConfigAccessor = new ConnectionConfigAccessor();
 
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     if (sourceConfig.user == null && sourceConfig.password == null) {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString);
+      DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(), connectionString);
     } else {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), connectionString,
+      DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(), connectionString,
                                   sourceConfig.user, sourceConfig.password);
     }
 
-    DataDrivenETLDBInputFormat.setInput(hConf, getDBRecordType(),
+    DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
                                         sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery(),
                                         false);
 
 
     if (sourceConfig.getTransactionIsolationLevel() != null) {
-      hConf.set(TransactionIsolationLevel.CONF_KEY,
-                sourceConfig.getTransactionIsolationLevel());
+      connectionConfigAccessor.setTransactionIsolationLevel(sourceConfig.getTransactionIsolationLevel());
     }
-    if (sourceConfig.connectionArguments != null) {
-      hConf.set(DBUtils.CONNECTION_ARGUMENTS, sourceConfig.connectionArguments);
-    }
+    connectionConfigAccessor.setConnectionArguments(sourceConfig.getConnectionArguments());
+    connectionConfigAccessor.setInitQueries(sourceConfig.getInitQueries());
     if (sourceConfig.numSplits == null || sourceConfig.numSplits != 1) {
       if (!sourceConfig.getImportQuery().contains("$CONDITIONS")) {
         throw new IllegalArgumentException(String.format("Import Query %s must contain the string '$CONDITIONS'.",
                                                          sourceConfig.importQuery));
       }
-      hConf.set(DBConfiguration.INPUT_ORDER_BY_PROPERTY, sourceConfig.splitBy);
+      connectionConfigAccessor.getConfiguration().set(DBConfiguration.INPUT_ORDER_BY_PROPERTY, sourceConfig.splitBy);
     }
     if (sourceConfig.numSplits != null) {
-      hConf.setInt(MRJobConfig.NUM_MAPS, sourceConfig.numSplits);
+      connectionConfigAccessor.getConfiguration().setInt(MRJobConfig.NUM_MAPS, sourceConfig.numSplits);
     }
 
-    DBConfiguration dbConfiguration = new DBConfiguration(hConf);
     Schema schemaFromDB = loadSchemaFromDB(driverClass);
     if (sourceConfig.schema != null) {
       sourceConfig.validateSchema(schemaFromDB);
-      hConf.set(DBUtils.OVERRIDE_SCHEMA, sourceConfig.schema);
+      connectionConfigAccessor.setSchema(sourceConfig.schema);
     } else {
       String schemaStr = SCHEMA_TYPE_ADAPTER.toJson(schemaFromDB);
-      hConf.set(DBUtils.OVERRIDE_SCHEMA, schemaStr);
+      connectionConfigAccessor.setSchema(schemaStr);
     }
     LineageRecorder lineageRecorder = new LineageRecorder(context, sourceConfig.referenceName);
     lineageRecorder.createExternalDataset(sourceConfig.getSchema());
-    context.setInput(Input.of(sourceConfig.referenceName,
-                              new SourceInputFormatProvider(DataDrivenETLDBInputFormat.class, hConf)));
+    context.setInput(Input.of(sourceConfig.referenceName, new SourceInputFormatProvider(
+      DataDrivenETLDBInputFormat.class, connectionConfigAccessor.getConfiguration())));
   }
 
   protected Class<? extends DBWritable> getDBRecordType() {

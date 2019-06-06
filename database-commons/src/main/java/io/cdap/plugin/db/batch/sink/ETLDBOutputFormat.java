@@ -18,7 +18,7 @@ package io.cdap.plugin.db.batch.sink;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import io.cdap.plugin.db.ConnectionConfig;
+import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.JDBCDriverShim;
 import io.cdap.plugin.db.batch.NoOpCommitConnection;
 import io.cdap.plugin.db.batch.TransactionIsolationLevel;
@@ -39,6 +39,8 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -48,9 +50,9 @@ import java.util.Properties;
  * @param <V> - Value passed to this class to be written. The value is ignored.
  */
 public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K, V> {
-  public static final String AUTO_COMMIT_ENABLED = "io.cdap.plugin.db.output.autocommit.enabled";
 
   private static final Logger LOG = LoggerFactory.getLogger(ETLDBOutputFormat.class);
+
   private Configuration conf;
   private Driver driver;
   private JDBCDriverShim driverShim;
@@ -144,22 +146,28 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
         }
       }
 
-      Properties properties =
-        ConnectionConfig.getConnectionArguments(conf.get(DBUtils.CONNECTION_ARGUMENTS),
-                                                conf.get(DBConfiguration.USERNAME_PROPERTY),
-                                                conf.get(DBConfiguration.PASSWORD_PROPERTY));
+      ConnectionConfigAccessor connectionConfigAccessor = new ConnectionConfigAccessor(conf);
+      Map<String, String> connectionArgs = connectionConfigAccessor.getConnectionArguments();
+      Properties properties = new Properties();
+      properties.putAll(connectionArgs);
       connection = DriverManager.getConnection(url, properties);
 
-      boolean autoCommitEnabled = conf.getBoolean(AUTO_COMMIT_ENABLED, false);
+      boolean autoCommitEnabled = connectionConfigAccessor.isAutoCommitEnabled();
       if (autoCommitEnabled) {
         // hack to work around jdbc drivers like the hive driver that throw exceptions on commit
         connection = new NoOpCommitConnection(connection);
       } else {
         connection.setAutoCommit(false);
       }
-      String level = conf.get(TransactionIsolationLevel.CONF_KEY);
+      String level = connectionConfigAccessor.getTransactionIsolationLevel();
       LOG.debug("Transaction isolation level: {}", level);
       connection.setTransactionIsolation(TransactionIsolationLevel.getLevel(level));
+      // execute initialization queries if any
+      for (String query : connectionConfigAccessor.getInitQueries()) {
+        try (Statement statement = connection.createStatement()) {
+          statement.execute(query);
+        }
+      }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

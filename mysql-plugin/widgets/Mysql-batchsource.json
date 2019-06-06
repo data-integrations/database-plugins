@@ -111,8 +111,79 @@
       ]
     },
     {
+      "label": "SSL",
+      "properties": [
+        {
+          "label": "Use SSL",
+          "name": "useSSL",
+          "widget-type": "select",
+          "widget-attributes": {
+            "default": "If available",
+            "values": ["If available", "Yes", "No"]
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Keystore URL",
+          "name": "clientCertificateKeyStoreUrl"
+        },
+        {
+          "widget-type": "password",
+          "label": "Keystore Password",
+          "name": "clientCertificateKeyStorePassword"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Truststore URL",
+          "name": "trustCertificateKeyStoreUrl"
+        },
+        {
+          "widget-type": "password",
+          "label": "Truststore Password",
+          "name": "trustCertificateKeyStorePassword"
+        }
+      ]
+    },
+    {
       "label": "Advanced",
       "properties": [
+        {
+          "widget-type": "toggle",
+          "label": "Use Compression",
+          "name": "useCompression",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Yes"
+            },
+            "off": {
+              "value": "false",
+              "label": "No"
+            },
+            "default": "false"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Use ANSI Quotes",
+          "name": "useAnsiQuotes",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Yes"
+            },
+            "off": {
+              "value": "false",
+              "label": "No"
+            },
+            "default": "false"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "SQL_MODE",
+          "name": "sqlMode"
+        },
         {
           "widget-type": "keyvalue",
           "label": "Connection Arguments",
@@ -126,22 +197,19 @@
           }
         },
         {
-          "widget-type": "radio-group",
-          "label": "Auto reconnect",
+          "widget-type": "toggle",
+          "label": "Auto Reconnect",
           "name": "autoReconnect",
           "widget-attributes": {
-            "layout": "inline",
-            "default": "false",
-            "options": [
-              {
-                "id": "true",
-                "label": "True"
-              },
-              {
-                "id": "false",
-                "label": "False"
-              }
-            ]
+            "on": {
+              "value": "true",
+              "label": "Yes"
+            },
+            "off": {
+              "value": "false",
+              "label": "No"
+            },
+            "default": "false"
           }
         }
       ]

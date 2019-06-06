@@ -25,6 +25,7 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
@@ -61,18 +62,20 @@ public class MysqlSinkTestRun extends MysqlPluginTestBase {
       ImmutableMap.<String, String>builder()
         .putAll(BASE_PROPS)
         .put(MysqlConstants.AUTO_RECONNECT, "true")
+        .put(MysqlConstants.USE_COMPRESSION, "true")
+        .put(MysqlConstants.SQL_MODE, "ANSI_QUOTES,NO_ENGINE_SUBSTITUTION")
         .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
         .put(Constants.Reference.REFERENCE_NAME, "DBTest")
         .build(),
       null);
 
-    deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSink");
+    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSink");
     createInputData(inputDatasetName);
-
+    runETLOnce(appManager, ImmutableMap.of("logical.start.time", String.valueOf(CURRENT_TS)));
 
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement();
-         ResultSet resultSet = stmt.executeQuery("SELECT * FROM my_table")) {
+         ResultSet resultSet = stmt.executeQuery("SELECT * FROM MY_DEST_TABLE")) {
       Set<String> users = new HashSet<>();
       Assert.assertTrue(resultSet.next());
       users.add(resultSet.getString("NAME"));
@@ -94,13 +97,13 @@ public class MysqlSinkTestRun extends MysqlPluginTestBase {
       "dbRecord",
       Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
       Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("SCORE", Schema.of(Schema.Type.FLOAT)),
+      Schema.Field.of("SCORE", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("GRADUATED", Schema.of(Schema.Type.BOOLEAN)),
       Schema.Field.of("TINY", Schema.of(Schema.Type.INT)),
       Schema.Field.of("SMALL", Schema.of(Schema.Type.INT)),
       Schema.Field.of("BIG", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("FLOAT_COL", Schema.of(Schema.Type.FLOAT)),
-      Schema.Field.of("REAL_COL", Schema.of(Schema.Type.FLOAT)),
+      Schema.Field.of("REAL_COL", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("NUMERIC_COL", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("DECIMAL_COL", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("BIT_COL", Schema.of(Schema.Type.BOOLEAN)),
@@ -117,13 +120,13 @@ public class MysqlSinkTestRun extends MysqlPluginTestBase {
       inputRecords.add(StructuredRecord.builder(schema)
                          .set("ID", i)
                          .set("NAME", name)
-                         .set("SCORE", 3.451f)
+                         .set("SCORE", 3.451)
                          .set("GRADUATED", (i % 2 == 0))
                          .set("TINY", i + 1)
                          .set("SMALL", i + 2)
                          .set("BIG", 3456987L)
                          .set("FLOAT_COL", 3.456f)
-                         .set("REAL_COL", 3.457f)
+                         .set("REAL_COL", 3.457)
                          .set("NUMERIC_COL", 3.458d)
                          .set("DECIMAL_COL", 3.459d)
                          .set("BIT_COL", (i % 2 == 1))

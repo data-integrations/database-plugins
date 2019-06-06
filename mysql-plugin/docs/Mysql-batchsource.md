@@ -46,11 +46,32 @@ For example, 'SELECT MIN(id),MAX(id) FROM table'. Not required if numSplits is s
 **Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
 will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
-**Auto Reconnect** Should the driver try to re-establish stale and/or dead connections.
+**Auto Reconnect:** Should the driver try to re-establish stale and/or dead connections.
 
 **Schema:** The schema of records output by the source. This will be used in place of whatever schema comes
 back from the query. However, it must match the schema that comes back from the query,
 except it can mark fields as nullable and can contain a subset of the fields.
+
+**Use SSL:** Turns on SSL encryption. The connection will fail if SSL is not available.
+
+**Keystore URL:** URL to the client certificate KeyStore (if not specified, use defaults). Must be accessible at the
+same location on host where CDAP Master is running and all hosts on which at least one HDFS, MapReduce, or YARN daemon
+role is running.
+
+**Keystore Password:** Password for the client certificates KeyStore.
+
+**Truststore URL:** URL to the trusted root certificate KeyStore (if not specified, use defaults). Must be accessible at
+the same location on host where CDAP Master is running and all hosts on which at least one HDFS, MapReduce, or YARN
+daemon role is running.
+
+**Truststore Password:** Password for the trusted root certificates KeyStore
+
+**Use Compression:** Use zlib compression when communicating with the server. Select this option for WAN
+connections.
+
+**Use ANSI Quotes:** Treats " as an identifier quote character and not as a string quote character.
+
+**SQL_MODE:** Override the default SQL_MODE session variable used by the server.
 
 
 Example

@@ -118,7 +118,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   }
 
   private Schema computeSchema() {
-    String schemaStr = conf.get(DBUtils.OVERRIDE_SCHEMA);
+    String schemaStr = new ConnectionConfigAccessor(conf).getSchema();
     if (schemaStr == null) {
       throw new IllegalStateException("Schema was not provided");
     }

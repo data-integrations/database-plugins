@@ -59,8 +59,6 @@ import javax.management.ReflectionException;
  */
 public final class DBUtils {
   private static final Logger LOG = LoggerFactory.getLogger(DBUtils.class);
-  public static final String OVERRIDE_SCHEMA = "io.cdap.plugin.db.override.schema";
-  public static final String CONNECTION_ARGUMENTS = "io.cdap.plugin.db.connection.arguments";
 
   /**
    * Performs any Database related cleanup
