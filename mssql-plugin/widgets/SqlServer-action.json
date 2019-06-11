@@ -47,6 +47,25 @@
       "label": "Credentials",
       "properties": [
         {
+          "label": "Authentication Type",
+          "name": "authentication",
+          "widget-type": "radio-group",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "SQL Login",
+            "options": [
+              {
+                "id": "SQL Login",
+                "label": "SQL Login"
+              },
+              {
+                "id": "ActiveDirectoryPassword",
+                "label": "Active Directory Password"
+              }
+            ]
+          }
+        },
+        {
           "widget-type": "textbox",
           "label": "Username",
           "name": "user"
@@ -62,18 +81,6 @@
       "label": "Advanced",
       "properties": [
         {
-          "widget-type": "keyvalue",
-          "label": "Connection Arguments",
-          "name": "connectionArguments",
-          "widget-attributes": {
-            "showDelimiter": "false",
-            "key-placeholder": "Key",
-            "value-placeholder": "Value",
-            "kv-delimiter": "=",
-            "delimiter": ";"
-          }
-        },
-        {
           "widget-type": "textbox",
           "label": "Instance Name",
           "name": "instanceName"
@@ -84,6 +91,116 @@
           "name": "queryTimeout",
           "widget-attributes": {
             "default": "-1"
+          }
+        },
+        {
+          "label": "Application Intent",
+          "name": "applicationIntent",
+          "widget-type": "radio-group",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "ReadWrite",
+            "options": [
+              {
+                "id": "ReadWrite",
+                "label": "ReadWrite"
+              },
+              {
+                "id": "ReadOnly",
+                "label": "ReadOnly"
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Connect Timeout",
+          "name": "loginTimeout",
+          "widget-attributes": {
+            "default": "0"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Column Encryption",
+          "name": "columnEncryptionSetting",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Enabled"
+            },
+            "off": {
+              "value": "false",
+              "label": "Disabled"
+            },
+            "default": "false"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Encrypt",
+          "name": "encrypt",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Yes"
+            },
+            "off": {
+              "value": "false",
+              "label": "No"
+            },
+            "default": "false"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Trust Server Certificate",
+          "name": "trustServerCertificate",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Yes"
+            },
+            "off": {
+              "value": "false",
+              "label": "No"
+            },
+            "default": "false"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Workstation ID",
+          "name": "workstationID"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Failover Partner",
+          "name": "failoverPartner"
+        },
+        {
+          "widget-type": "number",
+          "label": "Packet Size",
+          "name": "packetSize",
+          "widget-attributes": {
+            "default": "-1"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Current Language",
+          "name": "currentLanguage"
+        },
+        {
+          "widget-type": "keyvalue",
+          "label": "Connection Arguments",
+          "name": "connectionArguments",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value",
+            "kv-delimiter": "=",
+            "delimiter": ";"
           }
         }
       ]

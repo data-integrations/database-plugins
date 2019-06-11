@@ -16,7 +16,7 @@
 
 package io.cdap.plugin.mssql;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
@@ -24,6 +24,8 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -48,17 +50,59 @@ public class SqlServerSink extends AbstractDBSink {
   public static class SqlServerSinkConfig extends DBSpecificSinkConfig {
 
     @Name(SqlServerConstants.INSTANCE_NAME)
-    @Description("The SQL Server instance name to connect to. When it is not specified, a connection is made" +
-      " to the default instance. For the case where both the instanceName " +
-      "and port are specified, see the notes for port.")
+    @Description(SqlServerConstants.INSTANCE_NAME_DESCRIPTION)
     @Nullable
     public String instanceName;
 
     @Name(SqlServerConstants.QUERY_TIMEOUT)
-    @Description("The number of seconds to wait before a timeout has occurred on a query. The default value is -1, " +
-      "which means infinite timeout. Setting this to 0 also implies to wait indefinitely.")
+    @Description(SqlServerConstants.QUERY_TIMEOUT_DESCRIPTION)
     @Nullable
     public Integer queryTimeout = -1;
+
+    @Name(SqlServerConstants.AUTHENTICATION)
+    @Description(SqlServerConstants.AUTHENTICATION_DESCRIPTION)
+    @Nullable
+    public String authenticationType;
+
+    @Name(SqlServerConstants.CONNECT_TIMEOUT)
+    @Description(SqlServerConstants.CONNECT_TIMEOUT_DESCRIPTION)
+    @Nullable
+    public Integer connectTimeout;
+
+    @Name(SqlServerConstants.COLUMN_ENCRYPTION)
+    @Description(SqlServerConstants.COLUMN_ENCRYPTION_DESCRIPTION)
+    @Nullable
+    public Boolean columnEncryption;
+
+    @Name(SqlServerConstants.ENCRYPT)
+    @Description(SqlServerConstants.ENCRYPT_DESCRIPTION)
+    @Nullable
+    public Boolean encrypt;
+
+    @Name(SqlServerConstants.TRUST_SERVER_CERTIFICATE)
+    @Description(SqlServerConstants.TRUST_SERVER_CERTIFICATE_DESCRIPTION)
+    @Nullable
+    public Boolean trustServerCertificate;
+
+    @Name(SqlServerConstants.WORKSTATION_ID)
+    @Description(SqlServerConstants.WORKSTATION_ID_DESCRIPTION)
+    @Nullable
+    public String workstationId;
+
+    @Name(SqlServerConstants.FAILOVER_PARTNER)
+    @Description(SqlServerConstants.FAILOVER_PARTNER_DESCRIPTION)
+    @Nullable
+    public String failoverPartner;
+
+    @Name(SqlServerConstants.PACKET_SIZE)
+    @Description(SqlServerConstants.PACKET_SIZE_DESCRIPTION)
+    @Nullable
+    public Integer packetSize;
+
+    @Name(SqlServerConstants.CURRENT_LANGUAGE)
+    @Description(SqlServerConstants.CURRENT_LANGUAGE_DESCRIPTION)
+    @Nullable
+    public String currentLanguage;
 
     @Override
     public String getConnectionString() {
@@ -67,13 +111,19 @@ public class SqlServerSink extends AbstractDBSink {
 
     @Override
     public Map<String, String> getDBSpecificArguments() {
-      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+      return SqlServerUtil.composeDbSpecificArgumentsMap(instanceName, authenticationType, null,
+                                                         connectTimeout, columnEncryption, encrypt,
+                                                         trustServerCertificate, workstationId, failoverPartner,
+                                                         packetSize, queryTimeout);
+    }
 
-      if (instanceName != null) {
-        builder.put(SqlServerConstants.INSTANCE_NAME, String.valueOf(instanceName));
+    @Override
+    public List<String> getInitQueries() {
+      if (!Strings.isNullOrEmpty(currentLanguage)) {
+        return Collections.singletonList(String.format(SqlServerConstants.SET_LANGUAGE_QUERY_FORMAT, currentLanguage));
       }
 
-      return builder.put(SqlServerConstants.QUERY_TIMEOUT, String.valueOf(queryTimeout)).build();
+      return Collections.emptyList();
     }
   }
 }
