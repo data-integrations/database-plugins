@@ -37,6 +37,7 @@
     <module>netezza-plugin</module>
     <module>aurora-mysql-plugin</module>
     <module>aurora-postgresql-plugin</module>
+    <module>mongodb-plugin</module>
   </modules>
 
   <licenses>
