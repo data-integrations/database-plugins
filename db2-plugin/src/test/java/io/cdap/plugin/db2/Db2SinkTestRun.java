@@ -18,6 +18,7 @@ package io.cdap.plugin.db2;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
@@ -78,6 +79,8 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
       Assert.assertEquals(new Time(CURRENT_TS).toString(), resultSet.getTime("TIME_COL").toString());
       Assert.assertEquals(new Timestamp(CURRENT_TS), resultSet.getTimestamp("TIMESTAMP_COL"));
       Assert.assertTrue(resultSet.next());
+      Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("BLOB_COL"), 0, 5));
+      Assert.assertEquals("user2", resultSet.getString("CLOB_COL"));
       users.add(resultSet.getString("VARCHAR_COL"));
       Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
 

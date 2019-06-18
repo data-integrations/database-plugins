@@ -23,6 +23,7 @@ import io.cdap.plugin.db.SchemaReader;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -52,7 +53,7 @@ public class OracleDBRecord extends DBRecord {
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                              int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
-    if (OracleSchemaReader.ORACLE_TYPES.contains(sqlType)) {
+    if (OracleSchemaReader.ORACLE_TYPES.contains(sqlType) || sqlType == Types.NCLOB) {
       handleOracleSpecificType(resultSet, recordBuilder, field, columnIndex, sqlType);
     } else {
       setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
@@ -66,6 +67,7 @@ public class OracleDBRecord extends DBRecord {
     switch (sqlType) {
       case OracleSchemaReader.INTERVAL_YM:
       case OracleSchemaReader.INTERVAL_DS:
+      case Types.NCLOB:
         recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
         break;
       case OracleSchemaReader.TIMESTAMP_LTZ:

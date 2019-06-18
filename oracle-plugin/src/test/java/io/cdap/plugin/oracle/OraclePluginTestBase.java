@@ -39,6 +39,7 @@ import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
+import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -77,6 +78,7 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
     .put(ConnectionConfig.DATABASE, System.getProperty("oracle.database"))
     .put(ConnectionConfig.USER, System.getProperty("oracle.username"))
     .put(ConnectionConfig.PASSWORD, System.getProperty("oracle.password"))
+    .put(OracleConstants.CONNECTION_TYPE, System.getProperty("oracle.connectionType"))
     .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .put(OracleConstants.DEFAULT_BATCH_VALUE, "10")
     .build();
@@ -106,8 +108,20 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
-    connectionUrl = "jdbc:oracle:thin:@" + BASE_PROPS.get(ConnectionConfig.HOST) + ":" +
-      BASE_PROPS.get(ConnectionConfig.PORT) + ":" + BASE_PROPS.get(ConnectionConfig.DATABASE);
+    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(BASE_PROPS.get("oracle.connectionType"))) {
+      connectionUrl = String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT,
+                                    BASE_PROPS.get(ConnectionConfig.HOST),
+                                    BASE_PROPS.get(ConnectionConfig.PORT),
+                                    BASE_PROPS.get(ConnectionConfig.DATABASE)
+      );
+    } else {
+      connectionUrl = String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT,
+                                    BASE_PROPS.get(ConnectionConfig.HOST),
+                                    BASE_PROPS.get(ConnectionConfig.PORT),
+                                    BASE_PROPS.get(ConnectionConfig.DATABASE)
+      );
+    }
+
     Connection conn = createConnection();
     createTestTables(conn);
     prepareTestData(conn);
@@ -142,7 +156,8 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
                      "  INTERVAL_DAY_TO_SECOND_COL INTERVAL DAY(2) TO SECOND," +
                      "  RAW_COL RAW(16)," +
                      "  CLOB_COL CLOB," +
-                     "  BLOB_COL BLOB" +
+                     "  BLOB_COL BLOB," +
+                     "  NCLOB_COL NCLOB" +
                      ")");
       stmt.execute("CREATE TABLE MY_DEST_TABLE AS " +
                      "SELECT * FROM my_table");
@@ -157,11 +172,11 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
       Statement stmt = conn.createStatement();
       PreparedStatement pStmt1 =
         conn.prepareStatement("INSERT INTO my_table " +
-                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
                                 "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       PreparedStatement pStmt2 =
         conn.prepareStatement("INSERT INTO your_table " +
-                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
                                 "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
 
       stmt.execute("insert into dbActionTest values (1, '1970-01-01')");
@@ -171,11 +186,12 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
     }
   }
 
-  private static void populateData(PreparedStatement ...stmts) throws SQLException {
+  private static void populateData(PreparedStatement... stmts) throws SQLException {
     // insert the same data into both tables: my_table and your_table
     for (PreparedStatement pStmt : stmts) {
       for (int i = 1; i <= 5; i++) {
         Clob clob = null;
+        NClob nClob = null;
         try {
           String name = "user" + i;
           pStmt.setInt(1, i);
@@ -204,10 +220,19 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
           pStmt.setClob(21, clob);
 
           pStmt.setBytes(22, name.getBytes());
+
+          nClob = pStmt.getConnection().createNClob();
+          nClob.setString(1, name);
+          pStmt.setNClob(23, nClob);
+
           pStmt.executeUpdate();
         } finally {
           if (Objects.nonNull(clob)) {
             clob.free();
+          }
+
+          if (Objects.nonNull(nClob)) {
+            nClob.free();
           }
         }
       }

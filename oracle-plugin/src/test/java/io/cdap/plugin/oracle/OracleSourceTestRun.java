@@ -84,8 +84,8 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
   public void testDBSource() throws Exception {
     String importQuery = "SELECT CHAR_COL, VARCHAR_COL, INT_COL, INTEGER_COL, DEC_COL, DECIMAL_COL, NUMBER_COL," +
       " NUMERIC_COL, SMALLINT_COL, REAL_COL, DATE_COL, TIMESTAMP_COL, INTERVAL_YEAR_TO_MONTH_COL, " +
-      "INTERVAL_DAY_TO_SECOND_COL, RAW_COL, TIMESTAMPTZ_COL, TIMESTAMPLTZ_COL, CLOB_COL, BLOB_COL FROM my_table " +
-      " WHERE SMALLINT_COL < 3 AND $CONDITIONS";
+      "INTERVAL_DAY_TO_SECOND_COL, RAW_COL, TIMESTAMPTZ_COL, TIMESTAMPLTZ_COL, CLOB_COL, NCLOB_COL, " +
+      "BLOB_COL FROM my_table WHERE SMALLINT_COL < 3 AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(SMALLINT_COL),MAX(SMALLINT_COL) from my_table";
     String splitBy = "SMALLINT_COL";
     ETLPlugin sourceConfig = new ETLPlugin(
@@ -154,6 +154,8 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
     Assert.assertEquals("user2", Bytes.toString((ByteBuffer) row2.get("RAW_COL")));
     Assert.assertEquals("user1", row1.get("CLOB_COL"));
     Assert.assertEquals("user2", row2.get("CLOB_COL"));
+    Assert.assertEquals("user1", row1.get("NCLOB_COL"));
+    Assert.assertEquals("user2", row2.get("NCLOB_COL"));
     Assert.assertEquals("user1", Bytes.toString((ByteBuffer) row1.get("BLOB_COL")));
     Assert.assertEquals("user2", Bytes.toString((ByteBuffer) row2.get("BLOB_COL")));
   }
@@ -211,6 +213,7 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
     Map<String, String> baseSourceProps = ImmutableMap.<String, String>builder()
       .put(OracleConstants.DEFAULT_ROW_PREFETCH, "40")
       .put(OracleConstants.DEFAULT_BATCH_VALUE, "40")
+      .put(OracleConstants.CONNECTION_TYPE, BASE_PROPS.get(OracleConstants.CONNECTION_TYPE))
       .put(ConnectionConfig.HOST, BASE_PROPS.get(ConnectionConfig.HOST))
       .put(ConnectionConfig.PORT, BASE_PROPS.get(ConnectionConfig.PORT))
       .put(ConnectionConfig.DATABASE, BASE_PROPS.get(ConnectionConfig.DATABASE))
@@ -305,6 +308,7 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
       ImmutableMap.<String, String>builder()
         .put(OracleConstants.DEFAULT_ROW_PREFETCH, "40")
         .put(OracleConstants.DEFAULT_BATCH_VALUE, "40")
+        .put(OracleConstants.CONNECTION_TYPE, BASE_PROPS.get(OracleConstants.CONNECTION_TYPE))
         .put(ConnectionConfig.HOST, BASE_PROPS.get(ConnectionConfig.HOST))
         .put(ConnectionConfig.PORT, BASE_PROPS.get(ConnectionConfig.PORT))
         .put(ConnectionConfig.DATABASE, "dumDB")

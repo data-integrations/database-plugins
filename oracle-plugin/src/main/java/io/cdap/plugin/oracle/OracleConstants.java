@@ -30,4 +30,5 @@ public final class OracleConstants {
   public static final String DEFAULT_BATCH_VALUE = "defaultBatchValue";
   public static final String DEFAULT_ROW_PREFETCH = "defaultRowPrefetch";
   public static final String SERVICE_CONNECTION_TYPE = "service";
+  public static final String CONNECTION_TYPE = "connectionType";
 }

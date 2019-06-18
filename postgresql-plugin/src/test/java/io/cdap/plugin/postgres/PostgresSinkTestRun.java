@@ -105,7 +105,8 @@ public class PostgresSinkTestRun extends PostgresPluginTestBase {
       Schema.Field.of("TIME_COL", Schema.of(Schema.LogicalType.TIME_MICROS)),
       Schema.Field.of("TIMESTAMP_COL", Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)),
       Schema.Field.of("CHAR_COL", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("BYTEA_COL", Schema.of(Schema.Type.BYTES))
+      Schema.Field.of("BYTEA_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("TEXT_COL", Schema.of(Schema.Type.STRING))
     );
     List<StructuredRecord> inputRecords = new ArrayList<>();
     LocalDateTime localDateTime = new Timestamp(CURRENT_TS).toLocalDateTime();
@@ -126,6 +127,7 @@ public class PostgresSinkTestRun extends PostgresPluginTestBase {
                          .setTimestamp("TIMESTAMP_COL", localDateTime.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)))
                          .set("BYTEA_COL", name.getBytes())
                          .set("CHAR_COL", name)
+                         .set("TEXT_COL", name)
                          .build());
     }
     MockSource.writeInput(inputManager, inputRecords);
