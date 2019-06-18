@@ -100,6 +100,14 @@ public class SqlServerSourceTestRun extends SqlServerPluginTestBase {
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
         .put(Constants.Reference.REFERENCE_NAME, "DBSourceTest")
+        .put(SqlServerConstants.CONNECT_TIMEOUT, "20")
+        .put(SqlServerConstants.COLUMN_ENCRYPTION, SqlServerConstants.COLUMN_ENCRYPTION_ENABLED)
+        .put(SqlServerConstants.ENCRYPT, "true")
+        .put(SqlServerConstants.TRUST_SERVER_CERTIFICATE, "true")
+        .put(SqlServerConstants.WORKSTATION_ID, "workstation-1")
+        .put(SqlServerConstants.FAILOVER_PARTNER, "localhost")
+        .put(SqlServerConstants.PACKET_SIZE, "-1")
+        .put(SqlServerConstants.CURRENT_LANGUAGE, "us_english")
         .build(),
       null
     );
@@ -220,6 +228,14 @@ public class SqlServerSourceTestRun extends SqlServerPluginTestBase {
       .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
       .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
       .put(Constants.Reference.REFERENCE_NAME, "UserPassDBTest")
+      .put(SqlServerConstants.CONNECT_TIMEOUT, "20")
+      .put(SqlServerConstants.COLUMN_ENCRYPTION, SqlServerConstants.COLUMN_ENCRYPTION_ENABLED)
+      .put(SqlServerConstants.ENCRYPT, "true")
+      .put(SqlServerConstants.TRUST_SERVER_CERTIFICATE, "true")
+      .put(SqlServerConstants.WORKSTATION_ID, "workstation-1")
+      .put(SqlServerConstants.FAILOVER_PARTNER, "localhost")
+      .put(SqlServerConstants.PACKET_SIZE, "-1")
+      .put(SqlServerConstants.CURRENT_LANGUAGE, "us_english")
       .build();
 
     ApplicationId appId = NamespaceId.DEFAULT.app("dbTest");
@@ -283,6 +299,14 @@ public class SqlServerSourceTestRun extends SqlServerPluginTestBase {
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
         .put(Constants.Reference.REFERENCE_NAME, "DBNonExistentTest")
+        .put(SqlServerConstants.CONNECT_TIMEOUT, "20")
+        .put(SqlServerConstants.COLUMN_ENCRYPTION, SqlServerConstants.COLUMN_ENCRYPTION_ENABLED)
+        .put(SqlServerConstants.ENCRYPT, "true")
+        .put(SqlServerConstants.TRUST_SERVER_CERTIFICATE, "true")
+        .put(SqlServerConstants.WORKSTATION_ID, "workstation-1")
+        .put(SqlServerConstants.FAILOVER_PARTNER, "localhost")
+        .put(SqlServerConstants.PACKET_SIZE, "-1")
+        .put(SqlServerConstants.CURRENT_LANGUAGE, "us_english")
         .build(),
       null);
     ETLStage sink = new ETLStage("sink", sinkConfig);
@@ -313,6 +337,14 @@ public class SqlServerSourceTestRun extends SqlServerPluginTestBase {
         .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
         .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
         .put(Constants.Reference.REFERENCE_NAME, "SQLServerTest")
+        .put(SqlServerConstants.CONNECT_TIMEOUT, "20")
+        .put(SqlServerConstants.COLUMN_ENCRYPTION, SqlServerConstants.COLUMN_ENCRYPTION_ENABLED)
+        .put(SqlServerConstants.ENCRYPT, "true")
+        .put(SqlServerConstants.TRUST_SERVER_CERTIFICATE, "true")
+        .put(SqlServerConstants.WORKSTATION_ID, "workstation-1")
+        .put(SqlServerConstants.FAILOVER_PARTNER, "localhost")
+        .put(SqlServerConstants.PACKET_SIZE, "-1")
+        .put(SqlServerConstants.CURRENT_LANGUAGE, "us_english")
         .build(),
       null);
     ETLStage sourceBadConn = new ETLStage("sourceBadConn", sourceBadConnConfig);

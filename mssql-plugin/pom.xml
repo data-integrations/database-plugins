@@ -39,6 +39,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.microsoft.azure</groupId>
+      <artifactId>adal4j</artifactId>
+      <version>1.6.4</version>
+    </dependency>
+    <dependency>
       <groupId>io.cdap.plugin</groupId>
       <artifactId>hydrator-common</artifactId>
     </dependency>
@@ -93,7 +98,8 @@
               io.cdap.plugin.*;
               org.apache.commons.lang;
               org.apache.commons.logging.*;
-              org.codehaus.jackson.*
+              org.codehaus.jackson.*;
+              com.microsoft.aad.*
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>

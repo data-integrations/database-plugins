@@ -63,6 +63,14 @@ public class SqlServerSinkTestRun extends SqlServerPluginTestBase {
         .putAll(BASE_PROPS)
         .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
         .put(Constants.Reference.REFERENCE_NAME, "DBTest")
+        .put(SqlServerConstants.CONNECT_TIMEOUT, "20")
+        .put(SqlServerConstants.COLUMN_ENCRYPTION, SqlServerConstants.COLUMN_ENCRYPTION_ENABLED)
+        .put(SqlServerConstants.ENCRYPT, "true")
+        .put(SqlServerConstants.TRUST_SERVER_CERTIFICATE, "true")
+        .put(SqlServerConstants.WORKSTATION_ID, "workstation-1")
+        .put(SqlServerConstants.FAILOVER_PARTNER, "localhost")
+        .put(SqlServerConstants.PACKET_SIZE, "-1")
+        .put(SqlServerConstants.CURRENT_LANGUAGE, "us_english")
         .build(),
       null);
 
