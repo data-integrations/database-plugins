@@ -36,6 +36,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.postgresql.Driver;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -58,6 +59,8 @@ public class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
 
   protected static String connectionUrl;
   protected static int year;
+  protected static final int PRECISION = 10;
+  protected static final int SCALE = 6;
   protected static boolean tearDown = true;
   private static int startCount;
 
@@ -124,8 +127,8 @@ public class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
                      "\"NOT_IMPORTED\" VARCHAR(30)," +
                      "\"SMALLINT_COL\" SMALLINT," +
                      "\"BIG\" BIGINT," +
-                     "\"NUMERIC_COL\" NUMERIC(10, 2)," +
-                     "\"DECIMAL_COL\" DECIMAL(10, 2)," +
+                     "\"NUMERIC_COL\" NUMERIC(" + PRECISION + "," + SCALE + ")," +
+                     "\"DECIMAL_COL\" DECIMAL(" + PRECISION + "," + SCALE + ")," +
                      "\"DOUBLE_PREC_COL\" DOUBLE PRECISION," +
                      "\"DATE_COL\" DATE," +
                      "\"TIME_COL\" TIME," +
@@ -172,8 +175,8 @@ public class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
         pStmt.setString(5, "random" + i);
         pStmt.setShort(6, (short) i);
         pStmt.setLong(7, (long) i);
-        pStmt.setFloat(8, (float) 123.45 + i);
-        pStmt.setFloat(9, (float) 123.45 + i);
+        pStmt.setBigDecimal(8, new BigDecimal(123.45).add(new BigDecimal(i)));
+        pStmt.setBigDecimal(9, new BigDecimal(123.45).add(new BigDecimal(i)));
         pStmt.setDouble(10, 123.45 + i);
         pStmt.setDate(11, new Date(CURRENT_TS));
         pStmt.setTime(12, new Time(CURRENT_TS));

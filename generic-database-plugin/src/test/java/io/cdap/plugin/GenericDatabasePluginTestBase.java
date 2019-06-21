@@ -44,6 +44,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -71,6 +72,8 @@ public class GenericDatabasePluginTestBase extends DatabasePluginTestBase {
   private static int startCount;
   private static HSQLDBServer hsqlDBServer;
   protected static Schema schema;
+  protected static final int PRECISION = 10;
+  protected static final int SCALE = 6;
   static boolean tearDown = true;
 
   @ClassRule
@@ -127,8 +130,8 @@ public class GenericDatabasePluginTestBase extends DatabasePluginTestBase {
                              Schema.Field.of("BIG", nullableLong),
                              Schema.Field.of("FLOAT_COL", nullableFloat),
                              Schema.Field.of("REAL_COL", nullableFloat),
-                             Schema.Field.of("NUMERIC_COL", nullableDouble),
-                             Schema.Field.of("DECIMAL_COL", nullableDouble),
+                             Schema.Field.of("NUMERIC_COL", Schema.decimalOf(PRECISION, SCALE)),
+                             Schema.Field.of("DECIMAL_COL", Schema.decimalOf(PRECISION, SCALE)),
                              Schema.Field.of("BIT_COL", nullableBoolean),
                              Schema.Field.of("DATE_COL", nullableLong),
                              Schema.Field.of("TIME_COL", nullableLong),
@@ -164,8 +167,8 @@ public class GenericDatabasePluginTestBase extends DatabasePluginTestBase {
                      "BIG BIGINT, " +
                      "FLOAT_COL FLOAT, " +
                      "REAL_COL REAL, " +
-                     "NUMERIC_COL NUMERIC(10, 2), " +
-                     "DECIMAL_COL DECIMAL(10, 2), " +
+                     "NUMERIC_COL NUMERIC(" + PRECISION + "," + SCALE + "), " +
+                     "DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + "), " +
                      "BIT_COL BIT, " +
                      "DATE_COL DATE, " +
                      "TIME_COL TIME, " +
@@ -208,11 +211,11 @@ public class GenericDatabasePluginTestBase extends DatabasePluginTestBase {
           pStmt.setLong(8, (long) i);
           pStmt.setFloat(9, (float) 123.45 + i);
           pStmt.setFloat(10, (float) 123.45 + i);
-          pStmt.setDouble(11, 123.45 + i);
+          pStmt.setBigDecimal(11, new BigDecimal(123.45).add(new BigDecimal(i)));
           if ((i % 2 == 0)) {
-            pStmt.setNull(12, Types.DOUBLE);
+            pStmt.setNull(12, Types.DECIMAL);
           } else {
-            pStmt.setDouble(12, 123.45 + i);
+            pStmt.setBigDecimal(12, new BigDecimal(123.45).add(new BigDecimal(i)));
           }
           pStmt.setBoolean(13, (i % 2 == 1));
           pStmt.setDate(14, new Date(CURRENT_TS));

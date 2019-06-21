@@ -37,6 +37,8 @@ import io.cdap.plugin.jdbc.DatabaseConstants;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -69,8 +71,8 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
     Schema.Field.of("BIG", Schema.of(Schema.Type.LONG)),
     Schema.Field.of("FLOAT_COL", Schema.of(Schema.Type.FLOAT)),
     Schema.Field.of("REAL_COL", Schema.of(Schema.Type.FLOAT)),
-    Schema.Field.of("NUMERIC_COL", Schema.of(Schema.Type.DOUBLE)),
-    Schema.Field.of("DECIMAL_COL", Schema.of(Schema.Type.DOUBLE)),
+    Schema.Field.of("NUMERIC_COL", Schema.decimalOf(PRECISION, SCALE)),
+    Schema.Field.of("DECIMAL_COL", Schema.decimalOf(PRECISION, SCALE)),
     Schema.Field.of("BIT_COL", Schema.of(Schema.Type.BOOLEAN)),
     Schema.Field.of("DATE_COL", Schema.of(Schema.LogicalType.DATE)),
     Schema.Field.of("TIME_COL", Schema.of(Schema.LogicalType.TIME_MICROS)),
@@ -112,6 +114,10 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
         Assert.assertTrue(resultSet.next());
         Assert.assertEquals("user2", resultSet.getString("CLOB_COL"));
         Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("BLOB_COL"), 0, 5));
+        Assert.assertEquals(new BigDecimal(3.458, new MathContext(PRECISION)).setScale(SCALE),
+                            resultSet.getBigDecimal("NUMERIC_COL"));
+        Assert.assertEquals(new BigDecimal(3.459, new MathContext(PRECISION)).setScale(SCALE),
+                            resultSet.getBigDecimal("DECIMAL_COL"));
         users.add(resultSet.getString("NAME"));
         Assert.assertFalse(resultSet.next());
         Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
@@ -176,8 +182,8 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
                          .set("BIG", 3456987L)
                          .set("FLOAT_COL", 3.456f)
                          .set("REAL_COL", 3.457f)
-                         .set("NUMERIC_COL", 3.458d)
-                         .set("DECIMAL_COL", 3.459d)
+                         .setDecimal("NUMERIC_COL", new BigDecimal(3.458d, new MathContext(PRECISION)).setScale(SCALE))
+                         .setDecimal("DECIMAL_COL", new BigDecimal(3.459d, new MathContext(PRECISION)).setScale(SCALE))
                          .set("BIT_COL", (i % 2 == 1))
                          .setDate("DATE_COL", localDateTime.toLocalDate())
                          .setTime("TIME_COL", localDateTime.toLocalTime())

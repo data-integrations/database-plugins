@@ -59,6 +59,8 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
 
   protected static String connectionUrl;
   protected static int year;
+  protected static final int PRECISION = 10;
+  protected static final int SCALE = 6;
   protected static boolean tearDown = true;
   private static int startCount;
 
@@ -128,8 +130,8 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
                      "  SMALLINT_COL SMALLINT," +
                      "  INTEGER_COL INTEGER," +
                      "  BIGINT_COL BIGINT," +
-                     "  DECIMAL_COL DECIMAL(10, 2)," +
-                     "  NUMERIC_COL NUMERIC(10, 2)," +
+                     "  DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + ")," +
+                     "  NUMERIC_COL NUMERIC(" + PRECISION + "," + SCALE + ")," +
                      "  DECFLOAT_COL DECFLOAT," +
                      "  REAL_COL REAL," +
                      "  DOUBLE_COL DOUBLE," +
@@ -176,9 +178,9 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
           pStmt.setShort(1, (short) i);
           pStmt.setInt(2, i);
           pStmt.setLong(3, (long) i);
-          pStmt.setBigDecimal(4, new BigDecimal(i + 3.14));
-          pStmt.setBigDecimal(5, new BigDecimal(i + 3.14));
-          pStmt.setBigDecimal(6, new BigDecimal(i + 3.14));
+          pStmt.setBigDecimal(4, new BigDecimal(3.14).add(new BigDecimal(i)));
+          pStmt.setBigDecimal(5, new BigDecimal(3.14).add(new BigDecimal(i)));
+          pStmt.setBigDecimal(6, new BigDecimal(3.14).add(new BigDecimal(i)));
           pStmt.setFloat(7, i + 3.14f);
           pStmt.setDouble(8, i + 3.14);
           pStmt.setString(9, name);

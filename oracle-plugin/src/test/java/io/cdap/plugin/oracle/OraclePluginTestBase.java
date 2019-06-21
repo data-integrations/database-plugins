@@ -60,6 +60,8 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
 
   protected static String connectionUrl;
   protected static final int YEAR;
+  protected static final int PRECISION = 10;
+  protected static final int SCALE = 6;
   protected static boolean tearDown = true;
   private static int startCount;
 
@@ -143,9 +145,9 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
                      "  INT_COL INT," +
                      "  INTEGER_COL INTEGER," +
                      "  DEC_COL DEC," +
-                     "  DECIMAL_COL DECIMAL(10, 2)," +
-                     "  NUMBER_COL NUMBER(10, 2)," +
-                     "  NUMERIC_COL NUMERIC(10, 2)," +
+                     "  DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + ")," +
+                     "  NUMBER_COL NUMBER(" + PRECISION + "," + SCALE + ")," +
+                     "  NUMERIC_COL NUMERIC(" + PRECISION + "," + SCALE + ")," +
                      "  SMALLINT_COL SMALLINT," +
                      "  REAL_COL REAL," +
                      "  DATE_COL DATE," +

@@ -36,6 +36,8 @@ import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.sql.Time;
@@ -140,10 +142,14 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     Assert.assertEquals(125.45, (float) row2.get("FLOAT_COL"), 0.00001);
     Assert.assertEquals(124.45, (float) row1.get("REAL_COL"), 0.00001);
     Assert.assertEquals(125.45, (float) row2.get("REAL_COL"), 0.00001);
-    Assert.assertEquals(124, (long) row1.get("NUMERIC_COL"));
-    Assert.assertEquals(125, (long) row2.get("NUMERIC_COL"));
-    Assert.assertEquals(124.45, (double) row1.get("DECIMAL_COL"), 0.000001);
-    Assert.assertEquals(125.45, (double) row2.get("DECIMAL_COL"), 0.000001);
+    Assert.assertEquals(new BigDecimal(124.45, new MathContext(PRECISION)).setScale(SCALE),
+                        row1.getDecimal("NUMERIC_COL"));
+    Assert.assertEquals(new BigDecimal(125.45, new MathContext(PRECISION)).setScale(SCALE),
+                        row2.getDecimal("NUMERIC_COL"));
+    Assert.assertEquals(new BigDecimal(124.45, new MathContext(PRECISION)).setScale(SCALE),
+                        row1.getDecimal("DECIMAL_COL"));
+    Assert.assertEquals(new BigDecimal(125.45, new MathContext(PRECISION)).setScale(SCALE),
+                        row2.getDecimal("DECIMAL_COL"));
 
     // Verify time columns
     java.util.Date date = new java.util.Date(CURRENT_TS);

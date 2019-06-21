@@ -57,6 +57,8 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
   protected static final String JDBC_DRIVER_NAME = "sqlserver42";
 
   protected static String connectionUrl;
+  protected static final int PRECISION = 10;
+  protected static final int SCALE = 6;
   protected static boolean tearDown = true;
   private static int startCount;
 
@@ -129,8 +131,8 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
                      "BIG BIGINT, " +
                      "FLOAT_COL FLOAT, " +
                      "REAL_COL REAL, " +
-                     "NUMERIC_COL NUMERIC(10, 2), " +
-                     "DECIMAL_COL DECIMAL(10, 2), " +
+                     "NUMERIC_COL NUMERIC(" + PRECISION + "," + SCALE + "), " +
+                     "DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + "), " +
                      "BIT_COL BIT, " +
                      "DATE_COL DATE, " +
                      "DATETIME_COL DATETIME2, " +
@@ -187,12 +189,12 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
         pStmt.setLong(6, (long) i);
         pStmt.setDouble(7, 123.45 + i);
         pStmt.setFloat(8, 123.45f + i);
-        pStmt.setBigDecimal(9, new BigDecimal(123.45f + i));
+        pStmt.setBigDecimal(9, new BigDecimal(123.45).add(new BigDecimal(i)));
 
         if ((i % 2 == 0)) {
           pStmt.setNull(10, Types.DECIMAL);
         } else {
-          pStmt.setBigDecimal(10, new BigDecimal(123.45f + i));
+          pStmt.setBigDecimal(10, new BigDecimal(123.45).add(new BigDecimal(i)));
         }
 
 
@@ -202,7 +204,7 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
         pStmt.setTimestamp(14, new Timestamp(CURRENT_TS));
         pStmt.setTime(15, new Time(CURRENT_TS));
         pStmt.setBytes(16, name.getBytes());
-        pStmt.setBigDecimal(17, new BigDecimal(123.45f + i));
+        pStmt.setBigDecimal(17, new BigDecimal(123.45).add(new BigDecimal(i)));
         pStmt.setFloat(18, 123.45f + (short) i);
         pStmt.setString(19, name);
         pStmt.setString(20, name);
