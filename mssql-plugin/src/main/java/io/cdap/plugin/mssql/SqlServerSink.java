@@ -20,13 +20,22 @@ import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.plugin.db.DBRecord;
+import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -36,12 +45,51 @@ import javax.annotation.Nullable;
 @Name(SqlServerConstants.PLUGIN_NAME)
 @Description("Writes records to a MSSQL table. Each record will be written in a row in the table")
 public class SqlServerSink extends AbstractDBSink {
+  private static final Logger LOG = LoggerFactory.getLogger(SqlServerSink.class);
 
   private final SqlServerSinkConfig sqlServerSinkConfig;
 
   public SqlServerSink(SqlServerSinkConfig sqlServerSinkConfig) {
     super(sqlServerSinkConfig);
     this.sqlServerSinkConfig = sqlServerSinkConfig;
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new SqlServerSinkSchemaReader();
+  }
+
+  @Override
+  protected DBRecord getDBRecord(StructuredRecord.Builder output) {
+    return new SqlServerSinkDBRecord(output.build(), columnTypes);
+  }
+
+  @Override
+  protected boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
+
+    Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
+      : field.getSchema().getType();
+
+    // DATETIMEOFFSET type is mapped to Schema.Type.STRING
+    int type = metadata.getColumnType(index);
+    if (SqlServerSinkSchemaReader.DATETIME_OFFSET_TYPE == type && !Objects.equals(fieldType, Schema.Type.STRING)) {
+      LOG.error("Field '{}' was given as type '{}' but must be of type 'string' for the MS SQL column of " +
+                  "DATETIMEOFFSET type.", field.getName(), fieldType);
+      return false;
+    }
+
+    if (SqlServerSinkSchemaReader.GEOMETRY_TYPE != type && SqlServerSinkSchemaReader.GEOGRAPHY_TYPE != type) {
+      return super.isFieldCompatible(field, metadata, index);
+    }
+
+    // Value of GEOMETRY and GEOGRAPHY type can be set as Well Known Text string such as "POINT(3 40 5 6)"
+    if (!Objects.equals(fieldType, Schema.Type.BYTES) && !Objects.equals(fieldType, Schema.Type.STRING)) {
+      LOG.error("Field '{}' was given as type '{}' but must be of type 'bytes' or 'string' for the MS SQL column of " +
+                  "GEOMETRY/GEOGRAPHY type.", field.getName(), fieldType);
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**

@@ -27,6 +27,7 @@ import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
+import io.cdap.plugin.db.CustomAssertions;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,8 +41,8 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+
 
 /**
  * Test for ETL using databases.
@@ -145,35 +146,35 @@ public class MysqlSinkTestRun extends MysqlPluginTestBase {
         Assert.assertTrue(actual.next());
 
         // Verify data
-        assertObjectEquals(expected.get("ID"), actual.getInt("ID"));
-        assertObjectEquals(expected.get("NAME"), actual.getString("NAME"));
-        assertObjectEquals(expected.get("TEXT_COL"), actual.getString("TEXT_COL"));
-        assertObjectEquals(expected.get("TINYTEXT_COL"), actual.getString("TINYTEXT_COL"));
-        assertObjectEquals(expected.get("MEDIUMTEXT_COL"), actual.getString("MEDIUMTEXT_COL"));
-        assertObjectEquals(expected.get("LONGTEXT_COL"), actual.getString("LONGTEXT_COL"));
-        assertObjectEquals(expected.get("CHAR_COL"), actual.getString("CHAR_COL").trim());
-        assertObjectEquals(expected.get("GRADUATED"), actual.getBoolean("GRADUATED"));
+        CustomAssertions.assertObjectEquals(expected.get("ID"), actual.getInt("ID"));
+        CustomAssertions.assertObjectEquals(expected.get("NAME"), actual.getString("NAME"));
+        CustomAssertions.assertObjectEquals(expected.get("TEXT_COL"), actual.getString("TEXT_COL"));
+        CustomAssertions.assertObjectEquals(expected.get("TINYTEXT_COL"), actual.getString("TINYTEXT_COL"));
+        CustomAssertions.assertObjectEquals(expected.get("MEDIUMTEXT_COL"), actual.getString("MEDIUMTEXT_COL"));
+        CustomAssertions.assertObjectEquals(expected.get("LONGTEXT_COL"), actual.getString("LONGTEXT_COL"));
+        CustomAssertions.assertObjectEquals(expected.get("CHAR_COL"), actual.getString("CHAR_COL").trim());
+        CustomAssertions.assertObjectEquals(expected.get("GRADUATED"), actual.getBoolean("GRADUATED"));
         Assert.assertNull(actual.getString("NOT_IMPORTED"));
-        assertObjectEquals(expected.get("ENUM_COL"), actual.getString("ENUM_COL"));
-        assertObjectEquals(expected.get("SET_COL"), actual.getString("SET_COL"));
-        assertObjectEquals(expected.get("TINY"), actual.getInt("TINY"));
-        assertObjectEquals(expected.get("SMALL"), actual.getInt("SMALL"));
-        assertObjectEquals(expected.get("BIG"), actual.getLong("BIG"));
-        assertObjectEquals(expected.get("MEDIUMINT_COL"), actual.getInt("MEDIUMINT_COL"));
-        assertNumericEquals(expected.get("SCORE"), actual.getDouble("SCORE"));
-        assertNumericEquals(expected.get("FLOAT_COL"), actual.getFloat("FLOAT_COL"));
-        assertNumericEquals(expected.get("REAL_COL"), actual.getDouble("REAL_COL"));
-        assertObjectEquals(expected.getDecimal("NUMERIC_COL"), actual.getBigDecimal("NUMERIC_COL"));
-        assertObjectEquals(expected.getDecimal("DECIMAL_COL"), actual.getBigDecimal("DECIMAL_COL"));
-        assertObjectEquals(expected.get("BIT_COL"), actual.getBoolean("BIT_COL"));
+        CustomAssertions.assertObjectEquals(expected.get("ENUM_COL"), actual.getString("ENUM_COL"));
+        CustomAssertions.assertObjectEquals(expected.get("SET_COL"), actual.getString("SET_COL"));
+        CustomAssertions.assertObjectEquals(expected.get("TINY"), actual.getInt("TINY"));
+        CustomAssertions.assertObjectEquals(expected.get("SMALL"), actual.getInt("SMALL"));
+        CustomAssertions.assertObjectEquals(expected.get("BIG"), actual.getLong("BIG"));
+        CustomAssertions.assertObjectEquals(expected.get("MEDIUMINT_COL"), actual.getInt("MEDIUMINT_COL"));
+        CustomAssertions.assertNumericEquals(expected.get("SCORE"), actual.getDouble("SCORE"));
+        CustomAssertions.assertNumericEquals(expected.get("FLOAT_COL"), actual.getFloat("FLOAT_COL"));
+        CustomAssertions.assertNumericEquals(expected.get("REAL_COL"), actual.getDouble("REAL_COL"));
+        CustomAssertions.assertObjectEquals(expected.getDecimal("NUMERIC_COL"), actual.getBigDecimal("NUMERIC_COL"));
+        CustomAssertions.assertObjectEquals(expected.getDecimal("DECIMAL_COL"), actual.getBigDecimal("DECIMAL_COL"));
+        CustomAssertions.assertObjectEquals(expected.get("BIT_COL"), actual.getBoolean("BIT_COL"));
 
         // Verify binary columns
-        assertBytesEquals(expected.get("BINARY_COL"), actual.getBytes("BINARY_COL"));
-        assertBytesEquals(expected.get("VARBINARY_COL"), actual.getBytes("VARBINARY_COL"));
-        assertBytesEquals(expected.get("BLOB_COL"), actual.getBytes("BLOB_COL"));
-        assertBytesEquals(expected.get("MEDIUMBLOB_COL"), actual.getBytes("MEDIUMBLOB_COL"));
-        assertBytesEquals(expected.get("TINYBLOB_COL"), actual.getBytes("TINYBLOB_COL"));
-        assertBytesEquals(expected.get("LONGBLOB_COL"), actual.getBytes("LONGBLOB_COL"));
+        Assert.assertArrayEquals(expected.get("BINARY_COL"), actual.getBytes("BINARY_COL"));
+        Assert.assertArrayEquals(expected.get("VARBINARY_COL"), actual.getBytes("VARBINARY_COL"));
+        Assert.assertArrayEquals(expected.get("BLOB_COL"), actual.getBytes("BLOB_COL"));
+        Assert.assertArrayEquals(expected.get("MEDIUMBLOB_COL"), actual.getBytes("MEDIUMBLOB_COL"));
+        Assert.assertArrayEquals(expected.get("TINYBLOB_COL"), actual.getBytes("TINYBLOB_COL"));
+        Assert.assertArrayEquals(expected.get("LONGBLOB_COL"), actual.getBytes("LONGBLOB_COL"));
 
         // Verify time columns
         Assert.assertEquals(expected.getDate("DATE_COL"), actual.getDate("DATE_COL").toLocalDate());
@@ -188,35 +189,6 @@ public class MysqlSinkTestRun extends MysqlPluginTestBase {
                             actual.getTimestamp("TIMESTAMP_COL").toInstant().atZone(UTC_ZONE));
       }
     }
-  }
-
-  /**
-   * Added to prevent 'Ambiguous method call' issue
-   */
-  private void assertObjectEquals(Object expected, Object actual) {
-    Assert.assertEquals(expected, actual);
-  }
-
-  /**
-   * Added to trim arrays of bytes since it's common that actual arrays are larger.
-   */
-  private void assertBytesEquals(byte[] expected, byte[] actual) {
-    Assert.assertTrue(actual.length >= expected.length);
-    Assert.assertArrayEquals(expected, Arrays.copyOf(actual, expected.length));
-  }
-
-  /**
-   * Added to prevent repetitive casts to 'double' and specifying delta.
-   */
-  private void assertNumericEquals(double expected, double actual) {
-    Assert.assertEquals(expected, actual, 0.000001);
-  }
-
-  /**
-   * Added to prevent repetitive casts to 'float' and specifying delta.
-   */
-  private void assertNumericEquals(float expected, float actual) {
-    Assert.assertEquals(expected, actual, 0.000001);
   }
 
   private List<StructuredRecord> createInputData() throws Exception {

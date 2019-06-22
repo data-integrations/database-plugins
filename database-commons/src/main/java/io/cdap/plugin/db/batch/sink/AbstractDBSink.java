@@ -322,44 +322,47 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
     Preconditions.checkNotNull(inputSchema.getFields());
     Set<String> invalidFields = new HashSet<>();
-
     for (Schema.Field field : inputSchema.getFields()) {
       int columnIndex = rs.findColumn(field.getName());
-      int type = rsMetaData.getColumnType(columnIndex);
-      int precision = rsMetaData.getPrecision(columnIndex);
-      int scale = rsMetaData.getScale(columnIndex);
-
-      Schema columnSchema = DBUtils.getSchema(type, precision, scale);
-      boolean isColumnNullable = (ResultSetMetaData.columnNullable == rsMetaData.isNullable(columnIndex));
-
-      Schema.Type columnType = columnSchema.getType();
-      Schema.LogicalType columnLogicalType = columnSchema.getLogicalType();
-
-      Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-      Schema.Type fieldType = fieldSchema.getType();
-      Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
-
-      boolean isNotNullAssignable = !isColumnNullable && field.getSchema().isNullable();
-      boolean isNotCompatible = !(Objects.equals(fieldType, columnType)
-        && Objects.equals(fieldLogicalType, columnLogicalType));
-
-      if (isNotCompatible) {
+      if (!isFieldCompatible(field, rsMetaData, columnIndex)) {
         invalidFields.add(field.getName());
-        LOG.error("Field {} was given as type {} but the database column is actually of type {}.",
-                  field.getName(),
-                  fieldLogicalType != null ? fieldLogicalType.getToken() : fieldType,
-                  columnLogicalType != null ? columnLogicalType.getToken() : columnType
-        );
-      }
-      if (isNotNullAssignable) {
-        invalidFields.add(field.getName());
-        LOG.error("Field {} was given as nullable but the database column is not nullable", field.getName());
       }
     }
 
     Preconditions.checkArgument(invalidFields.isEmpty(),
-                                "Couldn't find matching database column(s) for input field(s) %s.",
+                                "Couldn't find matching database column(s) for input field(s) '%s'.",
                                 String.join(",", invalidFields));
+  }
+
+  /**
+   * Checks if field of the input schema is compatible with corresponding database column.
+   * @param field field of the explicit input schema.
+   * @param metadata resultSet metadata.
+   * @param index sql column index.
+   * @return 'true' if field is compatible, 'false' otherwise.
+   */
+  protected boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
+    boolean isColumnNullable = (ResultSetMetaData.columnNullable == metadata.isNullable(index));
+    boolean isNotNullAssignable = !isColumnNullable && field.getSchema().isNullable();
+    if (isNotNullAssignable) {
+      LOG.error("Field '{}' was given as nullable but the database column is not nullable", field.getName());
+      return false;
+    }
+
+    int type = metadata.getColumnType(index);
+    int precision = metadata.getPrecision(index);
+    int scale = metadata.getScale(index);
+
+    Schema inputFieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+    Schema outputFieldSchema = DBUtils.getSchema(type, precision, scale);
+    if (!Objects.equals(inputFieldSchema.getType(), outputFieldSchema.getType()) ||
+      !Objects.equals(inputFieldSchema.getLogicalType(), outputFieldSchema.getLogicalType())) {
+      LOG.error("Field '{}' was given as type '{}' but the database column is actually of type '{}'.",
+                field.getName(), inputFieldSchema.getType(), outputFieldSchema.getType());
+      return false;
+    }
+
+    return true;
   }
 
   private void emitLineage(BatchSinkContext context, List<Schema.Field> fields) {

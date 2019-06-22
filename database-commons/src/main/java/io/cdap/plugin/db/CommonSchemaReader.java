@@ -37,6 +37,9 @@ public class CommonSchemaReader implements SchemaReader {
     ResultSetMetaData metadata = resultSet.getMetaData();
     // ResultSetMetadata columns are numbered starting with 1
     for (int i = 1; i <= metadata.getColumnCount(); i++) {
+      if (shouldIgnoreColumn(metadata, i)) {
+        continue;
+      }
       String columnName = metadata.getColumnName(i);
       Schema columnSchema = getSchema(metadata, i);
       if (ResultSetMetaData.columnNullable == metadata.isNullable(i)) {
@@ -119,5 +122,10 @@ public class CommonSchemaReader implements SchemaReader {
     }
 
     return Schema.of(type);
+  }
+
+  @Override
+  public boolean shouldIgnoreColumn(ResultSetMetaData metadata, int index) throws SQLException {
+    return false;
   }
 }

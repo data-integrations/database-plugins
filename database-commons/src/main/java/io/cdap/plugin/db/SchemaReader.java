@@ -22,7 +22,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Main Interface to read db specific types.
@@ -49,4 +48,20 @@ public interface SchemaReader {
    * @throws SQLException
    */
   Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException;
+
+  /**
+   * Given a sql metadata indicates if sql column must be ignored and not included in the output schema. Thus we can
+   * support different data types for Sink and Source plugins.
+   * <p/>
+   * For example, in MS SQL 'TIMESTAMP' is the synonym for the 'ROWVERSION' data type, values of which are
+   * automatically generated and can not be inserted or updated. Therefore 'TIMESTAMP' can not be supported by Sink
+   * plugin. 'TIMESTAMP' reported as non-nullable column by JDBC connector, so inferred schema will be also
+   * non-nullable for this field, requiring to set a value. By ignoring this column we will avoid schema validation
+   * failure.
+   * @param metadata resultSet metadata
+   * @param index sql column index
+   * @return 'true' if sql column must not included in the output schema, 'false' otherwise
+   * @throws SQLException
+   */
+  boolean shouldIgnoreColumn(ResultSetMetaData metadata, int index) throws SQLException;
 }

@@ -151,7 +151,7 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
                      "MEDIUMTEXT_COL MEDIUMTEXT," +
                      "LONGTEXT_COL LONGTEXT," +
                      "CHAR_COL CHAR(100)," +
-                     "BINARY_COL BINARY(100)," +
+                     "BINARY_COL BINARY(5)," +
                      "VARBINARY_COL VARBINARY(20)," +
                      "TINYBLOB_COL TINYBLOB, " +
                      "BLOB_COL BLOB(100), " +

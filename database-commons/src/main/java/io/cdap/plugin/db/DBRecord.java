@@ -264,7 +264,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     }
   }
 
-  private void writeToDB(PreparedStatement stmt, Schema.Field field, int fieldIndex) throws SQLException {
+  protected void writeToDB(PreparedStatement stmt, Schema.Field field, int fieldIndex) throws SQLException {
     String fieldName = field.getName();
     Schema fieldSchema = getNonNullableSchema(field);
     Schema.Type fieldType = fieldSchema.getType();
@@ -330,7 +330,8 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     }
   }
 
-  private void writeBytes(PreparedStatement stmt, int fieldIndex, int sqlIndex, Object fieldValue) throws SQLException {
+  protected void writeBytes(PreparedStatement stmt, int fieldIndex, int sqlIndex, Object fieldValue)
+    throws SQLException {
     byte[] byteValue = fieldValue instanceof ByteBuffer ? Bytes.toBytes((ByteBuffer) fieldValue) : (byte[]) fieldValue;
     int parameterType = columnTypes[fieldIndex];
     if (Types.BLOB == parameterType) {

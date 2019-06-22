@@ -34,7 +34,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Driver;
@@ -258,8 +257,7 @@ public final class DBUtils {
           return ((Number) original).intValue();
         case Types.NUMERIC:
         case Types.DECIMAL:
-          BigDecimal decimal = (BigDecimal) original;
-          return new BigDecimal(decimal.unscaledValue(), scale, new MathContext(precision));
+          return (BigDecimal) original;
         case Types.DATE:
           return resultSet.getDate(columnIndex);
         case Types.TIME:

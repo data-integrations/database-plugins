@@ -21,8 +21,10 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Collections;
 import java.util.List;
@@ -49,6 +51,16 @@ public class SqlServerSource extends AbstractDBSource {
   protected String createConnectionString() {
     return String.format(SqlServerConstants.SQL_SERVER_CONNECTION_STRING_FORMAT,
                          sqlServerSourceConfig.host, sqlServerSourceConfig.port, sqlServerSourceConfig.database);
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new SqlServerSourceSchemaReader();
+  }
+
+  @Override
+  protected Class<? extends DBWritable> getDBRecordType() {
+    return SqlServerSourceDBRecord.class;
   }
 
   /**

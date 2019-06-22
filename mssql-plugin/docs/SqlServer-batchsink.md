@@ -75,6 +75,58 @@ https://docs.microsoft.com/en-us/sql/relational-databases/system-compatibility-v
 **Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
 will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
+Data Types Mapping
+----------
+
+
+    | MS SQL Data Type | CDAP Schema Data Type  | Comment                                                        |
+    | ---------------- | ---------------------- | -------------------------------------------------------------- |
+    | BIGINT           | long                   |                                                                |
+    | BINARY           | bytes                  |                                                                |
+    | BIT              | boolean                |                                                                |
+    | CHAR             | string                 |                                                                |
+    | DATE             | date                   |                                                                |
+    | DATETIME         | timestamp              |                                                                |
+    | DATETIME2        | timestamp              |                                                                |
+    | DATETIMEOFFSET   | string                 |                                                                |
+    | DECIMAL          | decimal                |                                                                |
+    | FLOAT            | double                 |                                                                |
+    | IMAGE            | bytes                  |                                                                |
+    | INT              | int                    |                                                                |
+    | MONEY            | decimal                |                                                                |
+    | NCHAR            | string                 |                                                                |
+    | NTEXT            | string                 |                                                                |
+    | NUMERIC          | decimal                |                                                                |
+    | NVARCHAR         | string                 |                                                                |
+    | NVARCHAR(MAX)    | string                 |                                                                |
+    | REAL             | float                  |                                                                |
+    | SMALLDATETIME    | timestamp              |                                                                |
+    | SMALLINT         | int                    |                                                                |
+    | SMALLMONEY       | decimal                |                                                                |
+    | TEXT             | string                 |                                                                |
+    | TIME             | time                   | TIME data type has the accuracy of 100 nanoseconds which is    |
+    |                  |                        | not currently supported. Values of this type will be rounded   |
+    |                  |                        | to microsecond.                                                |
+    | TINYINT          | int                    |                                                                |
+    | UDT              | bytes                  | UDT types are mapped according to the type they are an alias   |
+    |                  |                        | of. For example, is there is an 'SSN' type that was created as |
+    |                  |                        | 'CREATE TYPE SSN FROM varchar(11);', that type would get       |
+    |                  |                        | mapped to a CDAP string. Common Language Runtime UDTs are      |
+    |                  |                        | mapped to CDAP bytes.                                          |
+    | UNIQUEIDENTIFIER | string                 |                                                                |
+    | VARBINARY        | bytes                  |                                                                |
+    | VARBINARY(MAX)   | bytes                  |                                                                |
+    | VARCHAR          | string                 |                                                                |
+    | VARCHAR(MAX)     | string                 |                                                                |
+    | XML              | string                 |                                                                |
+    | SQLVARIANT       | string                 |                                                                |
+    | GEOMETRY         | bytes                  |                                                                |
+    | GEOGRAPHY        | bytes                  |                                                                |
+    | GEOMETRY         | string                 | Values of this type can be set from Well Known Text strings,   |
+    |                  |                        | such as "POINT(3 40 5 6)".                                     |
+    | GEOGRAPHY        | string                 | Values of this type can be set from Well Known Text strings,   |
+    |                  |                        | such as "POINT(3 40 5 6)".                                     |
+
 
 Example
 -------
