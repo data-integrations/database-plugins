@@ -30,6 +30,7 @@ import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -148,6 +149,8 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     } else if (o instanceof Timestamp) {
       Instant instant = ((Timestamp) o).toInstant();
       recordBuilder.setTimestamp(field.getName(), instant.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
+    } else if (o instanceof BigDecimal) {
+      recordBuilder.setDecimal(field.getName(), (BigDecimal) o);
     } else {
       recordBuilder.set(field.getName(), o);
     }
@@ -286,6 +289,9 @@ public class DBRecord implements Writable, DBWritable, Configurable {
         case TIMESTAMP_MILLIS:
         case TIMESTAMP_MICROS:
           stmt.setTimestamp(sqlIndex, Timestamp.from(record.getTimestamp(fieldName).toInstant()));
+          break;
+        case DECIMAL:
+          stmt.setBigDecimal(sqlIndex, record.getDecimal(fieldName));
           break;
       }
       return;

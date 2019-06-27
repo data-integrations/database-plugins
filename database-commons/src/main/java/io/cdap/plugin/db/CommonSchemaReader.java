@@ -16,18 +16,15 @@
 
 package io.cdap.plugin.db;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Common schema reader for mapping non specific DB types.
@@ -90,11 +87,7 @@ public class CommonSchemaReader implements SchemaReader {
       case Types.DECIMAL:
         int precision = metadata.getPrecision(index); // total number of digits
         int scale = metadata.getScale(index); // digits after the decimal point
-        // if there are no digits after the point, use integer types
-        type = scale != 0 ? Schema.Type.DOUBLE :
-          // with 10 digits we can represent 2^32 and LONG is required
-          precision > 9 ? Schema.Type.LONG : Schema.Type.INT;
-        break;
+        return Schema.decimalOf(precision, scale);
 
       case Types.DOUBLE:
         type = Schema.Type.DOUBLE;

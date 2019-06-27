@@ -34,6 +34,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Driver;
@@ -212,11 +213,7 @@ public final class DBUtils {
 
       case Types.NUMERIC:
       case Types.DECIMAL:
-        // if there are no digits after the point, use integer types
-        type = scale != 0 ? Schema.Type.DOUBLE :
-          // with 10 digits we can represent 2^32 and LONG is required
-          precision > 9 ? Schema.Type.LONG : Schema.Type.INT;
-        break;
+        return Schema.decimalOf(precision, scale);
 
       case Types.DOUBLE:
         type = Schema.Type.DOUBLE;
@@ -262,15 +259,7 @@ public final class DBUtils {
         case Types.NUMERIC:
         case Types.DECIMAL:
           BigDecimal decimal = (BigDecimal) original;
-          if (scale != 0) {
-            // if there are digits after the point, use double types
-            return decimal.doubleValue();
-          } else if (precision > 9) {
-            // with 10 digits we can represent 2^32 and LONG is required
-            return decimal.longValue();
-          } else {
-            return decimal.intValue();
-          }
+          return new BigDecimal(decimal.unscaledValue(), scale, new MathContext(precision));
         case Types.DATE:
           return resultSet.getDate(columnIndex);
         case Types.TIME:

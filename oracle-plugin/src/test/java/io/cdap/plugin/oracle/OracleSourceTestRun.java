@@ -36,6 +36,8 @@ import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.nio.ByteBuffer;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -128,12 +130,18 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
     Assert.assertEquals(26, (long) row2.get("INTEGER_COL"));
     Assert.assertEquals(56, (long) row1.get("DEC_COL"));
     Assert.assertEquals(57, (long) row2.get("DEC_COL"));
-    Assert.assertEquals(55.65, row1.get("DECIMAL_COL"), 0.00001);
-    Assert.assertEquals(56.65, row2.get("DECIMAL_COL"), 0.00001);
-    Assert.assertEquals(33.65, row1.get("NUMBER_COL"), 0.000001);
-    Assert.assertEquals(34.65, row2.get("NUMBER_COL"), 0.000001);
-    Assert.assertEquals(24.65, row1.get("NUMERIC_COL"), 0.000001);
-    Assert.assertEquals(25.65, row2.get("NUMERIC_COL"), 0.000001);
+    Assert.assertEquals(new BigDecimal(55.65, new MathContext(PRECISION)).setScale(SCALE),
+                        row1.getDecimal("DECIMAL_COL"));
+    Assert.assertEquals(new BigDecimal(56.65, new MathContext(PRECISION)).setScale(SCALE),
+                        row2.getDecimal("DECIMAL_COL"));
+    Assert.assertEquals(new BigDecimal(33.65, new MathContext(PRECISION)).setScale(SCALE),
+                        row1.getDecimal("NUMBER_COL"));
+    Assert.assertEquals(new BigDecimal(34.65, new MathContext(PRECISION)).setScale(SCALE),
+                        row2.getDecimal("NUMBER_COL"));
+    Assert.assertEquals(new BigDecimal(24.65, new MathContext(PRECISION)).setScale(SCALE),
+                        row1.getDecimal("NUMERIC_COL"));
+    Assert.assertEquals(new BigDecimal(25.65, new MathContext(PRECISION)).setScale(SCALE),
+                        row2.getDecimal("NUMERIC_COL"));
     Assert.assertEquals(1, (long) row1.get("SMALLINT_COL"));
     Assert.assertEquals(2, (long) row2.get("SMALLINT_COL"));
     Assert.assertEquals(15.45, row1.get("REAL_COL"), 0.000001);

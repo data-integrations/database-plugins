@@ -31,6 +31,8 @@ import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
@@ -79,6 +81,12 @@ public class OracleSinkTestRun extends OraclePluginTestBase {
       Assert.assertEquals("user2", resultSet.getString("CLOB_COL"));
       Assert.assertEquals("user2", resultSet.getString("NCLOB_COL"));
       Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("BLOB_COL"), 0, 5));
+      Assert.assertEquals(new BigDecimal(3.456, new MathContext(PRECISION)).setScale(SCALE),
+                          resultSet.getBigDecimal("DECIMAL_COL"));
+      Assert.assertEquals(new BigDecimal(3.456, new MathContext(PRECISION)).setScale(SCALE),
+                          resultSet.getBigDecimal("NUMBER_COL"));
+      Assert.assertEquals(new BigDecimal(3.457, new MathContext(PRECISION)).setScale(SCALE),
+                          resultSet.getBigDecimal("NUMERIC_COL"));
       users.add(resultSet.getString("VARCHAR_COL"));
       Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
 
@@ -97,9 +105,9 @@ public class OracleSinkTestRun extends OraclePluginTestBase {
       Schema.Field.of("INT_COL", Schema.of(Schema.Type.INT)),
       Schema.Field.of("INTEGER_COL", Schema.of(Schema.Type.INT)),
       Schema.Field.of("DEC_COL", Schema.of(Schema.Type.DOUBLE)),
-      Schema.Field.of("DECIMAL_COL", Schema.of(Schema.Type.DOUBLE)),
-      Schema.Field.of("NUMBER_COL", Schema.of(Schema.Type.DOUBLE)),
-      Schema.Field.of("NUMERIC_COL", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("DECIMAL_COL", Schema.decimalOf(PRECISION, SCALE)),
+      Schema.Field.of("NUMBER_COL", Schema.decimalOf(PRECISION, SCALE)),
+      Schema.Field.of("NUMERIC_COL", Schema.decimalOf(PRECISION, SCALE)),
       Schema.Field.of("SMALLINT_COL", Schema.of(Schema.Type.INT)),
       Schema.Field.of("REAL_COL", Schema.of(Schema.Type.FLOAT)),
       Schema.Field.of("DATE_COL", Schema.of(Schema.LogicalType.DATE)),
@@ -123,9 +131,9 @@ public class OracleSinkTestRun extends OraclePluginTestBase {
                          .set("INT_COL", 31 + i)
                          .set("INTEGER_COL", 42 + i)
                          .set("DEC_COL", (double) 24 + i)
-                         .set("DECIMAL_COL", 3.456)
-                         .set("NUMBER_COL", 3.456)
-                         .set("NUMERIC_COL", 3.457)
+                         .setDecimal("DECIMAL_COL", new BigDecimal(3.456, new MathContext(PRECISION)).setScale(SCALE))
+                         .setDecimal("NUMBER_COL", new BigDecimal(3.456, new MathContext(PRECISION)).setScale(SCALE))
+                         .setDecimal("NUMERIC_COL", new BigDecimal(3.457, new MathContext(PRECISION)).setScale(SCALE))
                          .set("SMALLINT_COL", 1)
                          .set("REAL_COL", 3.14f)
                          .setDate("DATE_COL", localDateTime.toLocalDate())

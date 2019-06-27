@@ -30,6 +30,8 @@ import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
@@ -79,6 +81,10 @@ public class AuroraPostgresSinkTestRun extends AuroraPostgresPluginTestBase {
                           resultSet.getTimestamp("TIMESTAMP_COL"));
       Assert.assertTrue(resultSet.next());
       Assert.assertArrayEquals("user2".getBytes(), resultSet.getBytes("BYTEA_COL"));
+      Assert.assertEquals(new BigDecimal(3.458, new MathContext(PRECISION)).setScale(SCALE),
+                          resultSet.getBigDecimal("NUMERIC_COL"));
+      Assert.assertEquals(new BigDecimal(3.459, new MathContext(PRECISION)).setScale(SCALE),
+                          resultSet.getBigDecimal("DECIMAL_COL"));
       users.add(resultSet.getString("NAME"));
       Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
 
@@ -96,8 +102,8 @@ public class AuroraPostgresSinkTestRun extends AuroraPostgresPluginTestBase {
       Schema.Field.of("GRADUATED", Schema.of(Schema.Type.BOOLEAN)),
       Schema.Field.of("SMALLINT_COL", Schema.of(Schema.Type.INT)),
       Schema.Field.of("BIG", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("NUMERIC_COL", Schema.of(Schema.Type.DOUBLE)),
-      Schema.Field.of("DECIMAL_COL", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("NUMERIC_COL", Schema.decimalOf(PRECISION, SCALE)),
+      Schema.Field.of("DECIMAL_COL", Schema.decimalOf(PRECISION, SCALE)),
       Schema.Field.of("DOUBLE_PREC_COL", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("DATE_COL", Schema.of(Schema.LogicalType.DATE)),
       Schema.Field.of("TIME_COL", Schema.of(Schema.LogicalType.TIME_MICROS)),
@@ -117,8 +123,8 @@ public class AuroraPostgresSinkTestRun extends AuroraPostgresPluginTestBase {
                          .set("GRADUATED", (i % 2 == 0))
                          .set("SMALLINT_COL", i + 2)
                          .set("BIG", 3456987L)
-                         .set("NUMERIC_COL", 3.458d)
-                         .set("DECIMAL_COL", 3.459d)
+                         .setDecimal("NUMERIC_COL", new BigDecimal(3.458d, new MathContext(PRECISION)).setScale(SCALE))
+                         .setDecimal("DECIMAL_COL", new BigDecimal(3.459d, new MathContext(PRECISION)).setScale(SCALE))
                          .set("DOUBLE_PREC_COL", 3.459d)
                          .setDate("DATE_COL", localDateTime.toLocalDate())
                          .setTime("TIME_COL", localDateTime.toLocalTime())

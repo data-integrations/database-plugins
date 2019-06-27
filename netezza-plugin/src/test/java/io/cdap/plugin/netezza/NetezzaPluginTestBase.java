@@ -35,6 +35,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.Driver;
@@ -58,6 +59,8 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
 
   protected static String connectionUrl;
   protected static final int YEAR;
+  protected static final int PRECISION = 10;
+  protected static final int SCALE = 6;
   protected static boolean tearDown = true;
   private static int startCount;
 
@@ -138,12 +141,12 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
                      "TIMESTAMP_COL TIMESTAMP," +
                      "INTERVAL_COL INTERVAL," +
                      "DOUBLE_PRECISION_COL DOUBLE PRECISION," +
-                     "NUMERIC_COL NUMERIC(18,0)," +
+                     "NUMERIC_COL NUMERIC(" + PRECISION + "," + SCALE + ")," +
                      "NVARCHAR_COL NATIONAL CHARACTER VARYING(40)," +
                      "REAL_COL REAL," +
                      "ST_GEOMETRY_COL ST_GEOMETRY(10)," +
                      "VARBINARY_COL BINARY VARYING(10)," +
-                     "DECIMAL_COL DECIMAL(16,2)," +
+                     "DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + ")," +
                      "FLOAT_COL FLOAT(6))");
       stmt.execute("CREATE TABLE MY_DEST_TABLE AS " +
                      "SELECT * FROM my_table");
@@ -196,12 +199,12 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
         pStmt.setTimestamp(16, new Timestamp(CURRENT_TS));
         pStmt.setString(17, "2 year 3 month " + i + " day");
         pStmt.setDouble(18, 123.45 + i);
-        pStmt.setDouble(19, 123.45 + i);
+        pStmt.setBigDecimal(19, new BigDecimal(123.45).add(new BigDecimal(i)));
         pStmt.setString(20, name);
         pStmt.setDouble(21, 123.45 + i);
         pStmt.setBytes(22, name.getBytes(Charsets.UTF_8));
         pStmt.setBytes(23, name.getBytes(Charsets.UTF_8));
-        pStmt.setDouble(24, 123.45 + i);
+        pStmt.setBigDecimal(24, new BigDecimal(123.45).add(new BigDecimal(i)));
         pStmt.setFloat(25, (float) 123.45 + i);
 
         pStmt.executeUpdate();

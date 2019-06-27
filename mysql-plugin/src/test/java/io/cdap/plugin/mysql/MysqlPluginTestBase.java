@@ -35,6 +35,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -59,6 +60,8 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
 
   protected static String connectionUrl;
   protected static final int YEAR;
+  protected static final int PRECISION = 10;
+  protected static final int SCALE = 6;
   protected static boolean tearDown = true;
   private static int startCount;
 
@@ -132,8 +135,8 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
                      "BIG BIGINT, " +
                      "FLOAT_COL FLOAT, " +
                      "REAL_COL REAL, " +
-                     "NUMERIC_COL NUMERIC(10, 2), " +
-                     "DECIMAL_COL DECIMAL(10, 2), " +
+                     "NUMERIC_COL NUMERIC(" + PRECISION + "," + SCALE + "), " +
+                     "DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + "), " +
                      "BIT_COL BIT, " +
                      "DATE_COL DATE, " +
                      "TIME_COL TIME, " +
@@ -195,11 +198,11 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
         pStmt.setLong(9, (long) i);
         pStmt.setFloat(10, (float) 123.45 + i);
         pStmt.setFloat(11, (float) 123.45 + i);
-        pStmt.setDouble(12, 123.45 + i);
+        pStmt.setBigDecimal(12,  new BigDecimal(123.45).add(new BigDecimal(i)));
         if ((i % 2 == 0)) {
-          pStmt.setNull(13, Types.DOUBLE);
+          pStmt.setNull(13, Types.DECIMAL);
         } else {
-          pStmt.setDouble(13, 123.45 + i);
+          pStmt.setBigDecimal(13, new BigDecimal(123.45).add(new BigDecimal(i)));
         }
         pStmt.setBoolean(14, (i % 2 == 1));
         pStmt.setDate(15, new Date(CURRENT_TS));

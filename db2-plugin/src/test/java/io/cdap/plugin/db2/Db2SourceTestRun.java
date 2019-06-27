@@ -36,6 +36,8 @@ import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -123,10 +125,14 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
     Assert.assertEquals(2, (int) row2.get("INTEGER_COL"));
     Assert.assertEquals(1, (long) row1.get("BIGINT_COL"));
     Assert.assertEquals(2, (long) row2.get("BIGINT_COL"));
-    Assert.assertEquals(4.14, row1.get("DECIMAL_COL"), 0.00001);
-    Assert.assertEquals(5.14, row2.get("DECIMAL_COL"), 0.00001);
-    Assert.assertEquals(4.14, row1.get("NUMERIC_COL"), 0.00001);
-    Assert.assertEquals(5.14, row2.get("NUMERIC_COL"), 0.00001);
+    Assert.assertEquals(new BigDecimal(4.14, new MathContext(PRECISION)).setScale(SCALE),
+                        row1.getDecimal("DECIMAL_COL"));
+    Assert.assertEquals(new BigDecimal(5.14, new MathContext(PRECISION)).setScale(SCALE),
+                        row2.getDecimal("DECIMAL_COL"));
+    Assert.assertEquals(new BigDecimal(4.14, new MathContext(PRECISION)).setScale(SCALE),
+                        row1.getDecimal("NUMERIC_COL"));
+    Assert.assertEquals(new BigDecimal(5.14, new MathContext(PRECISION)).setScale(SCALE),
+                        row2.getDecimal("NUMERIC_COL"));
     Assert.assertEquals(4.14, row1.get("DECFLOAT_COL"), 0.00001);
     Assert.assertEquals(5.14, row2.get("DECFLOAT_COL"), 0.00001);
     Assert.assertEquals(4.14f, row1.get("REAL_COL"), 0.00001f);

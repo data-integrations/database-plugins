@@ -31,6 +31,8 @@ import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
@@ -81,6 +83,10 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
       Assert.assertTrue(resultSet.next());
       Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("BLOB_COL"), 0, 5));
       Assert.assertEquals("user2", resultSet.getString("CLOB_COL"));
+      Assert.assertEquals(new BigDecimal(3.458, new MathContext(PRECISION)).setScale(SCALE),
+                          resultSet.getBigDecimal("NUMERIC_COL"));
+      Assert.assertEquals(new BigDecimal(3.459, new MathContext(PRECISION)).setScale(SCALE),
+                          resultSet.getBigDecimal("DECIMAL_COL"));
       users.add(resultSet.getString("VARCHAR_COL"));
       Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
 
@@ -95,8 +101,8 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
       Schema.Field.of("SMALLINT_COL", Schema.of(Schema.Type.INT)),
       Schema.Field.of("INTEGER_COL", Schema.of(Schema.Type.INT)),
       Schema.Field.of("BIGINT_COL", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("DECIMAL_COL", Schema.of(Schema.Type.DOUBLE)),
-      Schema.Field.of("NUMERIC_COL", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("DECIMAL_COL", Schema.decimalOf(PRECISION, SCALE)),
+      Schema.Field.of("NUMERIC_COL", Schema.decimalOf(PRECISION, SCALE)),
       Schema.Field.of("DECFLOAT_COL", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("REAL_COL", Schema.of(Schema.Type.FLOAT)),
       Schema.Field.of("DOUBLE_COL", Schema.of(Schema.Type.DOUBLE)),
@@ -119,8 +125,8 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
                          .set("SMALLINT_COL", i)
                          .set("INTEGER_COL", i)
                          .set("BIGINT_COL", (long) i)
-                         .set("DECIMAL_COL", (double) i)
-                         .set("NUMERIC_COL", .31 + i)
+                         .setDecimal("NUMERIC_COL", new BigDecimal(3.458d, new MathContext(PRECISION)).setScale(SCALE))
+                         .setDecimal("DECIMAL_COL", new BigDecimal(3.459d, new MathContext(PRECISION)).setScale(SCALE))
                          .set("DECFLOAT_COL", .42 + i)
                          .set("REAL_COL", 24f + i)
                          .set("DOUBLE_COL", 3.456)
