@@ -86,8 +86,10 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
   public void testDBSource() throws Exception {
     String importQuery = "SELECT SMALLINT_COL, INTEGER_COL, BIGINT_COL, DECIMAL_COL, NUMERIC_COL, " +
       " REAL_COL, DOUBLE_COL, CHAR_COL, DECFLOAT_COL, VARCHAR_COL, CHAR_BIT_COL, VARCHAR_BIT_COL, GRAPHIC_COL, " +
-      " CLOB_COL, BLOB_COL, DATE_COL, TIME_COL, TIMESTAMP_COL FROM my_table " +
+      " CLOB_COL, BLOB_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, VARBINARY_COL, VARGRAPHIC_COL, DBCLOB_COL FROM my_table " +
       " WHERE SMALLINT_COL < 3 AND $CONDITIONS";
+
+
     String boundingQuery = "SELECT MIN(SMALLINT_COL),MAX(SMALLINT_COL) from my_table";
     String splitBy = "SMALLINT_COL";
     ETLPlugin sourceConfig = new ETLPlugin(
@@ -149,7 +151,10 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
     Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("VARCHAR_BIT_COL")).array(), 0, 5));
     Assert.assertEquals("user1", row1.get("GRAPHIC_COL").toString().trim());
     Assert.assertEquals("user2", row2.get("GRAPHIC_COL").toString().trim());
-
+    Assert.assertEquals("user1", row1.get("VARGRAPHIC_COL").toString().trim());
+    Assert.assertEquals("user2", row2.get("VARGRAPHIC_COL").toString().trim());
+    Assert.assertEquals("user1", row1.get("DBCLOB_COL").toString().trim());
+    Assert.assertEquals("user2", row2.get("DBCLOB_COL").toString().trim());
     // Verify time columns
     java.util.Date date = new java.util.Date(CURRENT_TS);
     LocalDate expectedDate = date.toInstant()
@@ -166,6 +171,10 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
     Assert.assertEquals("user2", row2.get("CLOB_COL"));
     Assert.assertEquals("user1", Bytes.toString((ByteBuffer) row1.get("BLOB_COL")));
     Assert.assertEquals("user2", Bytes.toString((ByteBuffer) row2.get("BLOB_COL")));
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("BINARY_COL")).array(), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("BINARY_COL")).array(), 0, 5));
+    Assert.assertEquals("user1", Bytes.toString((ByteBuffer) row1.get("VARBINARY_COL")));
+    Assert.assertEquals("user2", Bytes.toString((ByteBuffer) row2.get("VARBINARY_COL")));
   }
 
   @Test

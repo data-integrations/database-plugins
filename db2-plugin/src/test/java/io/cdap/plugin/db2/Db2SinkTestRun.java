@@ -25,6 +25,7 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
@@ -51,6 +52,31 @@ import java.util.Set;
  * Test for ETL using databases.
  */
 public class Db2SinkTestRun extends Db2PluginTestBase {
+  private static final Schema SCHEMA = Schema.recordOf(
+    "dbRecord",
+    Schema.Field.of("SMALLINT_COL", Schema.of(Schema.Type.INT)),
+    Schema.Field.of("INTEGER_COL", Schema.of(Schema.Type.INT)),
+    Schema.Field.of("BIGINT_COL", Schema.of(Schema.Type.LONG)),
+    Schema.Field.of("DECIMAL_COL", Schema.decimalOf(10, 6)),
+    Schema.Field.of("NUMERIC_COL", Schema.decimalOf(10, 6)),
+    Schema.Field.of("DECFLOAT_COL", Schema.of(Schema.Type.DOUBLE)),
+    Schema.Field.of("REAL_COL", Schema.of(Schema.Type.FLOAT)),
+    Schema.Field.of("DOUBLE_COL", Schema.of(Schema.Type.DOUBLE)),
+    Schema.Field.of("CHAR_COL", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of("VARCHAR_COL", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of("CHAR_BIT_COL", Schema.of(Schema.Type.BYTES)),
+    Schema.Field.of("VARCHAR_BIT_COL", Schema.of(Schema.Type.BYTES)),
+    Schema.Field.of("GRAPHIC_COL", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of("CLOB_COL", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of("BLOB_COL", Schema.of(Schema.Type.BYTES)),
+    Schema.Field.of("DATE_COL", Schema.of(Schema.LogicalType.DATE)),
+    Schema.Field.of("TIME_COL", Schema.of(Schema.LogicalType.TIME_MICROS)),
+    Schema.Field.of("TIMESTAMP_COL", Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)),
+    Schema.Field.of("BINARY_COL", Schema.of(Schema.Type.BYTES)),
+    Schema.Field.of("VARBINARY_COL", Schema.of(Schema.Type.BYTES)),
+    Schema.Field.of("VARGRAPHIC_COL", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of("DBCLOB_COL", Schema.of(Schema.Type.STRING))
+  );
 
   @Before
   public void setup() throws Exception {
@@ -81,28 +107,46 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
     }
   }
 
-  @Test
-  public void testDBSink() throws Exception {
+  public void testDBSink(String appName, String inputDatasetName, boolean setInputSchema) throws Exception {
+    ETLPlugin sourceConfig = (setInputSchema)
+      ? MockSource.getPlugin(inputDatasetName, SCHEMA)
+      : MockSource.getPlugin(inputDatasetName);
 
-    String inputDatasetName = "input-dbsinktest";
-
-    ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
     ETLPlugin sinkConfig = getSinkConfig();
 
-    deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSink");
+    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, appName);
     createInputData(inputDatasetName);
-
+    runETLOnce(appManager, ImmutableMap.of("logical.start.time", String.valueOf(CURRENT_TS)));
 
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement();
-         ResultSet resultSet = stmt.executeQuery("SELECT * FROM my_table")) {
+         ResultSet resultSet = stmt.executeQuery("SELECT * FROM MY_DEST_TABLE ORDER BY SMALLINT_COL")) {
       Set<String> users = new HashSet<>();
+
       Assert.assertTrue(resultSet.next());
       users.add(resultSet.getString("VARCHAR_COL"));
+      Assert.assertEquals(1, resultSet.getInt("SMALLINT_COL"));
+      Assert.assertEquals(1, resultSet.getInt("INTEGER_COL"));
+      Assert.assertEquals(1L, resultSet.getLong("BIGINT_COL"));
+      Assert.assertEquals(3.458, resultSet.getBigDecimal("NUMERIC_COL").doubleValue(), 0.00001);
+      Assert.assertEquals(3.459, resultSet.getBigDecimal("DECIMAL_COL").doubleValue(), 0.00001);
+      Assert.assertEquals(1.42, resultSet.getDouble("DECFLOAT_COL"), 0.00001);
+      Assert.assertEquals(25.123f, resultSet.getFloat("REAL_COL"), 0.00001f);
+      Assert.assertEquals(3.456, resultSet.getDouble("DOUBLE_COL"), 0.00001);
+      Assert.assertEquals("user1", resultSet.getString("CHAR_COL").trim());
+      Assert.assertEquals("user1", resultSet.getString("VARCHAR_COL"));
+      Assert.assertEquals("user1", Bytes.toString(resultSet.getBytes("CHAR_BIT_COL"), 0, 5));
+      Assert.assertEquals("user1", Bytes.toString(resultSet.getBytes("VARCHAR_BIT_COL")));
+      Assert.assertEquals("user1", resultSet.getString("GRAPHIC_COL").trim());
       Assert.assertEquals(new Date(CURRENT_TS).toString(), resultSet.getDate("DATE_COL").toString());
       Assert.assertEquals(new Time(CURRENT_TS).toString(), resultSet.getTime("TIME_COL").toString());
       Assert.assertEquals(new Timestamp(CURRENT_TS), resultSet.getTimestamp("TIMESTAMP_COL"));
+      Assert.assertEquals("user1", Bytes.toString(resultSet.getBytes("BINARY_COL"), 0, 5));
+      Assert.assertEquals("user1", Bytes.toString(resultSet.getBytes("VARBINARY_COL")));
+      Assert.assertEquals("user1", resultSet.getString("VARGRAPHIC_COL").trim());
+      Assert.assertEquals("user1", resultSet.getString("DBCLOB_COL"));
       Assert.assertTrue(resultSet.next());
+      users.add(resultSet.getString("VARCHAR_COL"));
       Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("BLOB_COL"), 0, 5));
       Assert.assertEquals("user2", resultSet.getString("CLOB_COL"));
       Assert.assertEquals(new BigDecimal(3.458, new MathContext(PRECISION)).setScale(SCALE),
@@ -111,7 +155,6 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
                           resultSet.getBigDecimal("DECIMAL_COL"));
       users.add(resultSet.getString("VARCHAR_COL"));
       Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
-
     }
   }
 
@@ -146,50 +189,33 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
   private void createInputData(String inputDatasetName) throws Exception {
     // add some data to the input table
     DataSetManager<Table> inputManager = getDataset(inputDatasetName);
-    Schema schema = Schema.recordOf(
-      "dbRecord",
-      Schema.Field.of("SMALLINT_COL", Schema.of(Schema.Type.INT)),
-      Schema.Field.of("INTEGER_COL", Schema.of(Schema.Type.INT)),
-      Schema.Field.of("BIGINT_COL", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("DECIMAL_COL", Schema.decimalOf(PRECISION, SCALE)),
-      Schema.Field.of("NUMERIC_COL", Schema.decimalOf(PRECISION, SCALE)),
-      Schema.Field.of("DECFLOAT_COL", Schema.of(Schema.Type.DOUBLE)),
-      Schema.Field.of("REAL_COL", Schema.of(Schema.Type.FLOAT)),
-      Schema.Field.of("DOUBLE_COL", Schema.of(Schema.Type.DOUBLE)),
-      Schema.Field.of("CHAR_COL", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("VARCHAR_COL", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("CHAR_BIT_COL", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("VARCHAR_BIT_COL", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("GRAPHIC_COL", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("CLOB_COL", Schema.of(Schema.Type.BYTES)),
-      Schema.Field.of("BLOB_COL", Schema.of(Schema.Type.BYTES)),
-      Schema.Field.of("DATE_COL", Schema.of(Schema.LogicalType.DATE)),
-      Schema.Field.of("TIME_COL", Schema.of(Schema.LogicalType.TIME_MICROS)),
-      Schema.Field.of("TIMESTAMP_COL", Schema.of(Schema.LogicalType.TIMESTAMP_MICROS))
-    );
     List<StructuredRecord> inputRecords = new ArrayList<>();
     LocalDateTime localDateTime = new Timestamp(CURRENT_TS).toLocalDateTime();
     for (int i = 1; i <= 2; i++) {
       String name = "user" + i;
-      inputRecords.add(StructuredRecord.builder(schema)
+      inputRecords.add(StructuredRecord.builder(SCHEMA)
                          .set("SMALLINT_COL", i)
                          .set("INTEGER_COL", i)
                          .set("BIGINT_COL", (long) i)
                          .setDecimal("NUMERIC_COL", new BigDecimal(3.458d, new MathContext(PRECISION)).setScale(SCALE))
                          .setDecimal("DECIMAL_COL", new BigDecimal(3.459d, new MathContext(PRECISION)).setScale(SCALE))
                          .set("DECFLOAT_COL", .42 + i)
-                         .set("REAL_COL", 24f + i)
+                         .set("REAL_COL", 24.123f + i)
                          .set("DOUBLE_COL", 3.456)
                          .set("CHAR_COL", name)
                          .set("VARCHAR_COL", name)
-                         .set("CHAR_BIT_COL", name)
-                         .set("VARCHAR_BIT_COL", name)
+                         .set("CHAR_BIT_COL", name.getBytes())
+                         .set("VARCHAR_BIT_COL", name.getBytes())
                          .set("GRAPHIC_COL", name)
-                         .set("CLOB_COL", name.getBytes())
+                         .set("CLOB_COL", name)
                          .set("BLOB_COL", name.getBytes())
                          .setDate("DATE_COL", localDateTime.toLocalDate())
                          .setTime("TIME_COL", localDateTime.toLocalTime())
                          .setTimestamp("TIMESTAMP_COL", localDateTime.atZone(ZoneId.systemDefault()))
+                         .set("BINARY_COL", name.getBytes())
+                         .set("VARBINARY_COL", name.getBytes())
+                         .set("VARGRAPHIC_COL", name)
+                         .set("DBCLOB_COL", name)
                          .build());
     }
     MockSource.writeInput(inputManager, inputRecords);
