@@ -18,12 +18,14 @@ package io.cdap.plugin.mssql;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.List;
 
 /**
  * SQL Server Source implementation {@link org.apache.hadoop.mapreduce.lib.db.DBWritable} and
@@ -31,7 +33,7 @@ import java.sql.Types;
  */
 public class SqlServerSourceDBRecord extends DBRecord {
 
-  public SqlServerSourceDBRecord(StructuredRecord record, int[] columnTypes) {
+  public SqlServerSourceDBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
     super(record, columnTypes);
   }
 

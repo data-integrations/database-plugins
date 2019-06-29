@@ -31,6 +31,7 @@ public class SqlServerSourceSchemaReader extends CommonSchemaReader {
   public static final int DATETIME_OFFSET_TYPE = -155;
   public static final int GEOMETRY_TYPE = -157;
   public static final int GEOGRAPHY_TYPE = -158;
+  public static final int SQL_VARIANT = -156;
 
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {

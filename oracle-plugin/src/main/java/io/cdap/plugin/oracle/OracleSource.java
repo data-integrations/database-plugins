@@ -57,12 +57,12 @@ public class OracleSource extends AbstractDBSource {
 
   @Override
   protected SchemaReader getSchemaReader() {
-    return new OracleSchemaReader();
+    return new OracleSourceSchemaReader();
   }
 
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
-    return OracleDBRecord.class;
+    return OracleSourceDBRecord.class;
   }
 
   /**

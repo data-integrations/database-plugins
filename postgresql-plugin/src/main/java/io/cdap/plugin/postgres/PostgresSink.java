@@ -52,7 +52,6 @@ public class PostgresSink extends AbstractDBSink {
   protected void setColumnsInfo(List<Schema.Field> fields) {
     List<String> columnsList = new ArrayList<>();
     StringJoiner columnsJoiner = new StringJoiner(",");
-
     for (Schema.Field field : fields) {
       columnsList.add(field.getName());
       columnsJoiner.add(ESCAPE_CHAR + field.getName() + ESCAPE_CHAR);

@@ -42,8 +42,8 @@ public class NetezzaSink extends AbstractDBSink {
   }
 
   @Override
-  protected DBRecord getDBRecord(StructuredRecord.Builder output) {
-    return new NetezzaDBRecord(output.build(), columnTypes);
+  protected DBRecord getDBRecord(StructuredRecord output) {
+    return new NetezzaDBRecord(output, columnTypes);
   }
 
   /**

@@ -44,6 +44,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.sql.rowset.serial.SerialBlob;
 
 /**
@@ -59,18 +60,16 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   private final Lazy<Schema> schema = new Lazy<>(this::computeSchema);
 
   /**
-   * Need to cache {@link ResultSetMetaData} of the record for use during writing to a table.
-   * This is because we cannot rely on JDBC drivers to properly set metadata in the {@link PreparedStatement}
-   * passed to the #write method in this class.
+   * Need to cache column types to set fields of the input record on {@link PreparedStatement} in the right order.
    */
-  protected int[] columnTypes;
+  protected List<ColumnType> columnTypes;
 
   /**
    * Used to construct a DBRecord from a StructuredRecord in the ETL Pipeline
    *
    * @param record the {@link StructuredRecord} to construct the {@link DBRecord} from
    */
-  public DBRecord(StructuredRecord record, int[] columnTypes) {
+  public DBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
     this.record = record;
     this.columnTypes = columnTypes;
   }
@@ -114,7 +113,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     record = recordBuilder.build();
   }
 
-  private Schema getSchema() {
+  protected Schema getSchema() {
     return schema.getOrCompute();
   }
 
@@ -202,10 +201,10 @@ public class DBRecord implements Writable, DBWritable, Configurable {
    * @param stmt the {@link PreparedStatement} to write the {@link StructuredRecord} to
    */
   public void write(PreparedStatement stmt) throws SQLException {
-    Schema recordSchema = record.getSchema();
-    List<Schema.Field> schemaFields = recordSchema.getFields();
-    for (int i = 0; i < schemaFields.size(); i++) {
-      writeToDB(stmt, schemaFields.get(i), i);
+    for (int i = 0; i < columnTypes.size(); i++) {
+      ColumnType columnType = columnTypes.get(i);
+      Schema.Field field = record.getSchema().getField(columnType.getName());
+      writeToDB(stmt, field, i);
     }
   }
 
@@ -264,16 +263,24 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     }
   }
 
-  protected void writeToDB(PreparedStatement stmt, Schema.Field field, int fieldIndex) throws SQLException {
+  protected void writeToDB(PreparedStatement stmt, @Nullable Schema.Field field, int fieldIndex) throws SQLException {
+
+    int sqlIndex = fieldIndex + 1;
+    int sqlType = columnTypes.get(fieldIndex).getType();
+    if (field == null) {
+      // Some of the fields can be absent in the record
+      stmt.setNull(sqlIndex, sqlType);
+      return;
+    }
+
     String fieldName = field.getName();
     Schema fieldSchema = getNonNullableSchema(field);
     Schema.Type fieldType = fieldSchema.getType();
     Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
     Object fieldValue = record.get(fieldName);
-    int sqlIndex = fieldIndex + 1;
 
     if (fieldValue == null) {
-      stmt.setNull(sqlIndex, columnTypes[fieldIndex]);
+      stmt.setNull(sqlIndex, columnTypes.get(fieldIndex).getType());
       return;
     }
 
@@ -299,7 +306,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
 
     switch (fieldType) {
       case NULL:
-        stmt.setNull(sqlIndex, columnTypes[fieldIndex]);
+        stmt.setNull(sqlIndex, columnTypes.get(fieldIndex).getType());
         break;
       case STRING:
         // clob can also be written to as setString
@@ -333,7 +340,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   protected void writeBytes(PreparedStatement stmt, int fieldIndex, int sqlIndex, Object fieldValue)
     throws SQLException {
     byte[] byteValue = fieldValue instanceof ByteBuffer ? Bytes.toBytes((ByteBuffer) fieldValue) : (byte[]) fieldValue;
-    int parameterType = columnTypes[fieldIndex];
+    int parameterType = columnTypes.get(fieldIndex).getType();
     if (Types.BLOB == parameterType) {
       stmt.setBlob(sqlIndex, new SerialBlob(byteValue));
       return;
@@ -342,9 +349,9 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     stmt.setBytes(sqlIndex, byteValue);
   }
 
-  private void writeInt(PreparedStatement stmt, int fieldIndex, int sqlIndex, Object fieldValue) throws SQLException {
+  protected void writeInt(PreparedStatement stmt, int fieldIndex, int sqlIndex, Object fieldValue) throws SQLException {
     Integer intValue = (Integer) fieldValue;
-    int parameterType = columnTypes[fieldIndex];
+    int parameterType = columnTypes.get(fieldIndex).getType();
     if (Types.TINYINT == parameterType || Types.SMALLINT == parameterType) {
       stmt.setShort(sqlIndex, intValue.shortValue());
       return;

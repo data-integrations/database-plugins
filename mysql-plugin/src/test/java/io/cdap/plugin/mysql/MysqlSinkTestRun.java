@@ -43,7 +43,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  * Test for ETL using databases.
  */
@@ -104,12 +103,13 @@ public class MysqlSinkTestRun extends MysqlPluginTestBase {
 
   @Test
   public void testDBSinkWithDBSchemaAndInvalidData() throws Exception {
-    String stringColumnName = "NAME";
-    startPipelineAndWriteInvalidData(stringColumnName, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+    // MySQL JDBC connector allows to write integer values to STRING column. Use ENUM column instead.
+    String enumColumnName = "ENUM_COL";
+    startPipelineAndWriteInvalidData(enumColumnName, getSinkConfig(), DATAPIPELINE_ARTIFACT);
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement();
          ResultSet resultSet = stmt.executeQuery("SELECT * FROM MY_DEST_TABLE")) {
-      testInvalidDataWrite(resultSet, stringColumnName);
+      testInvalidDataWrite(resultSet, enumColumnName);
     }
   }
 

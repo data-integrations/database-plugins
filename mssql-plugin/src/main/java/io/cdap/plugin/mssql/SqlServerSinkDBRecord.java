@@ -18,11 +18,14 @@ package io.cdap.plugin.mssql;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.SchemaReader;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * SQL Server Sink implementation {@link org.apache.hadoop.mapreduce.lib.db.DBWritable} and
@@ -30,15 +33,14 @@ import java.sql.Types;
  */
 public class SqlServerSinkDBRecord extends SqlServerSourceDBRecord {
 
-  public SqlServerSinkDBRecord(StructuredRecord record, int[] columnTypes) {
+  public SqlServerSinkDBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
     super(record, columnTypes);
   }
 
   @Override
-  protected void writeToDB(PreparedStatement stmt, Schema.Field field, int fieldIndex) throws SQLException {
-    String fieldName = field.getName();
-    Object fieldValue = record.get(fieldName);
-    int sqlType = columnTypes[fieldIndex];
+  protected void writeToDB(PreparedStatement stmt, @Nullable Schema.Field field, int fieldIndex) throws SQLException {
+    Object fieldValue = (field != null) ? record.get(field.getName()) : null;
+    int sqlType = columnTypes.get(fieldIndex).getType();
     int sqlIndex = fieldIndex + 1;
     switch (sqlType) {
       case SqlServerSourceSchemaReader.GEOGRAPHY_TYPE:
@@ -59,9 +61,10 @@ public class SqlServerSinkDBRecord extends SqlServerSourceDBRecord {
         // Handle setting SQL Server 'TIME' data type as string to avoid accuracy loss. 'TIME' data type has the
         // accuracy of 100 nanoseconds(1 millisecond in Informatica) but 'java.sql.Time' will round value to second.
         if (fieldValue != null) {
+          String fieldName = field.getName();
           stmt.setString(sqlIndex, record.getTime(fieldName).toString());
         } else {
-          super.writeToDB(stmt, field, fieldIndex);
+          stmt.setNull(sqlIndex, sqlType);
         }
         break;
       default:

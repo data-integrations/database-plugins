@@ -19,11 +19,13 @@ package io.cdap.plugin.netezza;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -38,7 +40,7 @@ public class NetezzaDBRecord extends DBRecord {
     INTERVAL
   );
 
-  public NetezzaDBRecord(StructuredRecord record, int[] columnTypes) {
+  public NetezzaDBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
     this.record = record;
     this.columnTypes = columnTypes;
   }

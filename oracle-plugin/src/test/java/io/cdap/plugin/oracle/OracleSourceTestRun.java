@@ -39,8 +39,6 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.nio.ByteBuffer;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -84,10 +82,11 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
-    String importQuery = "SELECT CHAR_COL, VARCHAR_COL, INT_COL, INTEGER_COL, DEC_COL, DECIMAL_COL, NUMBER_COL," +
-      " NUMERIC_COL, SMALLINT_COL, REAL_COL, DATE_COL, TIMESTAMP_COL, INTERVAL_YEAR_TO_MONTH_COL, " +
-      "INTERVAL_DAY_TO_SECOND_COL, RAW_COL, TIMESTAMPTZ_COL, TIMESTAMPLTZ_COL, CLOB_COL, NCLOB_COL, " +
-      "BLOB_COL FROM my_table WHERE SMALLINT_COL < 3 AND $CONDITIONS";
+    String importQuery = "SELECT CHAR_COL, VARCHAR_COL, VARCHAR2_COL, NVARCHAR2_COL, INT_COL, INTEGER_COL, DEC_COL, " +
+      "DECIMAL_COL, NUMBER_COL, NUMERIC_COL, SMALLINT_COL, REAL_COL, DATE_COL, TIMESTAMP_COL, " +
+      "INTERVAL_YEAR_TO_MONTH_COL, INTERVAL_DAY_TO_SECOND_COL, RAW_COL, TIMESTAMPTZ_COL, TIMESTAMPLTZ_COL, CLOB_COL, " +
+      "NCLOB_COL, BLOB_COL, NCHAR_COL, FLOAT_COL, ROWID, ROWID_COL, UROWID_COL, BINARY_FLOAT_COL, BINARY_DOUBLE_COL, " +
+      "LONG_RAW_COL, BFILE_COL FROM my_table WHERE SMALLINT_COL < 3 AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(SMALLINT_COL),MAX(SMALLINT_COL) from my_table";
     String splitBy = "SMALLINT_COL";
     ETLPlugin sourceConfig = new ETLPlugin(
@@ -119,17 +118,46 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
     StructuredRecord row1 = "user1".equals(userid) ? outputRecords.get(0) : outputRecords.get(1);
     StructuredRecord row2 = "user1".equals(userid) ? outputRecords.get(1) : outputRecords.get(0);
 
+    // Built-in column
+    Assert.assertNotNull(row1.get("ROWID"));
+    Assert.assertNotNull(row2.get("ROWID"));
+
+    Assert.assertEquals("AAAUEVAAFAAAAR/AA" + 1, row1.get("ROWID_COL").toString());
+    Assert.assertEquals("AAAUEVAAFAAAAR/AA" + 2, row2.get("ROWID_COL").toString());
+    Assert.assertEquals("AAAUEVAAFAAAAR/AA" + 1, row1.get("UROWID_COL").toString());
+    Assert.assertEquals("AAAUEVAAFAAAAR/AA" + 2, row2.get("UROWID_COL").toString());
+
     // Verify data
     Assert.assertEquals("user1", row1.get("CHAR_COL").toString().trim());
     Assert.assertEquals("user2", row2.get("CHAR_COL").toString().trim());
+    Assert.assertEquals("user1", row1.get("NCHAR_COL").toString().trim());
+    Assert.assertEquals("user2", row2.get("NCHAR_COL").toString().trim());
     Assert.assertEquals("user1", row1.get("VARCHAR_COL"));
     Assert.assertEquals("user2", row2.get("VARCHAR_COL"));
-    Assert.assertEquals(43, (long) row1.get("INT_COL"));
-    Assert.assertEquals(44, (long) row2.get("INT_COL"));
-    Assert.assertEquals(25, (long) row1.get("INTEGER_COL"));
-    Assert.assertEquals(26, (long) row2.get("INTEGER_COL"));
-    Assert.assertEquals(56, (long) row1.get("DEC_COL"));
-    Assert.assertEquals(57, (long) row2.get("DEC_COL"));
+    Assert.assertEquals("user1", row1.get("VARCHAR2_COL"));
+    Assert.assertEquals("user2", row2.get("VARCHAR2_COL"));
+    Assert.assertEquals("user1", row1.get("NVARCHAR2_COL"));
+    Assert.assertEquals("user2", row2.get("NVARCHAR2_COL"));
+
+    Assert.assertEquals(new BigDecimal(43, new MathContext(DEFAULT_PRECISION)).setScale(0),
+                        row1.getDecimal("INT_COL"));
+    Assert.assertEquals(new BigDecimal(44, new MathContext(DEFAULT_PRECISION)).setScale(0),
+                        row2.getDecimal("INT_COL"));
+    Assert.assertEquals(new BigDecimal(25, new MathContext(DEFAULT_PRECISION)).setScale(0),
+                        row1.getDecimal("INTEGER_COL"));
+    Assert.assertEquals(new BigDecimal(26, new MathContext(DEFAULT_PRECISION)).setScale(0),
+                        row2.getDecimal("INTEGER_COL"));
+    Assert.assertEquals(new BigDecimal(56, new MathContext(DEFAULT_PRECISION)).setScale(0),
+                        row1.getDecimal("DEC_COL"));
+    Assert.assertEquals(new BigDecimal(57, new MathContext(DEFAULT_PRECISION)).setScale(0),
+                        row2.getDecimal("DEC_COL"));
+    Assert.assertEquals(new BigDecimal(1, new MathContext(DEFAULT_PRECISION)).setScale(0),
+                        row1.getDecimal("SMALLINT_COL"));
+    Assert.assertEquals(new BigDecimal(2, new MathContext(DEFAULT_PRECISION)).setScale(0),
+                        row2.getDecimal("SMALLINT_COL"));
+
+    Assert.assertEquals(124.45, row1.get("FLOAT_COL"), 0.00001);
+    Assert.assertEquals(125.45, row2.get("FLOAT_COL"), 0.00001);
     Assert.assertEquals(new BigDecimal(55.65, new MathContext(PRECISION)).setScale(SCALE),
                         row1.getDecimal("DECIMAL_COL"));
     Assert.assertEquals(new BigDecimal(56.65, new MathContext(PRECISION)).setScale(SCALE),
@@ -142,16 +170,18 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
                         row1.getDecimal("NUMERIC_COL"));
     Assert.assertEquals(new BigDecimal(25.65, new MathContext(PRECISION)).setScale(SCALE),
                         row2.getDecimal("NUMERIC_COL"));
-    Assert.assertEquals(1, (long) row1.get("SMALLINT_COL"));
-    Assert.assertEquals(2, (long) row2.get("SMALLINT_COL"));
+
     Assert.assertEquals(15.45, row1.get("REAL_COL"), 0.000001);
     Assert.assertEquals(16.45, row2.get("REAL_COL"), 0.000001);
+
     // Verify time columns
     java.util.Date date = new java.util.Date(CURRENT_TS);
 
-    ZonedDateTime expectedTs = date.toInstant().atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC));
+    ZonedDateTime expectedTs = date.toInstant().atZone(UTC);
     Assert.assertEquals(expectedTs.withNano(0), row1.getTimestamp("DATE_COL"));
-    Assert.assertEquals(expectedTs, row1.getTimestamp("TIMESTAMP_COL", ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
+    Assert.assertEquals(expectedTs, row1.getTimestamp("TIMESTAMP_COL", UTC));
+    Assert.assertEquals("2019-07-15 15:57:46.65 GMT", row1.get("TIMESTAMPTZ_COL"));
+    Assert.assertEquals(expectedTs, row1.getTimestamp("TIMESTAMPLTZ_COL", UTC));
 
     // Oracle specific types
     Assert.assertEquals("300-5", row1.get("INTERVAL_YEAR_TO_MONTH_COL").toString().trim());
@@ -160,12 +190,59 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
     // verify binary columns
     Assert.assertEquals("user1", Bytes.toString((ByteBuffer) row1.get("RAW_COL")));
     Assert.assertEquals("user2", Bytes.toString((ByteBuffer) row2.get("RAW_COL")));
+    Assert.assertEquals("user1", Bytes.toString((ByteBuffer) row1.get("LONG_RAW_COL")));
+    Assert.assertEquals("user2", Bytes.toString((ByteBuffer) row2.get("LONG_RAW_COL")));
     Assert.assertEquals("user1", row1.get("CLOB_COL"));
     Assert.assertEquals("user2", row2.get("CLOB_COL"));
     Assert.assertEquals("user1", row1.get("NCLOB_COL"));
     Assert.assertEquals("user2", row2.get("NCLOB_COL"));
     Assert.assertEquals("user1", Bytes.toString((ByteBuffer) row1.get("BLOB_COL")));
     Assert.assertEquals("user2", Bytes.toString((ByteBuffer) row2.get("BLOB_COL")));
+    Assert.assertEquals(124.45f, (float) row1.get("BINARY_FLOAT_COL"), 0.000001);
+    Assert.assertEquals(125.45f, (float) row2.get("BINARY_FLOAT_COL"), 0.000001);
+    Assert.assertEquals(124.45, row1.get("BINARY_DOUBLE_COL"), 0.000001);
+    Assert.assertEquals(125.45, row2.get("BINARY_DOUBLE_COL"), 0.000001);
+    Assert.assertNull(row2.get("BFILE_COL"));
+  }
+
+  @Test
+  public void testDbSourceLongColumn() throws Exception {
+    String importQuery = "SELECT VARCHAR_COL, LONG_COL FROM " + MY_TABLE_FOR_LONG +
+      " WHERE SMALLINT_COL < 3 AND $CONDITIONS";
+    String boundingQuery = "SELECT MIN(SMALLINT_COL),MAX(SMALLINT_COL) from " + MY_TABLE_FOR_LONG;
+    String splitBy = "SMALLINT_COL";
+    ETLPlugin sourceConfig = new ETLPlugin(
+      OracleConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .putAll(BASE_PROPS)
+        .put(OracleConstants.DEFAULT_ROW_PREFETCH, "40")
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
+        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, boundingQuery)
+        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
+        .put(Constants.Reference.REFERENCE_NAME, "DBSourceLongTest")
+        .build(),
+      null
+    );
+
+    String outputDatasetName = "output-dbsourcetest-long";
+    ETLPlugin sinkConfig = MockSink.getPlugin(outputDatasetName);
+
+    ApplicationManager appManager = deployETL(sourceConfig, sinkConfig,
+                                              DATAPIPELINE_ARTIFACT, "testDBSourceLong");
+    runETLOnce(appManager);
+
+    DataSetManager<Table> outputManager = getDataset(outputDatasetName);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    Assert.assertEquals(2, outputRecords.size());
+    String userid = outputRecords.get(0).get("VARCHAR_COL");
+    StructuredRecord row1 = "user1".equals(userid) ? outputRecords.get(0) : outputRecords.get(1);
+    StructuredRecord row2 = "user1".equals(userid) ? outputRecords.get(1) : outputRecords.get(0);
+
+    // Verify data
+    Assert.assertEquals("user1", row1.get("LONG_COL").toString().trim());
+    Assert.assertEquals("user2", row2.get("LONG_COL").toString().trim());
   }
 
   @Test
@@ -203,11 +280,14 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
     String userid = outputRecords.get(0).get("VARCHAR_COL");
     StructuredRecord row1 = "user1".equals(userid) ? outputRecords.get(0) : outputRecords.get(1);
     StructuredRecord row2 = "user1".equals(userid) ? outputRecords.get(1) : outputRecords.get(0);
+
     // Verify data
     Assert.assertEquals("user1", row1.get("VARCHAR_COL"));
     Assert.assertEquals("user2", row2.get("VARCHAR_COL"));
-    Assert.assertEquals(1, (long) row1.get("ID"));
-    Assert.assertEquals(2, (long) row2.get("ID"));
+    Assert.assertEquals(new BigDecimal(1, new MathContext(DEFAULT_PRECISION)).setScale(0),
+                        row1.getDecimal("ID"));
+    Assert.assertEquals(new BigDecimal(2, new MathContext(DEFAULT_PRECISION)).setScale(0),
+                        row2.getDecimal("ID"));
   }
 
   @Test
@@ -307,7 +387,7 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
     ApplicationId appId = NamespaceId.DEFAULT.app("dbSourceNonExistingTest");
     assertRuntimeFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
                          "ETL Application with DB Source should have failed because of a " +
-      "non-existent source table.", 1);
+                           "non-existent source table.", 1);
 
     // Bad connection
     ETLPlugin sourceBadConnConfig = new ETLPlugin(
@@ -337,6 +417,6 @@ public class OracleSourceTestRun extends OraclePluginTestBase {
       .build();
     assertRuntimeFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
                          "ETL Application with DB Source should have failed because of a " +
-      "non-existent source database.", 2);
+                           "non-existent source database.", 2);
   }
 }
