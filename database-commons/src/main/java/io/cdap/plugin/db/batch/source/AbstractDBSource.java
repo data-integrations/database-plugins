@@ -158,7 +158,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       return loadSchemaFromDB(connection, sourceConfig.importQuery);
 
     } catch (SQLException e) {
-      LOG.error("SQLException while performing getSchema", e);
+      // wrap exception to ensure SQLException-child instances not exposed to contexts without jdbc driver in classpath
       throw new SQLException(e.getMessage(), e.getSQLState(), e.getErrorCode());
     } finally {
       driverCleanup.destroy();
