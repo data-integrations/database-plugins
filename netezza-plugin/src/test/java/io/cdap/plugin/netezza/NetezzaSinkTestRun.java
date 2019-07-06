@@ -19,7 +19,6 @@ package io.cdap.plugin.netezza;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -31,7 +30,6 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -165,35 +163,34 @@ public class NetezzaSinkTestRun extends NetezzaPluginTestBase {
   private void createInputData(String inputDatasetName) throws Exception {
     // add some data to the input table
     DataSetManager<Table> inputManager = getDataset(inputDatasetName);
-
     List<StructuredRecord> inputRecords = new ArrayList<>();
     LocalDateTime localDateTime = new Timestamp(CURRENT_TS).toLocalDateTime();
     for (int i = 1; i <= 2; i++) {
       String name = "user" + i;
       inputRecords.add(StructuredRecord.builder(SCHEMA)
-        .set("INTEGER_COL", i)
-        .set("BYTEINT_COL", i)
-        .set("SMALLINT_COL", i)
-        .set("BIGINT_COL", (long) i)
-        .set("REAL_COL", 3.451f + i)
-        .set("REAL_FLOAT_COL", 3.451f + i)
-        .set("DOUBLE_FLOAT_COL", 3.451 + i)
-        .set("DOUBLE_PRECISION_COL", 3.451 + i)
-        .setDecimal("NUMERIC_COL", NUMERIC_VALUE)
-        .setDecimal("DECIMAL_COL", NUMERIC_VALUE)
-        .set("CHAR_COL", name)
-        .set("VARCHAR_COL", name)
-        .set("NCHAR_COL", name)
-        .set("NVARCHAR_COL", name)
-        .set("VARBINARY_COL", name.getBytes(Charsets.UTF_8))
-        .set("ST_GEOMETRY_COL", name.getBytes(Charsets.UTF_8))
-        .setDate("DATE_COL", localDateTime.toLocalDate())
-        .setTime("TIME_COL", localDateTime.toLocalTime())
-        .set("TIMETZ_COL", "13:24:16+03")
-        .setTimestamp("TIMESTAMP_COL", localDateTime.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)))
-        .set("INTERVAL_COL", "2 years 3 mons 2 days")
-        .set("BOOLEAN_COL", true)
-        .build());
+                         .set("INTEGER_COL", i)
+                         .set("BYTEINT_COL", i)
+                         .set("SMALLINT_COL", i)
+                         .set("BIGINT_COL", (long) i)
+                         .set("REAL_COL", 3.451f + i)
+                         .set("REAL_FLOAT_COL", 3.451f + i)
+                         .set("DOUBLE_FLOAT_COL", 3.451 + i)
+                         .set("DOUBLE_PRECISION_COL", 3.451 + i)
+                         .setDecimal("NUMERIC_COL", NUMERIC_VALUE)
+                         .setDecimal("DECIMAL_COL", NUMERIC_VALUE)
+                         .set("CHAR_COL", name)
+                         .set("VARCHAR_COL", name)
+                         .set("NCHAR_COL", name)
+                         .set("NVARCHAR_COL", name)
+                         .set("VARBINARY_COL", name.getBytes(Charsets.UTF_8))
+                         .set("ST_GEOMETRY_COL", name.getBytes(Charsets.UTF_8))
+                         .setDate("DATE_COL", localDateTime.toLocalDate())
+                         .setTime("TIME_COL", localDateTime.toLocalTime())
+                         .set("TIMETZ_COL", "13:24:16+03")
+                         .setTimestamp("TIMESTAMP_COL", localDateTime.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)))
+                         .set("INTERVAL_COL", "2 years 3 mons 2 days")
+                         .set("BOOLEAN_COL", true)
+                         .build());
     }
     MockSource.writeInput(inputManager, inputRecords);
   }

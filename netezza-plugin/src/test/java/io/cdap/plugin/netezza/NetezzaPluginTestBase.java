@@ -20,7 +20,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.datapipeline.DataPipelineApp;
@@ -32,7 +31,6 @@ import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.batch.DatabasePluginTestBase;
 import io.cdap.plugin.db.batch.sink.ETLDBOutputFormat;
 import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -44,13 +42,10 @@ import java.sql.Date;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
@@ -97,9 +92,9 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
     addPluginArtifact(NamespaceId.DEFAULT.artifact(JDBC_DRIVER_NAME, "1.0.0"),
-      DATAPIPELINE_ARTIFACT_ID,
-      NetezzaSource.class, NetezzaSink.class, DBRecord.class, ETLDBOutputFormat.class,
-      DataDrivenETLDBInputFormat.class, DBRecord.class, NetezzaPostAction.class, NetezzaAction.class);
+                      DATAPIPELINE_ARTIFACT_ID,
+                      NetezzaSource.class, NetezzaSink.class, DBRecord.class, ETLDBOutputFormat.class,
+                      DataDrivenETLDBInputFormat.class, DBRecord.class, NetezzaPostAction.class, NetezzaAction.class);
 
     connectionUrl = "jdbc:netezza://" + BASE_PROPS.get(ConnectionConfig.HOST) + ":" +
       BASE_PROPS.get(ConnectionConfig.PORT) + "/" + BASE_PROPS.get(ConnectionConfig.DATABASE);
@@ -108,11 +103,11 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
 
     // add netezza 3rd party plugin
     PluginClass netezzaDriver = new PluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME,
-      "netezza driver class", aClass.getCanonicalName(),
-      null, Collections.emptyMap());
+                                                "netezza driver class", aClass.getCanonicalName(),
+                                                null, Collections.emptyMap());
     addPluginArtifact(NamespaceId.DEFAULT.artifact("netezza-jdbc-connector", "1.0.0"),
-      DATAPIPELINE_ARTIFACT_ID,
-      Sets.newHashSet(netezzaDriver), aClass);
+                      DATAPIPELINE_ARTIFACT_ID,
+                      Sets.newHashSet(netezzaDriver), aClass);
 
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
@@ -128,13 +123,29 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
       // create a table that the action will truncate at the end of the run
       stmt.execute("CREATE TABLE post_action_test (x int, day varchar(10))");
 
-      stmt.execute("create table MY_TABLE (INTEGER_COL INTEGER, BYTEINT_COL BYTEINT, SMALLINT_COL SMALLINT, " +
-        "BIGINT_COL BIGINT, REAL_COL REAL, REAL_FLOAT_COL FLOAT(1), DOUBLE_FLOAT_COL FLOAT(7), " +
-        "DOUBLE_PRECISION_COL DOUBLE PRECISION, NUMERIC_COL NUMERIC(" + PRECISION + "," + SCALE + "), " +
-        "DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + "), CHAR_COL CHAR(40), VARCHAR_COL VARCHAR(40), " +
-        "NCHAR_COL NCHAR(40), NVARCHAR_COL NVARCHAR(40), VARBINARY_COL BINARY VARYING(10), " +
-        "ST_GEOMETRY_COL ST_GEOMETRY(10), DATE_COL DATE, TIME_COL TIME, TIMETZ_COL TIMETZ, TIMESTAMP_COL TIMESTAMP, " +
-        "INTERVAL_COL INTERVAL, BOOLEAN_COL BOOLEAN)");
+      stmt.execute("create table MY_TABLE (" +
+                     "INTEGER_COL INTEGER, " +
+                     "BYTEINT_COL BYTEINT, " +
+                     "SMALLINT_COL SMALLINT, " +
+                     "BIGINT_COL BIGINT, " +
+                     "REAL_COL REAL, " +
+                     "REAL_FLOAT_COL FLOAT(1), " +
+                     "DOUBLE_FLOAT_COL FLOAT(7), " +
+                     "DOUBLE_PRECISION_COL DOUBLE PRECISION, " +
+                     "NUMERIC_COL NUMERIC(" + PRECISION + "," + SCALE + "), " +
+                     "DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + "), " +
+                     "CHAR_COL CHAR(40), " +
+                     "VARCHAR_COL VARCHAR(40), " +
+                     "NCHAR_COL NCHAR(40), " +
+                     "NVARCHAR_COL NVARCHAR(40), " +
+                     "VARBINARY_COL BINARY VARYING(10), " +
+                     "ST_GEOMETRY_COL ST_GEOMETRY(10), " +
+                     "DATE_COL DATE, " +
+                     "TIME_COL TIME, " +
+                     "TIMETZ_COL TIMETZ, " +
+                     "TIMESTAMP_COL TIMESTAMP, " +
+                     "INTERVAL_COL INTERVAL, " +
+                     "BOOLEAN_COL BOOLEAN)");
 
       stmt.execute("CREATE TABLE MY_DEST_TABLE AS SELECT * FROM my_table");
       stmt.execute("CREATE TABLE YOUR_TABLE AS SELECT * FROM my_table");
@@ -142,50 +153,55 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static void prepareTestData(Connection conn) throws SQLException {
-    try (Statement stmt = conn.createStatement()) {
+    try (
+      Statement stmt = conn.createStatement();
+      PreparedStatement pStmt1 =
+        conn.prepareStatement("INSERT INTO my_table " +
+                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?)");
+      PreparedStatement pStmt2 =
+        conn.prepareStatement("INSERT INTO your_table " +
+                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?)")) {
+
       stmt.execute("insert into db_action_test values (1, '1970-01-01')");
       stmt.execute("insert into post_action_test values (1, '1970-01-01')");
 
-      for (String tableName : Arrays.asList("MY_TABLE", "YOUR_TABLE")) {
-        for (int i = 1; i <= 5; i++) {
-          String name = "user" + i;
-          try (PreparedStatement pStmt = conn.prepareStatement("insert into " + tableName + " values(" +
-            "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
-            pStmt.setString(11, name);
-            pStmt.setString(12, name);
-            pStmt.setString(13, name);
-            pStmt.setString(14, name);
-            pStmt.setBytes(15, name.getBytes(Charsets.UTF_8));
-            pStmt.setBytes(16, name.getBytes(Charsets.UTF_8));
+      populateData(pStmt1, pStmt2);
+    }
+  }
 
-            pStmt.setInt(1, i);
-            pStmt.setInt(2, i);
-            pStmt.setInt(3, i);
-            pStmt.setLong(4, i);
+  private static void populateData(PreparedStatement... stmts) throws SQLException {
+    // insert the same data into both tables: my_table and your_table
+    for (PreparedStatement pStmt : stmts) {
+      for (int i = 1; i <= 5; i++) {
+        String name = "user" + i;
+        pStmt.setInt(1, i);
+        pStmt.setInt(2, i);
+        pStmt.setInt(3, i);
+        pStmt.setLong(4, i);
+        pStmt.setFloat(5, 123.45f + i);
+        pStmt.setFloat(6, 123.45f + i);
+        pStmt.setDouble(7, 123.45 + i);
+        pStmt.setDouble(8, 123.45 + i);
+        pStmt.setBigDecimal(9, new BigDecimal(123.45, MathContext.DECIMAL64).add(new BigDecimal(i, MathContext.DECIMAL64)));
+        pStmt.setBigDecimal(10, new BigDecimal(123.45, MathContext.DECIMAL64).add(new BigDecimal(i, MathContext.DECIMAL64)));
+        pStmt.setString(11, name);
+        pStmt.setString(12, name);
+        pStmt.setString(13, name);
+        pStmt.setString(14, name);
+        pStmt.setBytes(15, name.getBytes(Charsets.UTF_8));
+        pStmt.setBytes(16, name.getBytes(Charsets.UTF_8));
+        pStmt.setDate(17, new Date(CURRENT_TS));
+        pStmt.setTime(18, new Time(CURRENT_TS));
+        pStmt.setString(19, "13:24:16+03");
+        pStmt.setTimestamp(20, new Timestamp(CURRENT_TS));
+        pStmt.setString(21, "2 year 3 month " + i + " day");
+        pStmt.setBoolean(22, (i % 2 == 0));
 
-            pStmt.setFloat(5, 123.45f + i);
-            pStmt.setFloat(6, 123.45f + i);
-            pStmt.setDouble(7, 123.45 + i);
-            pStmt.setDouble(8, 123.45 + i);
-            pStmt.setBigDecimal(
-              9,
-              new BigDecimal(123.45, MathContext.DECIMAL64).add(new BigDecimal(i, MathContext.DECIMAL64))
-            );
-            pStmt.setBigDecimal(
-              10,
-              new BigDecimal(123.45, MathContext.DECIMAL64).add(new BigDecimal(i, MathContext.DECIMAL64))
-            );
-            pStmt.setDate(17, new Date(CURRENT_TS));
-            pStmt.setTime(18, new Time(CURRENT_TS));
-            pStmt.setString(19, "13:24:16+03");
-            pStmt.setTimestamp(20, new Timestamp(CURRENT_TS));
-            pStmt.setString(21, "2 year 3 month " + i + " day");
-            // other
-            pStmt.setBoolean(22, (i % 2 == 0));
-
-            pStmt.execute();
-          }
-        }
+        pStmt.executeUpdate();
       }
     }
   }
@@ -194,7 +210,7 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
     try {
       Class.forName(Driver.class.getCanonicalName());
       return DriverManager.getConnection(connectionUrl, BASE_PROPS.get(ConnectionConfig.USER),
-        BASE_PROPS.get(ConnectionConfig.PASSWORD));
+                                         BASE_PROPS.get(ConnectionConfig.PASSWORD));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

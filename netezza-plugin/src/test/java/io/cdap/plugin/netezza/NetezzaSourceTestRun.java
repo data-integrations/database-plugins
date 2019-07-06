@@ -17,7 +17,6 @@
 package io.cdap.plugin.netezza;
 
 import com.google.common.collect.ImmutableMap;
-
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.dataset.table.Table;
@@ -34,7 +33,6 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -79,7 +77,7 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     ETLPlugin sinkConfig = MockSink.getPlugin("macroOutputTable");
 
     ApplicationManager appManager = deployETL(sourceConfig, sinkConfig,
-      DATAPIPELINE_ARTIFACT, "testDBMacro");
+                                              DATAPIPELINE_ARTIFACT, "testDBMacro");
     runETLOnce(appManager, ImmutableMap.of("logical.start.time", String.valueOf(CURRENT_TS)));
 
     DataSetManager<Table> outputManager = getDataset("macroOutputTable");
@@ -112,7 +110,7 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     ETLPlugin sinkConfig = MockSink.getPlugin(outputDatasetName);
 
     ApplicationManager appManager = deployETL(sourceConfig, sinkConfig,
-      DATAPIPELINE_ARTIFACT, "testDBSource");
+                                              DATAPIPELINE_ARTIFACT, "testDBSource");
     runETLOnce(appManager);
 
     DataSetManager<Table> outputManager = getDataset(outputDatasetName);
@@ -142,13 +140,13 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     Assert.assertEquals(124.45, row1.get("DOUBLE_PRECISION_COL"), 0.000001);
     Assert.assertEquals(125.45, row2.get("DOUBLE_PRECISION_COL"), 0.000001);
     Assert.assertEquals(new BigDecimal(124.45, new MathContext(PRECISION)).setScale(SCALE),
-      row1.getDecimal("NUMERIC_COL"));
+                        row1.getDecimal("NUMERIC_COL"));
     Assert.assertEquals(new BigDecimal(125.45, new MathContext(PRECISION)).setScale(SCALE),
-      row2.getDecimal("NUMERIC_COL"));
+                        row2.getDecimal("NUMERIC_COL"));
     Assert.assertEquals(new BigDecimal(124.45, new MathContext(PRECISION)).setScale(SCALE),
-      row1.getDecimal("DECIMAL_COL"));
+                        row1.getDecimal("DECIMAL_COL"));
     Assert.assertEquals(new BigDecimal(125.45, new MathContext(PRECISION)).setScale(SCALE),
-      row2.getDecimal("DECIMAL_COL"));
+                        row2.getDecimal("DECIMAL_COL"));
 
     Assert.assertEquals("user1", ((String) row1.get("CHAR_COL")).trim());
     Assert.assertEquals("user2", ((String) row2.get("CHAR_COL")).trim());
@@ -205,7 +203,7 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     ETLPlugin sinkConfig = MockSink.getPlugin(outputDatasetName);
 
     ApplicationManager appManager = deployETL(sourceConfig, sinkConfig,
-      DATAPIPELINE_ARTIFACT, "testDBSourceWithMultipleTables");
+                                              DATAPIPELINE_ARTIFACT, "testDBSourceWithMultipleTables");
     runETLOnce(appManager);
 
     // records should be written
@@ -261,14 +259,14 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     Map<String, String> noUser = new HashMap<>(baseSourceProps);
     noUser.put(ConnectionConfig.PASSWORD, "password");
     database = new ETLStage("databaseSource",
-      new ETLPlugin(NetezzaConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, noUser, null));
+                            new ETLPlugin(NetezzaConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, noUser, null));
     etlConfig = ETLBatchConfig.builder()
       .addStage(database)
       .addStage(table)
       .addConnection(database.getName(), table.getName())
       .build();
     assertDeploymentFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
-      "Deploying DB Source with null username but non-null password should have failed.");
+                            "Deploying DB Source with null username but non-null password should have failed.");
 
     // non-null username, non-null, but empty password. Should succeed.
     // as source
@@ -276,7 +274,7 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     emptyPassword.put(ConnectionConfig.USER, "root");
     emptyPassword.put(ConnectionConfig.PASSWORD, "");
     database = new ETLStage("databaseSource",
-      new ETLPlugin(NetezzaConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, emptyPassword, null));
+                            new ETLPlugin(NetezzaConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, emptyPassword, null));
     etlConfig = ETLBatchConfig.builder()
       .addStage(database)
       .addStage(table)
@@ -314,8 +312,8 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
       .build();
     ApplicationId appId = NamespaceId.DEFAULT.app("dbSourceNonExistingTest");
     assertRuntimeFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
-      "ETL Application with DB Source should have failed because of a " +
-        "non-existent source table.", 1);
+                         "ETL Application with DB Source should have failed because of a " +
+                           "non-existent source table.", 1);
 
     // Bad connection
     ETLPlugin sourceBadConnConfig = new ETLPlugin(
@@ -341,7 +339,7 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
       .addConnection(sourceBadConn.getName(), sink.getName())
       .build();
     assertRuntimeFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
-      "ETL Application with DB Source should have failed because of a " +
-        "non-existent source database.", 2);
+                         "ETL Application with DB Source should have failed because of a " +
+                           "non-existent source database.", 2);
   }
 }
