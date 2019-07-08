@@ -29,6 +29,7 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -51,21 +52,42 @@ import java.util.Set;
  */
 public class Db2SinkTestRun extends Db2PluginTestBase {
 
+  @Before
+  public void setup() throws Exception {
+    try (Connection connection = createConnection();
+         Statement stmt = connection.createStatement()) {
+      stmt.execute("DELETE FROM MY_DEST_TABLE");
+    }
+  }
+
+  @Test
+  public void testDBSinkWithInvalidFieldType() throws Exception {
+    testDBInvalidFieldType("ID", Schema.Type.STRING, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+  }
+
+  @Test
+  public void testDBSinkWithInvalidFieldLogicalType() throws Exception {
+    testDBInvalidFieldLogicalType("TIMESTAMP_COL", Schema.Type.LONG, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+  }
+
+  @Test
+  public void testDBSinkWithDBSchemaAndInvalidData() throws Exception {
+    String stringColumnName = "CHAR_COL";
+    startPipelineAndWriteInvalidData(stringColumnName, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+    try (Connection conn = createConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet resultSet = stmt.executeQuery("SELECT * FROM MY_DEST_TABLE")) {
+      testInvalidDataWrite(resultSet, stringColumnName);
+    }
+  }
+
   @Test
   public void testDBSink() throws Exception {
 
     String inputDatasetName = "input-dbsinktest";
 
     ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
-    ETLPlugin sinkConfig = new ETLPlugin(
-      Db2Constants.PLUGIN_NAME,
-      BatchSink.PLUGIN_TYPE,
-      ImmutableMap.<String, String>builder()
-        .putAll(BASE_PROPS)
-        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
-        .put(Constants.Reference.REFERENCE_NAME, "DBTest")
-        .build(),
-      null);
+    ETLPlugin sinkConfig = getSinkConfig();
 
     deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSink");
     createInputData(inputDatasetName);
@@ -91,6 +113,34 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
       Assert.assertEquals(ImmutableSet.of("user1", "user2"), users);
 
     }
+  }
+
+  @Override
+  protected void writeDataForInvalidDataWriteTest(String inputDatasetName, String stringColumnName) throws Exception {
+    Schema validSchema = Schema.recordOf(
+      "wrongDBRecord",
+      Schema.Field.of(stringColumnName, Schema.of(Schema.Type.STRING))
+    );
+
+    Schema invalidSchema = Schema.recordOf(
+      "wrongDBRecord",
+      Schema.Field.of(stringColumnName, Schema.of(Schema.Type.INT))
+    );
+
+    // add some data to the input table
+    DataSetManager<Table> inputManager = getDataset(inputDatasetName);
+
+    List<StructuredRecord> inputRecords = new ArrayList<>();
+    inputRecords.add(StructuredRecord.builder(validSchema)
+                       .set(stringColumnName, "user1")
+                       .build());
+    inputRecords.add(StructuredRecord.builder(invalidSchema)
+                       .set(stringColumnName, 1)
+                       .build());
+    inputRecords.add(StructuredRecord.builder(validSchema)
+                       .set(stringColumnName, "user3")
+                       .build());
+    MockSource.writeInput(inputManager, inputRecords);
   }
 
   private void createInputData(String inputDatasetName) throws Exception {
@@ -143,5 +193,17 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
                          .build());
     }
     MockSource.writeInput(inputManager, inputRecords);
+  }
+
+  private ETLPlugin getSinkConfig() {
+    return new ETLPlugin(
+      Db2Constants.PLUGIN_NAME,
+      BatchSink.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .putAll(BASE_PROPS)
+        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
+        .put(Constants.Reference.REFERENCE_NAME, "DBTest")
+        .build(),
+      null);
   }
 }

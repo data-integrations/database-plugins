@@ -98,6 +98,12 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     DBUtils.validateJDBCPluginPipeline(pipelineConfigurer, dbSinkConfig, getJDBCPluginId());
+    Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
+    if (Objects.nonNull(inputSchema)) {
+      Class<? extends Driver> driverClass = DBUtils.getDriverClass(
+        pipelineConfigurer, dbSinkConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
+      validateSchema(driverClass, dbSinkConfig.tableName, inputSchema);
+    }
   }
 
   @Override
@@ -116,7 +122,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     // make sure that the destination table exists and column types are correct
     try {
-      if (Objects.nonNull(context.getInputSchema())) {
+      if (Objects.nonNull(outputSchema)) {
         validateSchema(driverClass, dbSinkConfig.tableName, outputSchema);
       } else {
         outputSchema = inferSchema(driverClass);
@@ -280,9 +286,9 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     try {
       DBUtils.ensureJDBCDriverIsAvailable(jdbcDriverClass, connectionString, dbSinkConfig.jdbcPluginName);
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
-      LOG.error("Unable to load or register JDBC driver {} while checking for the existence of the database table {}.",
-                jdbcDriverClass, tableName, e);
-      throw Throwables.propagate(e);
+      throw new InvalidStageException(String.format("Unable to load or register JDBC driver '%s' while checking for " +
+                                                      "the existence of the database table '%s'.",
+                                                    jdbcDriverClass, tableName), e);
     }
 
     Properties connectionProperties = new Properties();
@@ -327,15 +333,23 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       boolean isColumnNullable = (ResultSetMetaData.columnNullable == rsMetaData.isNullable(columnIndex));
 
       Schema.Type columnType = columnSchema.getType();
-      Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
-        : field.getSchema().getType();
+      Schema.LogicalType columnLogicalType = columnSchema.getLogicalType();
+
+      Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+      Schema.Type fieldType = fieldSchema.getType();
+      Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
+
       boolean isNotNullAssignable = !isColumnNullable && field.getSchema().isNullable();
-      boolean isNotCompatible = !Objects.equals(fieldType, columnType);
+      boolean isNotCompatible = !(Objects.equals(fieldType, columnType)
+        && Objects.equals(fieldLogicalType, columnLogicalType));
 
       if (isNotCompatible) {
         invalidFields.add(field.getName());
-        LOG.error("Field {} was given as type {} but the database column is actually of type {}.", field.getName(),
-                  fieldType, columnSchema.getType());
+        LOG.error("Field {} was given as type {} but the database column is actually of type {}.",
+                  field.getName(),
+                  fieldLogicalType != null ? fieldLogicalType.getToken() : fieldType,
+                  columnLogicalType != null ? columnLogicalType.getToken() : columnType
+        );
       }
       if (isNotNullAssignable) {
         invalidFields.add(field.getName());
