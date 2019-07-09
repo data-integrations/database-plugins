@@ -87,12 +87,12 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
-    String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, SMALLINT_COL, BIGINT_COL, FLOAT_COL, REAL_COL, " +
-      "NUMERIC_COL, CHAR_COL, DECIMAL_COL, VARBINARY_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, " +
-      "TIME_WITH_TIME_ZONE_COL, INTERVAL_COL, ST_GEOMETRY_COL, VARBINARY_COL " +
-      "FROM my_table WHERE ID < 3 AND $CONDITIONS ORDER BY ID";
-    String boundingQuery = "SELECT MIN(ID),MAX(ID) from my_table";
-    String splitBy = "ID";
+    String importQuery = "SELECT INTEGER_COL, BYTEINT_COL, SMALLINT_COL, BIGINT_COL, REAL_COL, REAL_FLOAT_COL, " +
+      "DOUBLE_FLOAT_COL, DOUBLE_PRECISION_COL, NUMERIC_COL, DECIMAL_COL, CHAR_COL, VARCHAR_COL, NCHAR_COL, " +
+      "NVARCHAR_COL, VARBINARY_COL, ST_GEOMETRY_COL, DATE_COL, TIME_COL, TIMETZ_COL, TIMESTAMP_COL, INTERVAL_COL, " +
+      "BOOLEAN_COL FROM my_table WHERE INTEGER_COL < 3 AND $CONDITIONS ORDER BY INTEGER_COL";
+    String boundingQuery = "SELECT MIN(INTEGER_COL),MAX(INTEGER_COL) from my_table";
+    String splitBy = "INTEGER_COL";
     ETLPlugin sourceConfig = new ETLPlugin(
       NetezzaConstants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
@@ -117,31 +117,28 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
 
     Assert.assertEquals(2, outputRecords.size());
-    String userid = outputRecords.get(0).get("NAME");
-    StructuredRecord row1 = "user1".equals(userid) ? outputRecords.get(0) : outputRecords.get(1);
-    StructuredRecord row2 = "user1".equals(userid) ? outputRecords.get(1) : outputRecords.get(0);
+    String userName = outputRecords.get(0).get("VARCHAR_COL");
+    StructuredRecord row1 = "user1".equals(userName) ? outputRecords.get(0) : outputRecords.get(1);
+    StructuredRecord row2 = "user1".equals(userName) ? outputRecords.get(1) : outputRecords.get(0);
 
     // Verify data
-    Assert.assertEquals("user1", row1.get("NAME"));
-    Assert.assertEquals("user2", row2.get("NAME"));
-    Assert.assertEquals("user1", ((String) row1.get("CHAR_COL")).trim());
-    Assert.assertEquals("user2", ((String) row2.get("CHAR_COL")).trim());
-    Assert.assertEquals(124.45f, (float) row1.get("SCORE"), 0.000001);
-    Assert.assertEquals(125.45f, (float) row2.get("SCORE"), 0.000001);
-    Assert.assertEquals(false, row1.get("GRADUATED"));
-    Assert.assertEquals(true, row2.get("GRADUATED"));
-    Assert.assertNull(row1.get("NOT_IMPORTED"));
-    Assert.assertNull(row2.get("NOT_IMPORTED"));
-
+    Assert.assertEquals(1, (int) row1.get("INTEGER_COL"));
+    Assert.assertEquals(2, (int) row2.get("INTEGER_COL"));
+    Assert.assertEquals(1, (int) row1.get("BYTEINT_COL"));
+    Assert.assertEquals(2, (int) row2.get("BYTEINT_COL"));
     Assert.assertEquals(1, (int) row1.get("SMALLINT_COL"));
     Assert.assertEquals(2, (int) row2.get("SMALLINT_COL"));
     Assert.assertEquals(1, (long) row1.get("BIGINT_COL"));
     Assert.assertEquals(2, (long) row2.get("BIGINT_COL"));
 
-    Assert.assertEquals(124.45, (float) row1.get("FLOAT_COL"), 0.00001);
-    Assert.assertEquals(125.45, (float) row2.get("FLOAT_COL"), 0.00001);
-    Assert.assertEquals(124.45, (float) row1.get("REAL_COL"), 0.00001);
-    Assert.assertEquals(125.45, (float) row2.get("REAL_COL"), 0.00001);
+    Assert.assertEquals(124.45f, row1.get("REAL_COL"), 0.00001f);
+    Assert.assertEquals(125.45f, row2.get("REAL_COL"), 0.00001f);
+    Assert.assertEquals(124.45f, row1.get("REAL_FLOAT_COL"), 0.00001f);
+    Assert.assertEquals(125.45f, row2.get("REAL_FLOAT_COL"), 0.00001f);
+    Assert.assertEquals(124.45, row1.get("DOUBLE_FLOAT_COL"), 0.000001);
+    Assert.assertEquals(125.45, row2.get("DOUBLE_FLOAT_COL"), 0.000001);
+    Assert.assertEquals(124.45, row1.get("DOUBLE_PRECISION_COL"), 0.000001);
+    Assert.assertEquals(125.45, row2.get("DOUBLE_PRECISION_COL"), 0.000001);
     Assert.assertEquals(new BigDecimal(124.45, new MathContext(PRECISION)).setScale(SCALE),
                         row1.getDecimal("NUMERIC_COL"));
     Assert.assertEquals(new BigDecimal(125.45, new MathContext(PRECISION)).setScale(SCALE),
@@ -151,7 +148,20 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     Assert.assertEquals(new BigDecimal(125.45, new MathContext(PRECISION)).setScale(SCALE),
                         row2.getDecimal("DECIMAL_COL"));
 
-    // Verify time columns
+    Assert.assertEquals("user1", ((String) row1.get("CHAR_COL")).trim());
+    Assert.assertEquals("user2", ((String) row2.get("CHAR_COL")).trim());
+    Assert.assertEquals("user1", row1.get("VARCHAR_COL"));
+    Assert.assertEquals("user2", row2.get("VARCHAR_COL"));
+    Assert.assertEquals("user1", ((String) row1.get("NCHAR_COL")).trim());
+    Assert.assertEquals("user2", ((String) row2.get("NCHAR_COL")).trim());
+    Assert.assertEquals("user1", row1.get("NVARCHAR_COL"));
+    Assert.assertEquals("user2", row2.get("NVARCHAR_COL"));
+    // verify binary columns
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("VARBINARY_COL"))));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("VARBINARY_COL"))));
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("ST_GEOMETRY_COL"))));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("ST_GEOMETRY_COL"))));
+
     java.util.Date date = new java.util.Date(CURRENT_TS);
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     LocalDate expectedDate = Date.valueOf(sdf.format(date)).toLocalDate();
@@ -160,26 +170,22 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     ZonedDateTime expectedTs = date.toInstant().atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC));
     Assert.assertEquals(expectedDate, row1.getDate("DATE_COL"));
     Assert.assertEquals(expectedTime, row1.getTime("TIME_COL"));
+    Assert.assertEquals("13:24:16+03", row1.get("TIMETZ_COL"));
     Assert.assertEquals(expectedTs, row1.getTimestamp("TIMESTAMP_COL", ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
-
-    // verify binary columns
-    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("VARBINARY_COL")).array(), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("VARBINARY_COL")).array(), 0, 5));
-    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("ST_GEOMETRY_COL")).array(), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("ST_GEOMETRY_COL")).array(), 0, 5));
-
-    // Netezza specific types
     Assert.assertEquals("2 years 3 mons 1 day", row1.get("INTERVAL_COL"));
     Assert.assertEquals("2 years 3 mons 2 days", row2.get("INTERVAL_COL"));
+
+    Assert.assertFalse(row1.get("BOOLEAN_COL"));
+    Assert.assertTrue(row2.get("BOOLEAN_COL"));
   }
 
   @Test
   public void testDbSourceMultipleTables() throws Exception {
-    String importQuery = "SELECT my_table.ID, your_table.NAME FROM my_table, your_table " +
-      "WHERE my_table.ID < 3 and my_table.ID = your_table.ID and $CONDITIONS ";
-    String boundingQuery = "SELECT LEAST(MIN(my_table.ID), MIN(your_table.ID)), " +
-      "GREATEST(MAX(my_table.ID), MAX(your_table.ID))";
-    String splitBy = "my_table.ID";
+    String importQuery = "SELECT my_table.INTEGER_COL, your_table.VARCHAR_COL FROM my_table, your_table " +
+      "WHERE my_table.INTEGER_COL < 3 and my_table.INTEGER_COL = your_table.INTEGER_COL and $CONDITIONS ";
+    String boundingQuery = "SELECT LEAST(MIN(my_table.INTEGER_COL), MIN(your_table.INTEGER_COL)), " +
+      "GREATEST(MAX(my_table.INTEGER_COL), MAX(your_table.INTEGER_COL))";
+    String splitBy = "my_table.INTEGER_COL";
     ETLPlugin sourceConfig = new ETLPlugin(
       NetezzaConstants.PLUGIN_NAME,
       BatchSource.PLUGIN_TYPE,
@@ -204,21 +210,21 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     DataSetManager<Table> outputManager = getDataset(outputDatasetName);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
     Assert.assertEquals(2, outputRecords.size());
-    String userid = outputRecords.get(0).get("NAME");
+    String userid = outputRecords.get(0).get("VARCHAR_COL");
     StructuredRecord row1 = "user1".equals(userid) ? outputRecords.get(0) : outputRecords.get(1);
     StructuredRecord row2 = "user1".equals(userid) ? outputRecords.get(1) : outputRecords.get(0);
     // Verify data
-    Assert.assertEquals("user1", row1.get("NAME"));
-    Assert.assertEquals("user2", row2.get("NAME"));
-    Assert.assertEquals(1, row1.<Integer>get("ID").intValue());
-    Assert.assertEquals(2, row2.<Integer>get("ID").intValue());
+    Assert.assertEquals("user1", row1.get("VARCHAR_COL"));
+    Assert.assertEquals("user2", row2.get("VARCHAR_COL"));
+    Assert.assertEquals(1, row1.<Integer>get("INTEGER_COL").intValue());
+    Assert.assertEquals(2, row2.<Integer>get("INTEGER_COL").intValue());
   }
 
   @Test
   public void testUserNamePasswordCombinations() throws Exception {
     String importQuery = "SELECT * FROM my_table WHERE $CONDITIONS";
-    String boundingQuery = "SELECT MIN(ID),MAX(ID) from my_table";
-    String splitBy = "ID";
+    String boundingQuery = "SELECT MIN(INTEGER_COL),MAX(INTEGER_COL) from my_table";
+    String splitBy = "INTEGER_COL";
 
     ETLPlugin sinkConfig = MockSink.getPlugin("outputTable");
 
@@ -307,7 +313,7 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
     ApplicationId appId = NamespaceId.DEFAULT.app("dbSourceNonExistingTest");
     assertRuntimeFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
                          "ETL Application with DB Source should have failed because of a " +
-      "non-existent source table.", 1);
+                           "non-existent source table.", 1);
 
     // Bad connection
     ETLPlugin sourceBadConnConfig = new ETLPlugin(
@@ -334,6 +340,6 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
       .build();
     assertRuntimeFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
                          "ETL Application with DB Source should have failed because of a " +
-      "non-existent source database.", 2);
+                           "non-existent source database.", 2);
   }
 }

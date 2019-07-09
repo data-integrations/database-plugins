@@ -36,6 +36,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.Driver;
@@ -59,7 +60,7 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
 
   protected static String connectionUrl;
   protected static final int YEAR;
-  protected static final int PRECISION = 10;
+  protected static final int PRECISION = 16;
   protected static final int SCALE = 6;
   protected static boolean tearDown = true;
   private static int startCount;
@@ -122,36 +123,32 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
       // create a table that the action will truncate at the end of the run
       stmt.execute("CREATE TABLE post_action_test (x int, day varchar(10))");
 
-      stmt.execute("CREATE TABLE my_table (" +
-                     "ID INT NOT NULL," +
-                     "NAME VARCHAR(40) NOT NULL," +
-                     "SCORE REAL," +
-                     "GRADUATED BOOLEAN," +
-                     "NOT_IMPORTED VARCHAR(30)," +
-                     "BYTEINT_COL BYTEINT," +
-                     "SMALLINT_COL SMALLINT," +
-                     "INTEGER_COL INTEGER," +
-                     "BIGINT_COL BIGINT," +
-                     "CHAR_COL CHARACTER(40)," +
-                     "VARCHAR_COL CHARACTER VARYING(40)," +
-                     "NCHAR_COL NATIONAL CHARACTER(40)," +
-                     "DATE_COL DATE," +
-                     "TIME_COL TIME," +
-                     "TIME_WITH_TIME_ZONE_COL TIME WITH TIME ZONE," +
-                     "TIMESTAMP_COL TIMESTAMP," +
-                     "INTERVAL_COL INTERVAL," +
-                     "DOUBLE_PRECISION_COL DOUBLE PRECISION," +
-                     "NUMERIC_COL NUMERIC(" + PRECISION + "," + SCALE + ")," +
-                     "NVARCHAR_COL NATIONAL CHARACTER VARYING(40)," +
-                     "REAL_COL REAL," +
-                     "ST_GEOMETRY_COL ST_GEOMETRY(10)," +
-                     "VARBINARY_COL BINARY VARYING(10)," +
-                     "DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + ")," +
-                     "FLOAT_COL FLOAT(6))");
-      stmt.execute("CREATE TABLE MY_DEST_TABLE AS " +
-                     "SELECT * FROM my_table");
-      stmt.execute("CREATE TABLE your_table AS " +
-                     "SELECT * FROM my_table");
+      stmt.execute("create table MY_TABLE (" +
+                     "INTEGER_COL INTEGER, " +
+                     "BYTEINT_COL BYTEINT, " +
+                     "SMALLINT_COL SMALLINT, " +
+                     "BIGINT_COL BIGINT, " +
+                     "REAL_COL REAL, " +
+                     "REAL_FLOAT_COL FLOAT(1), " +
+                     "DOUBLE_FLOAT_COL FLOAT(7), " +
+                     "DOUBLE_PRECISION_COL DOUBLE PRECISION, " +
+                     "NUMERIC_COL NUMERIC(" + PRECISION + "," + SCALE + "), " +
+                     "DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + "), " +
+                     "CHAR_COL CHAR(40), " +
+                     "VARCHAR_COL VARCHAR(40), " +
+                     "NCHAR_COL NCHAR(40), " +
+                     "NVARCHAR_COL NVARCHAR(40), " +
+                     "VARBINARY_COL BINARY VARYING(10), " +
+                     "ST_GEOMETRY_COL ST_GEOMETRY(10), " +
+                     "DATE_COL DATE, " +
+                     "TIME_COL TIME, " +
+                     "TIMETZ_COL TIMETZ, " +
+                     "TIMESTAMP_COL TIMESTAMP, " +
+                     "INTERVAL_COL INTERVAL, " +
+                     "BOOLEAN_COL BOOLEAN)");
+
+      stmt.execute("CREATE TABLE MY_DEST_TABLE AS SELECT * FROM my_table");
+      stmt.execute("CREATE TABLE YOUR_TABLE AS SELECT * FROM my_table");
     }
   }
 
@@ -162,12 +159,12 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
         conn.prepareStatement("INSERT INTO my_table " +
                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
                                 "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?)");
+                                "       ?, ?)");
       PreparedStatement pStmt2 =
         conn.prepareStatement("INSERT INTO your_table " +
                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
                                 "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?)")) {
+                                "       ?, ?)")) {
 
       stmt.execute("insert into db_action_test values (1, '1970-01-01')");
       stmt.execute("insert into post_action_test values (1, '1970-01-01')");
@@ -176,36 +173,33 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
     }
   }
 
-  private static void populateData(PreparedStatement ...stmts) throws SQLException {
+  private static void populateData(PreparedStatement... stmts) throws SQLException {
     // insert the same data into both tables: my_table and your_table
     for (PreparedStatement pStmt : stmts) {
       for (int i = 1; i <= 5; i++) {
         String name = "user" + i;
         pStmt.setInt(1, i);
-        pStmt.setString(2, name);
-        pStmt.setDouble(3, 123.45 + i);
-        pStmt.setBoolean(4, (i % 2 == 0));
-        pStmt.setString(5, "random" + i);
-        pStmt.setShort(6, (short) i);
-        pStmt.setShort(7, (short) i);
-        pStmt.setInt(8, i);
-        pStmt.setLong(9, (long) i);
-        pStmt.setString(10, name);
+        pStmt.setInt(2, i);
+        pStmt.setInt(3, i);
+        pStmt.setLong(4, i);
+        pStmt.setFloat(5, 123.45f + i);
+        pStmt.setFloat(6, 123.45f + i);
+        pStmt.setDouble(7, 123.45 + i);
+        pStmt.setDouble(8, 123.45 + i);
+        pStmt.setBigDecimal(9, new BigDecimal(123.45, MathContext.DECIMAL64).add(new BigDecimal(i, MathContext.DECIMAL64)));
+        pStmt.setBigDecimal(10, new BigDecimal(123.45, MathContext.DECIMAL64).add(new BigDecimal(i, MathContext.DECIMAL64)));
         pStmt.setString(11, name);
         pStmt.setString(12, name);
-        pStmt.setDate(13, new Date(CURRENT_TS));
-        pStmt.setTime(14, new Time(CURRENT_TS));
-        pStmt.setTime(15, new Time(CURRENT_TS));
-        pStmt.setTimestamp(16, new Timestamp(CURRENT_TS));
-        pStmt.setString(17, "2 year 3 month " + i + " day");
-        pStmt.setDouble(18, 123.45 + i);
-        pStmt.setBigDecimal(19, new BigDecimal(123.45).add(new BigDecimal(i)));
-        pStmt.setString(20, name);
-        pStmt.setDouble(21, 123.45 + i);
-        pStmt.setBytes(22, name.getBytes(Charsets.UTF_8));
-        pStmt.setBytes(23, name.getBytes(Charsets.UTF_8));
-        pStmt.setBigDecimal(24, new BigDecimal(123.45).add(new BigDecimal(i)));
-        pStmt.setFloat(25, (float) 123.45 + i);
+        pStmt.setString(13, name);
+        pStmt.setString(14, name);
+        pStmt.setBytes(15, name.getBytes(Charsets.UTF_8));
+        pStmt.setBytes(16, name.getBytes(Charsets.UTF_8));
+        pStmt.setDate(17, new Date(CURRENT_TS));
+        pStmt.setTime(18, new Time(CURRENT_TS));
+        pStmt.setString(19, "13:24:16+03");
+        pStmt.setTimestamp(20, new Timestamp(CURRENT_TS));
+        pStmt.setString(21, "2 year 3 month " + i + " day");
+        pStmt.setBoolean(22, (i % 2 == 0));
 
         pStmt.executeUpdate();
       }
