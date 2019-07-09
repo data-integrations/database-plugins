@@ -35,6 +35,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.postgresql.Driver;
+import org.postgresql.util.PGTime;
+import org.postgresql.util.PGobject;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -45,6 +47,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
@@ -62,6 +68,16 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
   protected static final int PRECISION = 10;
   protected static final int SCALE = 6;
   protected static boolean tearDown = true;
+  protected static final OffsetDateTime OFFSET_TIME = OffsetDateTime.of(
+    1992,
+    3,
+    11,
+    12,
+    0,
+    10,
+    0,
+    ZoneOffset.of("+03")
+  );
   private static int startCount;
 
   @ClassRule
@@ -71,6 +87,7 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(new Date(CURRENT_TS));
     YEAR = calendar.get(Calendar.YEAR);
+
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
@@ -119,27 +136,55 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
       // create a table that the action will truncate at the end of the run
       stmt.execute("CREATE TABLE \"postActionTest\" (x int, day varchar(10))");
 
+      String columns = "\"ID\" INT NOT NULL," +
+        "\"NAME\" VARCHAR(40) NOT NULL," +
+        "\"SCORE\" REAL," +
+        "\"GRADUATED\" BOOLEAN," +
+        "\"NOT_IMPORTED\" VARCHAR(30)," +
+        "\"SMALLINT_COL\" SMALLINT," +
+        "\"BIG\" BIGINT," +
+        "\"NUMERIC_COL\" NUMERIC(" + PRECISION + "," + SCALE + ")," +
+        "\"DECIMAL_COL\" DECIMAL(" + PRECISION + "," + SCALE + ")," +
+        "\"DOUBLE_PREC_COL\" DOUBLE PRECISION," +
+        "\"DATE_COL\" DATE," +
+        "\"TIME_COL\" TIME," +
+        "\"TIMESTAMP_COL\" TIMESTAMP(3)," +
+        "\"TEXT_COL\" TEXT," +
+        "\"CHAR_COL\" CHAR(100)," +
+        "\"BYTEA_COL\" BYTEA," +
+        "\"BIT_COL\" BIT(4)," +
+        "\"VAR_BIT_COL\" BIT VARYING (4)," +
+        "\"TIMETZ_COL\" TIME WITH TIME ZONE," +
+        "\"TIMESTAMPTZ_COL\" TIMESTAMP WITH TIME ZONE," +
+        "\"XML_COL\" XML, " +
+        "\"UUID_COL\" UUID, " +
+        "\"CIDR_COL\" CIDR, " +
+        "\"CIRCLE_COL\" CIRCLE," +
+        "\"INET_COL\" INET, " +
+        "\"INTERVAL_COL\" INTERVAL, " +
+        "\"JSON_COL\" JSON, " +
+        "\"JSONB_COL\" JSONB, " +
+        "\"LINE_COL\" LINE, " +
+        "\"LSEG_COL\" LSEG, " +
+        "\"MACADDR_COL\" MACADDR, " +
+        "\"MACADDR8_COL\" MACADDR8, " +
+        "\"MONEY_COL\" MONEY, " +
+        "\"PATH_COL\" PATH, " +
+        "\"POINT_COL\" POINT, " +
+        "\"POLYGON_COL\" POLYGON, " +
+        "\"TSQUERY_COL\" TSQUERY, " +
+        "\"TSVECTOR_COL\" TSVECTOR, " +
+        "\"BOX_COL\" BOX";
+
       stmt.execute("CREATE TABLE my_table" +
-                     "(" +
-                     "\"ID\" INT NOT NULL," +
-                     "\"NAME\" VARCHAR(40) NOT NULL," +
-                     "\"SCORE\" REAL," +
-                     "\"GRADUATED\" BOOLEAN," +
-                     "\"NOT_IMPORTED\" VARCHAR(30)," +
-                     "\"SMALLINT_COL\" SMALLINT," +
-                     "\"BIG\" BIGINT," +
-                     "\"NUMERIC_COL\" NUMERIC(" + PRECISION + "," + SCALE + ")," +
-                     "\"DECIMAL_COL\" DECIMAL(" + PRECISION + "," + SCALE + ")," +
-                     "\"DOUBLE_PREC_COL\" DOUBLE PRECISION," +
-                     "\"DATE_COL\" DATE," +
-                     "\"TIME_COL\" TIME," +
-                     "\"TIMESTAMP_COL\" TIMESTAMP(3)," +
-                     "\"TEXT_COL\" TEXT," +
-                     "\"CHAR_COL\" CHAR(100)," +
-                     "\"BYTEA_COL\" BYTEA" +
+                     "(" + columns +
+                     ", \"BIG_SERIAL_COL\" BIGSERIAL," +
+                     "\"SMALL_SERIAL_COL\" SMALLSERIAL," +
+                     "\"SERIAL_COL\" SERIAL" +
                      ")");
-      stmt.execute("CREATE TABLE \"MY_DEST_TABLE\" AS " +
-                     "SELECT * FROM my_table");
+
+
+      stmt.execute("CREATE TABLE \"MY_DEST_TABLE\"(" + columns + ")");
       stmt.execute("CREATE TABLE your_table AS " +
                      "SELECT * FROM my_table");
     }
@@ -152,11 +197,15 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
       PreparedStatement pStmt1 =
         conn.prepareStatement("INSERT INTO my_table " +
                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?)");
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       PreparedStatement pStmt2 =
         conn.prepareStatement("INSERT INTO your_table " +
                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?)")) {
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
 
       stmt.execute("insert into \"dbActionTest\" values (1, '1970-01-01')");
       stmt.execute("insert into \"postActionTest\" values (1, '1970-01-01')");
@@ -165,7 +214,7 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
     }
   }
 
-  private static void populateData(PreparedStatement ...stmts) throws SQLException {
+  private static void populateData(PreparedStatement... stmts) throws SQLException {
     // insert the same data into both tables: my_table and your_table
     for (PreparedStatement pStmt : stmts) {
       for (int i = 1; i <= 5; i++) {
@@ -186,6 +235,29 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
         pStmt.setString(14, name);
         pStmt.setString(15, "char" + i);
         pStmt.setBytes(16, name.getBytes(Charsets.UTF_8));
+        pStmt.setObject(17, "1010", Types.OTHER);
+        pStmt.setObject(18, "101", Types.OTHER);
+        pStmt.setObject(19, new PGTime(123456, Calendar.getInstance(TimeZone.getTimeZone(ZoneId.of("GMT+3")))));
+        pStmt.setObject(20, OFFSET_TIME);
+        pStmt.setObject(21, createPGObject("xml", "<root></root>"));
+        pStmt.setObject(22, createPGObject("uuid", "e95861c9-1111-40ce-b42b-d6b9d1765c2c"));
+        pStmt.setObject(23, createPGObject("cidr", "192.168.0.0/23"));
+        pStmt.setObject(24, createPGObject("circle", "<(1.0,2.0),10.0>"));
+        pStmt.setObject(25, createPGObject("inet", "192.168.1.1"));
+        pStmt.setObject(26, createPGObject("interval", "1 day"));
+        pStmt.setObject(27, createPGObject("json", "{\"hello\": \"world\"}"));
+        pStmt.setObject(28, createPGObject("jsonb", "{\"hello\": \"world\"}"));
+        pStmt.setObject(29, createPGObject("line", "((1.0, 1.0),(2.0, 2.0))"));
+        pStmt.setObject(30, createPGObject("lseg", "((1.0, 1.0),(2.0, 2.0))"));
+        pStmt.setObject(31, createPGObject("macaddr", "08:00:2b:01:02:03"));
+        pStmt.setObject(32, createPGObject("macaddr8", "08:00:2b:01:02:03:04:05"));
+        pStmt.setObject(33, createPGObject("money", "1234.12"));
+        pStmt.setObject(34, createPGObject("path", "[(1.0, 1.0),(2.0, 2.0), (3.0, 3.0)]"));
+        pStmt.setObject(35, createPGObject("point", "(1.0, 1.0)"));
+        pStmt.setObject(36, createPGObject("polygon", "((1.0, 1.0),(2.0, 2.0), (0.0, 5.0))"));
+        pStmt.setObject(37, createPGObject("tsquery", "fat & (rat | cat)"));
+        pStmt.setObject(38, createPGObject("tsvector", "a fat cat"));
+        pStmt.setObject(39, createPGObject("box", "((1.0, 1.0),(2.0, 2.0))"));
         pStmt.executeUpdate();
       }
     }
@@ -199,6 +271,13 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private static PGobject createPGObject(String type, String value) throws SQLException {
+    PGobject result = new PGobject();
+    result.setType(type);
+    result.setValue(value);
+    return result;
   }
 
   @AfterClass

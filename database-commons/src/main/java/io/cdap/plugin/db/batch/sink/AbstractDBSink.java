@@ -65,12 +65,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -235,7 +233,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   }
 
   private void setResultSetMetadata() throws Exception {
-    Map<String, Integer> columnToType = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    List<ColumnType> columnTypes = new ArrayList<>(columns.size());
     String connectionString = dbSinkConfig.getConnectionString();
 
     driverCleanup = DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, dbSinkConfig.jdbcPluginName);
@@ -255,18 +253,17 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
         // JDBC driver column indices start with 1
         for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
           String name = resultSetMetadata.getColumnName(i + 1);
+          String columnTypeName = resultSetMetadata.getColumnTypeName(i + 1);
           int type = resultSetMetadata.getColumnType(i + 1);
-          columnToType.put(name, type);
+          String schemaColumnName = columns.get(i);
+          Preconditions.checkArgument(schemaColumnName.toLowerCase().equals(name.toLowerCase()),
+                                      "Missing column '%s' in SQL table", schemaColumnName);
+          columnTypes.add(new ColumnType(schemaColumnName, columnTypeName, type));
         }
       }
     }
 
-    this.columnTypes = columns.stream()
-      .map(name -> {
-        Preconditions.checkArgument(columnToType.containsKey(name), "Missing column '%s' in SQL table", name);
-        return new ColumnType(name, columnToType.get(name));
-      })
-      .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+    this.columnTypes = Collections.unmodifiableList(columnTypes);
   }
 
   private void validateSchema(Class<? extends Driver> jdbcDriverClass, String tableName, Schema inputSchema) {

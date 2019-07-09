@@ -20,15 +20,23 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.plugin.db.DBRecord;
+import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
@@ -39,6 +47,8 @@ import javax.annotation.Nullable;
 @Name(PostgresConstants.PLUGIN_NAME)
 @Description("Writes records to a PostgreSQL table. Each record will be written in a row in the table")
 public class PostgresSink extends AbstractDBSink {
+  private static final Logger LOG = LoggerFactory.getLogger(PostgresSink.class);
+
   private static final Character ESCAPE_CHAR = '"';
 
   private final PostgresSinkConfig postgresSinkConfig;
@@ -46,6 +56,16 @@ public class PostgresSink extends AbstractDBSink {
   public PostgresSink(PostgresSinkConfig postgresSinkConfig) {
     super(postgresSinkConfig);
     this.postgresSinkConfig = postgresSinkConfig;
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new PostgresSchemaReader();
+  }
+
+  @Override
+  protected DBRecord getDBRecord(StructuredRecord output) {
+    return new PostgresDBRecord(output, columnTypes);
   }
 
   @Override
@@ -59,6 +79,27 @@ public class PostgresSink extends AbstractDBSink {
 
     super.columns = Collections.unmodifiableList(columnsList);
     super.dbColumns = columnsJoiner.toString();
+  }
+
+  @Override
+  protected boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
+    Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
+      : field.getSchema().getType();
+
+    String colTypeName = metadata.getColumnTypeName(index);
+    int columnType = metadata.getColumnType(index);
+    if (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(colTypeName) ||
+      PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(columnType)) {
+      if (Objects.equals(fieldType, Schema.Type.STRING)) {
+        return true;
+      } else {
+        LOG.error("Field '{}' was given as type '{}' but must be of type 'string' for the PostgreSQL column of " +
+                    "{} type.", field.getName(), fieldType, colTypeName);
+        return false;
+      }
+    }
+
+    return super.isFieldCompatible(field, metadata, index);
   }
 
   /**

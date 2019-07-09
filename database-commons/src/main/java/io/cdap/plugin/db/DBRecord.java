@@ -157,8 +157,8 @@ public class DBRecord implements Writable, DBWritable, Configurable {
 
   protected void setFieldAccordingToSchema(ResultSet resultSet, StructuredRecord.Builder recordBuilder,
                                            Schema.Field field, int columnIndex) throws SQLException {
-
-    Schema.Type fieldType = field.getSchema().getType();
+    Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
+      : field.getSchema().getType();
 
     switch (fieldType) {
       case NULL:
