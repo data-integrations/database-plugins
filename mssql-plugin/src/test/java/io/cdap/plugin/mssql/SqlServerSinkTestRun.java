@@ -30,6 +30,7 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -53,28 +54,41 @@ import java.util.Set;
  */
 public class SqlServerSinkTestRun extends SqlServerPluginTestBase {
 
+  @Before
+  public void setup() throws Exception {
+    try (Connection connection = createConnection();
+         Statement stmt = connection.createStatement()) {
+      stmt.execute("TRUNCATE TABLE MY_DEST_TABLE");
+    }
+  }
+
+  @Test
+  public void testDBSinkWithInvalidFieldType() throws Exception {
+    testDBInvalidFieldType("ID", Schema.Type.STRING, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+  }
+
+  @Test
+  public void testDBSinkWithInvalidFieldLogicalType() throws Exception {
+    testDBInvalidFieldLogicalType("TIMESTAMP_COL", Schema.Type.LONG, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+  }
+
+  @Test
+  public void testDBSinkWithDBSchemaAndInvalidData() throws Exception {
+    String stringColumnName = "NAME";
+    startPipelineAndWriteInvalidData(stringColumnName, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+    try (Connection conn = createConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet resultSet = stmt.executeQuery("SELECT * FROM MY_DEST_TABLE")) {
+      testInvalidDataWrite(resultSet, stringColumnName);
+    }
+  }
+
   @Test
   public void testDBSink() throws Exception {
     String inputDatasetName = "input-dbsinktest";
 
     ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
-    ETLPlugin sinkConfig = new ETLPlugin(
-      SqlServerConstants.PLUGIN_NAME,
-      BatchSink.PLUGIN_TYPE,
-      ImmutableMap.<String, String>builder()
-        .putAll(BASE_PROPS)
-        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
-        .put(Constants.Reference.REFERENCE_NAME, "DBTest")
-        .put(SqlServerConstants.CONNECT_TIMEOUT, "20")
-        .put(SqlServerConstants.COLUMN_ENCRYPTION, SqlServerConstants.COLUMN_ENCRYPTION_ENABLED)
-        .put(SqlServerConstants.ENCRYPT, "true")
-        .put(SqlServerConstants.TRUST_SERVER_CERTIFICATE, "true")
-        .put(SqlServerConstants.WORKSTATION_ID, "workstation-1")
-        .put(SqlServerConstants.FAILOVER_PARTNER, "localhost")
-        .put(SqlServerConstants.PACKET_SIZE, "-1")
-        .put(SqlServerConstants.CURRENT_LANGUAGE, "us_english")
-        .build(),
-      null);
+    ETLPlugin sinkConfig = getSinkConfig();
 
     deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSink");
     createInputData(inputDatasetName);
@@ -146,5 +160,25 @@ public class SqlServerSinkTestRun extends SqlServerPluginTestBase {
                          .build());
     }
     MockSource.writeInput(inputManager, inputRecords);
+  }
+
+  private ETLPlugin getSinkConfig() {
+    return new ETLPlugin(
+      SqlServerConstants.PLUGIN_NAME,
+      BatchSink.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .putAll(BASE_PROPS)
+        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
+        .put(Constants.Reference.REFERENCE_NAME, "DBTest")
+        .put(SqlServerConstants.CONNECT_TIMEOUT, "20")
+        .put(SqlServerConstants.COLUMN_ENCRYPTION, SqlServerConstants.COLUMN_ENCRYPTION_ENABLED)
+        .put(SqlServerConstants.ENCRYPT, "true")
+        .put(SqlServerConstants.TRUST_SERVER_CERTIFICATE, "true")
+        .put(SqlServerConstants.WORKSTATION_ID, "workstation-1")
+        .put(SqlServerConstants.FAILOVER_PARTNER, "localhost")
+        .put(SqlServerConstants.PACKET_SIZE, "-1")
+        .put(SqlServerConstants.CURRENT_LANGUAGE, "us_english")
+        .build(),
+      null);
   }
 }

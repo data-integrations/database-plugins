@@ -85,8 +85,30 @@ public class MysqlSinkTestRun extends MysqlPluginTestBase {
 
   @Before
   public void setup() throws Exception {
-    try (Statement stmt = createConnection().createStatement()) {
+    try (Connection connection = createConnection();
+         Statement stmt = connection.createStatement()) {
       stmt.execute("TRUNCATE TABLE MY_DEST_TABLE");
+    }
+  }
+
+  @Test
+  public void testDBSinkWithInvalidFieldType() throws Exception {
+    testDBInvalidFieldType("ID", Schema.Type.STRING, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+  }
+
+  @Test
+  public void testDBSinkWithInvalidFieldLogicalType() throws Exception {
+    testDBInvalidFieldLogicalType("TIMESTAMP_COL", Schema.Type.LONG, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+  }
+
+  @Test
+  public void testDBSinkWithDBSchemaAndInvalidData() throws Exception {
+    String stringColumnName = "NAME";
+    startPipelineAndWriteInvalidData(stringColumnName, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+    try (Connection conn = createConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet resultSet = stmt.executeQuery("SELECT * FROM MY_DEST_TABLE")) {
+      testInvalidDataWrite(resultSet, stringColumnName);
     }
   }
 
@@ -105,18 +127,7 @@ public class MysqlSinkTestRun extends MysqlPluginTestBase {
       ? MockSource.getPlugin(inputDatasetName, schema)
       : MockSource.getPlugin(inputDatasetName);
 
-    ETLPlugin sinkConfig = new ETLPlugin(
-      MysqlConstants.PLUGIN_NAME,
-      BatchSink.PLUGIN_TYPE,
-      ImmutableMap.<String, String>builder()
-        .putAll(BASE_PROPS)
-        .put(MysqlConstants.AUTO_RECONNECT, "true")
-        .put(MysqlConstants.USE_COMPRESSION, "true")
-        .put(MysqlConstants.SQL_MODE, "ANSI_QUOTES,NO_ENGINE_SUBSTITUTION")
-        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
-        .put(Constants.Reference.REFERENCE_NAME, "DBTest")
-        .build(),
-      null);
+    ETLPlugin sinkConfig = getSinkConfig();
 
     ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, appName);
 
@@ -250,5 +261,20 @@ public class MysqlSinkTestRun extends MysqlPluginTestBase {
     }
 
     return inputRecords;
+  }
+
+  private ETLPlugin getSinkConfig() {
+    return new ETLPlugin(
+      MysqlConstants.PLUGIN_NAME,
+      BatchSink.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .putAll(BASE_PROPS)
+        .put(MysqlConstants.AUTO_RECONNECT, "true")
+        .put(MysqlConstants.USE_COMPRESSION, "true")
+        .put(MysqlConstants.SQL_MODE, "ANSI_QUOTES,NO_ENGINE_SUBSTITUTION")
+        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
+        .put(Constants.Reference.REFERENCE_NAME, "DBTest")
+        .build(),
+      null);
   }
 }

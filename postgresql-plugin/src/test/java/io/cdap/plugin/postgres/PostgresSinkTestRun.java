@@ -28,6 +28,7 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -51,21 +52,42 @@ import java.util.Set;
  */
 public class PostgresSinkTestRun extends PostgresPluginTestBase {
 
+  @Before
+  public void setup() throws Exception {
+    try (Connection connection = createConnection();
+         Statement stmt = connection.createStatement()) {
+      stmt.execute("TRUNCATE TABLE \"MY_DEST_TABLE\"");
+    }
+  }
+
+  @Test
+  public void testDBSinkWithInvalidFieldType() throws Exception {
+    testDBInvalidFieldType("ID", Schema.Type.STRING, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+  }
+
+  @Test
+  public void testDBSinkWithInvalidFieldLogicalType() throws Exception {
+    testDBInvalidFieldLogicalType("TIMESTAMP_COL", Schema.Type.LONG, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+  }
+
+  @Test
+  public void testDBSinkWithDBSchemaAndInvalidData() throws Exception {
+    String stringColumnName = "NAME";
+    startPipelineAndWriteInvalidData(stringColumnName, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+    try (Connection conn = createConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet resultSet = stmt.executeQuery("SELECT * FROM \"MY_DEST_TABLE\"")) {
+      testInvalidDataWrite(resultSet, stringColumnName);
+    }
+  }
+
   @Test
   public void testDBSink() throws Exception {
 
     String inputDatasetName = "input-dbsinktest";
 
     ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
-    ETLPlugin sinkConfig = new ETLPlugin(
-      PostgresConstants.PLUGIN_NAME,
-      BatchSink.PLUGIN_TYPE,
-      ImmutableMap.<String, String>builder()
-        .putAll(BASE_PROPS)
-        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
-        .put(Constants.Reference.REFERENCE_NAME, "DBTest")
-        .build(),
-      null);
+    ETLPlugin sinkConfig = getSinkConfig();
 
     deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, "testDBSink");
     createInputData(inputDatasetName);
@@ -138,5 +160,17 @@ public class PostgresSinkTestRun extends PostgresPluginTestBase {
                          .build());
     }
     MockSource.writeInput(inputManager, inputRecords);
+  }
+
+  private ETLPlugin getSinkConfig() {
+    return new ETLPlugin(
+      PostgresConstants.PLUGIN_NAME,
+      BatchSink.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .putAll(BASE_PROPS)
+        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
+        .put(Constants.Reference.REFERENCE_NAME, "DBTest")
+        .build(),
+      null);
   }
 }

@@ -84,8 +84,30 @@ public class NetezzaSinkTestRun extends NetezzaPluginTestBase {
 
   @Before
   public void setup() throws Exception {
-    try (Statement stmt = createConnection().createStatement()) {
-      stmt.execute("DELETE FROM MY_DEST_TABLE");
+    try (Connection connection = createConnection();
+         Statement stmt = connection.createStatement()) {
+      stmt.execute("TRUNCATE TABLE MY_DEST_TABLE");
+    }
+  }
+
+  @Test
+  public void testDBSinkWithInvalidFieldType() throws Exception {
+    testDBInvalidFieldType("INTEGER_COL", Schema.Type.STRING, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+  }
+
+  @Test
+  public void testDBSinkWithInvalidFieldLogicalType() throws Exception {
+    testDBInvalidFieldLogicalType("TIMESTAMP_COL", Schema.Type.LONG, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+  }
+
+  @Test
+  public void testDBSinkWithDBSchemaAndInvalidData() throws Exception {
+    String stringColumnName = "NAME";
+    startPipelineAndWriteInvalidData(stringColumnName, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+    try (Connection conn = createConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet resultSet = stmt.executeQuery("SELECT * FROM MY_DEST_TABLE")) {
+      testInvalidDataWrite(resultSet, stringColumnName);
     }
   }
 
@@ -104,15 +126,7 @@ public class NetezzaSinkTestRun extends NetezzaPluginTestBase {
     ETLPlugin sourceConfig = (setInputSchema)
       ? MockSource.getPlugin(inputDatasetName, SCHEMA)
       : MockSource.getPlugin(inputDatasetName);
-    ETLPlugin sinkConfig = new ETLPlugin(
-      NetezzaConstants.PLUGIN_NAME,
-      BatchSink.PLUGIN_TYPE,
-      ImmutableMap.<String, String>builder()
-        .putAll(BASE_PROPS)
-        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
-        .put(Constants.Reference.REFERENCE_NAME, "DBTest")
-        .build(),
-      null);
+    ETLPlugin sinkConfig = getSinkConfig();
 
     ApplicationManager appManager = deployETL(sourceConfig, sinkConfig, DATAPIPELINE_ARTIFACT, appName);
     createInputData(inputDatasetName);
@@ -193,5 +207,17 @@ public class NetezzaSinkTestRun extends NetezzaPluginTestBase {
                          .build());
     }
     MockSource.writeInput(inputManager, inputRecords);
+  }
+
+  private ETLPlugin getSinkConfig() {
+    return new ETLPlugin(
+      NetezzaConstants.PLUGIN_NAME,
+      BatchSink.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .putAll(BASE_PROPS)
+        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
+        .put(Constants.Reference.REFERENCE_NAME, "DBTest")
+        .build(),
+      null);
   }
 }
