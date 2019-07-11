@@ -36,16 +36,22 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -56,10 +62,20 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
   protected static final String DRIVER_CLASS = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
   protected static final String JDBC_DRIVER_NAME = "sqlserver42";
 
+  protected static final List<ByteBuffer> TIMESTAMP_VALUES = new ArrayList<>();
+  protected static final List<ByteBuffer> GEOMETRY_VALUES = new ArrayList<>();
+  protected static final List<ByteBuffer> GEOGRAPHY_VALUES = new ArrayList<>();
+
   protected static String connectionUrl;
   protected static final int PRECISION = 10;
   protected static final int SCALE = 6;
+  protected static final int MONEY_PRECISION = 19;
+  protected static final int MONEY_SCALE = 4;
+  protected static final int SMALL_MONEY_PRECISION = 10;
+  protected static final int SMALL_MONEY_SCALE = 4;
+  protected static final LocalTime TIME_MICROS = LocalTime.of(16, 17, 18, 123456000);
   protected static boolean tearDown = true;
+  protected static final ZoneId UTC = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
   private static int startCount;
 
   @ClassRule
@@ -116,6 +132,10 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
 
   protected static void createTestTables(Connection conn) throws SQLException {
     try (Statement stmt = conn.createStatement()) {
+      // create UDT which is actually alias for varchar(11)
+      stmt.execute("CREATE TYPE SSN FROM varchar(11) NOT NULL");
+      // create UDT which is actually alias for varchar(11)
+      stmt.execute("CREATE TYPE BIG_UDT FROM BIGINT NOT NULL");
       // create a table that the action will truncate at the end of the run
       stmt.execute("CREATE TABLE dbActionTest (x int, day varchar(10))");
       // create a table that the action will truncate at the end of the run
@@ -135,8 +155,11 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
                      "DECIMAL_COL DECIMAL(" + PRECISION + "," + SCALE + "), " +
                      "BIT_COL BIT, " +
                      "DATE_COL DATE, " +
-                     "DATETIME_COL DATETIME2, " +
+                     "DATETIME_COL DATETIME, " +
+                     "DATETIME2_COL DATETIME2, " +
+                     "DATETIMEOFFSET_COL DATETIMEOFFSET, " +
                      "SMALLDATETIME_COL SMALLDATETIME, " +
+                     "TIMESTAMP_COL TIMESTAMP, " +
                      "TIME_COL TIME, " +
                      "IMAGE_COL IMAGE, " +
                      "MONEY_COL MONEY, " +
@@ -144,10 +167,22 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
                      "NCHAR_COL NCHAR(100), " +
                      "NTEXT_COL NTEXT, " +
                      "NVARCHAR_COL NVARCHAR(100), " +
-                     "TEXT_COL TEXT," +
-                     "CHAR_COL CHAR(100)," +
-                     "BINARY_COL BINARY(100)," +
-                     "VARBINARY_COL VARBINARY(20)" +
+                     "NVARCHAR_MAX_COL NVARCHAR(max), " +
+                     "VARCHAR_MAX_COL VARCHAR(max), " +
+                     "TEXT_COL TEXT, " +
+                     "CHAR_COL CHAR(100), " +
+                     "BINARY_COL BINARY(5), " +
+                     "VARBINARY_COL VARBINARY(20), " +
+                     "VARBINARY_MAX_COL VARBINARY(MAX), " +
+                     "UNIQUEIDENTIFIER_COL UNIQUEIDENTIFIER, " +
+                     "XML_COL XML, " +
+                     "SQL_VARIANT_COL SQL_VARIANT, " +
+                     "GEOMETRY_COL GEOMETRY, " +
+                     "GEOGRAPHY_COL GEOGRAPHY, " +
+                     "GEOMETRY_WKT_COL GEOMETRY, " +
+                     "GEOGRAPHY_WKT_COL GEOGRAPHY," +
+                     "UDT_COL SSN," +
+                     "BIG_UDT_COL BIG_UDT" +
                      ")");
       stmt.execute("SELECT * INTO MY_DEST_TABLE FROM my_table");
       stmt.execute("SELECT * INTO your_table FROM my_table");
@@ -155,24 +190,29 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static void prepareTestData(Connection conn) throws SQLException {
-
+    // specify column names to exclude TIMESTAMP_COL which is automatically generated and can not be set
+    String insertIntoFormat = "INSERT INTO %s(ID, NAME, NOT_IMPORTED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, " +
+      "NUMERIC_COL, DECIMAL_COL, BIT_COL, DATE_COL, DATETIME_COL, DATETIME2_COL, DATETIMEOFFSET_COL, " +
+      "SMALLDATETIME_COL, TIME_COL, IMAGE_COL, MONEY_COL, SMALLMONEY_COL, NCHAR_COL, NTEXT_COL, NVARCHAR_COL, " +
+      "NVARCHAR_MAX_COL, VARCHAR_MAX_COL, TEXT_COL, CHAR_COL, BINARY_COL, VARBINARY_COL, VARBINARY_MAX_COL, " +
+      "UNIQUEIDENTIFIER_COL, XML_COL, SQL_VARIANT_COL, GEOMETRY_COL, GEOGRAPHY_COL, GEOMETRY_WKT_COL, " +
+      "GEOGRAPHY_WKT_COL, UDT_COL, BIG_UDT_COL) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " +
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     try (
       Statement stmt = conn.createStatement();
-      PreparedStatement pStmt1 =
-        conn.prepareStatement("INSERT INTO my_table " +
-                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?)");
-      PreparedStatement pStmt2 =
-        conn.prepareStatement("INSERT INTO your_table " +
-                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?)")) {
-
+      PreparedStatement pStmt1 = conn.prepareStatement(String.format(insertIntoFormat, "my_table"));
+      PreparedStatement pStmt2 = conn.prepareStatement(String.format(insertIntoFormat, "your_table"))) {
       stmt.execute("insert into dbActionTest values (1, '1970-01-01')");
       stmt.execute("insert into postActionTest values (1, '1970-01-01')");
-
       populateData(pStmt1, pStmt2);
+    }
+    try (Statement stmt = conn.createStatement(); ResultSet resultSet =
+      stmt.executeQuery("SELECT ID, TIMESTAMP_COL, GEOMETRY_COL, GEOGRAPHY_COL FROM my_table ORDER BY ID")) {
+      while (resultSet.next()) {
+        TIMESTAMP_VALUES.add(ByteBuffer.wrap(resultSet.getBytes("TIMESTAMP_COL")));
+        GEOMETRY_VALUES.add(ByteBuffer.wrap(resultSet.getBytes("GEOMETRY_COL")));
+        GEOGRAPHY_VALUES.add(ByteBuffer.wrap(resultSet.getBytes("GEOGRAPHY_COL")));
+      }
     }
   }
 
@@ -202,17 +242,31 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
         pStmt.setDate(12, new Date(CURRENT_TS));
         pStmt.setTimestamp(13, new Timestamp(CURRENT_TS));
         pStmt.setTimestamp(14, new Timestamp(CURRENT_TS));
-        pStmt.setTime(15, new Time(CURRENT_TS));
-        pStmt.setBytes(16, name.getBytes());
-        pStmt.setBigDecimal(17, new BigDecimal(123.45).add(new BigDecimal(i)));
-        pStmt.setFloat(18, 123.45f + (short) i);
-        pStmt.setString(19, name);
-        pStmt.setString(20, name);
+        pStmt.setString(15, "2019-06-24 16:19:15.8010000 +03:00");
+        pStmt.setTimestamp(16, new Timestamp(CURRENT_TS));
+        pStmt.setString(17, TIME_MICROS.toString());
+        pStmt.setBytes(18, name.getBytes());
+        pStmt.setBigDecimal(19, new BigDecimal(123.45f + i));
+        pStmt.setFloat(20, 123.45f + (short) i);
         pStmt.setString(21, name);
         pStmt.setString(22, name);
-        pStmt.setString(23, "char" + i);
-        pStmt.setBytes(24, name.getBytes(Charsets.UTF_8));
-        pStmt.setBytes(25, name.getBytes(Charsets.UTF_8));
+        pStmt.setString(23, name);
+        pStmt.setString(24, name);
+        pStmt.setString(25, name);
+        pStmt.setString(26, name);
+        pStmt.setString(27, "char" + i);
+        pStmt.setBytes(28, name.getBytes(Charsets.UTF_8));
+        pStmt.setBytes(29, name.getBytes(Charsets.UTF_8));
+        pStmt.setBytes(30, name.getBytes(Charsets.UTF_8));
+        pStmt.setString(31, "0E984725-C51C-4BF4-9960-E1C80E27ABA" + i);
+        pStmt.setString(32, "<root><child/></root>");
+        pStmt.setString(33, name);
+        pStmt.setString(34, "POINT(3 40 5 6)");
+        pStmt.setString(35, "POINT(3 40 5 6)");
+        pStmt.setString(36, "POINT(3 40 5 6)");
+        pStmt.setString(37, "POINT(3 40 5 6)");
+        pStmt.setString(38, "12345678910");
+        pStmt.setLong(39, 15417543010L);
         pStmt.addBatch();
         if (i % 1000 == 0) {
           pStmt.executeBatch();
@@ -245,6 +299,8 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
       stmt.execute("DROP TABLE postActionTest");
       stmt.execute("DROP TABLE dbActionTest");
       stmt.execute("DROP TABLE MY_DEST_TABLE");
+      stmt.execute("DROP TYPE SSN");
+      stmt.execute("DROP TYPE BIG_UDT");
     }
   }
 }

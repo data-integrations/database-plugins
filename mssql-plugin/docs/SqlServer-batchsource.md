@@ -90,6 +90,54 @@ back from the query. However, it must match the schema that comes back from the 
 except it can mark fields as nullable and can contain a subset of the fields.
 
 
+Data Types Mapping
+----------
+
+    | MS SQL Data Type | CDAP Schema Data Type  | Comment                                                        |
+    | ---------------- | ---------------------- | -------------------------------------------------------------- |
+    | BIGINT           | long                   |                                                                |
+    | BINARY           | bytes                  |                                                                |
+    | BIT              | boolean                |                                                                |
+    | CHAR             | string                 |                                                                |
+    | DATE             | date                   |                                                                |
+    | DATETIME         | timestamp              |                                                                |
+    | DATETIME2        | timestamp              |                                                                |
+    | DATETIMEOFFSET   | string                 |                                                                |
+    | DECIMAL          | decimal                |                                                                |
+    | FLOAT            | double                 |                                                                |
+    | IMAGE            | bytes                  |                                                                |
+    | INT              | int                    |                                                                |
+    | MONEY            | decimal                |                                                                |
+    | NCHAR            | string                 |                                                                |
+    | NTEXT            | string                 |                                                                |
+    | NUMERIC          | decimal                |                                                                |
+    | NVARCHAR         | string                 |                                                                |
+    | NVARCHAR(MAX)    | string                 |                                                                |
+    | REAL             | float                  |                                                                |
+    | SMALLDATETIME    | timestamp              |                                                                |
+    | SMALLINT         | int                    |                                                                |
+    | SMALLMONEY       | decimal                |                                                                |
+    | TEXT             | string                 |                                                                |
+    | TIME             | time                   | TIME data type has the accuracy of 100 nanoseconds which is    |
+    |                  |                        | not currently supported. Values of this type will be rounded   |
+    |                  |                        | to microsecond.                                                |
+    | TINYINT          | int                    |                                                                |
+    | UDT              | bytes                  | UDT types are mapped according to the type they are an alias   |
+    |                  |                        | of. For example, is there is an 'SSN' type that was created as |
+    |                  |                        | 'CREATE TYPE SSN FROM varchar(11);', that type would get       |
+    |                  |                        | mapped to a CDAP string. Common Language Runtime UDTs are      |
+    |                  |                        | mapped to CDAP bytes.                                          |
+    | UNIQUEIDENTIFIER | string                 |                                                                |
+    | VARBINARY        | bytes                  |                                                                |
+    | VARBINARY(MAX)   | bytes                  |                                                                |
+    | VARCHAR          | string                 |                                                                |
+    | VARCHAR(MAX)     | string                 |                                                                |
+    | XML              | string                 |                                                                |
+    | SQLVARIANT       | string                 |                                                                |
+    | GEOMETRY         | bytes                  |                                                                |
+    | GEOGRAPHY        | bytes                  |                                                                |
+
+
 Example
 ------
 Suppose you want to read data from SQL Server database named "prod" that is running on "localhost" port 1433,
@@ -112,9 +160,9 @@ Password: "Test11"
 For example, if the 'id' column is a primary key of type int and the other columns are
 non-nullable varchars, output records will have this schema:
 
-| field name     | type                |
-| -------------- | ------------------- |
-| id             | int                 |
-| name           | string              |
-| email          | string              |
-| phone          | string              |
+    | field name     | type                |
+    | -------------- | ------------------- |
+    | id             | int                 |
+    | name           | string              |
+    | email          | string              |
+    | phone          | string              |

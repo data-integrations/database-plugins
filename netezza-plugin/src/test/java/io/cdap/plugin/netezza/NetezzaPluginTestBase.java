@@ -186,8 +186,10 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
         pStmt.setFloat(6, 123.45f + i);
         pStmt.setDouble(7, 123.45 + i);
         pStmt.setDouble(8, 123.45 + i);
-        pStmt.setBigDecimal(9, new BigDecimal(123.45, MathContext.DECIMAL64).add(new BigDecimal(i, MathContext.DECIMAL64)));
-        pStmt.setBigDecimal(10, new BigDecimal(123.45, MathContext.DECIMAL64).add(new BigDecimal(i, MathContext.DECIMAL64)));
+        pStmt.setBigDecimal(9, new BigDecimal(123.45, MathContext.DECIMAL64)
+          .add(new BigDecimal(i, MathContext.DECIMAL64)));
+        pStmt.setBigDecimal(10, new BigDecimal(123.45, MathContext.DECIMAL64)
+          .add(new BigDecimal(i, MathContext.DECIMAL64)));
         pStmt.setString(11, name);
         pStmt.setString(12, name);
         pStmt.setString(13, name);

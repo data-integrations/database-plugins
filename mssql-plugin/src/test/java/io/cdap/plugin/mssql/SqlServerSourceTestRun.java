@@ -40,12 +40,8 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.nio.ByteBuffer;
 import java.sql.Date;
-import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -88,9 +84,11 @@ public class SqlServerSourceTestRun extends SqlServerPluginTestBase {
   @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
     String importQuery = "SELECT ID, NAME, TINY, SMALL, BIG, FLOAT_COL, " +
-      "REAL_COL, NUMERIC_COL, CHAR_COL, DECIMAL_COL, BIT_COL, BINARY_COL, DATE_COL, TIME_COL, DATETIME_COL," +
-      "VARBINARY_COL, TEXT_COL FROM my_table " +
-      "WHERE ID < 3 AND $CONDITIONS";
+      "REAL_COL, NUMERIC_COL, CHAR_COL, DECIMAL_COL, BIT_COL, BINARY_COL, DATE_COL, TIME_COL, DATETIME_COL, " +
+      "DATETIME2_COL, DATETIMEOFFSET_COL, VARBINARY_COL, VARBINARY_MAX_COL, IMAGE_COL, TEXT_COL, MONEY_COL, " +
+      "SMALLMONEY_COL, NCHAR_COL, NTEXT_COL, VARCHAR_MAX_COL, NVARCHAR_COL, NVARCHAR_MAX_COL, SMALLDATETIME_COL, " +
+      "TIMESTAMP_COL, UNIQUEIDENTIFIER_COL, XML_COL, SQL_VARIANT_COL, GEOMETRY_COL, GEOGRAPHY_COL, UDT_COL, " +
+      "BIG_UDT_COL FROM my_table WHERE ID < 3 AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(ID),MAX(ID) from my_table";
     String splitBy = "ID";
     ETLPlugin sourceConfig = new ETLPlugin(
@@ -134,8 +132,31 @@ public class SqlServerSourceTestRun extends SqlServerPluginTestBase {
     Assert.assertEquals("user2", row2.get("NAME"));
     Assert.assertEquals("user1", row1.get("TEXT_COL"));
     Assert.assertEquals("user2", row2.get("TEXT_COL"));
+    Assert.assertEquals("12345678910", row1.get("UDT_COL"));
+    Assert.assertEquals("12345678910", row2.get("UDT_COL"));
+    Assert.assertEquals(15417543010L, (long) row1.get("BIG_UDT_COL"));
+    Assert.assertEquals(15417543010L, (long) row2.get("BIG_UDT_COL"));
     Assert.assertEquals("char1", ((String) row1.get("CHAR_COL")).trim());
     Assert.assertEquals("char2", ((String) row2.get("CHAR_COL")).trim());
+    // trim since 'NCHAR' is fixed-length datatype and result string will contain multiple whitespace chars at the end
+    Assert.assertEquals("user1", row1.<String>get("NCHAR_COL").trim());
+    Assert.assertEquals("user2", row2.<String>get("NCHAR_COL").trim());
+    // trim since 'NTEXT' is fixed-length datatype and result string will contain multiple whitespace chars at the end
+    Assert.assertEquals("user1", row1.<String>get("NTEXT_COL").trim());
+    Assert.assertEquals("user2", row2.<String>get("NTEXT_COL").trim());
+
+    Assert.assertEquals("user1", row1.get("NVARCHAR_COL"));
+    Assert.assertEquals("user2", row2.get("NVARCHAR_COL"));
+    Assert.assertEquals("user1", row1.get("VARCHAR_MAX_COL"));
+    Assert.assertEquals("user2", row2.get("VARCHAR_MAX_COL"));
+    Assert.assertEquals("user1", row1.get("NVARCHAR_MAX_COL"));
+    Assert.assertEquals("user2", row2.get("NVARCHAR_MAX_COL"));
+    Assert.assertEquals("0E984725-C51C-4BF4-9960-E1C80E27ABA" + 1, row1.get("UNIQUEIDENTIFIER_COL"));
+    Assert.assertEquals("0E984725-C51C-4BF4-9960-E1C80E27ABA" + 2, row2.get("UNIQUEIDENTIFIER_COL"));
+    Assert.assertEquals("<root><child/></root>", row1.get("XML_COL"));
+    Assert.assertEquals("<root><child/></root>", row2.get("XML_COL"));
+    Assert.assertEquals("user1", row1.get("SQL_VARIANT_COL"));
+    Assert.assertEquals("user2", row2.get("SQL_VARIANT_COL"));
 
     Assert.assertEquals(1, (int) row1.get("TINY"));
     Assert.assertEquals(2, (int) row2.get("TINY"));
@@ -161,18 +182,35 @@ public class SqlServerSourceTestRun extends SqlServerPluginTestBase {
     java.util.Date date = new java.util.Date(CURRENT_TS);
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     LocalDate expectedDate = Date.valueOf(sdf.format(date)).toLocalDate();
-    sdf = new SimpleDateFormat("H:mm:ss");
-    LocalTime expectedTime = Time.valueOf(sdf.format(date)).toLocalTime();
-    ZonedDateTime expectedTs = date.toInstant().atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC));
+    ZonedDateTime expectedTs = date.toInstant().atZone(UTC);
     Assert.assertEquals(expectedDate, row1.getDate("DATE_COL"));
-    Assert.assertEquals(expectedTime, row1.getTime("TIME_COL"));
-    Assert.assertEquals(expectedTs, row1.getTimestamp("DATETIME_COL", ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
+    Assert.assertEquals(TIME_MICROS, row1.getTime("TIME_COL"));
+    // datetime values are rounded to increments of .000, .003, or .007 seconds
+    Assert.assertEquals(expectedTs.toEpochSecond(), row1.getTimestamp("DATETIME_COL", UTC).toEpochSecond());
+    Assert.assertEquals(expectedTs, row1.getTimestamp("DATETIME2_COL", UTC));
+    Assert.assertEquals("2019-06-24 16:19:15.8010000 +03:00", row1.get("DATETIMEOFFSET_COL"));
+    // smalldatetime does not store seconds, minutes can be rounded
+    long actualSeconds = row1.getTimestamp("SMALLDATETIME_COL", UTC).toEpochSecond();
+    Assert.assertEquals(expectedTs.toEpochSecond() / (60 * 60), actualSeconds / (60 * 60));
 
     // verify binary columns
     Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("BINARY_COL")).array(), 0, 5));
     Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("BINARY_COL")).array(), 0, 5));
     Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("VARBINARY_COL")).array(), 0, 5));
     Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("VARBINARY_COL")).array(), 0, 5));
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("VARBINARY_MAX_COL")).array(), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("VARBINARY_MAX_COL")).array(), 0, 5));
+    Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("IMAGE_COL")).array(), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("IMAGE_COL")).array(), 0, 5));
+    Assert.assertEquals(new BigDecimal(125.45, new MathContext(MONEY_PRECISION))
+                          .setScale(MONEY_SCALE, BigDecimal.ROUND_HALF_UP),
+                        row2.getDecimal("MONEY_COL"));
+    Assert.assertEquals(new BigDecimal(125.45, new MathContext(SMALL_MONEY_PRECISION))
+                          .setScale(SMALL_MONEY_SCALE, BigDecimal.ROUND_HALF_UP),
+                        row2.getDecimal("SMALLMONEY_COL"));
+    Assert.assertArrayEquals(Bytes.getBytes(TIMESTAMP_VALUES.get(1)), Bytes.getBytes(row2.get("TIMESTAMP_COL")));
+    Assert.assertArrayEquals(Bytes.getBytes(GEOMETRY_VALUES.get(1)), Bytes.getBytes(row2.get("GEOMETRY_COL")));
+    Assert.assertArrayEquals(Bytes.getBytes(GEOGRAPHY_VALUES.get(1)), Bytes.getBytes(row2.get("GEOGRAPHY_COL")));
   }
 
   @Test
