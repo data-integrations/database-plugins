@@ -78,3 +78,29 @@ non-nullable varchars, output records will have this schema:
 | name           | string              |
 | email          | string              |
 | phone          | string              |
+
+Data Types Mapping
+------
+| DB2 Data Type                | CDAP Schema Data Type | Comment |
+|------------------------------|-----------------------|---------|
+| SMALLINT                     | int                   |         |
+| INTEGER                      | int                   |         |
+| BIGINT                       | long                  |         |
+| DECIMAL(p,s) or NUMERIC(p,s) | decimal               |         |
+| DECFLOAT                     | string                |         |
+| REAL                         | float                 |         |
+| DOUBLE                       | double                |         |
+| CHAR                         | string                |         |
+| VARCHAR                      | string                |         |
+| CHAR(n) FOR BIT DATA         | bytes                 |         |
+| VARCHAR(n) FOR BIT DATA      | bytes                 |         |
+| BINARY                       | bytes                 |         |
+| VARBINARY                    | bytes                 |         |
+| GRAPHIC                      | string                |         |
+| VARGRAPHIC                   | string                |         |
+| CLOB                         | string                |         |
+| BLOB                         | bytes                 |         |
+| DBCLOB                       | string                |         |
+| DATE                         | date                  |         |
+| TIME                         | time                  |         |
+| TIMESTAMP                    | timestamp             |         |

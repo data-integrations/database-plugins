@@ -86,8 +86,8 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
   public void testDBSource() throws Exception {
     String importQuery = "SELECT SMALLINT_COL, INTEGER_COL, BIGINT_COL, DECIMAL_COL, NUMERIC_COL, " +
       " REAL_COL, DOUBLE_COL, CHAR_COL, DECFLOAT_COL, VARCHAR_COL, CHAR_BIT_COL, VARCHAR_BIT_COL, GRAPHIC_COL, " +
-      " CLOB_COL, BLOB_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, VARBINARY_COL, VARGRAPHIC_COL, DBCLOB_COL " +
-      "FROM my_table WHERE SMALLINT_COL < 3 AND $CONDITIONS";
+      " CLOB_COL, BLOB_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, VARBINARY_COL, VARGRAPHIC_COL, DBCLOB_COL" +
+      " FROM my_table WHERE SMALLINT_COL < 3 AND $CONDITIONS";
 
 
     String boundingQuery = "SELECT MIN(SMALLINT_COL),MAX(SMALLINT_COL) from my_table";
@@ -135,8 +135,8 @@ public class Db2SourceTestRun extends Db2PluginTestBase {
                         row1.getDecimal("NUMERIC_COL"));
     Assert.assertEquals(new BigDecimal(5.14, new MathContext(PRECISION)).setScale(SCALE),
                         row2.getDecimal("NUMERIC_COL"));
-    Assert.assertEquals(4.14, row1.get("DECFLOAT_COL"), 0.00001);
-    Assert.assertEquals(5.14, row2.get("DECFLOAT_COL"), 0.00001);
+    Assert.assertTrue(((String) row1.get("DECFLOAT_COL")).startsWith("4.14"));
+    Assert.assertTrue(((String) row2.get("DECFLOAT_COL")).startsWith("5.14"));
     Assert.assertEquals(4.14f, row1.get("REAL_COL"), 0.00001f);
     Assert.assertEquals(5.14f, row2.get("REAL_COL"), 0.00001f);
     Assert.assertEquals(4.14, row1.get("DOUBLE_COL"), 0.00001);

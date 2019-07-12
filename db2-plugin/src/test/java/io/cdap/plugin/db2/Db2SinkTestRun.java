@@ -53,29 +53,29 @@ import java.util.Set;
  */
 public class Db2SinkTestRun extends Db2PluginTestBase {
   private static final Schema SCHEMA = Schema.recordOf(
-    "dbRecord",
-    Schema.Field.of("SMALLINT_COL", Schema.of(Schema.Type.INT)),
-    Schema.Field.of("INTEGER_COL", Schema.of(Schema.Type.INT)),
-    Schema.Field.of("BIGINT_COL", Schema.of(Schema.Type.LONG)),
-    Schema.Field.of("DECIMAL_COL", Schema.decimalOf(10, 6)),
-    Schema.Field.of("NUMERIC_COL", Schema.decimalOf(10, 6)),
-    Schema.Field.of("DECFLOAT_COL", Schema.of(Schema.Type.DOUBLE)),
-    Schema.Field.of("REAL_COL", Schema.of(Schema.Type.FLOAT)),
-    Schema.Field.of("DOUBLE_COL", Schema.of(Schema.Type.DOUBLE)),
-    Schema.Field.of("CHAR_COL", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("VARCHAR_COL", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("CHAR_BIT_COL", Schema.of(Schema.Type.BYTES)),
-    Schema.Field.of("VARCHAR_BIT_COL", Schema.of(Schema.Type.BYTES)),
-    Schema.Field.of("GRAPHIC_COL", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("CLOB_COL", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("BLOB_COL", Schema.of(Schema.Type.BYTES)),
-    Schema.Field.of("DATE_COL", Schema.of(Schema.LogicalType.DATE)),
-    Schema.Field.of("TIME_COL", Schema.of(Schema.LogicalType.TIME_MICROS)),
-    Schema.Field.of("TIMESTAMP_COL", Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)),
-    Schema.Field.of("BINARY_COL", Schema.of(Schema.Type.BYTES)),
-    Schema.Field.of("VARBINARY_COL", Schema.of(Schema.Type.BYTES)),
-    Schema.Field.of("VARGRAPHIC_COL", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("DBCLOB_COL", Schema.of(Schema.Type.STRING))
+      "dbRecord",
+      Schema.Field.of("SMALLINT_COL", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("INTEGER_COL", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("BIGINT_COL", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("DECIMAL_COL", Schema.decimalOf(10, 6)),
+      Schema.Field.of("NUMERIC_COL", Schema.decimalOf(10, 6)),
+      Schema.Field.of("DECFLOAT_COL", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("REAL_COL", Schema.of(Schema.Type.FLOAT)),
+      Schema.Field.of("DOUBLE_COL", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("CHAR_COL", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("VARCHAR_COL", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("CHAR_BIT_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("VARCHAR_BIT_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("GRAPHIC_COL", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("CLOB_COL", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("BLOB_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("DATE_COL", Schema.of(Schema.LogicalType.DATE)),
+      Schema.Field.of("TIME_COL", Schema.of(Schema.LogicalType.TIME_MICROS)),
+      Schema.Field.of("TIMESTAMP_COL", Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)),
+      Schema.Field.of("BINARY_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("VARBINARY_COL", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("VARGRAPHIC_COL", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("DBCLOB_COL", Schema.of(Schema.Type.STRING))
   );
 
   @Before
@@ -105,6 +105,16 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
          ResultSet resultSet = stmt.executeQuery("SELECT * FROM MY_DEST_TABLE")) {
       testInvalidDataWrite(resultSet, stringColumnName);
     }
+  }
+
+  @Test
+  public void testDBSinkWithExplicitInputSchema() throws Exception {
+    testDBSink("testDBSinkWithExplicitInputSchema", "input-dbsinktest-explicit", true);
+  }
+
+  @Test
+  public void testDBSinkWithInferredInputSchema() throws Exception {
+    testDBSink("testDBSinkWithInferredInputSchema", "input-dbsinktest-inferred", false);
   }
 
   public void testDBSink(String appName, String inputDatasetName, boolean setInputSchema) throws Exception {
@@ -199,7 +209,7 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
                          .set("BIGINT_COL", (long) i)
                          .setDecimal("NUMERIC_COL", new BigDecimal(3.458d, new MathContext(PRECISION)).setScale(SCALE))
                          .setDecimal("DECIMAL_COL", new BigDecimal(3.459d, new MathContext(PRECISION)).setScale(SCALE))
-                         .set("DECFLOAT_COL", .42 + i)
+                         .set("DECFLOAT_COL", Double.toString(.42 + i))
                          .set("REAL_COL", 24.123f + i)
                          .set("DOUBLE_COL", 3.456)
                          .set("CHAR_COL", name)
