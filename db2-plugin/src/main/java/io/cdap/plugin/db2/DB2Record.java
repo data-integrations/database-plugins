@@ -65,7 +65,7 @@ public class DB2Record extends DBRecord {
     String columnTypeName = metaData.getColumnTypeName(columnIndex);
 
     if (DB2SchemaReader.DB2_DECFLOAT.equals(columnTypeName)) {
-      recordBuilder.set(field.getName(), resultSet.getBigDecimal(columnIndex).doubleValue());
+      recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
     }
   }
 }

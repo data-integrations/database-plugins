@@ -144,7 +144,11 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
                      "  BLOB_COL BLOB," +
                      "  DATE_COL DATE," +
                      "  TIME_COL TIME," +
-                     "  TIMESTAMP_COL TIMESTAMP" +
+                     "  TIMESTAMP_COL TIMESTAMP," +
+                     "  BINARY_COL BINARY(10)," +
+                     "  VARBINARY_COL VARBINARY(10)," +
+                     "  VARGRAPHIC_COL VARGRAPHIC(10)," +
+                     "  DBCLOB_COL DBCLOB(10)" +
                      ")");
       stmt.execute("CREATE TABLE MY_DEST_TABLE LIKE my_table");
       stmt.execute("CREATE TABLE your_table LIKE my_table");
@@ -157,11 +161,11 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
       PreparedStatement pStmt1 =
         conn.prepareStatement("INSERT INTO my_table " +
                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?, ?)");
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       PreparedStatement pStmt2 =
         conn.prepareStatement("INSERT INTO your_table " +
                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
 
       stmt.execute("insert into dbActionTest values (1, '1970-01-01')");
       stmt.execute("insert into postActionTest values (1, '1970-01-01')");
@@ -193,6 +197,10 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
           pStmt.setDate(16, new Date(CURRENT_TS));
           pStmt.setTime(17, new Time(CURRENT_TS));
           pStmt.setTimestamp(18, new Timestamp(CURRENT_TS));
+          pStmt.setBytes(19, name.getBytes());
+          pStmt.setBytes(20, name.getBytes());
+          pStmt.setString(21, name);
+          pStmt.setString(22, name);
 
           pStmt.executeUpdate();
       }

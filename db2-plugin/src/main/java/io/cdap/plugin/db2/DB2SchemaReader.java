@@ -37,7 +37,7 @@ public class DB2SchemaReader extends CommonSchemaReader {
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     if (DB2_TYPES.contains(metadata.getColumnType(index)) && DB2_DECFLOAT.equals(metadata.getColumnTypeName(index))) {
-      return Schema.of(Schema.Type.DOUBLE);
+      return Schema.of(Schema.Type.STRING);
     } else {
       return super.getSchema(metadata, index);
     }

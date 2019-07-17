@@ -156,6 +156,10 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     try (Connection connection = DriverManager.getConnection(connectionString, connectionProperties)) {
       executeInitQueries(connection, sourceConfig.getInitQueries());
       return loadSchemaFromDB(connection, sourceConfig.importQuery);
+
+    } catch (SQLException e) {
+      // wrap exception to ensure SQLException-child instances not exposed to contexts without jdbc driver in classpath
+      throw new SQLException(e.getMessage(), e.getSQLState(), e.getErrorCode());
     } finally {
       driverCleanup.destroy();
     }

@@ -20,11 +20,18 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.Objects;
 
 
 /**
@@ -34,6 +41,7 @@ import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 @Name(Db2Constants.PLUGIN_NAME)
 @Description("Writes records to a DB2 table. Each record will be written in a row in the table.")
 public class Db2Sink extends AbstractDBSink {
+  private static final Logger LOG = LoggerFactory.getLogger(Db2Sink.class);
 
   private final Db2SinkConfig db2SinkConfig;
 
@@ -60,5 +68,25 @@ public class Db2Sink extends AbstractDBSink {
   @Override
   protected SchemaReader getSchemaReader() {
     return new DB2SchemaReader();
+  }
+
+  @Override
+  protected boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
+    Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
+      : field.getSchema().getType();
+
+    //DECFLOAT is mapped to string
+    String colTypeName = metadata.getColumnTypeName(index);
+    if (DB2SchemaReader.DB2_DECFLOAT.equals(colTypeName)) {
+      if (Objects.equals(fieldType, Schema.Type.STRING)) {
+        return true;
+      } else {
+        LOG.error("Field '{}' was given as type '{}' but must be of type 'string' for the DB2 column of " +
+                    "DECFLOAT type.", field.getName(), fieldType);
+        return false;
+      }
+    }
+
+    return super.isFieldCompatible(field, metadata, index);
   }
 }

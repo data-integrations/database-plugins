@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
@@ -39,6 +40,11 @@ public class Db2Source extends AbstractDBSource {
   public Db2Source(Db2SourceConfig db2SourceConfig) {
     super(db2SourceConfig);
     this.db2SourceConfig = db2SourceConfig;
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new DB2SchemaReader();
   }
 
   @Override
