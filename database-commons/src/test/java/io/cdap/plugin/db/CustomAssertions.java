@@ -54,7 +54,7 @@ public final class CustomAssertions {
    * @param actual   the value to check against expected
    */
   public static void assertNumericEquals(double expected, double actual) {
-    Assert.assertEquals(expected, actual, 0.01);
+    Assert.assertEquals(expected, actual, DELTA);
   }
 
   /**
@@ -66,6 +66,6 @@ public final class CustomAssertions {
    * @param actual   the value to check against expected
    */
   public static void assertNumericEquals(float expected, float actual) {
-    Assert.assertEquals(expected, actual, 0.01);
+    Assert.assertEquals(expected, actual, DELTA);
   }
 }

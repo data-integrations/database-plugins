@@ -35,7 +35,6 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -60,35 +59,37 @@ public class SqlServerSink extends AbstractDBSink {
   }
 
   @Override
-  protected DBRecord getDBRecord(StructuredRecord.Builder output) {
-    return new SqlServerSinkDBRecord(output.build(), columnTypes);
+  protected DBRecord getDBRecord(StructuredRecord output) {
+    return new SqlServerSinkDBRecord(output, columnTypes);
   }
 
   @Override
   protected boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
+    Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+    Schema.Type fieldType = fieldSchema.getType();
+    Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
 
-    Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
-      : field.getSchema().getType();
+    int sqlType = metadata.getColumnType(index);
 
-    // DATETIMEOFFSET type is mapped to Schema.Type.STRING
-    int type = metadata.getColumnType(index);
-    if (SqlServerSinkSchemaReader.DATETIME_OFFSET_TYPE == type && !Objects.equals(fieldType, Schema.Type.STRING)) {
-      LOG.error("Field '{}' was given as type '{}' but must be of type 'string' for the MS SQL column of " +
-                  "DATETIMEOFFSET type.", field.getName(), fieldType);
-      return false;
-    }
-
-    if (SqlServerSinkSchemaReader.GEOMETRY_TYPE != type && SqlServerSinkSchemaReader.GEOGRAPHY_TYPE != type) {
+    // Handle logical types first
+    if (fieldLogicalType != null) {
       return super.isFieldCompatible(field, metadata, index);
     }
 
-    // Value of GEOMETRY and GEOGRAPHY type can be set as Well Known Text string such as "POINT(3 40 5 6)"
-    if (!Objects.equals(fieldType, Schema.Type.BYTES) && !Objects.equals(fieldType, Schema.Type.STRING)) {
-      LOG.error("Field '{}' was given as type '{}' but must be of type 'bytes' or 'string' for the MS SQL column of " +
-                  "GEOMETRY/GEOGRAPHY type.", field.getName(), fieldType);
-      return false;
-    } else {
-      return true;
+    switch (fieldType) {
+      case BYTES:
+        return sqlType == SqlServerSinkSchemaReader.GEOGRAPHY_TYPE
+          || sqlType == SqlServerSinkSchemaReader.GEOMETRY_TYPE
+          || super.isFieldCompatible(field, metadata, index);
+      case STRING:
+        return sqlType == SqlServerSinkSchemaReader.DATETIME_OFFSET_TYPE
+          // Value of GEOMETRY and GEOGRAPHY type can be set as Well Known Text string such as "POINT(3 40 5 6)"
+          || sqlType == SqlServerSinkSchemaReader.GEOGRAPHY_TYPE
+          || sqlType == SqlServerSinkSchemaReader.GEOMETRY_TYPE
+          || sqlType == SqlServerSinkSchemaReader.SQL_VARIANT
+          || super.isFieldCompatible(field, metadata, index);
+      default:
+        return super.isFieldCompatible(field, metadata, index);
     }
   }
 

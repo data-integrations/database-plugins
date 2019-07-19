@@ -38,6 +38,7 @@ import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSink;
 import io.cdap.plugin.common.ReferencePluginConfig;
 import io.cdap.plugin.common.batch.sink.SinkOutputFormatProvider;
+import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
@@ -59,6 +60,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -80,10 +82,9 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   private final DBSinkConfig dbSinkConfig;
   private Class<? extends Driver> driverClass;
   private DriverCleanup driverCleanup;
-  protected int[] columnTypes;
   protected List<String> columns;
+  protected List<ColumnType> columnTypes;
   protected String dbColumns;
-  private Schema outputSchema;
 
   public AbstractDBSink(DBSinkConfig dbSinkConfig) {
     super(new ReferencePluginConfig(dbSinkConfig.referenceName));
@@ -116,7 +117,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
               dbSinkConfig.jdbcPluginName,
               connectionString);
 
-    outputSchema = context.getInputSchema();
+    Schema outputSchema = context.getInputSchema();
 
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
@@ -176,7 +177,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     driverClass = context.loadPluginClass(getJDBCPluginId());
-    outputSchema = Optional.ofNullable(context.getInputSchema()).orElse(inferSchema(driverClass));
+    Schema outputSchema = Optional.ofNullable(context.getInputSchema()).orElse(inferSchema(driverClass));
 
     setColumnsInfo(outputSchema.getFields());
     setResultSetMetadata();
@@ -209,23 +210,11 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) {
-    // Create StructuredRecord that only has the columns in this.columns
-    List<Schema.Field> outputFields = new ArrayList<>();
-    for (Schema.Field field : input.getSchema().getFields()) {
-      Preconditions.checkArgument(columns.contains(field.getName()), "Input field '%s' is not found in columns",
-                                  field.getName());
-      outputFields.add(field);
-    }
-    StructuredRecord.Builder output = StructuredRecord.builder(outputSchema);
-    for (String column : columns) {
-      output.set(column, input.get(column));
-    }
-
-    emitter.emit(new KeyValue<>(getDBRecord(output), null));
+    emitter.emit(new KeyValue<>(getDBRecord(input), null));
   }
 
-  protected DBRecord getDBRecord(StructuredRecord.Builder output) {
-    return new DBRecord(output.build(), columnTypes);
+  protected DBRecord getDBRecord(StructuredRecord output) {
+    return new DBRecord(output, columnTypes);
   }
 
   protected SchemaReader getSchemaReader() {
@@ -272,12 +261,12 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       }
     }
 
-    columnTypes = new int[columns.size()];
-    for (int i = 0; i < columnTypes.length; i++) {
-      String name = columns.get(i);
-      Preconditions.checkArgument(columnToType.containsKey(name), "Missing column '%s' in SQL table", name);
-      columnTypes[i] = columnToType.get(name);
-    }
+    this.columnTypes = columns.stream()
+      .map(name -> {
+        Preconditions.checkArgument(columnToType.containsKey(name), "Missing column '%s' in SQL table", name);
+        return new ColumnType(name, columnToType.get(name));
+      })
+      .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
   }
 
   private void validateSchema(Class<? extends Driver> jdbcDriverClass, String tableName, Schema inputSchema) {
@@ -324,7 +313,23 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     Set<String> invalidFields = new HashSet<>();
     for (Schema.Field field : inputSchema.getFields()) {
       int columnIndex = rs.findColumn(field.getName());
+      boolean isColumnNullable = (ResultSetMetaData.columnNullable == rsMetaData.isNullable(columnIndex));
+      boolean isNotNullAssignable = !isColumnNullable && field.getSchema().isNullable();
+      if (isNotNullAssignable) {
+        LOG.error("Field '{}' was given as nullable but the database column is not nullable", field.getName());
+        invalidFields.add(field.getName());
+      }
+
       if (!isFieldCompatible(field, rsMetaData, columnIndex)) {
+        String sqlTypeName = rsMetaData.getColumnTypeName(columnIndex);
+        Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+        Schema.Type fieldType = fieldSchema.getType();
+        Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
+        LOG.error("Field '{}' was given as type '{}' but the database column is actually of type '{}'.",
+                  field.getName(),
+                  fieldLogicalType != null ? fieldLogicalType.getToken() : fieldType,
+                  sqlTypeName
+        );
         invalidFields.add(field.getName());
       }
     }
@@ -335,34 +340,70 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   }
 
   /**
-   * Checks if field of the input schema is compatible with corresponding database column.
+   * Checks if field is compatible to be written into database column of the given sql index.
    * @param field field of the explicit input schema.
    * @param metadata resultSet metadata.
    * @param index sql column index.
-   * @return 'true' if field is compatible, 'false' otherwise.
+   * @return 'true' if field is compatible to be written, 'false' otherwise.
    */
   protected boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
-    boolean isColumnNullable = (ResultSetMetaData.columnNullable == metadata.isNullable(index));
-    boolean isNotNullAssignable = !isColumnNullable && field.getSchema().isNullable();
-    if (isNotNullAssignable) {
-      LOG.error("Field '{}' was given as nullable but the database column is not nullable", field.getName());
-      return false;
+    Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+    Schema.Type fieldType = fieldSchema.getType();
+    Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
+
+    int sqlType = metadata.getColumnType(index);
+
+    // Handle logical types first
+    if (fieldLogicalType != null) {
+      switch (fieldLogicalType) {
+        case DATE:
+          return sqlType == Types.DATE;
+        case TIME_MILLIS:
+        case TIME_MICROS:
+          return sqlType == Types.TIME;
+        case TIMESTAMP_MILLIS:
+        case TIMESTAMP_MICROS:
+          return sqlType == Types.TIMESTAMP;
+        case DECIMAL:
+          return sqlType == Types.NUMERIC
+            || sqlType == Types.DECIMAL;
+      }
     }
 
-    int type = metadata.getColumnType(index);
-    int precision = metadata.getPrecision(index);
-    int scale = metadata.getScale(index);
-
-    Schema inputFieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-    Schema outputFieldSchema = DBUtils.getSchema(type, precision, scale);
-    if (!Objects.equals(inputFieldSchema.getType(), outputFieldSchema.getType()) ||
-      !Objects.equals(inputFieldSchema.getLogicalType(), outputFieldSchema.getLogicalType())) {
-      LOG.error("Field '{}' was given as type '{}' but the database column is actually of type '{}'.",
-                field.getName(), inputFieldSchema.getType(), outputFieldSchema.getType());
-      return false;
+    switch (fieldType) {
+      case NULL:
+        return true;
+      case BOOLEAN:
+        return sqlType == Types.BOOLEAN
+          || sqlType == Types.BIT;
+      case INT:
+        return sqlType == Types.INTEGER
+          ||  sqlType == Types.SMALLINT
+          || sqlType == Types.TINYINT;
+      case LONG:
+        return sqlType == Types.BIGINT;
+      case FLOAT:
+        return sqlType == Types.REAL
+          || sqlType == Types.FLOAT;
+      case DOUBLE:
+        return sqlType == Types.DOUBLE;
+      case BYTES:
+        return sqlType == Types.BINARY
+          || sqlType == Types.VARBINARY
+          || sqlType == Types.LONGVARBINARY
+          || sqlType == Types.BLOB;
+      case STRING:
+        return sqlType == Types.VARCHAR
+          || sqlType == Types.CHAR
+          || sqlType == Types.CLOB
+          || sqlType == Types.LONGNVARCHAR
+          || sqlType == Types.LONGVARCHAR
+          || sqlType == Types.NCHAR
+          || sqlType == Types.NCLOB
+          || sqlType == Types.NVARCHAR;
+      default:
+        return false;
     }
-
-    return true;
   }
 
   private void emitLineage(BatchSinkContext context, List<Schema.Field> fields) {

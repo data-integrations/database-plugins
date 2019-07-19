@@ -18,18 +18,20 @@ package io.cdap.plugin.auroradb.postgres;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * Writable class for Aurora DB PostgreSQL Source/Sink
  */
 public class AuroraPostgresDBRecord extends DBRecord {
 
-  public AuroraPostgresDBRecord(StructuredRecord record, int[] columnTypes) {
+  public AuroraPostgresDBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
     super(record, columnTypes);
   }
 

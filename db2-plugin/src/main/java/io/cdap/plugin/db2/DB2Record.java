@@ -18,12 +18,14 @@ package io.cdap.plugin.db2;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * Writable class for DB2 Source/Sink.
@@ -37,7 +39,7 @@ public class DB2Record extends DBRecord {
   public DB2Record() {
   }
 
-  public DB2Record(StructuredRecord build, int[] columnTypes) {
+  public DB2Record(StructuredRecord build, List<ColumnType> columnTypes) {
     super(build, columnTypes);
   }
 

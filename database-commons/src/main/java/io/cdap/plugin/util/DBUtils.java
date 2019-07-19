@@ -17,10 +17,6 @@
 package io.cdap.plugin.util;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
@@ -29,7 +25,6 @@ import io.cdap.plugin.db.JDBCDriverShim;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -39,7 +34,6 @@ import java.sql.Clob;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Hashtable;
@@ -102,148 +96,6 @@ public final class DBUtils {
       DriverManager.registerDriver(driverShim);
       return new DriverCleanup(driverShim);
     }
-  }
-
-  /**
-   * Given the result set, get the metadata of the result set and return
-   * list of {@link io.cdap.cdap.api.data.schema.Schema.Field},
-   * where name of the field is same as column name and type of the field is obtained using
-   * {@link DBUtils#getSchema(int, int, int)}
-   *
-   * @param resultSet result set of executed query
-   * @param schemaStr schema string to override resultant schema
-   * @return list of schema fields
-   * @throws SQLException
-   */
-  public static List<Schema.Field> getSchemaFields(ResultSet resultSet, @Nullable String schemaStr)
-    throws SQLException {
-    Schema resultsetSchema = Schema.recordOf("resultset", getSchemaFields(resultSet));
-    Schema schema;
-
-    if (!Strings.isNullOrEmpty(schemaStr)) {
-      try {
-        schema = Schema.parseJson(schemaStr);
-      } catch (IOException e) {
-        throw new IllegalArgumentException(String.format("Unable to parse schema string %s", schemaStr), e);
-      }
-      for (Schema.Field field : schema.getFields()) {
-        Schema.Field resultsetField = resultsetSchema.getField(field.getName());
-        if (resultsetField == null) {
-          throw new IllegalArgumentException(String.format("Schema field %s is not present in input record",
-                                                           field.getName()));
-        }
-        Schema resultsetFieldSchema = resultsetField.getSchema().isNullable() ?
-          resultsetField.getSchema().getNonNullable() : resultsetField.getSchema();
-        Schema simpleSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-
-        if (!resultsetFieldSchema.equals(simpleSchema)) {
-          throw new IllegalArgumentException(String.format("Schema field %s has type %s but in input record found " +
-                                                             "type %s ",
-                                                           field.getName(), simpleSchema.getType(),
-                                                           resultsetFieldSchema.getType()));
-        }
-      }
-      return schema.getFields();
-
-    }
-    return resultsetSchema.getFields();
-  }
-
-  /**
-   * Given the result set, get the metadata of the result set and return
-   * list of {@link io.cdap.cdap.api.data.schema.Schema.Field},
-   * where name of the field is same as column name and type of the field is obtained using
-   * {@link DBUtils#getSchema(int, int, int)}
-   *
-   * @param resultSet result set of executed query
-   * @return list of schema fields
-   * @throws SQLException
-   */
-  public static List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
-    List<Schema.Field> schemaFields = Lists.newArrayList();
-    ResultSetMetaData metadata = resultSet.getMetaData();
-    // ResultSetMetadata columns are numbered starting with 1
-    for (int i = 1; i <= metadata.getColumnCount(); i++) {
-      String columnName = metadata.getColumnName(i);
-      int columnSqlType = metadata.getColumnType(i);
-      int columnSqlPrecision = metadata.getPrecision(i); // total number of digits
-      int columnSqlScale = metadata.getScale(i); // digits after the decimal point
-      Schema columnSchema = getSchema(columnSqlType, columnSqlPrecision, columnSqlScale);
-      if (ResultSetMetaData.columnNullable == metadata.isNullable(i)) {
-        columnSchema = Schema.nullableOf(columnSchema);
-      }
-      Schema.Field field = Schema.Field.of(columnName, columnSchema);
-      schemaFields.add(field);
-    }
-    return schemaFields;
-  }
-
-  // given a sql type return schema type
-  public static Schema getSchema(int sqlType, int precision, int scale) throws SQLException {
-    // Type.STRING covers sql types - VARCHAR,CHAR,CLOB,LONGNVARCHAR,LONGVARCHAR,NCHAR,NCLOB,NVARCHAR
-    Schema.Type type = Schema.Type.STRING;
-    switch (sqlType) {
-      case Types.NULL:
-        type = Schema.Type.NULL;
-        break;
-
-      case Types.ROWID:
-        break;
-
-      case Types.BOOLEAN:
-      case Types.BIT:
-        type = Schema.Type.BOOLEAN;
-        break;
-
-      case Types.TINYINT:
-      case Types.SMALLINT:
-      case Types.INTEGER:
-        type = Schema.Type.INT;
-        break;
-
-      case Types.BIGINT:
-        type = Schema.Type.LONG;
-        break;
-
-      case Types.REAL:
-      case Types.FLOAT:
-        type = Schema.Type.FLOAT;
-        break;
-
-      case Types.NUMERIC:
-      case Types.DECIMAL:
-        return Schema.decimalOf(precision, scale);
-
-      case Types.DOUBLE:
-        type = Schema.Type.DOUBLE;
-        break;
-
-      case Types.DATE:
-        return Schema.of(Schema.LogicalType.DATE);
-      case Types.TIME:
-        return Schema.of(Schema.LogicalType.TIME_MICROS);
-      case Types.TIMESTAMP:
-        return Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
-
-      case Types.BINARY:
-      case Types.VARBINARY:
-      case Types.LONGVARBINARY:
-      case Types.BLOB:
-        type = Schema.Type.BYTES;
-        break;
-
-      case Types.ARRAY:
-      case Types.DATALINK:
-      case Types.DISTINCT:
-      case Types.JAVA_OBJECT:
-      case Types.OTHER:
-      case Types.REF:
-      case Types.SQLXML:
-      case Types.STRUCT:
-        throw new SQLException(new UnsupportedTypeException("Unsupported SQL Type: " + sqlType));
-    }
-
-    return Schema.of(type);
   }
 
   @Nullable

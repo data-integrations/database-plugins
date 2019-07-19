@@ -53,6 +53,40 @@ will be passed to the JDBC driver as connection arguments for JDBC drivers that 
 **Default Row Prefetch:** The default number of rows to prefetch from the server.
 
 
+Data Types Mapping
+----------
+
+    | Oracle Data Type               | CDAP Schema Data Type | Comment                                                |
+    | ------------------------------ | --------------------- | ------------------------------------------------------ |
+    | VARCHAR2                       | string                |                                                        |
+    | NVARCHAR2                      | string                |                                                        |
+    | VARCHAR                        | string                |                                                        |
+    | NUMBER                         | decimal               |                                                        |
+    | FLOAT                          | double                |                                                        |
+    | LONG                           | string                |                                                        |
+    | DATE                           | timestamp             |                                                        |
+    | BINARY_FLOAT                   | float                 |                                                        |
+    | BINARY_DOUBLE                  | double                |                                                        |
+    | TIMESTAMP                      | timestamp             |                                                        |
+    | TIMESTAMP WITH TIME ZONE       | string                |                                                        |
+    | TIMESTAMP WITH LOCAL TIME ZONE | timestamp             |                                                        |
+    | INTERVAL YEAR TO MONTH         | string                |                                                        |
+    | INTERVAL DAY TO SECOND         | string                |                                                        |
+    | RAW                            | bytes                 |                                                        |
+    | LONG RAW                       | bytes                 |                                                        |
+    | ROWID                          | string                |                                                        |
+    | UROWID                         | string                |                                                        |
+    | CHAR                           | string                |                                                        |
+    | NCHAR                          | string                |                                                        |
+    | CLOB                           | string                |                                                        |
+    | NCLOB                          | string                |                                                        |
+    | BLOB                           | bytes                 |                                                        |
+    | BFILE                          | bytes                 | BFILE is a data type used to store a locator (link)    |
+    |                                |                       | to an external file, which is stored outside of the    |
+    |                                |                       | database. Only the locator will be read from an        |
+    |                                |                       | Oracle table and not the content of the external file. |
+
+
 Example
 ------
 Suppose you want to read data from Oracle database named "XE" that is running on "localhost" port 1251,
@@ -77,9 +111,9 @@ Default Row Prefetch: 40
 For example, if the 'id' column is a primary key of type int and the other columns are
 non-nullable varchars, output records will have this schema:
 
-| field name     | type                |
-| -------------- | ------------------- |
-| id             | int                 |
-| name           | string              |
-| email          | string              |
-| phone          | string              |
+    | field name     | type                |
+    | -------------- | ------------------- |
+    | id             | int                 |
+    | name           | string              |
+    | email          | string              |
+    | phone          | string              |

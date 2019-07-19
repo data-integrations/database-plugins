@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.Objects;
+import java.sql.Types;
 
 
 /**
@@ -61,8 +61,8 @@ public class Db2Sink extends AbstractDBSink {
   }
 
   @Override
-  protected DBRecord getDBRecord(StructuredRecord.Builder output) {
-    return new DB2Record(output.build(), columnTypes);
+  protected DBRecord getDBRecord(StructuredRecord output) {
+    return new DB2Record(output, columnTypes);
   }
 
   @Override
@@ -72,21 +72,26 @@ public class Db2Sink extends AbstractDBSink {
 
   @Override
   protected boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
-    Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
-      : field.getSchema().getType();
+    Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+    Schema.Type fieldType = fieldSchema.getType();
+    Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
 
-    //DECFLOAT is mapped to string
+    int sqlType = metadata.getColumnType(index);
     String colTypeName = metadata.getColumnTypeName(index);
-    if (DB2SchemaReader.DB2_DECFLOAT.equals(colTypeName)) {
-      if (Objects.equals(fieldType, Schema.Type.STRING)) {
-        return true;
-      } else {
-        LOG.error("Field '{}' was given as type '{}' but must be of type 'string' for the DB2 column of " +
-                    "DECFLOAT type.", field.getName(), fieldType);
-        return false;
-      }
+
+    // Handle logical types first
+    if (fieldLogicalType != null) {
+      return super.isFieldCompatible(field, metadata, index);
     }
 
-    return super.isFieldCompatible(field, metadata, index);
+    switch (fieldType) {
+      case STRING:
+        return sqlType == Types.OTHER
+          //DECFLOAT is mapped to string
+          || DB2SchemaReader.DB2_DECFLOAT.equals(colTypeName)
+          || super.isFieldCompatible(field, metadata, index);
+      default:
+        return super.isFieldCompatible(field, metadata, index);
+    }
   }
 }
