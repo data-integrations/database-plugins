@@ -51,6 +51,37 @@ back from the query. However, it must match the schema that comes back from the 
 except it can mark fields as nullable and can contain a subset of the fields.
 
 
+Data Types Mapping
+----------
+
+    | Netezza Data Type              | CDAP Schema Data Type | Comment                                            |
+    | ------------------------------ | --------------------- | -------------------------------------------------- |
+    | BOOLEAN                        | boolean               |                                                    |
+    | BYTEINT                        | int                   |                                                    |
+    | CHAR                           | string                |                                                    |
+    | DATE                           | date                  |                                                    |
+    | NUMERIC, DECIMAL               | decimal               |                                                    |
+    | FLOAT(1-6)                     | float                 | Floating point number with precision of 6 or less  |
+    | FLOAT(7-15)                    | double                | Floating point number with precision of 7 - 15     |
+    | REAL                           | float                 | Equivalent to FLOAT(6)                             |
+    | DOUBLE PRECISION               | double                |                                                    |
+    | INTEGER                        | int                   |                                                    |
+    | SMALLINT                       | int                   |                                                    |
+    | BIGINT                         | long                  |                                                    |
+    | NCHAR                          | string                |                                                    |
+    | NVARCHAR                       | string                |                                                    |
+    | TIME                           | time                  |                                                    |
+    | TIMETZ, TIME WITH TIME ZONE    | string                |                                                    |
+    |                                |                       |                                                    |
+    | TIMESTAMP                      | timestampt            |                                                    |
+    | VARCHAR                        | string                |                                                    |
+    | INTERVAL                       | string                |                                                    |
+    | VARBINARY                      | bytes                 |                                                    |
+    | ST_GEOMETRY                    | bytes                 |                                                    |
+
+
+
+
 Example
 ------
 Suppose you want to read data from Netezza database named "prod" that is running on "localhost" port 5480,
@@ -73,9 +104,9 @@ Password: "testpwsd"
 For example, if the 'id' column is a primary key of type int and the other columns are
 non-nullable varchars, output records will have this schema:
 
-| field name     | type                |
-| -------------- | ------------------- |
-| id             | int                 |
-| name           | string              |
-| email          | string              |
-| phone          | string              |
+    | field name     | type                |
+    | -------------- | ------------------- |
+    | id             | int                 |
+    | name           | string              |
+    | email          | string              |
+    | phone          | string              |
