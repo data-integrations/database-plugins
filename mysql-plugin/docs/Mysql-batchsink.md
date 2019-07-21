@@ -58,6 +58,42 @@ connections.
 **SQL_MODE:** Override the default SQL_MODE session variable used by the server.
 
 
+Data Types Mapping
+----------
+
+    | MySQL Data Type                | CDAP Schema Data Type | Comment                                            |
+    | ------------------------------ | --------------------- | -------------------------------------------------- |
+    | BIT                            | boolean               |                                                    |
+    | TINYINT                        | int                   |                                                    |
+    | BOOL, BOOLEAN                  | boolean               |                                                    |
+    | SMALLINT                       | int                   |                                                    |
+    | MEDIUMINT                      | double                |                                                    |
+    | INT,INTEGER                    | int                   |                                                    |
+    | BIGINT                         | long                  |                                                    |
+    | FLOAT                          | float                 |                                                    |
+    | DOUBLE                         | double                |                                                    |
+    | DECIMAL                        | decimal               |                                                    |
+    | DATE                           | date                  |                                                    |
+    | DATETIME                       | timestamp             |                                                    |
+    | TIMESTAMP                      | timestamp             |                                                    |
+    | TIME                           | time                  |                                                    |
+    | YEAR                           | date                  |                                                    |
+    | CHAR                           | string                |                                                    |
+    | VARCHAR                        | string                |                                                    |
+    | BINARY                         | bytes                 |                                                    |
+    | VARBINARY                      | bytes                 |                                                    |
+    | TINYBLOB                       | bytes                 |                                                    |
+    | TINYTEXT                       | string                |                                                    |
+    | BLOB                           | bytes                 |                                                    |
+    | TEXT                           | string                |                                                    |
+    | MEDIUMBLOB                     | bytes                 |                                                    |
+    | MEDIUMTEXT                     | string                |                                                    |
+    | LONGBLOB                       | bytes                 |                                                    |
+    | LONGTEXT                       | string                |                                                    |
+    | ENUM                           | string                |                                                    |
+    | SET                            | string                |                                                    |
+
+
 Example
 -------
 Suppose you want to write output records to "users" table of MySQL database named "prod" that is running on "localhost", 

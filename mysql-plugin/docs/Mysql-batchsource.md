@@ -74,6 +74,42 @@ connections.
 **SQL_MODE:** Override the default SQL_MODE session variable used by the server.
 
 
+Data Types Mapping
+----------
+
+    | MySQL Data Type                | CDAP Schema Data Type | Comment                                            |
+    | ------------------------------ | --------------------- | -------------------------------------------------- |
+    | BIT                            | boolean               |                                                    |
+    | TINYINT                        | int                   |                                                    |
+    | BOOL, BOOLEAN                  | boolean               |                                                    |
+    | SMALLINT                       | int                   |                                                    |
+    | MEDIUMINT                      | double                |                                                    |
+    | INT,INTEGER                    | int                   |                                                    |
+    | BIGINT                         | long                  |                                                    |
+    | FLOAT                          | float                 |                                                    |
+    | DOUBLE                         | double                |                                                    |
+    | DECIMAL                        | decimal               |                                                    |
+    | DATE                           | date                  |                                                    |
+    | DATETIME                       | timestamp             |                                                    |
+    | TIMESTAMP                      | timestamp             |                                                    |
+    | TIME                           | time                  |                                                    |
+    | YEAR                           | date                  |                                                    |
+    | CHAR                           | string                |                                                    |
+    | VARCHAR                        | string                |                                                    |
+    | BINARY                         | bytes                 |                                                    |
+    | VARBINARY                      | bytes                 |                                                    |
+    | TINYBLOB                       | bytes                 |                                                    |
+    | TINYTEXT                       | string                |                                                    |
+    | BLOB                           | bytes                 |                                                    |
+    | TEXT                           | string                |                                                    |
+    | MEDIUMBLOB                     | bytes                 |                                                    |
+    | MEDIUMTEXT                     | string                |                                                    |
+    | LONGBLOB                       | bytes                 |                                                    |
+    | LONGTEXT                       | string                |                                                    |
+    | ENUM                           | string                |                                                    |
+    | SET                            | string                |                                                    |
+
+
 Example
 ------
 Suppose you want to read data from MySQL database named "prod" that is running on "localhost" port 3306,
@@ -96,9 +132,9 @@ Password: "root"
 For example, if the 'id' column is a primary key of type int and the other columns are
 non-nullable varchars, output records will have this schema:
 
-| field name     | type                |
-| -------------- | ------------------- |
-| id             | int                 |
-| name           | string              |
-| email          | string              |
-| phone          | string              |
+    | field name     | type                |
+    | -------------- | ------------------- |
+    | id             | int                 |
+    | name           | string              |
+    | email          | string              |
+    | phone          | string              |
