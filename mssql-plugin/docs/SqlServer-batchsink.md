@@ -88,7 +88,8 @@ Data Types Mapping
     | DATE             | date                   |                                                                |
     | DATETIME         | timestamp              |                                                                |
     | DATETIME2        | timestamp              |                                                                |
-    | DATETIMEOFFSET   | string                 |                                                                |
+    | DATETIMEOFFSET   | string                 |  DATETIMEOFFSET string literal in the following format:        |
+    |                  |                        |  "2019-06-24 16:19:15.8010000 +03:00"                          |
     | DECIMAL          | decimal                |                                                                |
     | FLOAT            | double                 |                                                                |
     | IMAGE            | bytes                  |                                                                |
@@ -126,6 +127,7 @@ Data Types Mapping
     |                  |                        | such as "POINT(3 40 5 6)".                                     |
     | GEOGRAPHY        | string                 | Values of this type can be set from Well Known Text strings,   |
     |                  |                        | such as "POINT(3 40 5 6)".                                     |
+    | TIMESTAMP        |                        | TIMESTAMP data type is not supported for the sink              |
 
 
 Example
