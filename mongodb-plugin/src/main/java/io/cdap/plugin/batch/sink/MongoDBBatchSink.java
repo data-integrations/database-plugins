@@ -20,7 +20,6 @@ import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.hadoop.MongoOutputFormat;
 import com.mongodb.hadoop.io.BSONWritable;
 import io.cdap.cdap.api.annotation.Description;
-import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.batch.Output;
@@ -31,6 +30,8 @@ import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
+import io.cdap.plugin.MongoDBConfig;
+import io.cdap.plugin.MongoDBConstants;
 import io.cdap.plugin.common.ReferenceBatchSink;
 import io.cdap.plugin.common.ReferencePluginConfig;
 import org.apache.hadoop.conf.Configuration;
@@ -45,15 +46,15 @@ import java.util.UUID;
  * This {@link MongoDBBatchSink} takes a {@link StructuredRecord} in,
  * converts it to {@link BSONWritable}, and writes it to MongoDB.
  */
-@Plugin(type = "batchsink")
-@Name("MongoDB")
+@Plugin(type = BatchSink.PLUGIN_TYPE)
+@Name(MongoDBConstants.PLUGIN_NAME)
 @Description("MongoDB Batch Sink converts a StructuredRecord to a BSONWritable and writes it to MongoDB.")
 public class MongoDBBatchSink extends ReferenceBatchSink<StructuredRecord, NullWritable, BSONWritable> {
 
-  private final MongoDBSinkConfig config;
+  private final MongoDBConfig config;
 
-  public MongoDBBatchSink(MongoDBSinkConfig config) {
-    super(config);
+  public MongoDBBatchSink(MongoDBConfig config) {
+    super(new ReferencePluginConfig(config.referenceName));
     this.config = config;
   }
 
@@ -81,9 +82,9 @@ public class MongoDBBatchSink extends ReferenceBatchSink<StructuredRecord, NullW
   private static class MongoDBOutputFormatProvider implements OutputFormatProvider {
     private final Map<String, String> conf;
 
-    MongoDBOutputFormatProvider(MongoDBSinkConfig config, String path) {
+    MongoDBOutputFormatProvider(MongoDBConfig config, String path) {
       this.conf = new HashMap<>();
-      conf.put("mongo.output.uri", config.connectionString);
+      conf.put("mongo.output.uri", config.getConnectionString());
       conf.put("mapreduce.task.tmp.dir", path);
     }
 
@@ -96,28 +97,5 @@ public class MongoDBBatchSink extends ReferenceBatchSink<StructuredRecord, NullW
     public Map<String, String> getOutputFormatConfiguration() {
       return conf;
     }
-  }
-
-  /**
-   * Config class for {@link MongoDBBatchSink}
-   */
-  public static class MongoDBSinkConfig extends ReferencePluginConfig {
-    @Name(Properties.CONNECTION_STRING)
-    @Description("MongoDB Connection String (see http://docs.mongodb.org/manual/reference/connection-string); " +
-      "Example: 'mongodb://localhost:27017/analytics.users'.")
-    @Macro
-    private String connectionString;
-
-    public MongoDBSinkConfig(String referenceName, String connectionString) {
-      super(referenceName);
-      this.connectionString = connectionString;
-    }
-  }
-
-  /**
-   * Property names for config
-   */
-  public static class Properties {
-    public static final String CONNECTION_STRING = "connectionString";
   }
 }

@@ -56,6 +56,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.WorkflowManager;
+import io.cdap.plugin.MongoDBConstants;
 import io.cdap.plugin.batch.sink.MongoDBBatchSink;
 import io.cdap.plugin.batch.source.MongoDBBatchSource;
 import io.cdap.plugin.common.Constants;
@@ -67,6 +68,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -157,18 +159,16 @@ public class MongoDBTest extends HydratorTestBase {
       "MongoDB",
       BatchSink.PLUGIN_TYPE,
       new ImmutableMap.Builder<String, String>()
-        .put(MongoDBBatchSink.Properties.CONNECTION_STRING,
-             String.format("mongodb://localhost:%d/%s.%s",
-                           mongoPort, MONGO_DB, MONGO_SINK_COLLECTIONS))
+        .putAll(getCommonPluginProperties())
+        .put(MongoDBConstants.COLLECTION, MONGO_SINK_COLLECTIONS)
         .put(Constants.Reference.REFERENCE_NAME, "MongoTestDBSink1").build(),
       null));
     ETLStage sink2 = new ETLStage("MongoDB2", new ETLPlugin(
       "MongoDB",
       BatchSink.PLUGIN_TYPE,
       new ImmutableMap.Builder<String, String>()
-        .put(MongoDBBatchSink.Properties.CONNECTION_STRING,
-             String.format("mongodb://localhost:%d/%s.%s",
-                           mongoPort, MONGO_DB, secondCollectionName))
+        .putAll(getCommonPluginProperties())
+        .put(MongoDBConstants.COLLECTION, secondCollectionName)
         .put(Constants.Reference.REFERENCE_NAME, "MongoTestDBSink2").build(),
       null));
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
@@ -203,11 +203,10 @@ public class MongoDBTest extends HydratorTestBase {
       "MongoDB",
       BatchSource.PLUGIN_TYPE,
       new ImmutableMap.Builder<String, String>()
-        .put(MongoDBBatchSource.Properties.CONNECTION_STRING,
-             String.format("mongodb://localhost:%d/%s.%s",
-                           mongoPort, MONGO_DB, MONGO_SOURCE_COLLECTIONS))
-        .put(MongoDBBatchSource.Properties.SCHEMA, SOURCE_BODY_SCHEMA.toString())
-        .put(MongoDBBatchSource.Properties.SPLITTER_CLASS, StandaloneMongoSplitter.class.getSimpleName())
+        .putAll(getCommonPluginProperties())
+        .put(MongoDBConstants.COLLECTION, MONGO_SOURCE_COLLECTIONS)
+        .put(MongoDBConstants.SCHEMA, SOURCE_BODY_SCHEMA.toString())
+        .put(MongoDBConstants.SPLITTER_CLASS, StandaloneMongoSplitter.class.getSimpleName())
         .put(Constants.Reference.REFERENCE_NAME, "MongoMongoTest").build(),
       null));
 
@@ -215,9 +214,8 @@ public class MongoDBTest extends HydratorTestBase {
       "MongoDB",
       BatchSink.PLUGIN_TYPE,
       new ImmutableMap.Builder<String, String>()
-        .put(MongoDBBatchSink.Properties.CONNECTION_STRING,
-             String.format("mongodb://localhost:%d/%s.%s",
-                           mongoPort, MONGO_DB, MONGO_SINK_COLLECTIONS))
+        .putAll(getCommonPluginProperties())
+        .put(MongoDBConstants.COLLECTION, MONGO_SINK_COLLECTIONS)
         .put(Constants.Reference.REFERENCE_NAME, "MongoToMongoTest").build(),
       null));
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
@@ -262,12 +260,10 @@ public class MongoDBTest extends HydratorTestBase {
       "MongoDB",
       BatchSource.PLUGIN_TYPE,
       new ImmutableMap.Builder<String, String>()
-        .put(MongoDBBatchSource.Properties.CONNECTION_STRING,
-             String.format("mongodb://localhost:%d/%s.%s",
-                           mongoPort, MONGO_DB, MONGO_SOURCE_COLLECTIONS))
-        .put(MongoDBBatchSource.Properties.SCHEMA, SOURCE_BODY_SCHEMA.toString())
-        .put(MongoDBBatchSource.Properties.SPLITTER_CLASS,
-             StandaloneMongoSplitter.class.getSimpleName())
+        .putAll(getCommonPluginProperties())
+        .put(MongoDBConstants.COLLECTION, MONGO_SOURCE_COLLECTIONS)
+        .put(MongoDBConstants.SCHEMA, SOURCE_BODY_SCHEMA.toString())
+        .put(MongoDBConstants.SPLITTER_CLASS, StandaloneMongoSplitter.class.getSimpleName())
         .put(Constants.Reference.REFERENCE_NAME, "SimpleMongoTest").build(),
       null));
     String outputDatasetName = "output-batchsourcetest";
@@ -319,5 +315,13 @@ public class MongoDBTest extends HydratorTestBase {
       Assert.assertEquals(13, (int) document.getInteger("num"));
       Assert.assertEquals(212.36, document.getDouble("price"), 0.0001);
     }
+  }
+
+  private Map<String, String> getCommonPluginProperties() {
+    return new ImmutableMap.Builder<String, String>()
+      .put(MongoDBConstants.HOST, "localhost")
+      .put(MongoDBConstants.PORT, String.valueOf(mongoPort))
+      .put(MongoDBConstants.DATABASE, MONGO_DB)
+      .build();
   }
 }

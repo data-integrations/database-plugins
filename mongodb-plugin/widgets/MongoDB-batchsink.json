@@ -5,19 +5,72 @@
   "display-name": "MongoDB",
   "configuration-groups": [
     {
-      "label": "MongoDB Configuration",
+      "label": "Basic",
       "properties": [
         {
           "widget-type": "textbox",
           "label": "Reference Name",
-          "name": "referenceName"
+          "name": "referenceName",
+          "widget-attributes": {
+            "placeholder": "Name used to identify this sink for lineage"
+          }
         },
         {
           "widget-type": "textbox",
-          "label": "Connection String",
-          "name": "connectionString",
+          "label": "Host",
+          "name": "host",
           "widget-attributes": {
-            "width": "large"
+            "default": "localhost"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Port",
+          "name": "port",
+          "widget-attributes": {
+            "default": "27017"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Database",
+          "name": "database"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Collection",
+          "name": "collection"
+        }
+      ]
+    },
+    {
+      "label": "Credentials",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Username",
+          "name": "user"
+        },
+        {
+          "widget-type": "password",
+          "label": "Password",
+          "name": "password"
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
+        {
+          "widget-type": "keyvalue",
+          "label": "Connection Arguments",
+          "name": "connectionArguments",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value",
+            "kv-delimiter": "=",
+            "delimiter": ";"
           }
         }
       ]
