@@ -29,12 +29,14 @@ import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.BSONConverter;
+import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSource;
 import io.cdap.plugin.common.ReferencePluginConfig;
@@ -59,7 +61,7 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
   private BSONConverter bsonConverter;
 
   public MongoDBBatchSource(MongoDBConfig config) {
-    super(config);
+    super(new ReferencePluginConfig(config.referenceName));
     this.config = config;
   }
 
@@ -77,7 +79,7 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
     conf.clear();
 
     MongoConfigUtil.setInputFormat(conf, MongoInputFormat.class);
-    MongoConfigUtil.setInputURI(conf, config.connectionString);
+    MongoConfigUtil.setInputURI(conf, config.getConnectionString());
     if (!Strings.isNullOrEmpty(config.inputQuery)) {
       MongoConfigUtil.setQuery(conf, config.inputQuery);
     }
@@ -115,35 +117,30 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
   /**
    * Config class for {@link MongoDBBatchSource}.
    */
-  public static class MongoDBConfig extends ReferencePluginConfig {
+  public static class MongoDBConfig extends PluginConfig {
 
-    @Name(Properties.CONNECTION_STRING)
-    @Description("MongoDB Connection String (see http://docs.mongodb.org/manual/reference/connection-string); " +
-      "Example: 'mongodb://localhost:27017/analytics.users'.")
-    @Macro
-    private String connectionString;
+    @Name(Constants.Reference.REFERENCE_NAME)
+    @Description(Constants.Reference.REFERENCE_NAME_DESCRIPTION)
+    public String referenceName;
 
-    @Name(Properties.AUTH_CONNECTION_STRING)
-    @Nullable
-    @Description("Auxiliary MongoDB connection string to authenticate against when constructing splits.")
-    @Macro
-    private String authConnectionString;
+    @Name(Properties.HOST)
+    @Description("Host that MongoDB is running on.")
+    public String host;
+
+    @Name(Properties.PORT)
+    @Description("Port that MongoDB is listening to.")
+    public Integer port;
+
+    @Name(Properties.DATABASE)
+    @Description("MongoDB database name.")
+    public String database;
+
+    @Name(Properties.COLLECTION)
+    @Description("Name of the database collection to read from.")
+    public String collection;
 
     @Name(Properties.SCHEMA)
-    @Description("The schema for the data as it will be formatted in CDAP. Sample schema: {\n" +
-      "    \"type\": \"record\",\n" +
-      "    \"name\": \"schemaBody\",\n" +
-      "    \"fields\": [\n" +
-      "        {\n" +
-      "            \"name\": \"name\",\n" +
-      "            \"type\": \"string\"\n" +
-      "        },\n" +
-      "        {\n" +
-      "            \"name\": \"age\",\n" +
-      "            \"type\": \"int\"\n" +
-      "        }" +
-      "    ]\n" +
-      "}")
+    @Description("Schema of records output by the source.")
     private String schema;
 
     @Name(Properties.INPUT_QUERY)
@@ -152,7 +149,6 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
     @Nullable
     @Macro
     private String inputQuery;
-
 
     @Name(Properties.INPUT_FIELDS)
     @Nullable
@@ -168,16 +164,28 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
     @Macro
     private String splitterClass;
 
-    public MongoDBConfig(String referenceName, String connectionString, String authConnectionString,
-                         String schema, String inputQuery, String inputFields, String splitterClass) {
-      super(referenceName);
-      this.connectionString = connectionString;
-      this.authConnectionString = authConnectionString;
-      this.schema = schema;
-      this.inputQuery = inputQuery;
-      this.inputFields = inputFields;
-      this.splitterClass = splitterClass;
-    }
+    @Name(Properties.USER)
+    @Description("User to use to connect to the specified database. Required for databases that " +
+      "need authentication. Optional for databases that do not require authentication.")
+    @Nullable
+    public String user;
+
+    @Name(Properties.PASSWORD)
+    @Description("Password to use to connect to the specified database. Required for databases that " +
+      "need authentication. Optional for databases that do not require authentication.")
+    @Nullable
+    public String password;
+
+    @Name(Properties.AUTH_CONNECTION_STRING)
+    @Nullable
+    @Description("Auxiliary MongoDB connection string to authenticate against when constructing splits.")
+    @Macro
+    private String authConnectionString;
+
+    @Name(Properties.CONNECTION_ARGUMENTS)
+    @Description("A list of arbitrary string key/value pairs as connection arguments.")
+    @Nullable
+    public String connectionArguments;
 
     /**
      * @return {@link Schema} of the dataset if one was given else null
@@ -194,6 +202,21 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
                                                          schema, e.getMessage()), e);
       }
     }
+
+    public String getConnectionString() {
+      StringBuilder connectionStringBuilder = new StringBuilder("mongodb://");
+      if (!Strings.isNullOrEmpty(user) || !Strings.isNullOrEmpty(password)) {
+        connectionStringBuilder.append(user).append(":").append(password).append("@");
+      }
+      connectionStringBuilder.append(host).append(":").append(port).append("/")
+        .append(database).append(".").append(collection);
+
+      if (!Strings.isNullOrEmpty(connectionArguments)) {
+        connectionStringBuilder.append("?").append(connectionArguments);
+      }
+
+      return connectionStringBuilder.toString();
+    }
   }
 
   /**
@@ -202,8 +225,15 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
   public static class Properties {
     public static final String AUTH_CONNECTION_STRING = "authConnectionString";
     public static final String CONNECTION_STRING = "connectionString";
+    public static final String HOST = "host";
+    public static final String PORT = "port";
+    public static final String DATABASE = "database";
+    public static final String COLLECTION = "collection";
     public static final String SCHEMA = "schema";
     public static final String INPUT_QUERY = "inputQuery";
+    public static final String USER = "user";
+    public static final String PASSWORD = "password";
+    public static final String CONNECTION_ARGUMENTS = "connectionArguments";
     public static final String INPUT_FIELDS = "inputFields";
     public static final String SPLITTER_CLASS = "splitterClass";
   }
