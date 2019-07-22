@@ -36,6 +36,36 @@ Properties
 **Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
 will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
 
+
+Data Types Mapping
+----------
+
+    | Netezza Data Type              | CDAP Schema Data Type | Comment                                            |
+    | ------------------------------ | --------------------- | -------------------------------------------------- |
+    | BOOLEAN                        | boolean               |                                                    |
+    | BYTEINT                        | int                   |                                                    |
+    | CHAR                           | string                |                                                    |
+    | DATE                           | date                  |                                                    |
+    | NUMERIC, DECIMAL               | decimal               |                                                    |
+    | FLOAT(1-6)                     | float                 | Floating point number with precision of 6 or less  |
+    | FLOAT(7-15)                    | double                | Floating point number with precision of 7 - 15     |
+    | REAL                           | float                 | Equivalent to FLOAT(6)                             |
+    | DOUBLE PRECISION               | double                |                                                    |
+    | INTEGER                        | int                   |                                                    |
+    | SMALLINT                       | int                   |                                                    |
+    | BIGINT                         | long                  |                                                    |
+    | NCHAR                          | string                |                                                    |
+    | NVARCHAR                       | string                |                                                    |
+    | TIME                           | time                  |                                                    |
+    | TIMETZ, TIME WITH TIME ZONE    | string                | Time with time zone string literal in the          |
+    |                                |                       | following format: "13:24:16+03"                    |
+    | TIMESTAMP                      | timestampt            |                                                    |
+    | VARCHAR                        | string                |                                                    |
+    | INTERVAL                       | string                |                                                    |
+    | VARBINARY                      | bytes                 |                                                    |
+    | ST_GEOMETRY                    | bytes                 |                                                    |
+
+
 Example
 -------
 Suppose you want to write output records to "users" table of Netezza database named "prod" that is running on "localhost", 

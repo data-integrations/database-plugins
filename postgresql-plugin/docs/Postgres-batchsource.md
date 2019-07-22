@@ -77,9 +77,9 @@ Password: "postgres"
 For example, if the 'id' column is a primary key of type int and the other columns are
 non-nullable varchars, output records will have this schema:
 
-| field name     | type                |
-| -------------- | ------------------- |
-| id             | int                 |
-| name           | string              |
-| email          | string              |
-| phone          | string              |
+    | field name     | type                |
+    | -------------- | ------------------- |
+    | id             | int                 |
+    | name           | string              |
+    | email          | string              |
+    | phone          | string              |
