@@ -82,11 +82,11 @@ public class SqlServerPluginTestBase extends DatabasePluginTestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("mssql.host"))
-    .put(ConnectionConfig.PORT, System.getProperty("mssql.port"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("mssql.database"))
-    .put(ConnectionConfig.USER, System.getProperty("mssql.username"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("mssql.password"))
+    .put(ConnectionConfig.HOST, System.getProperty("mssql.host", "localhost"))
+    .put(ConnectionConfig.PORT, System.getProperty("mssql.port", "1433"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("mssql.database", "tempdb"))
+    .put(ConnectionConfig.USER, System.getProperty("mssql.username", "sa"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("mssql.password", "123Qwe123"))
     .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 

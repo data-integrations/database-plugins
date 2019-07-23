@@ -1,0 +1,59 @@
+# Copyright © 2019 Cask Data, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+version: '3'
+services:
+  mysql:
+    image: mysql:8.0.16
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=123Qwe123
+      - MYSQL_DATABASE=mydb
+
+  postgres:
+    image: postgres:11.3-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=123Qwe123
+      - POSTGRES_DB=mydb
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2017-CU14-ubuntu
+    ports:
+      - 1433:1433
+    environment:
+      - SA_PASSWORD=123Qwe123
+      - MSSQL_DB=mydb
+      - ACCEPT_EULA=Y
+
+  db2:
+    image: ibmcom/db2:11.5.0.0
+    ports:
+      - 50000:50000
+    environment:
+      - DB2INST1_PASSWORD=123Qwe123
+      - DBNAME=mydb
+      - LICENSE=accept
+    privileged: true
+
+  oracle:
+    image: oracle/database:12.1.0.2-ee
+    ports:
+      - 1521:1521
+    environment:
+      - ORACLE_SID=cdap
+      - ORACLE_PDB=mydb
+      - ORACLE_PWD=123Qwe123

@@ -78,11 +78,11 @@ public class MysqlPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("mysql.host"))
-    .put(ConnectionConfig.PORT, System.getProperty("mysql.port"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("mysql.database"))
-    .put(ConnectionConfig.USER, System.getProperty("mysql.username"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("mysql.password"))
+    .put(ConnectionConfig.HOST, System.getProperty("mysql.host", "localhost"))
+    .put(ConnectionConfig.PORT, System.getProperty("mysql.port", "3306"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("mysql.database", "mydb"))
+    .put(ConnectionConfig.USER, System.getProperty("mysql.username", "root"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("mysql.password", "123Qwe123"))
     .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 

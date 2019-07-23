@@ -347,7 +347,7 @@ public class OracleSinkTestRun extends OraclePluginTestBase {
   @Override
   protected void writeDataForInvalidDataWriteTest(String inputDatasetName, String stringColumnName) throws Exception {
     Schema validSchema = Schema.recordOf(
-      "wrongDBRecord",
+      "validDBRecord",
       Schema.Field.of("ID", Schema.of(Schema.Type.BYTES)),
       Schema.Field.of(stringColumnName, Schema.of(Schema.Type.STRING))
     );

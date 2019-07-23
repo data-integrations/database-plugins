@@ -137,7 +137,7 @@ public class DatabasePluginTestBase extends HydratorTestBase {
 
   protected void writeDataForInvalidDataWriteTest(String inputDatasetName, String stringColumnName) throws Exception {
     Schema validSchema = Schema.recordOf(
-      "wrongDBRecord",
+      "validDBRecord",
       Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
       Schema.Field.of(stringColumnName, Schema.of(Schema.Type.STRING))
     );

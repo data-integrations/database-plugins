@@ -102,12 +102,13 @@ public class NetezzaSinkTestRun extends NetezzaPluginTestBase {
 
   @Test
   public void testDBSinkWithDBSchemaAndInvalidData() throws Exception {
-    String stringColumnName = "NAME";
-    startPipelineAndWriteInvalidData(stringColumnName, getSinkConfig(), DATAPIPELINE_ARTIFACT);
+    // Netezza JDBC connector allows to write integer values to STRING column. Use BOOLEAN column instead.
+    String booleanColumnName = "BOOLEAN_COL";
+    startPipelineAndWriteInvalidData(booleanColumnName, getSinkConfig(), DATAPIPELINE_ARTIFACT);
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement();
          ResultSet resultSet = stmt.executeQuery("SELECT * FROM MY_DEST_TABLE")) {
-      testInvalidDataWrite(resultSet, stringColumnName);
+      testInvalidDataWrite(resultSet, booleanColumnName);
     }
   }
 

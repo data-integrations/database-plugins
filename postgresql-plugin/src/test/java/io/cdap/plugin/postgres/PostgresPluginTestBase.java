@@ -91,11 +91,11 @@ public class PostgresPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("postgresql.host"))
-    .put(ConnectionConfig.PORT, System.getProperty("postgresql.port"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("postgresql.database"))
-    .put(ConnectionConfig.USER, System.getProperty("postgresql.username"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("postgresql.password"))
+    .put(ConnectionConfig.HOST, System.getProperty("postgresql.host", "localhost"))
+    .put(ConnectionConfig.PORT, System.getProperty("postgresql.port", "5432"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("postgresql.database", "mydb"))
+    .put(ConnectionConfig.USER, System.getProperty("postgresql.username", "postgres"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("postgresql.password", "123Qwe123"))
     .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 
