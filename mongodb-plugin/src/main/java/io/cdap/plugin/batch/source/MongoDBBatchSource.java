@@ -45,6 +45,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.bson.BSONObject;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -98,6 +100,11 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
     }
     LineageRecorder lineageRecorder = new LineageRecorder(context, config.referenceName);
     lineageRecorder.createExternalDataset(config.getSchema());
+    List<Schema.Field> fields = config.getSchema().getFields();
+    if (fields != null && !fields.isEmpty()) {
+      lineageRecorder.recordRead("Read", "Read from MongoDB collection.",
+                                 fields.stream().map(Schema.Field::getName).collect(Collectors.toList()));
+    }
     context.setInput(Input.of(config.referenceName,
                               new SourceInputFormatProvider(MongoConfigUtil.getInputFormat(conf), conf)));
   }

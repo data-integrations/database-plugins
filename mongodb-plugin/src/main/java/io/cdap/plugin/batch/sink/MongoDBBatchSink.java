@@ -32,14 +32,18 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.plugin.MongoDBConfig;
 import io.cdap.plugin.MongoDBConstants;
+import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSink;
 import io.cdap.plugin.common.ReferencePluginConfig;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * A {@link BatchSink} that writes data to MongoDB.
@@ -66,6 +70,17 @@ public class MongoDBBatchSink extends ReferenceBatchSink<StructuredRecord, NullW
       conf.get(
         "mapred.child.tmp",
         conf.get("hadoop.tmp.dir", System.getProperty("java.io.tmpdir")))) + "/" + UUID.randomUUID().toString();
+
+    if (Objects.nonNull(context.getInputSchema())) {
+      LineageRecorder lineageRecorder = new LineageRecorder(context, config.referenceName);
+      lineageRecorder.createExternalDataset(context.getInputSchema());
+      List<Schema.Field> fields = context.getInputSchema().getFields();
+      if (fields != null && !fields.isEmpty()) {
+        lineageRecorder.recordWrite("Write", "Wrote to MongoDB collection.",
+                                    fields.stream().map(Schema.Field::getName).collect(Collectors.toList()));
+      }
+    }
+
     context.addOutput(Output.of(config.referenceName, new MongoDBOutputFormatProvider(config, path)));
   }
 
