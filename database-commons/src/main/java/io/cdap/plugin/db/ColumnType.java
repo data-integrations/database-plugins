@@ -21,16 +21,22 @@ package io.cdap.plugin.db;
  */
 public class ColumnType {
 
-  private final String name;
-  private final int type;
+  private String name;
+  private String typeName;
+  private int type;
 
-  public ColumnType(String name, int type) {
+  public ColumnType(String name, String typeName, int type) {
     this.name = name;
+    this.typeName = typeName;
     this.type = type;
   }
 
   public String getName() {
     return name;
+  }
+
+  public String getTypeName() {
+    return typeName;
   }
 
   public int getType() {

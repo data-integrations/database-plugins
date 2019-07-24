@@ -88,9 +88,49 @@ public class PostgresSourceTestRun extends PostgresPluginTestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
-    String importQuery = "SELECT \"ID\", \"NAME\", \"SCORE\", \"GRADUATED\", \"SMALLINT_COL\", \"BIG\", " +
-      "\"NUMERIC_COL\", \"CHAR_COL\", \"DECIMAL_COL\", \"BYTEA_COL\", \"DATE_COL\", \"TIME_COL\", \"TIMESTAMP_COL\", " +
-      "\"TEXT_COL\", \"DOUBLE_PREC_COL\" FROM my_table " +
+    String importQuery = "SELECT " +
+      "\"ID\", " +
+      "\"NAME\", " +
+      "\"SCORE\", " +
+      "\"GRADUATED\", " +
+      "\"SMALLINT_COL\", " +
+      "\"BIG\", " +
+      "\"NUMERIC_COL\", " +
+      "\"CHAR_COL\", " +
+      "\"DECIMAL_COL\", " +
+      "\"BYTEA_COL\", " +
+      "\"DATE_COL\", " +
+      "\"TIME_COL\", " +
+      "\"TIMESTAMP_COL\", " +
+      "\"TEXT_COL\", " +
+      "\"DOUBLE_PREC_COL\", " +
+      "\"BIG_SERIAL_COL\", " +
+      "\"SMALL_SERIAL_COL\", " +
+      "\"SERIAL_COL\", " +
+      "\"BIT_COL\", " +
+      "\"VAR_BIT_COL\", " +
+      "\"TIMETZ_COL\", " +
+      "\"TIMESTAMPTZ_COL\", " +
+      "\"XML_COL\", " +
+      "\"UUID_COL\", " +
+      "\"CIDR_COL\", " +
+      "\"CIRCLE_COL\", " +
+      "\"INET_COL\", " +
+      "\"INTERVAL_COL\", " +
+      "\"JSON_COL\", " +
+      "\"JSONB_COL\", " +
+      "\"LINE_COL\", " +
+      "\"LSEG_COL\", " +
+      "\"MACADDR_COL\", " +
+      "\"MACADDR8_COL\", " +
+      "\"MONEY_COL\", " +
+      "\"PATH_COL\", " +
+      "\"POINT_COL\", " +
+      "\"POLYGON_COL\", " +
+      "\"TSQUERY_COL\", " +
+      "\"TSVECTOR_COL\", " +
+      "\"BOX_COL\" " +
+      "FROM my_table " +
       "WHERE \"ID\" < 3 AND $CONDITIONS";
     String boundingQuery = "SELECT MIN(\"ID\"),MAX(\"ID\") from my_table";
     String splitBy = "ID";
@@ -124,6 +164,14 @@ public class PostgresSourceTestRun extends PostgresPluginTestBase {
 
     // Verify data
     Assert.assertEquals("user1", row1.get("NAME"));
+    Assert.assertEquals(1L, (long) row1.get("BIG_SERIAL_COL"));
+    Assert.assertEquals(1, (int) row1.get("SERIAL_COL"));
+    Assert.assertEquals(1, (int) row1.get("SMALL_SERIAL_COL"));
+    Assert.assertEquals(2L, (long) row2.get("BIG_SERIAL_COL"));
+    Assert.assertEquals(2, (int) row2.get("SERIAL_COL"));
+    Assert.assertEquals(2, (int) row2.get("SMALL_SERIAL_COL"));
+    Assert.assertEquals("1010", row1.get("BIT_COL"));
+    Assert.assertEquals("101", row1.get("VAR_BIT_COL"));
     Assert.assertEquals("user2", row2.get("NAME"));
     Assert.assertEquals("user1", row1.get("TEXT_COL"));
     Assert.assertEquals("user2", row2.get("TEXT_COL"));
@@ -160,10 +208,34 @@ public class PostgresSourceTestRun extends PostgresPluginTestBase {
     Assert.assertEquals(expectedDate, row1.getDate("DATE_COL"));
     Assert.assertEquals(expectedTime, row1.getTime("TIME_COL"));
     Assert.assertEquals(expectedTs, row1.getTimestamp("TIMESTAMP_COL", ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
-
+    Assert.assertEquals("03:02:03.456+03", row1.get("TIMETZ_COL"));
+    Assert.assertEquals(
+      OFFSET_TIME.atZoneSameInstant(ZoneId.ofOffset("UTC", ZoneOffset.UTC)),
+      row1.getTimestamp("TIMESTAMPTZ_COL", ZoneId.ofOffset("UTC", ZoneOffset.UTC))
+    );
     // verify binary columns
     Assert.assertEquals("user1", Bytes.toString(((ByteBuffer) row1.get("BYTEA_COL")).array(), 0, 5));
     Assert.assertEquals("user2", Bytes.toString(((ByteBuffer) row2.get("BYTEA_COL")).array(), 0, 5));
+    // verity string-mapped pg specific types
+    Assert.assertEquals("<root></root>", row2.get("XML_COL"));
+    Assert.assertEquals("e95861c9-1111-40ce-b42b-d6b9d1765c2c", row2.get("UUID_COL"));
+    Assert.assertEquals("192.168.0.0/23", row2.get("CIDR_COL"));
+    Assert.assertEquals("<(1,2),10>", row2.get("CIRCLE_COL"));
+    Assert.assertEquals("192.168.1.1", row2.get("INET_COL"));
+    Assert.assertEquals("1 day", row2.get("INTERVAL_COL"));
+    Assert.assertEquals("{\"hello\": \"world\"}", row2.get("JSON_COL"));
+    Assert.assertEquals("{\"hello\": \"world\"}", row2.get("JSONB_COL"));
+    Assert.assertEquals("{1,-1,0}", row2.get("LINE_COL"));
+    Assert.assertEquals("[(1,1),(2,2)]", row2.get("LSEG_COL"));
+    Assert.assertEquals("08:00:2b:01:02:03", row2.get("MACADDR_COL"));
+    Assert.assertEquals("08:00:2b:01:02:03:04:05", row2.get("MACADDR8_COL"));
+    Assert.assertEquals("$1,234.12", row2.get("MONEY_COL"));
+    Assert.assertEquals("[(1,1),(2,2),(3,3)]", row2.get("PATH_COL"));
+    Assert.assertEquals("(1,1)", row2.get("POINT_COL"));
+    Assert.assertEquals("((1,1),(2,2),(0,5))", row2.get("POLYGON_COL"));
+    Assert.assertEquals("'fat' & ( 'rat' | 'cat' )", row2.get("TSQUERY_COL"));
+    Assert.assertEquals("'a' 'cat' 'fat'", row2.get("TSVECTOR_COL"));
+    Assert.assertEquals("(2,2),(1,1)", row2.get("BOX_COL"));
   }
 
   @Test
@@ -300,7 +372,7 @@ public class PostgresSourceTestRun extends PostgresPluginTestBase {
     ApplicationId appId = NamespaceId.DEFAULT.app("dbSourceNonExistingTest");
     assertRuntimeFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
                          "ETL Application with DB Source should have failed because of a " +
-      "non-existent source table.", 1);
+                           "non-existent source table.", 1);
 
     // Bad connection
     ETLPlugin sourceBadConnConfig = new ETLPlugin(
@@ -327,6 +399,6 @@ public class PostgresSourceTestRun extends PostgresPluginTestBase {
       .build();
     assertRuntimeFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
                          "ETL Application with DB Source should have failed because of a " +
-      "non-existent source database.", 2);
+                           "non-existent source database.", 2);
   }
 }

@@ -30,13 +30,20 @@ import java.util.Set;
  */
 public class PostgresSchemaReader extends CommonSchemaReader {
 
-  public static final Set<Integer> POSTGRES_TYPES = ImmutableSet.of(
+  public static final Set<Integer> STRING_MAPPED_POSTGRES_TYPES = ImmutableSet.of(
     Types.OTHER, Types.ARRAY, Types.SQLXML
+  );
+
+  public static final Set<String> STRING_MAPPED_POSTGRES_TYPES_NAMES = ImmutableSet.of(
+    "bit", "timetz", "money"
   );
 
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
-    if (POSTGRES_TYPES.contains(metadata.getColumnType(index))) {
+    String typeName = metadata.getColumnTypeName(index);
+    int columnType = metadata.getColumnType(index);
+
+    if (STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(typeName) || STRING_MAPPED_POSTGRES_TYPES.contains(columnType)) {
       return Schema.of(Schema.Type.STRING);
     }
 
