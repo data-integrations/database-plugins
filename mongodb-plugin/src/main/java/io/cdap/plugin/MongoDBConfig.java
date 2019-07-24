@@ -18,9 +18,12 @@ package io.cdap.plugin;
 
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.plugin.common.Constants;
+import io.cdap.plugin.common.IdUtils;
 
 import javax.annotation.Nullable;
 
@@ -31,40 +34,72 @@ public class MongoDBConfig extends PluginConfig {
 
   @Name(Constants.Reference.REFERENCE_NAME)
   @Description(Constants.Reference.REFERENCE_NAME_DESCRIPTION)
+  @Macro
   public String referenceName;
 
   @Name(MongoDBConstants.HOST)
   @Description("Host that MongoDB is running on.")
+  @Macro
   public String host;
 
   @Name(MongoDBConstants.PORT)
   @Description("Port that MongoDB is listening to.")
+  @Macro
   public Integer port;
 
   @Name(MongoDBConstants.DATABASE)
   @Description("MongoDB database name.")
+  @Macro
   public String database;
 
   @Name(MongoDBConstants.COLLECTION)
   @Description("Name of the database collection.")
+  @Macro
   public String collection;
 
   @Name(MongoDBConstants.USER)
   @Description("User to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
+  @Macro
   @Nullable
   public String user;
 
   @Name(MongoDBConstants.PASSWORD)
   @Description("Password to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
+  @Macro
   @Nullable
   public String password;
 
   @Name(MongoDBConstants.CONNECTION_ARGUMENTS)
   @Description("A list of arbitrary string key/value pairs as connection arguments.")
+  @Macro
   @Nullable
   public String connectionArguments;
+
+  /**
+   * Validates the given referenceName to consists of characters allowed to represent a dataset.
+   */
+  public void validate() {
+    IdUtils.validateId(referenceName);
+    if (!containsMacro(MongoDBConstants.HOST) && Strings.isNullOrEmpty(host)) {
+      throw new InvalidConfigPropertyException("Host must be specified", MongoDBConstants.HOST);
+    }
+    if (!containsMacro(MongoDBConstants.PORT)) {
+      if (null == port) {
+        throw new InvalidConfigPropertyException("Port number must be specified", MongoDBConstants.PORT);
+      }
+      if (port < 1) {
+        throw new InvalidConfigPropertyException("Port number must be greater than 0", MongoDBConstants.PORT);
+      }
+    }
+    if (!containsMacro(MongoDBConstants.DATABASE) && Strings.isNullOrEmpty(database)) {
+      throw new InvalidConfigPropertyException("Database name must be specified", MongoDBConstants.DATABASE);
+    }
+    if (!containsMacro(MongoDBConstants.COLLECTION) && Strings.isNullOrEmpty(collection)) {
+      throw new InvalidConfigPropertyException("Collection name must be specified", MongoDBConstants.COLLECTION);
+    }
+  }
 
   /**
    * Constructs a connection string from host, port, username, password and database properties.

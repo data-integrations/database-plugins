@@ -17,6 +17,7 @@
 package io.cdap.plugin.batch.source;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.mongodb.hadoop.MongoInputFormat;
 import com.mongodb.hadoop.splitter.MongoSplitter;
 import com.mongodb.hadoop.splitter.StandaloneMongoSplitter;
@@ -34,7 +35,7 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
-import io.cdap.plugin.BSONConverter;
+import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.plugin.MongoDBConfig;
 import io.cdap.plugin.MongoDBConstants;
 import io.cdap.plugin.common.LineageRecorder;
@@ -46,6 +47,8 @@ import org.bson.BSONObject;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -60,7 +63,7 @@ import javax.annotation.Nullable;
 public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject, StructuredRecord> {
 
   private final MongoDBSourceConfig config;
-  private BSONConverter bsonConverter;
+  private BSONObjectToRecordTransformer bsonObjectToRecordTransformer;
 
   public MongoDBBatchSource(MongoDBSourceConfig config) {
     super(new ReferencePluginConfig(config.referenceName));
@@ -70,13 +73,14 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
+    config.validate();
     Schema schema = config.getSchema();
-    BSONConverter.validateSchema(schema);
     pipelineConfigurer.getStageConfigurer().setOutputSchema(schema);
   }
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
+    config.validate();
     Configuration conf = new Configuration();
     conf.clear();
 
@@ -98,13 +102,8 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
         className).asSubclass(MongoSplitter.class);
       MongoConfigUtil.setSplitterClass(conf, klass);
     }
-    LineageRecorder lineageRecorder = new LineageRecorder(context, config.referenceName);
-    lineageRecorder.createExternalDataset(config.getSchema());
-    List<Schema.Field> fields = config.getSchema().getFields();
-    if (fields != null && !fields.isEmpty()) {
-      lineageRecorder.recordRead("Read", "Read from MongoDB collection.",
-                                 fields.stream().map(Schema.Field::getName).collect(Collectors.toList()));
-    }
+
+    emitLineage(context);
     context.setInput(Input.of(config.referenceName,
                               new SourceInputFormatProvider(MongoConfigUtil.getInputFormat(conf), conf)));
   }
@@ -112,13 +111,24 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
-    bsonConverter = new BSONConverter(config.getSchema());
+    bsonObjectToRecordTransformer = new BSONObjectToRecordTransformer(config.getSchema());
   }
 
   @Override
   public void transform(KeyValue<Object, BSONObject> input, Emitter<StructuredRecord> emitter) throws Exception {
     BSONObject bsonObject = input.getValue();
-    emitter.emit(bsonConverter.transform(bsonObject));
+    emitter.emit(bsonObjectToRecordTransformer.transform(bsonObject));
+  }
+
+  private void emitLineage(BatchSourceContext context) {
+    LineageRecorder lineageRecorder = new LineageRecorder(context, config.referenceName);
+    lineageRecorder.createExternalDataset(config.getSchema());
+    List<Schema.Field> fields = Objects.requireNonNull(config.getSchema()).getFields();
+    if (fields != null && !fields.isEmpty()) {
+      lineageRecorder.recordRead("Read",
+                                 String.format("Read from '%s' MongoDB collection.", config.collection),
+                                 fields.stream().map(Schema.Field::getName).collect(Collectors.toList()));
+    }
   }
 
   /**
@@ -126,6 +136,10 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
    */
   public static class MongoDBSourceConfig extends MongoDBConfig {
 
+    public static final Set<Schema.Type> SUPPORTED_FIELD_TYPES = ImmutableSet.of(Schema.Type.ARRAY, Schema.Type.BOOLEAN,
+                                                                                 Schema.Type.BYTES, Schema.Type.STRING,
+                                                                                 Schema.Type.DOUBLE, Schema.Type.FLOAT,
+                                                                                 Schema.Type.INT, Schema.Type.LONG);
     @Name(MongoDBConstants.SCHEMA)
     @Description("Schema of records output by the source.")
     private String schema;
@@ -158,18 +172,43 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
     private String authConnectionString;
 
     /**
-     * @return {@link Schema} of the dataset if one was given else null
-     * @throws IllegalArgumentException if the schema is null or not a valid JSON
+     * @return the schema of the dataset
      */
+    @Nullable
     public Schema getSchema() {
-      if (schema == null) {
-        throw new IllegalArgumentException("Schema cannot be null.");
-      }
       try {
-        return Schema.parseJson(schema);
+        return null == schema ? null : Schema.parseJson(schema);
       } catch (IOException e) {
-        throw new IllegalArgumentException(String.format("Unable to parse schema '%s'. Reason: %s",
-                                                         schema, e.getMessage()), e);
+        throw new InvalidConfigPropertyException("Invalid schema", e, MongoDBConstants.SCHEMA);
+      }
+    }
+
+    @Override
+    public void validate() {
+      super.validate();
+      if (!containsMacro(MongoDBConstants.SCHEMA)) {
+        Schema parsedSchema = getSchema();
+        if (null == parsedSchema) {
+          throw new InvalidConfigPropertyException("Schema must be specified", MongoDBConstants.SCHEMA);
+        }
+        List<Schema.Field> fields = parsedSchema.getFields();
+        if (null == fields || fields.isEmpty()) {
+          throw new InvalidConfigPropertyException("Schema should contain fields to map", MongoDBConstants.SCHEMA);
+        }
+        for (Schema.Field field : fields) {
+          Schema.Type fieldType = field.getSchema().isNullable()
+            ? field.getSchema().getNonNullable().getType()
+            : field.getSchema().getType();
+          if (!SUPPORTED_FIELD_TYPES.contains(fieldType)) {
+            String supportedTypes = SUPPORTED_FIELD_TYPES.stream()
+              .map(Enum::name)
+              .map(String::toLowerCase)
+              .collect(Collectors.joining(", "));
+            String errorMessage = String.format("Field '%s' is of unsupported type '%s'. Supported types are: %s. ",
+                                                field.getName(), fieldType, supportedTypes);
+            throw new InvalidConfigPropertyException(errorMessage, MongoDBConstants.SCHEMA);
+          }
+        }
       }
     }
   }

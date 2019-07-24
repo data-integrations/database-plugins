@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.batch.sink;
 
-import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.hadoop.MongoOutputFormat;
 import com.mongodb.hadoop.io.BSONWritable;
 import io.cdap.cdap.api.annotation.Description;
@@ -28,6 +27,8 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.plugin.MongoDBConfig;
@@ -56,6 +57,7 @@ import java.util.stream.Collectors;
 public class MongoDBBatchSink extends ReferenceBatchSink<StructuredRecord, NullWritable, BSONWritable> {
 
   private final MongoDBConfig config;
+  private RecordToBSONWritableTransformer transformer;
 
   public MongoDBBatchSink(MongoDBConfig config) {
     super(new ReferencePluginConfig(config.referenceName));
@@ -63,7 +65,14 @@ public class MongoDBBatchSink extends ReferenceBatchSink<StructuredRecord, NullW
   }
 
   @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(pipelineConfigurer);
+    config.validate();
+  }
+
+  @Override
   public void prepareRun(BatchSinkContext context) throws Exception {
+    config.validate();
     Configuration conf = new Configuration();
     String path = conf.get(
       "mapreduce.task.tmp.dir",
@@ -71,27 +80,33 @@ public class MongoDBBatchSink extends ReferenceBatchSink<StructuredRecord, NullW
         "mapred.child.tmp",
         conf.get("hadoop.tmp.dir", System.getProperty("java.io.tmpdir")))) + "/" + UUID.randomUUID().toString();
 
+    emitLineage(context);
+    context.addOutput(Output.of(config.referenceName, new MongoDBOutputFormatProvider(config, path)));
+  }
+
+  @Override
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    super.initialize(context);
+    transformer = new RecordToBSONWritableTransformer();
+  }
+
+  @Override
+  public void transform(StructuredRecord record, Emitter<KeyValue<NullWritable, BSONWritable>> emitter) {
+    BSONWritable bsonWritable = transformer.transform(record);
+    emitter.emit(new KeyValue<>(NullWritable.get(), bsonWritable));
+  }
+
+  private void emitLineage(BatchSinkContext context) {
     if (Objects.nonNull(context.getInputSchema())) {
       LineageRecorder lineageRecorder = new LineageRecorder(context, config.referenceName);
       lineageRecorder.createExternalDataset(context.getInputSchema());
       List<Schema.Field> fields = context.getInputSchema().getFields();
       if (fields != null && !fields.isEmpty()) {
-        lineageRecorder.recordWrite("Write", "Wrote to MongoDB collection.",
+        lineageRecorder.recordWrite("Write",
+                                    String.format("Wrote to '%s' MongoDB collection.", config.collection),
                                     fields.stream().map(Schema.Field::getName).collect(Collectors.toList()));
       }
     }
-
-    context.addOutput(Output.of(config.referenceName, new MongoDBOutputFormatProvider(config, path)));
-  }
-
-  @Override
-  public void transform(StructuredRecord input, Emitter<KeyValue<NullWritable, BSONWritable>> emitter)
-    throws Exception {
-    BasicDBObjectBuilder bsonBuilder = BasicDBObjectBuilder.start();
-    for (Schema.Field field : input.getSchema().getFields()) {
-      bsonBuilder.add(field.getName(), input.get(field.getName()));
-    }
-    emitter.emit(new KeyValue<>(NullWritable.get(), new BSONWritable(bsonBuilder.get())));
   }
 
   private static class MongoDBOutputFormatProvider implements OutputFormatProvider {

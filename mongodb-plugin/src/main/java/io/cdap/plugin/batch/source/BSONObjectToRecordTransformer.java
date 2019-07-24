@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.plugin;
+package io.cdap.plugin.batch.source;
 
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -23,43 +23,27 @@ import io.cdap.cdap.api.data.schema.Schema;
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
 
-import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Converts {@link BSONObject} to {@link StructuredRecord}.
+ * Transforms {@link BSONObject} to {@link StructuredRecord}.
  */
-public class BSONConverter {
-  private static final List<Schema.Type> VALID_TYPES = Lists.newArrayList(Schema.Type.ARRAY, Schema.Type.BOOLEAN,
-                                                                          Schema.Type.BYTES, Schema.Type.STRING,
-                                                                          Schema.Type.DOUBLE,
-                                                                          Schema.Type.FLOAT, Schema.Type.INT,
-                                                                          Schema.Type.LONG, Schema.Type.NULL);
+public class BSONObjectToRecordTransformer {
+
   private final Schema schema;
 
-  public BSONConverter(Schema schema) throws IOException {
+  public BSONObjectToRecordTransformer(Schema schema) {
     this.schema = schema;
   }
 
-  public StructuredRecord transform(BSONObject bsonObject) throws IOException {
+  public StructuredRecord transform(BSONObject bsonObject) {
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
-    for (Schema.Field field : schema.getFields()) {
+    List<Schema.Field> fields = Objects.requireNonNull(schema.getFields(), "Schema fields cannot be empty");
+    for (Schema.Field field : fields) {
       builder.set(field.getName(), extractValue(bsonObject.get(field.getName()), field.getSchema()));
     }
     return builder.build();
-  }
-
-  public static void validateSchema(Schema schema) {
-    for (Schema.Field field : schema.getFields()) {
-      Schema.Type type = field.getSchema().getType();
-      if (field.getSchema().isNullable()) {
-        type = field.getSchema().getNonNullable().getType();
-      }
-      if (!VALID_TYPES.contains(type)) {
-        throw new IllegalArgumentException(String.format("Unsupported Type : Field Name : %s; Type : %s",
-                                                         field.getName(), field.getSchema().getType()));
-      }
-    }
   }
 
   private Object extractValue(Object object, Schema schema) {
@@ -81,8 +65,6 @@ public class BSONConverter {
       case BOOLEAN:
       case STRING:
         return object;
-      case NULL:
-        return null;
       default:
         throw new UnexpectedFormatException("field type " + fieldType + " is not supported.");
     }
