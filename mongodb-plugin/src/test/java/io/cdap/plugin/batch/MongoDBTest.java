@@ -14,12 +14,11 @@
  * the License.
  */
 
-package io.cdap.plugin.test;
+package io.cdap.plugin.batch;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.ServerAddress;
@@ -60,6 +59,11 @@ import io.cdap.plugin.MongoDBConstants;
 import io.cdap.plugin.batch.sink.MongoDBBatchSink;
 import io.cdap.plugin.batch.source.MongoDBBatchSource;
 import io.cdap.plugin.common.Constants;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonDouble;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.After;
 import org.junit.Assert;
@@ -67,6 +71,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -105,6 +110,20 @@ public class MongoDBTest extends HydratorTestBase {
     Schema.Field.of("price", Schema.nullableOf(Schema.of(Schema.Type.DOUBLE))),
     Schema.Field.of("agents", Schema.nullableOf(Schema.arrayOf(Schema.nullableOf(Schema.of(Schema.Type.STRING))))));
 
+  private static final List<BsonDocument> TEST_DOCUMENTS = Arrays.asList(
+    new BsonDocument()
+      .append("ticker", new BsonString("AAPL"))
+      .append("num", new BsonInt32(10))
+      .append("price", new BsonDouble(23.23))
+      .append("agents", new BsonArray(Arrays.asList(new BsonString("a1"), new BsonString("a2")))),
+
+    new BsonDocument()
+      .append("ticker", new BsonString("ORCL"))
+      .append("num", new BsonInt32(12))
+      .append("price", new BsonDouble(10.10))
+      .append("agents", new BsonArray(Arrays.asList(new BsonString("a1"), new BsonString("a2"))))
+  );
+
   private MongodForTestsFactory factory = null;
   private int mongoPort;
 
@@ -132,14 +151,8 @@ public class MongoDBTest extends HydratorTestBase {
     Assert.assertFalse(collections.iterator().hasNext());
     mongoDatabase.createCollection(MONGO_SOURCE_COLLECTIONS);
     MongoDatabase db = mongoClient.getDatabase(MONGO_DB);
-    MongoCollection dbCollection = db.getCollection(MONGO_SOURCE_COLLECTIONS, BasicDBObject.class);
-    BasicDBList basicDBList = new BasicDBList();
-    basicDBList.put(1, "a1");
-    basicDBList.put(2, "a2");
-    dbCollection.insertOne(new BasicDBObject(ImmutableMap.of("ticker", "AAPL", "num", 10, "price", 23.23,
-                                                             "agents", basicDBList)));
-    dbCollection.insertOne(new BasicDBObject(ImmutableMap.of("ticker", "ORCL", "num", 12, "price", 10.10,
-                                                             "agents", basicDBList)));
+    MongoCollection dbCollection = db.getCollection(MONGO_SOURCE_COLLECTIONS, BsonDocument.class);
+    dbCollection.insertMany(TEST_DOCUMENTS);
   }
 
   @After

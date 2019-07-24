@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.batch.sink;
 
+import com.google.common.collect.ImmutableSet;
 import com.mongodb.hadoop.MongoOutputFormat;
 import com.mongodb.hadoop.io.BSONWritable;
 import io.cdap.cdap.api.annotation.Description;
@@ -31,6 +32,7 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
+import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.plugin.MongoDBConfig;
 import io.cdap.plugin.MongoDBConstants;
 import io.cdap.plugin.common.LineageRecorder;
@@ -43,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -58,7 +61,10 @@ public class MongoDBBatchSink extends ReferenceBatchSink<StructuredRecord, NullW
 
   private final MongoDBConfig config;
   private RecordToBSONWritableTransformer transformer;
-
+  private static final Set<Schema.Type> SUPPORTED_FIELD_TYPES = ImmutableSet.of(Schema.Type.ARRAY, Schema.Type.BOOLEAN,
+                                                                                Schema.Type.BYTES, Schema.Type.STRING,
+                                                                                Schema.Type.DOUBLE, Schema.Type.FLOAT,
+                                                                                Schema.Type.INT, Schema.Type.LONG);
   public MongoDBBatchSink(MongoDBConfig config) {
     super(new ReferencePluginConfig(config.referenceName));
     this.config = config;
@@ -68,6 +74,10 @@ public class MongoDBBatchSink extends ReferenceBatchSink<StructuredRecord, NullW
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     config.validate();
+    Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
+    if (inputSchema != null) {
+      validateInputSchema(inputSchema);
+    }
   }
 
   @Override
@@ -94,6 +104,26 @@ public class MongoDBBatchSink extends ReferenceBatchSink<StructuredRecord, NullW
   public void transform(StructuredRecord record, Emitter<KeyValue<NullWritable, BSONWritable>> emitter) {
     BSONWritable bsonWritable = transformer.transform(record);
     emitter.emit(new KeyValue<>(NullWritable.get(), bsonWritable));
+  }
+
+  private void validateInputSchema(Schema inputSchema) {
+    List<Schema.Field> fields = inputSchema.getFields();
+    if (fields == null || fields.isEmpty()) {
+      throw new InvalidStageException("Input schema should contain fields");
+    }
+    for (Schema.Field field : fields) {
+      Schema.Type fieldType = field.getSchema().isNullable() ?
+        field.getSchema().getNonNullable().getType() : field.getSchema().getType();
+      if (!SUPPORTED_FIELD_TYPES.contains(fieldType)) {
+        String supportedTypes = SUPPORTED_FIELD_TYPES.stream()
+          .map(Enum::name)
+          .map(String::toLowerCase)
+          .collect(Collectors.joining(", "));
+        String errorMessage = String.format("Field '%s' is of unsupported type '%s'. Supported types are: %s.",
+                                            field.getName(), fieldType, supportedTypes);
+        throw new InvalidStageException(errorMessage);
+      }
+    }
   }
 
   private void emitLineage(BatchSinkContext context) {

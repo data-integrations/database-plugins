@@ -37,6 +37,12 @@ public class BSONObjectToRecordTransformer {
     this.schema = schema;
   }
 
+  /**
+   * Transforms given {@link BSONObject} to {@link StructuredRecord}.
+   *
+   * @param bsonObject BSON object to be transformed.
+   * @return {@link StructuredRecord} that corresponds to the given {@link BSONObject}.
+   */
   public StructuredRecord transform(BSONObject bsonObject) {
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     List<Schema.Field> fields = Objects.requireNonNull(schema.getFields(), "Schema fields cannot be empty");

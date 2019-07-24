@@ -142,34 +142,34 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
                                                                                  Schema.Type.INT, Schema.Type.LONG);
     @Name(MongoDBConstants.SCHEMA)
     @Description("Schema of records output by the source.")
-    private String schema;
+    public String schema;
 
     @Name(MongoDBConstants.INPUT_QUERY)
     @Description("Optionally filter the input collection with a query. This query must be represented in JSON " +
       "format, and use the MongoDB extended JSON format to represent non-native JSON data types.")
     @Nullable
     @Macro
-    private String inputQuery;
+    public String inputQuery;
 
     @Name(MongoDBConstants.INPUT_FIELDS)
     @Nullable
     @Description("A projection document limiting the fields that appear in each document. " +
       "If no projection document is provided, all fields will be read.")
     @Macro
-    private String inputFields;
+    public String inputFields;
 
     @Name(MongoDBConstants.SPLITTER_CLASS)
     @Nullable
     @Description("The name of the Splitter class to use. If left empty, the MongoDB Hadoop Connector will attempt " +
       "to make a best guess as to what Splitter to use.")
     @Macro
-    private String splitterClass;
+    public String splitterClass;
 
     @Name(MongoDBConstants.AUTH_CONNECTION_STRING)
     @Nullable
     @Description("Auxiliary MongoDB connection string to authenticate against when constructing splits.")
     @Macro
-    private String authConnectionString;
+    public String authConnectionString;
 
     /**
      * @return the schema of the dataset
@@ -188,11 +188,11 @@ public class MongoDBBatchSource extends ReferenceBatchSource<Object, BSONObject,
       super.validate();
       if (!containsMacro(MongoDBConstants.SCHEMA)) {
         Schema parsedSchema = getSchema();
-        if (null == parsedSchema) {
+        if (parsedSchema == null) {
           throw new InvalidConfigPropertyException("Schema must be specified", MongoDBConstants.SCHEMA);
         }
         List<Schema.Field> fields = parsedSchema.getFields();
-        if (null == fields || fields.isEmpty()) {
+        if (fields == null || fields.isEmpty()) {
           throw new InvalidConfigPropertyException("Schema should contain fields to map", MongoDBConstants.SCHEMA);
         }
         for (Schema.Field field : fields) {

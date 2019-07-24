@@ -78,15 +78,24 @@ public class MongoDBConfig extends PluginConfig {
   public String connectionArguments;
 
   /**
-   * Validates the given referenceName to consists of characters allowed to represent a dataset.
+   * Validates {@link MongoDBConfig} instance.
    */
   public void validate() {
-    IdUtils.validateId(referenceName);
+    if (!containsMacro(Constants.Reference.REFERENCE_NAME) && Strings.isNullOrEmpty(referenceName)) {
+      throw new InvalidConfigPropertyException("Reference name must be specified", Constants.Reference.REFERENCE_NAME);
+    } else {
+      try {
+        IdUtils.validateId(referenceName);
+      } catch (IllegalArgumentException e) {
+        // InvalidConfigPropertyException should be thrown instead of IllegalArgumentException
+        throw new InvalidConfigPropertyException("Invalid reference name", e, Constants.Reference.REFERENCE_NAME);
+      }
+    }
     if (!containsMacro(MongoDBConstants.HOST) && Strings.isNullOrEmpty(host)) {
       throw new InvalidConfigPropertyException("Host must be specified", MongoDBConstants.HOST);
     }
     if (!containsMacro(MongoDBConstants.PORT)) {
-      if (null == port) {
+      if (port == null) {
         throw new InvalidConfigPropertyException("Port number must be specified", MongoDBConstants.PORT);
       }
       if (port < 1) {
