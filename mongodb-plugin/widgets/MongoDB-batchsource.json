@@ -42,7 +42,7 @@
           "name": "collection"
         },
         {
-          "widget-type": "textarea",
+          "widget-type": "json-editor",
           "label": "Input Query",
           "name": "inputQuery",
           "widget-attributes": {
@@ -50,8 +50,8 @@
           }
         },
         {
-          "widget-type": "textbox",
-          "label": "Index",
+          "widget-type": "json-editor",
+          "label": "Input Fields",
           "name": "inputFields",
           "widget-attributes": {
             "width": "medium"
