@@ -86,12 +86,12 @@ public class OraclePluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("oracle.host"))
-    .put(ConnectionConfig.PORT, System.getProperty("oracle.port"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("oracle.database"))
-    .put(ConnectionConfig.USER, System.getProperty("oracle.username"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("oracle.password"))
-    .put(OracleConstants.CONNECTION_TYPE, System.getProperty("oracle.connectionType"))
+    .put(ConnectionConfig.HOST, System.getProperty("oracle.host", "localhost"))
+    .put(ConnectionConfig.PORT, System.getProperty("oracle.port", "1521"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("oracle.database", "cdap"))
+    .put(ConnectionConfig.USER, System.getProperty("oracle.username", "SYSTEM"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("oracle.password", "123Qwe123"))
+    .put(OracleConstants.CONNECTION_TYPE, System.getProperty("oracle.connectionType", "sid"))
     .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .put(OracleConstants.DEFAULT_BATCH_VALUE, "10")
     .build();

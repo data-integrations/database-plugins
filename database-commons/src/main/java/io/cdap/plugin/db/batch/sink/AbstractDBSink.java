@@ -350,6 +350,10 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
     int sqlType = metadata.getColumnType(index);
 
+    return isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+  }
+
+  protected boolean isFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType) {
     // Handle logical types first
     if (fieldLogicalType != null) {
       switch (fieldLogicalType) {
@@ -375,7 +379,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
           || sqlType == Types.BIT;
       case INT:
         return sqlType == Types.INTEGER
-          ||  sqlType == Types.SMALLINT
+          || sqlType == Types.SMALLINT
           || sqlType == Types.TINYINT;
       case LONG:
         return sqlType == Types.BIGINT;

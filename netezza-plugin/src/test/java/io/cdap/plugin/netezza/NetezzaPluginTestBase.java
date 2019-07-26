@@ -75,11 +75,11 @@ public class NetezzaPluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("netezza.host"))
-    .put(ConnectionConfig.PORT, System.getProperty("netezza.port"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("netezza.database"))
-    .put(ConnectionConfig.USER, System.getProperty("netezza.username"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("netezza.password"))
+    .put(ConnectionConfig.HOST, System.getProperty("netezza.host", "localhost"))
+    .put(ConnectionConfig.PORT, System.getProperty("netezza.port", "5480"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("netezza.database", "mydb"))
+    .put(ConnectionConfig.USER, System.getProperty("netezza.username", "admin"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("netezza.password", "password"))
     .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 

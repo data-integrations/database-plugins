@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class NetezzaDBRecord extends DBRecord {
 
-  private static final int INTERVAL = 101;
+  public static final int INTERVAL = 101;
 
   private static final Set<Integer> netezzaTypes = ImmutableSet.of(
     Types.VARBINARY,

@@ -98,7 +98,7 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
 
   @Test
   public void testDBSinkWithDBSchemaAndInvalidData() throws Exception {
-    String stringColumnName = "CHAR_COL";
+    String stringColumnName = "BINARY_COL";
     startPipelineAndWriteInvalidData(stringColumnName, getSinkConfig(), DATAPIPELINE_ARTIFACT);
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement();
@@ -169,15 +169,15 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
   }
 
   @Override
-  protected void writeDataForInvalidDataWriteTest(String inputDatasetName, String stringColumnName) throws Exception {
+  protected void writeDataForInvalidDataWriteTest(String inputDatasetName, String columnName) throws Exception {
     Schema validSchema = Schema.recordOf(
-      "wrongDBRecord",
-      Schema.Field.of(stringColumnName, Schema.of(Schema.Type.STRING))
+      "validDBRecord",
+      Schema.Field.of(columnName, Schema.of(Schema.Type.BYTES))
     );
 
     Schema invalidSchema = Schema.recordOf(
       "wrongDBRecord",
-      Schema.Field.of(stringColumnName, Schema.of(Schema.Type.INT))
+      Schema.Field.of(columnName, Schema.of(Schema.Type.INT))
     );
 
     // add some data to the input table
@@ -185,13 +185,13 @@ public class Db2SinkTestRun extends Db2PluginTestBase {
 
     List<StructuredRecord> inputRecords = new ArrayList<>();
     inputRecords.add(StructuredRecord.builder(validSchema)
-                       .set(stringColumnName, "user1")
+                       .set(columnName, "user1".getBytes())
                        .build());
     inputRecords.add(StructuredRecord.builder(invalidSchema)
-                       .set(stringColumnName, 1)
+                       .set(columnName, 1)
                        .build());
     inputRecords.add(StructuredRecord.builder(validSchema)
-                       .set(stringColumnName, "user3")
+                       .set(columnName, "user3".getBytes())
                        .build());
     MockSource.writeInput(inputManager, inputRecords);
   }

@@ -74,11 +74,11 @@ public class Db2PluginTestBase extends DatabasePluginTestBase {
   }
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("db2.host"))
-    .put(ConnectionConfig.PORT, System.getProperty("db2.port"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("db2.database"))
-    .put(ConnectionConfig.USER, System.getProperty("db2.username"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("db2.password"))
+    .put(ConnectionConfig.HOST, System.getProperty("db2.host", "localhost"))
+    .put(ConnectionConfig.PORT, System.getProperty("db2.port", "50000"))
+    .put(ConnectionConfig.DATABASE, System.getProperty("db2.database", "mydb"))
+    .put(ConnectionConfig.USER, System.getProperty("db2.username", "db2inst1"))
+    .put(ConnectionConfig.PASSWORD, System.getProperty("db2.password", "123Qwe123"))
     .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 
