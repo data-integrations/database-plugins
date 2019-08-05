@@ -50,7 +50,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TimeZone;
 
-public class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
+public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
@@ -68,11 +68,11 @@ public class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("auroraPostgresql.clusterEndpoint"))
-    .put(ConnectionConfig.PORT, System.getProperty("auroraPostgresql.port"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("auroraPostgresql.database"))
-    .put(ConnectionConfig.USER, System.getProperty("auroraPostgresql.username"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("auroraPostgresql.password"))
+    .put(ConnectionConfig.HOST, getPropertyOrFail("auroraPostgresql.clusterEndpoint"))
+    .put(ConnectionConfig.PORT, getPropertyOrFail("auroraPostgresql.port"))
+    .put(ConnectionConfig.DATABASE, getPropertyOrFail("auroraPostgresql.database"))
+    .put(ConnectionConfig.USER, getPropertyOrFail("auroraPostgresql.username"))
+    .put(ConnectionConfig.PASSWORD, getPropertyOrFail("auroraPostgresql.password"))
     .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 
@@ -163,7 +163,7 @@ public class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
     }
   }
 
-  private static void populateData(PreparedStatement ...stmts) throws SQLException {
+  private static void populateData(PreparedStatement... stmts) throws SQLException {
     // insert the same data into both tables: my_table and your_table
     for (PreparedStatement pStmt : stmts) {
       for (int i = 1; i <= 5; i++) {
@@ -187,6 +187,16 @@ public class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
         pStmt.executeUpdate();
       }
     }
+  }
+
+  private static String getPropertyOrFail(String propertyName) {
+    String value = System.getProperty(propertyName);
+
+    if (value == null) {
+      throw new IllegalStateException("There is no value for property " + propertyName);
+    }
+
+    return value;
   }
 
   public static Connection createConnection() {

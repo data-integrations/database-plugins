@@ -21,17 +21,15 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import io.cdap.plugin.db.batch.sink.FieldsValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -64,33 +62,8 @@ public class SqlServerSink extends AbstractDBSink {
   }
 
   @Override
-  protected boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
-    Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-    Schema.Type fieldType = fieldSchema.getType();
-    Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
-
-    int sqlType = metadata.getColumnType(index);
-
-    // Handle logical types first
-    if (fieldLogicalType != null) {
-      return super.isFieldCompatible(field, metadata, index);
-    }
-
-    switch (fieldType) {
-      case BYTES:
-        return sqlType == SqlServerSinkSchemaReader.GEOGRAPHY_TYPE
-          || sqlType == SqlServerSinkSchemaReader.GEOMETRY_TYPE
-          || super.isFieldCompatible(field, metadata, index);
-      case STRING:
-        return sqlType == SqlServerSinkSchemaReader.DATETIME_OFFSET_TYPE
-          // Value of GEOMETRY and GEOGRAPHY type can be set as Well Known Text string such as "POINT(3 40 5 6)"
-          || sqlType == SqlServerSinkSchemaReader.GEOGRAPHY_TYPE
-          || sqlType == SqlServerSinkSchemaReader.GEOMETRY_TYPE
-          || sqlType == SqlServerSinkSchemaReader.SQL_VARIANT
-          || super.isFieldCompatible(field, metadata, index);
-      default:
-        return super.isFieldCompatible(field, metadata, index);
-    }
+  protected FieldsValidator getFieldsValidator() {
+    return new SqlFieldsValidator();
   }
 
   /**

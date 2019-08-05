@@ -17,7 +17,6 @@
 package io.cdap.plugin.db.batch.sink;
 
 import com.google.common.collect.ImmutableMap;
-import io.cdap.GenericDatabasePluginTestBase;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.dataset.table.Table;
@@ -31,6 +30,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
+import io.cdap.plugin.GenericDatabasePluginTestBase;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;

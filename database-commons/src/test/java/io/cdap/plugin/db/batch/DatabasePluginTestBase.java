@@ -48,7 +48,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Base test class for all database plugins.
  */
-public class DatabasePluginTestBase extends HydratorTestBase {
+public abstract class DatabasePluginTestBase extends HydratorTestBase {
 
   public static Schema getSchemaWithInvalidTypeMapping(String columnName, Schema.Type type) {
     return Schema.recordOf(

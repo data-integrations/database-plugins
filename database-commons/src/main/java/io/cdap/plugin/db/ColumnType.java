@@ -16,6 +16,8 @@
 
 package io.cdap.plugin.db;
 
+import java.util.Objects;
+
 /**
  * Stores SQL column name and type.
  */
@@ -41,5 +43,33 @@ public class ColumnType {
 
   public int getType() {
     return type;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ColumnType that = (ColumnType) o;
+    return type == that.type &&
+      Objects.equals(name, that.name) &&
+      Objects.equals(typeName, that.typeName);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, typeName, type);
+  }
+
+  @Override
+  public String toString() {
+    return "ColumnType{" +
+      "name='" + name + '\'' +
+      ", typeName='" + typeName + '\'' +
+      ", type=" + type +
+      '}';
   }
 }

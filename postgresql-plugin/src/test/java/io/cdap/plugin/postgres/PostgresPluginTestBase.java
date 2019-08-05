@@ -56,7 +56,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TimeZone;
 
-public class PostgresPluginTestBase extends DatabasePluginTestBase {
+public abstract class PostgresPluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();

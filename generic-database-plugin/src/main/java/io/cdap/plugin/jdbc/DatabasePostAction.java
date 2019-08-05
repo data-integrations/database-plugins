@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
  * Represents database post action.
  */
 @Plugin(type = PostAction.PLUGIN_TYPE)
-@Name("DatabaseQuery")
+@Name(DatabaseConstants.PLUGIN_NAME)
 @Description("Runs a MySQL query after a pipeline run.")
 public class DatabasePostAction extends AbstractQueryAction {
 

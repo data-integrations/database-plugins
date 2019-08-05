@@ -19,7 +19,6 @@ package io.cdap.plugin.db.batch.sink;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.cdap.GenericDatabasePluginTestBase;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -30,6 +29,7 @@ import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
+import io.cdap.plugin.GenericDatabasePluginTestBase;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
@@ -64,7 +64,7 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
     "dbRecord",
     Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
     Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("SCORE", Schema.of(Schema.Type.FLOAT)),
+    Schema.Field.of("SCORE", Schema.of(Schema.Type.DOUBLE)),
     Schema.Field.of("GRADUATED", Schema.of(Schema.Type.BOOLEAN)),
     Schema.Field.of("TINY", Schema.of(Schema.Type.INT)),
     Schema.Field.of("SMALL", Schema.of(Schema.Type.INT)),
@@ -86,7 +86,7 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
     String inputDatasetName = "input-dbsinktest";
 
 
-    ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName, sinkSchema);
+    ETLPlugin sourceConfig = MockSource.getPlugin(inputDatasetName);
     ETLPlugin sinkConfig = new ETLPlugin(DatabaseConstants.PLUGIN_NAME,
                                          BatchSink.PLUGIN_TYPE,
                                          ImmutableMap.of(ConnectionConfig.CONNECTION_STRING, getConnectionURL(),
@@ -102,7 +102,7 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
 
     try (Connection conn = getConnection();
          Statement stmt = conn.createStatement()) {
-      stmt.execute("SELECT * FROM \"MY_DEST_TABLE\"");
+      stmt.execute("SELECT * FROM \"MY_DEST_TABLE\" ORDER BY \"NAME\"");
       Set<String> users = new HashSet<>();
       try (ResultSet resultSet = stmt.getResultSet()) {
         Assert.assertTrue(resultSet.next());
@@ -112,7 +112,7 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
         Assert.assertEquals(new Timestamp(CURRENT_TS).toString(),
                             resultSet.getTimestamp("TIMESTAMP_COL").toString());
         Assert.assertTrue(resultSet.next());
-        Assert.assertEquals("user2", resultSet.getString("CLOB_COL"));
+        Assert.assertEquals(CLOB_DATA, resultSet.getString("CLOB_COL"));
         Assert.assertEquals("user2", Bytes.toString(resultSet.getBytes("BLOB_COL"), 0, 5));
         Assert.assertEquals(new BigDecimal(3.458, new MathContext(PRECISION)).setScale(SCALE),
                             resultSet.getBigDecimal("NUMERIC_COL"));
@@ -175,7 +175,7 @@ public class DBSinkTestRun extends GenericDatabasePluginTestBase {
       inputRecords.add(StructuredRecord.builder(sinkSchema)
                          .set("ID", i)
                          .set("NAME", name)
-                         .set("SCORE", 3.451f)
+                         .set("SCORE", 3.451d)
                          .set("GRADUATED", (i % 2 == 0))
                          .set("TINY", i + 1)
                          .set("SMALL", i + 2)
