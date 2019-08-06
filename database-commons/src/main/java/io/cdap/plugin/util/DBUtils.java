@@ -17,14 +17,11 @@
 package io.cdap.plugin.util;
 
 import com.google.common.base.Preconditions;
-import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
-import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.JDBCDriverShim;
-import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,10 +34,8 @@ import java.sql.Clob;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Objects;
@@ -187,60 +182,6 @@ public final class DBUtils {
       ConnectionConfig.JDBC_PLUGIN_TYPE,
       config.jdbcPluginName,
       jdbcPluginId, PluginProperties.builder().build());
-  }
-
-  /**
-   * Checks if fields from schema are compatible to be written into database.
-   *
-   * @param actualSchema schema from db.
-   * @param configSchema schema from config.
-   */
-  public static void validateSourceSchema(Schema actualSchema, Schema configSchema) {
-    if (configSchema == null) {
-      throw new InvalidConfigPropertyException("Schema should not be null or empty",
-                                               AbstractDBSource.DBSourceConfig.SCHEMA);
-    }
-    for (Schema.Field field : configSchema.getFields()) {
-      Schema.Field actualField = actualSchema.getField(field.getName());
-      if (actualField == null) {
-        throw new InvalidConfigPropertyException(String.format("Schema field '%s' is not present in actual record",
-                                                               field.getName()),
-                                                 AbstractDBSource.DBSourceConfig.SCHEMA);
-      }
-      Schema actualFieldSchema = actualField.getSchema().isNullable() ?
-        actualField.getSchema().getNonNullable() : actualField.getSchema();
-      Schema expectedFieldSchema = field.getSchema().isNullable() ?
-        field.getSchema().getNonNullable() : field.getSchema();
-
-      if (!actualFieldSchema.equals(expectedFieldSchema)) {
-        throw new IllegalArgumentException(
-          String.format("Schema field '%s' has type '%s' but found '%s' in input record",
-                        field.getName(), expectedFieldSchema.getType(), actualFieldSchema.getType()));
-      }
-    }
-  }
-
-  /**
-   * Compare columns from schema with columns in table and returns list of matched columns in {@link ColumnType} format.
-   *
-   * @param resultSetMetadata result set metadata from table.
-   * @param columns           list of columns from schema.
-   * @return list of matched columns.
-   */
-  public static List<ColumnType> getMatchedColumnTypeList(ResultSetMetaData resultSetMetadata, List<String> columns)
-    throws SQLException {
-    List<ColumnType> columnTypes = new ArrayList<>(columns.size());
-    // JDBC driver column indices start with 1
-    for (int i = 0; i < resultSetMetadata.getColumnCount(); i++) {
-      String name = resultSetMetadata.getColumnName(i + 1);
-      String columnTypeName = resultSetMetadata.getColumnTypeName(i + 1);
-      int type = resultSetMetadata.getColumnType(i + 1);
-      String schemaColumnName = columns.get(i);
-      Preconditions.checkArgument(schemaColumnName.toLowerCase().equals(name.toLowerCase()),
-                                  "Missing column '%s' in SQL table", schemaColumnName);
-      columnTypes.add(new ColumnType(schemaColumnName, columnTypeName, type));
-    }
-    return columnTypes;
   }
 
   /**

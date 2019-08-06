@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.db.batch.sink;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.annotation.Description;
@@ -238,11 +239,34 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
                                                                dbSinkConfig.getEscapedTableName()))
       ) {
         ResultSetMetaData resultSetMetadata = rs.getMetaData();
-        columnTypes.addAll(DBUtils.getMatchedColumnTypeList(resultSetMetadata, columns));
+        columnTypes.addAll(getMatchedColumnTypeList(resultSetMetadata, columns));
       }
     }
 
     this.columnTypes = Collections.unmodifiableList(columnTypes);
+  }
+
+  /**
+   * Compare columns from schema with columns in table and returns list of matched columns in {@link ColumnType} format.
+   *
+   * @param resultSetMetadata result set metadata from table.
+   * @param columns           list of columns from schema.
+   * @return list of matched columns.
+   */
+  static List<ColumnType> getMatchedColumnTypeList(ResultSetMetaData resultSetMetadata, List<String> columns)
+    throws SQLException {
+    List<ColumnType> columnTypes = new ArrayList<>(columns.size());
+    // JDBC driver column indices start with 1
+    for (int i = 0; i < resultSetMetadata.getColumnCount(); i++) {
+      String name = resultSetMetadata.getColumnName(i + 1);
+      String columnTypeName = resultSetMetadata.getColumnTypeName(i + 1);
+      int type = resultSetMetadata.getColumnType(i + 1);
+      String schemaColumnName = columns.get(i);
+      Preconditions.checkArgument(schemaColumnName.toLowerCase().equals(name.toLowerCase()),
+                                  "Missing column '%s' in SQL table", schemaColumnName);
+      columnTypes.add(new ColumnType(schemaColumnName, columnTypeName, type));
+    }
+    return columnTypes;
   }
 
   private void validateSchema(Class<? extends Driver> jdbcDriverClass, String tableName, Schema inputSchema) {

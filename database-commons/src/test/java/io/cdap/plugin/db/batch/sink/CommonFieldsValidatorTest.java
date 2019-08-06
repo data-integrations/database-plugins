@@ -14,14 +14,12 @@
  * the License.
  */
 
-package io.cdap.plugin.db;
+package io.cdap.plugin.db.batch.sink;
 
 import com.google.common.collect.ImmutableSet;
 import com.mockrunner.mock.jdbc.MockResultSet;
 import com.mockrunner.mock.jdbc.MockResultSetMetaData;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.plugin.db.batch.sink.CommonFieldsValidator;
-import io.cdap.plugin.db.batch.sink.FieldsValidator;
 import org.junit.Assert;
 import org.junit.Test;
 
