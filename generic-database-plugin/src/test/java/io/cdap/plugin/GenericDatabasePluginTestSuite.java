@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap;
+package io.cdap.plugin;
 
 import io.cdap.cdap.common.test.TestSuite;
 import io.cdap.plugin.db.batch.action.DBActionTestRun;

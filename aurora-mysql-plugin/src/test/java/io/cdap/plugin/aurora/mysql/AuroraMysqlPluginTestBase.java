@@ -55,7 +55,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import javax.sql.rowset.serial.SerialBlob;
 
-public class AuroraMysqlPluginTestBase extends DatabasePluginTestBase {
+public abstract class AuroraMysqlPluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
@@ -73,11 +73,11 @@ public class AuroraMysqlPluginTestBase extends DatabasePluginTestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("auroraMysql.clusterEndpoint"))
-    .put(ConnectionConfig.PORT, System.getProperty("auroraMysql.port"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("auroraMysql.database"))
-    .put(ConnectionConfig.USER, System.getProperty("auroraMysql.username"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("auroraMysql.password"))
+    .put(ConnectionConfig.HOST, getPropertyOrFail("auroraMysql.clusterEndpoint"))
+    .put(ConnectionConfig.PORT, getPropertyOrFail("auroraMysql.port"))
+    .put(ConnectionConfig.DATABASE, getPropertyOrFail("auroraMysql.database"))
+    .put(ConnectionConfig.USER, getPropertyOrFail("auroraMysql.username"))
+    .put(ConnectionConfig.PASSWORD, getPropertyOrFail("auroraMysql.password"))
     .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
     .build();
 
@@ -185,7 +185,7 @@ public class AuroraMysqlPluginTestBase extends DatabasePluginTestBase {
     }
   }
 
-  private static void populateData(PreparedStatement ...stmts) throws SQLException {
+  private static void populateData(PreparedStatement... stmts) throws SQLException {
     // insert the same data into both tables: my_table and your_table
     for (PreparedStatement pStmt : stmts) {
       for (int i = 1; i <= 5; i++) {
@@ -226,6 +226,16 @@ public class AuroraMysqlPluginTestBase extends DatabasePluginTestBase {
         pStmt.executeUpdate();
       }
     }
+  }
+
+  private static String getPropertyOrFail(String propertyName) {
+    String value = System.getProperty(propertyName);
+
+    if (value == null) {
+      throw new IllegalStateException("There is no value for property " + propertyName);
+    }
+
+    return value;
   }
 
   public static Connection createConnection() {

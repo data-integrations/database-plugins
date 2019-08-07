@@ -17,7 +17,6 @@
 package io.cdap.plugin.db.batch.action;
 
 import com.google.common.collect.ImmutableMap;
-import io.cdap.GenericDatabasePluginTestBase;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
@@ -28,6 +27,7 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.plugin.GenericDatabasePluginTestBase;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.jdbc.DatabaseConstants;
 import org.junit.Assert;
@@ -38,7 +38,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 /**
- * Test for AbstractDBAction Plugin
+ * Test for DatabaseAction Plugin
  */
 public class DBActionTestRun extends GenericDatabasePluginTestBase {
 

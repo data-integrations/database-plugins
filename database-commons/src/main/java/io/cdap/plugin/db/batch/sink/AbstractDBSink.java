@@ -16,11 +16,9 @@
 
 package io.cdap.plugin.db.batch.sink;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -60,15 +58,12 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -161,7 +156,6 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
    * Extracts column info from input schema. Later it is used for metadata retrieval
    * and insert during query generation. Override this method if you need to escape column names
    * for databases with case-sensitive identifiers
-   *
    */
   protected void setColumnsInfo(List<Schema.Field> fields) {
     columns = fields.stream()
@@ -227,11 +221,6 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     }
   }
 
-  @VisibleForTesting
-  public void setColumns(List<String> columns) {
-    this.columns = ImmutableList.copyOf(columns);
-  }
-
   private void setResultSetMetadata() throws Exception {
     List<ColumnType> columnTypes = new ArrayList<>(columns.size());
     String connectionString = dbSinkConfig.getConnectionString();
@@ -250,20 +239,34 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
                                                                dbSinkConfig.getEscapedTableName()))
       ) {
         ResultSetMetaData resultSetMetadata = rs.getMetaData();
-        // JDBC driver column indices start with 1
-        for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
-          String name = resultSetMetadata.getColumnName(i + 1);
-          String columnTypeName = resultSetMetadata.getColumnTypeName(i + 1);
-          int type = resultSetMetadata.getColumnType(i + 1);
-          String schemaColumnName = columns.get(i);
-          Preconditions.checkArgument(schemaColumnName.toLowerCase().equals(name.toLowerCase()),
-                                      "Missing column '%s' in SQL table", schemaColumnName);
-          columnTypes.add(new ColumnType(schemaColumnName, columnTypeName, type));
-        }
+        columnTypes.addAll(getMatchedColumnTypeList(resultSetMetadata, columns));
       }
     }
 
     this.columnTypes = Collections.unmodifiableList(columnTypes);
+  }
+
+  /**
+   * Compare columns from schema with columns in table and returns list of matched columns in {@link ColumnType} format.
+   *
+   * @param resultSetMetadata result set metadata from table.
+   * @param columns           list of columns from schema.
+   * @return list of matched columns.
+   */
+  static List<ColumnType> getMatchedColumnTypeList(ResultSetMetaData resultSetMetadata, List<String> columns)
+    throws SQLException {
+    List<ColumnType> columnTypes = new ArrayList<>(columns.size());
+    // JDBC driver column indices start with 1
+    for (int i = 0; i < resultSetMetadata.getColumnCount(); i++) {
+      String name = resultSetMetadata.getColumnName(i + 1);
+      String columnTypeName = resultSetMetadata.getColumnTypeName(i + 1);
+      int type = resultSetMetadata.getColumnType(i + 1);
+      String schemaColumnName = columns.get(i);
+      Preconditions.checkArgument(schemaColumnName.toLowerCase().equals(name.toLowerCase()),
+                                  "Missing column '%s' in SQL table", schemaColumnName);
+      columnTypes.add(new ColumnType(schemaColumnName, columnTypeName, type));
+    }
+    return columnTypes;
   }
 
   private void validateSchema(Class<? extends Driver> jdbcDriverClass, String tableName, Schema inputSchema) {
@@ -293,7 +296,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       try (PreparedStatement pStmt = connection.prepareStatement("SELECT * FROM " + dbSinkConfig.getEscapedTableName()
                                                                    + " WHERE 1 = 0");
            ResultSet rs = pStmt.executeQuery()) {
-        validateFields(inputSchema, rs);
+        getFieldsValidator().validateFields(inputSchema, rs);
       }
 
     } catch (SQLException e) {
@@ -303,108 +306,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     }
   }
 
-  private void validateFields(Schema inputSchema, ResultSet rs) throws SQLException {
-    ResultSetMetaData rsMetaData = rs.getMetaData();
-
-    Preconditions.checkNotNull(inputSchema.getFields());
-    Set<String> invalidFields = new HashSet<>();
-    for (Schema.Field field : inputSchema.getFields()) {
-      int columnIndex = rs.findColumn(field.getName());
-      boolean isColumnNullable = (ResultSetMetaData.columnNullable == rsMetaData.isNullable(columnIndex));
-      boolean isNotNullAssignable = !isColumnNullable && field.getSchema().isNullable();
-      if (isNotNullAssignable) {
-        LOG.error("Field '{}' was given as nullable but the database column is not nullable", field.getName());
-        invalidFields.add(field.getName());
-      }
-
-      if (!isFieldCompatible(field, rsMetaData, columnIndex)) {
-        String sqlTypeName = rsMetaData.getColumnTypeName(columnIndex);
-        Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-        Schema.Type fieldType = fieldSchema.getType();
-        Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
-        LOG.error("Field '{}' was given as type '{}' but the database column is actually of type '{}'.",
-                  field.getName(),
-                  fieldLogicalType != null ? fieldLogicalType.getToken() : fieldType,
-                  sqlTypeName
-        );
-        invalidFields.add(field.getName());
-      }
-    }
-
-    Preconditions.checkArgument(invalidFields.isEmpty(),
-                                "Couldn't find matching database column(s) for input field(s) '%s'.",
-                                String.join(",", invalidFields));
-  }
-
-  /**
-   * Checks if field is compatible to be written into database column of the given sql index.
-   * @param field field of the explicit input schema.
-   * @param metadata resultSet metadata.
-   * @param index sql column index.
-   * @return 'true' if field is compatible to be written, 'false' otherwise.
-   */
-  protected boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
-    Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-    Schema.Type fieldType = fieldSchema.getType();
-    Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
-
-    int sqlType = metadata.getColumnType(index);
-
-    return isFieldCompatible(fieldType, fieldLogicalType, sqlType);
-  }
-
-  protected boolean isFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType) {
-    // Handle logical types first
-    if (fieldLogicalType != null) {
-      switch (fieldLogicalType) {
-        case DATE:
-          return sqlType == Types.DATE;
-        case TIME_MILLIS:
-        case TIME_MICROS:
-          return sqlType == Types.TIME;
-        case TIMESTAMP_MILLIS:
-        case TIMESTAMP_MICROS:
-          return sqlType == Types.TIMESTAMP;
-        case DECIMAL:
-          return sqlType == Types.NUMERIC
-            || sqlType == Types.DECIMAL;
-      }
-    }
-
-    switch (fieldType) {
-      case NULL:
-        return true;
-      case BOOLEAN:
-        return sqlType == Types.BOOLEAN
-          || sqlType == Types.BIT;
-      case INT:
-        return sqlType == Types.INTEGER
-          || sqlType == Types.SMALLINT
-          || sqlType == Types.TINYINT;
-      case LONG:
-        return sqlType == Types.BIGINT;
-      case FLOAT:
-        return sqlType == Types.REAL
-          || sqlType == Types.FLOAT;
-      case DOUBLE:
-        return sqlType == Types.DOUBLE;
-      case BYTES:
-        return sqlType == Types.BINARY
-          || sqlType == Types.VARBINARY
-          || sqlType == Types.LONGVARBINARY
-          || sqlType == Types.BLOB;
-      case STRING:
-        return sqlType == Types.VARCHAR
-          || sqlType == Types.CHAR
-          || sqlType == Types.CLOB
-          || sqlType == Types.LONGNVARCHAR
-          || sqlType == Types.LONGVARCHAR
-          || sqlType == Types.NCHAR
-          || sqlType == Types.NCLOB
-          || sqlType == Types.NVARCHAR;
-      default:
-        return false;
-    }
+  protected FieldsValidator getFieldsValidator() {
+    return new CommonFieldsValidator();
   }
 
   private void emitLineage(BatchSinkContext context, List<Schema.Field> fields) {
@@ -439,6 +342,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     /**
      * Adds escape characters (back quotes, double quotes, etc.) to the table name for
      * databases with case-sensitive identifiers.
+     *
      * @return tableName with leading and trailing escape characters appended.
      * Default implementation returns unchanged table name string.
      */

@@ -52,7 +52,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
 
-public class OraclePluginTestBase extends DatabasePluginTestBase {
+public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();

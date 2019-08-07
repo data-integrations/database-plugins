@@ -85,7 +85,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     if (importQueryString.toUpperCase().contains("WHERE $CONDITIONS AND")) {
       importQueryString = importQueryString.replaceAll("(?i)" + Pattern.quote("$CONDITIONS AND"), "");
     } else if (importQueryString.toUpperCase().contains("WHERE $CONDITIONS")) {
-      importQueryString = importQueryString.replaceAll("(?i)"  + Pattern.quote("WHERE $CONDITIONS"), "");
+      importQueryString = importQueryString.replaceAll("(?i)" + Pattern.quote("WHERE $CONDITIONS"), "");
     } else if (importQueryString.toUpperCase().contains("AND $CONDITIONS")) {
       importQueryString = importQueryString.replaceAll("(?i)" + Pattern.quote("AND $CONDITIONS"), "");
     } else if (importQueryString.toUpperCase().contains("$CONDITIONS")) {
@@ -381,11 +381,14 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     }
 
     private void validateSchema(Schema actualSchema) {
-      Schema schema = getSchema();
-      if (schema == null) {
+      validateSchema(actualSchema, getSchema());
+    }
+
+    static void validateSchema(Schema actualSchema, Schema configSchema) {
+      if (configSchema == null) {
         throw new InvalidConfigPropertyException("Schema should not be null or empty", SCHEMA);
       }
-      for (Schema.Field field : schema.getFields()) {
+      for (Schema.Field field : configSchema.getFields()) {
         Schema.Field actualField = actualSchema.getField(field.getName());
         if (actualField == null) {
           throw new InvalidConfigPropertyException(String.format("Schema field '%s' is not present in actual record",

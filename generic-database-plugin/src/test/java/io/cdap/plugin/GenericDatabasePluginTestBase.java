@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap;
+package io.cdap.plugin;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -61,7 +61,7 @@ import javax.sql.rowset.serial.SerialBlob;
 /**
  * Database Plugin Tests setup.
  */
-public class GenericDatabasePluginTestBase extends DatabasePluginTestBase {
+public abstract class GenericDatabasePluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final String CLOB_DATA =

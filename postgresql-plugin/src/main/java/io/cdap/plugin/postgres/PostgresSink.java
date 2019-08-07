@@ -27,16 +27,14 @@ import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import io.cdap.plugin.db.batch.sink.FieldsValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
@@ -82,24 +80,8 @@ public class PostgresSink extends AbstractDBSink {
   }
 
   @Override
-  protected boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
-    Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
-      : field.getSchema().getType();
-
-    String colTypeName = metadata.getColumnTypeName(index);
-    int columnType = metadata.getColumnType(index);
-    if (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(colTypeName) ||
-      PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(columnType)) {
-      if (Objects.equals(fieldType, Schema.Type.STRING)) {
-        return true;
-      } else {
-        LOG.error("Field '{}' was given as type '{}' but must be of type 'string' for the PostgreSQL column of " +
-                    "{} type.", field.getName(), fieldType, colTypeName);
-        return false;
-      }
-    }
-
-    return super.isFieldCompatible(field, metadata, index);
+  protected FieldsValidator getFieldsValidator() {
+    return new PostgresFieldsValidator();
   }
 
   /**

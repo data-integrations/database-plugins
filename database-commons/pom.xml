@@ -59,6 +59,12 @@
       <artifactId>cdap-api</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>com.mockrunner</groupId>
+      <artifactId>mockrunner-jdbc</artifactId>
+      <version>${mockrunner.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
