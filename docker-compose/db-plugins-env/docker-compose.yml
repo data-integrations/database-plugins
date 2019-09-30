@@ -57,3 +57,4 @@ services:
       - ORACLE_SID=cdap
       - ORACLE_PDB=mydb
       - ORACLE_PWD=123Qwe123
+  # TODO implement SAPHANA env
