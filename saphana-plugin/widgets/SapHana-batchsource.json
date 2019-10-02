@@ -1,0 +1,164 @@
+{
+  "metadata": {
+    "spec-version": "1.5"
+  },
+  "display-name": "SAP HANA",
+  "configuration-groups": [
+    {
+      "label": "Basic",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Reference Name",
+          "name": "referenceName",
+          "widget-attributes": {
+            "placeholder": "Name used to identify this source for lineage"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Driver Name",
+          "name": "jdbcPluginName",
+          "widget-attributes": {
+            "default": "sap"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Host",
+          "name": "host",
+          "widget-attributes": {
+            "default": "localhost"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Port",
+          "name": "port",
+          "widget-attributes": {
+            "default": "5432"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Database",
+          "name": "database"
+        },
+        {
+          "widget-type": "textarea",
+          "label": "Import Query",
+          "name": "importQuery",
+          "widget-attributes": {
+            "rows": "4"
+          },
+          "plugin-function": {
+            "widget": "outputSchema",
+            "output-property": "schema",
+            "omit-properties": [
+              {
+                "name": "schema"
+              }
+            ],
+            "add-properties": [
+              {
+                "name": "query",
+                "plugin-property-for-value": "importQuery",
+                "widget-type": "textarea",
+                "label": "Query",
+                "widget-attributes": {
+                  "rows": "4"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "textarea",
+          "label": "Bounding Query",
+          "name": "boundingQuery",
+          "widget-attributes": {
+            "rows": "4"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Split-By Field Name",
+          "name": "splitBy"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Number of Splits to Generate",
+          "name": "numSplits",
+          "widget-attributes": {
+            "default": "1"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Credentials",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Username",
+          "name": "user"
+        },
+        {
+          "widget-type": "password",
+          "label": "Password",
+          "name": "password"
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
+        {
+          "widget-type": "keyvalue",
+          "label": "Connection Arguments",
+          "name": "connectionArguments",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value",
+            "kv-delimiter": "=",
+            "delimiter": ";"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Connection Timeout",
+          "name": "connectionTimeout",
+          "widget-attributes": {
+            "default": "100"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "schema",
+      "widget-type": "schema",
+      "widget-attributes": {
+        "schema-types": [
+          "boolean",
+          "int",
+          "long",
+          "float",
+          "double",
+          "bytes",
+          "string"
+        ],
+        "schema-default-type": "string"
+      }
+    }
+  ],
+  "jump-config": {
+    "datasets": [
+      {
+        "ref-property-name": "referenceName"
+      }
+    ]
+  }
+}
