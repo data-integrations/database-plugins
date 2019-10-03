@@ -17,7 +17,6 @@
 package io.cdap.plugin.saphana;
 
 
-
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.batch.sink.CommonFieldsValidator;
 
@@ -30,24 +29,24 @@ import java.util.Objects;
  */
 public class SapHanaFieldValidator extends CommonFieldsValidator {
 
-  @Override
-  public boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
-    Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
-      : field.getSchema().getType();
+    @Override
+    public boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
+        Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
+                : field.getSchema().getType();
 
-    String colTypeName = metadata.getColumnTypeName(index);
-    int columnType = metadata.getColumnType(index);
-    if (SapHanaSchemaReader.STRING_MAPPED_SAPHANA_TYPES_NAMES.contains(colTypeName) ||
-      SapHanaSchemaReader.STRING_MAPPED_SAPHANA_TYPES.contains(columnType)) {
-      if (Objects.equals(fieldType, Schema.Type.STRING)) {
-        return true;
-      } else {
-        LOG.error("Field '{}' was given as type '{}' but must be of type 'string' for the SAP HANA column of " +
-                    "{} type.", field.getName(), fieldType, colTypeName);
-        return false;
-      }
+        String colTypeName = metadata.getColumnTypeName(index);
+        int columnType = metadata.getColumnType(index);
+        if (SapHanaSchemaReader.STRING_MAPPED_SAPHANA_TYPES_NAMES.contains(colTypeName) ||
+                SapHanaSchemaReader.STRING_MAPPED_SAPHANA_TYPES.contains(columnType)) {
+            if (Objects.equals(fieldType, Schema.Type.STRING)) {
+                return true;
+            } else {
+                LOG.error("Field '{}' was given as type '{}' but must be of type 'string' for the SAP HANA column of " +
+                        "{} type.", field.getName(), fieldType, colTypeName);
+                return false;
+            }
+        }
+
+        return super.isFieldCompatible(field, metadata, index);
     }
-
-    return super.isFieldCompatible(field, metadata, index);
-  }
 }

@@ -29,11 +29,11 @@ public class SapHanaSchemaReader extends CommonSchemaReader {
 
 
     public static final Set<Integer> STRING_MAPPED_SAPHANA_TYPES = ImmutableSet.of(
-            //TODO fill this
+            //TODO
     );
 
     public static final Set<String> STRING_MAPPED_SAPHANA_TYPES_NAMES = ImmutableSet.of(
-            //TODO fill this
+            //TODO
     );
 
     @Override

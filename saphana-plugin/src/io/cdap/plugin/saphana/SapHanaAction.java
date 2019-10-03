@@ -28,7 +28,7 @@ import io.cdap.plugin.db.batch.config.DBSpecificQueryConfig;
 @Plugin(type = Action.PLUGIN_TYPE)
 @Name(SapHanaConstants.PLUGIN_NAME)
 @Description("Action that runs a SAP HANA command")
-public class SapHanaAction  extends AbstractDBAction {
+public class SapHanaAction extends AbstractDBAction {
     public SapHanaAction(QueryConfig config, Boolean enableAutoCommit) {
         super(config, enableAutoCommit);
     }
