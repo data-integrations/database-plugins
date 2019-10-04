@@ -17,14 +17,6 @@
         },
         {
           "widget-type": "textbox",
-          "label": "Driver Name",
-          "name": "jdbcPluginName",
-          "widget-attributes": {
-            "default": "mariadb"
-          }
-        },
-        {
-          "widget-type": "textbox",
           "label": "Host",
           "name": "host",
           "widget-attributes": {
@@ -104,6 +96,14 @@
       "label": "Advanced",
       "properties": [
         {
+          "widget-type": "textbox",
+          "label": "Driver Name",
+          "name": "jdbcPluginName",
+          "widget-attributes": {
+            "default": "mariadb"
+          }
+        },
+        {
           "widget-type": "toggle",
           "label": "Use Compression",
           "name": "useCompression",
@@ -118,11 +118,6 @@
             },
             "default": "false"
           }
-        },
-        {
-          "widget-type": "textbox",
-          "label": "SQL_MODE",
-          "name": "sqlMode"
         },
         {
           "widget-type": "keyvalue",

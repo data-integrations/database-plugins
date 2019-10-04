@@ -84,17 +84,12 @@ public final class MariadbUtil {
    * Composes immutable list of initial queries to the DB
    *
    * @param useAnsiQuotes ANSI_QUOTES mode
-   * @param sqlMode SQL mode
    * @return immutable list of initial commands
    */
-  public static List<String> composeDbInitQueries(@Nullable Boolean useAnsiQuotes, @Nullable String sqlMode) {
+  public static List<String> composeDbInitQueries(@Nullable Boolean useAnsiQuotes) {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
      if (useAnsiQuotes != null  && useAnsiQuotes) {
        builder.add(MariadbConstants.ANSI_QUOTES_QUERY);
-     }
-
-     if (!Strings.isNullOrEmpty(sqlMode)) {
-       builder.add(String.format(MariadbConstants.SET_SQL_MODE_QUERY_FORMAT, sqlMode));
      }
 
     return builder.build();

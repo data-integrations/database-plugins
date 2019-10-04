@@ -64,11 +64,6 @@ public class MariadbSource extends AbstractDBSource {
     @Nullable
     public Boolean useCompression;
 
-    @Name(MariadbConstants.SQL_MODE)
-    @Description("Override the default SQL_MODE session variable used by the server")
-    @Nullable
-    public String sqlMode;
-
     @Name(MariadbConstants.USE_SSL)
     @Description("Turns on SSL encryption. Connection will fail if SSL is not available")
     @Nullable
@@ -115,7 +110,7 @@ public class MariadbSource extends AbstractDBSource {
 
     @Override
     public List<String> getInitQueries() {
-      return MariadbUtil.composeDbInitQueries(useAnsiQuotes, sqlMode);
+      return MariadbUtil.composeDbInitQueries(useAnsiQuotes);
     }
   }
 }

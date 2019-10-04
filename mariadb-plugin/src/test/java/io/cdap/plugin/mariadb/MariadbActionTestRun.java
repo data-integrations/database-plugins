@@ -49,7 +49,7 @@ public class MariadbActionTestRun extends MariadbPluginTestBase {
         .putAll(BASE_PROPS)
         .put(MariadbConstants.AUTO_RECONNECT, "true")
         .put(MariadbConstants.USE_COMPRESSION, "true")
-        .put(MariadbConstants.SQL_MODE, "ANSI_QUOTES,NO_ENGINE_SUBSTITUTION")
+        .put(MariadbConstants.ANSI_QUOTES_QUERY, "true")
         .put(QueryConfig.QUERY, "delete from dbActionTest where day = '${logicalStartTime(yyyy-MM-dd,0m,UTC)}'")
         .build(),
       null));

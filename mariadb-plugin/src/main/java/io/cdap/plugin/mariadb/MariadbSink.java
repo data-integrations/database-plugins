@@ -57,11 +57,6 @@ public class MariadbSink extends AbstractDBSink {
     @Nullable
     public Boolean useCompression;
 
-    @Name(MariadbConstants.SQL_MODE)
-    @Description("Override the default SQL_MODE session variable used by the server")
-    @Nullable
-    public String sqlMode;
-
     @Name(MariadbConstants.USE_SSL)
     @Description("Turns on SSL encryption. Connection will fail if SSL is not available")
     @Nullable
@@ -99,11 +94,6 @@ public class MariadbSink extends AbstractDBSink {
               keyStorePassword,
               trustStore,
               trustStorePassword);
-    }
-
-    @Override
-    public List<String> getInitQueries() {
-      return MariadbUtil.composeDbInitQueries(null, sqlMode);
     }
   }
 }

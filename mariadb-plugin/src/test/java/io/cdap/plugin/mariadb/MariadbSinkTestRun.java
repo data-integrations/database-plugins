@@ -243,7 +243,7 @@ public class MariadbSinkTestRun extends MariadbPluginTestBase {
         .putAll(BASE_PROPS)
         .put(MariadbConstants.AUTO_RECONNECT, "true")
         .put(MariadbConstants.USE_COMPRESSION, "true")
-        .put(MariadbConstants.SQL_MODE, "ANSI_QUOTES,NO_ENGINE_SUBSTITUTION")
+        .put(MariadbConstants.ANSI_QUOTES_QUERY, "true")
         .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, "MY_DEST_TABLE")
         .put(Constants.Reference.REFERENCE_NAME, "DBTest")
         .build(),
