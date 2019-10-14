@@ -16,11 +16,11 @@
 
 package io.cdap.plugin.util;
 
-import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
-import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.plugin.db.ConnectionConfig;
+import io.cdap.plugin.db.DBConfig;
 import io.cdap.plugin.db.JDBCDriverShim;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -163,17 +163,23 @@ public final class DBUtils {
 
   public static void validateJDBCPluginPipeline(PipelineConfigurer pipelineConfigurer, ConnectionConfig config,
                                                 String jdbcPluginId) {
-    if (Objects.isNull(config.user) && Objects.nonNull(config.password)) {
-      throw new InvalidConfigPropertyException("user", "user is null. Please provide both user name and password if " +
-        "database requires authentication. If not, please remove password and retry.");
+    FailureCollector collector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
+    if (!config.containsMacro(DBConfig.USER) && !config.containsMacro(DBConfig.PASSWORD) &&
+      Objects.isNull(config.user) && Objects.nonNull(config.password)) {
+      collector.addFailure("Username is required when password is given.", null)
+        .withConfigProperty(ConnectionConfig.USER);
     }
 
     Class<? extends Driver> jdbcDriverClass = getDriverClass(pipelineConfigurer, config, jdbcPluginId);
-    Preconditions.checkArgument(
-      jdbcDriverClass != null, "Unable to load JDBC Driver class for plugin name '%s'. Please make sure " +
-        "that the plugin '%s' of type '%s' containing the driver has been installed correctly.",
-      config.jdbcPluginName,
-      config.jdbcPluginName, ConnectionConfig.JDBC_PLUGIN_TYPE);
+    if (jdbcDriverClass == null) {
+      collector.addFailure(
+        String.format("Unable to load JDBC Driver class for plugin name '%s'.", config.jdbcPluginName),
+        String.format("Ensure that the plugin '%s' of type '%s' containing the driver has been installed correctly.",
+                      config.jdbcPluginName, ConnectionConfig.JDBC_PLUGIN_TYPE))
+        .withConfigProperty(ConnectionConfig.JDBC_PLUGIN_NAME)
+        .withPluginNotFound(jdbcPluginId, config.jdbcPluginName, ConnectionConfig.JDBC_PLUGIN_TYPE);
+    }
+    collector.getOrThrowException();
   }
 
   public static Class<? extends Driver> getDriverClass(PipelineConfigurer pipelineConfigurer, ConnectionConfig config,

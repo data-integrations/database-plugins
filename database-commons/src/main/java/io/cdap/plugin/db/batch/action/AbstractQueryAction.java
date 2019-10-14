@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.db.batch.action;
 
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchActionContext;
 import io.cdap.cdap.etl.api.batch.PostAction;
@@ -40,7 +41,9 @@ public abstract class AbstractQueryAction extends PostAction {
 
   @Override
   public void run(BatchActionContext batchContext) throws Exception {
-    config.validate();
+    FailureCollector collector = batchContext.getFailureCollector();
+    config.validate(collector);
+    collector.getOrThrowException();
 
     if (!config.shouldRun(batchContext)) {
       return;
@@ -53,7 +56,8 @@ public abstract class AbstractQueryAction extends PostAction {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-    config.validate();
+    FailureCollector collector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
+    config.validate(collector);
     DBUtils.validateJDBCPluginPipeline(pipelineConfigurer, config, JDBC_PLUGIN_ID);
   }
 }

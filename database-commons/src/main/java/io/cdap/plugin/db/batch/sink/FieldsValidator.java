@@ -17,10 +17,12 @@
 package io.cdap.plugin.db.batch.sink;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.FailureCollector;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Set;
 
 /**
  * Main Interface to validate db fields.
@@ -33,7 +35,7 @@ public interface FieldsValidator {
    * @param inputSchema input schema.
    * @param resultSet   resultSet with database fields.
    */
-  void validateFields(Schema inputSchema, ResultSet resultSet) throws SQLException;
+  void validateFields(Schema inputSchema, ResultSet resultSet, FailureCollector collector) throws SQLException;
 
   /**
    * Checks if field is compatible to be written into database column of the given sql index.
