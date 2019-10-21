@@ -13,9 +13,17 @@ mvn clean test \
 ```
 Notice that you must change properties for Aurora MySQL and Aurora Postgresql to real before running tests.
 ## Setup Local Environment
-MySQL, Postgresql, MSSQL, DB2 are using prebuild images.
+MySQL, Postgresql, MSSQL, DB2, SAP HANA are using prebuild images.
 
 Oracle DB image should be build separately.
+
+Note that you should login into docker account to pull SAP HANA image. 
+Account can be created [here](https://hub.docker.com/signup)
+Also, please note SAP HANA is sensitive to some CPU instructions.
+CPU model "host-passthrough" or similar can be required if running inside VM.
+SAP HANA requires that password for DB is provided through url.
+Convenience script ```docker-compose/db-plugins-env/saphana-password-server.sh``` 
+provided for this purpose.
 
 Netezza requires VMware Player for running Netezza emulator.
 
@@ -24,6 +32,7 @@ Netezza requires VMware Player for running Netezza emulator.
   * [Build Oracle DB docker image version 12.1.0.2-ee](https://github.com/oracle/docker-images/tree/master/OracleDatabase/SingleInstance)
 * Start docker environment by running commands:
 ```bash
+bash saphana-password-server.sh &
 cd docker-compose/db-plugins-env/
 docker-compose up -d
 ```
