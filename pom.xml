@@ -42,6 +42,7 @@
     <module>saphana-plugin</module>
     <module>cloudsql-mysql-plugin</module>
     <module>cloudsql-postgresql-plugin</module>
+    <module>teradata-plugin</module>
   </modules>
 
   <licenses>
