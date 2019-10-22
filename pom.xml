@@ -39,6 +39,7 @@
     <module>aurora-postgresql-plugin</module>
     <module>memsql-plugin</module>
     <module>saphana-plugin</module>
+    <module>teradata-plugin</module>
   </modules>
 
   <licenses>
