@@ -20,6 +20,8 @@ import com.google.common.collect.ImmutableSet;
 import com.mockrunner.mock.jdbc.MockResultSet;
 import com.mockrunner.mock.jdbc.MockResultSetMetaData;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.validation.CauseAttributes;
+import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -98,7 +100,9 @@ public class CommonFieldsValidatorTest {
     resultSet.addColumns(columns);
     resultSet.setResultSetMetaData(resultSetMetaData);
 
-    VALIDATOR.validateFields(schema, resultSet);
+    MockFailureCollector collector = new MockFailureCollector();
+    VALIDATOR.validateFields(schema, resultSet, collector);
+    Assert.assertEquals(0, collector.getValidationFailures().size());
   }
 
   @Test
@@ -135,13 +139,12 @@ public class CommonFieldsValidatorTest {
     resultSet.addColumns(columns);
     resultSet.setResultSetMetaData(resultSetMetaData);
 
-    try {
-      VALIDATOR.validateFields(schema, resultSet);
-      Assert.fail(String.format("Expected to throw %s", IllegalArgumentException.class.getName()));
-    } catch (IllegalArgumentException e) {
-      String errorMessage = "Couldn't find matching database column(s) for input field(s) 'SCORE'.";
-      Assert.assertEquals(errorMessage, e.getMessage());
-    }
+    MockFailureCollector collector = new MockFailureCollector();
+    VALIDATOR.validateFields(schema, resultSet, collector);
+    Assert.assertEquals(1, collector.getValidationFailures().size());
+    String attribute = collector.getValidationFailures().iterator().next().getCauses().get(0)
+      .getAttribute(CauseAttributes.INPUT_SCHEMA_FIELD);
+    Assert.assertEquals("SCORE", attribute);
   }
 
   @Test
@@ -174,13 +177,12 @@ public class CommonFieldsValidatorTest {
     resultSet.addColumns(columns);
     resultSet.setResultSetMetaData(resultSetMetaData);
 
-    try {
-      VALIDATOR.validateFields(schema, resultSet);
-      Assert.fail(String.format("Expected to throw %s", IllegalArgumentException.class.getName()));
-    } catch (IllegalArgumentException e) {
-      String errorMessage = "Couldn't find matching database column(s) for input field(s) 'SCORE'.";
-      Assert.assertEquals(errorMessage, e.getMessage());
-    }
+    MockFailureCollector collector = new MockFailureCollector();
+    VALIDATOR.validateFields(schema, resultSet, collector);
+    Assert.assertEquals(1, collector.getValidationFailures().size());
+    String attribute = collector.getValidationFailures().iterator().next().getCauses().get(0)
+      .getAttribute(CauseAttributes.INPUT_SCHEMA_FIELD);
+    Assert.assertEquals("SCORE", attribute);
   }
 
   public void validateFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType,

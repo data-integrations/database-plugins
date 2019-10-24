@@ -18,6 +18,7 @@ package io.cdap.plugin.db.batch.sink;
 
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.FailureCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +26,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Common fields validator.
@@ -35,37 +34,29 @@ public class CommonFieldsValidator implements FieldsValidator {
   protected static final Logger LOG = LoggerFactory.getLogger(CommonFieldsValidator.class);
 
   @Override
-  public void validateFields(Schema inputSchema, ResultSet resultSet) throws SQLException {
+  public void validateFields(Schema inputSchema, ResultSet resultSet, FailureCollector collector) throws SQLException {
     ResultSetMetaData rsMetaData = resultSet.getMetaData();
-
     Preconditions.checkNotNull(inputSchema.getFields());
-    Set<String> invalidFields = new HashSet<>();
     for (Schema.Field field : inputSchema.getFields()) {
       int columnIndex = resultSet.findColumn(field.getName());
       boolean isColumnNullable = (ResultSetMetaData.columnNullable == rsMetaData.isNullable(columnIndex));
       boolean isNotNullAssignable = !isColumnNullable && field.getSchema().isNullable();
+      String name = field.getName();
       if (isNotNullAssignable) {
-        LOG.error("Field '{}' was given as nullable but the database column is not nullable", field.getName());
-        invalidFields.add(field.getName());
+        collector.addFailure(
+          String.format("Field '%s' was given as nullable but database column is not nullable.", name),
+          "Ensure that the field is not nullable.").withInputSchemaField(name);
       }
 
       if (!isFieldCompatible(field, rsMetaData, columnIndex)) {
         String sqlTypeName = rsMetaData.getColumnTypeName(columnIndex);
         Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-        Schema.Type fieldType = fieldSchema.getType();
-        Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
-        LOG.error("Field '{}' was given as type '{}' but the database column is actually of type '{}'.",
-                  field.getName(),
-                  fieldLogicalType != null ? fieldLogicalType.getToken() : fieldType,
-                  sqlTypeName
-        );
-        invalidFields.add(field.getName());
+        collector.addFailure(
+          String.format("Field '%s' was given as type '%s' but the database column is actually of type '%s'.",
+                        name, fieldSchema.getDisplayName(), sqlTypeName),
+          "Ensure that the field is not nullable.").withInputSchemaField(name);
       }
     }
-
-    Preconditions.checkArgument(invalidFields.isEmpty(),
-                                "Couldn't find matching database column(s) for input field(s) '%s'.",
-                                String.join(",", invalidFields));
   }
 
   /**

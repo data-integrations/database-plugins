@@ -18,6 +18,7 @@ package io.cdap.plugin.db.batch.action;
 
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchActionContext;
 import io.cdap.plugin.common.batch.action.Condition;
 import io.cdap.plugin.common.batch.action.ConditionConfig;
@@ -43,10 +44,14 @@ public abstract class QueryActionConfig extends QueryConfig {
     runCondition = Condition.SUCCESS.name();
   }
 
-  public void validate() {
+  public void validate(FailureCollector collector) {
     // have to delegate instead of inherit, since we can't extend both ConditionConfig and ConnectionConfig.
-    if (!containsMacro("runCondition")) {
-      new ConditionConfig(runCondition).validate();
+    if (!containsMacro(RUN_CONDITION)) {
+      try {
+        new ConditionConfig(runCondition).validate();
+      } catch (IllegalArgumentException e) {
+        collector.addFailure(e.getMessage(), null).withConfigProperty(RUN_CONDITION);
+      }
     }
   }
 
