@@ -41,10 +41,17 @@ import java.util.StringJoiner;
 @Description("Writes records to a SAP HANA table. Each record will be written in a row in the table")
 public class SapHanaSink extends AbstractDBSink {
 
+  private final SapHanaSinkConfig sapHanaSinkConfig;
   private static final Character ESCAPE_CHAR = '"';
+
+  public SapHanaSink(DBSinkConfig dbSinkConfig, SapHanaSinkConfig sapHanaSinkConfig) {
+    super(dbSinkConfig);
+    this.sapHanaSinkConfig = sapHanaSinkConfig;
+  }
 
   public SapHanaSink(SapHanaSinkConfig sapHanaSinkConfig) {
     super(sapHanaSinkConfig);
+    this.sapHanaSinkConfig = sapHanaSinkConfig;
   }
 
   @Override

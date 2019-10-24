@@ -21,7 +21,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.plugin.db.batch.action.AbstractDBAction;
-import io.cdap.plugin.db.batch.action.QueryConfig;
+import io.cdap.plugin.db.batch.config.DBSpecificQueryConfig;
 
 /**
  * Action that runs SAP HANA command.
@@ -31,7 +31,18 @@ import io.cdap.plugin.db.batch.action.QueryConfig;
 @Description("Action that runs a SAP HANA command")
 public class SapHanaAction extends AbstractDBAction {
 
-  public SapHanaAction(QueryConfig config) {
+  SapHanaQueryActionConfig sapHanaQueryActionConfig;
+
+  public SapHanaAction(SapHanaQueryActionConfig config) {
     super(config, false);
+    this.sapHanaQueryActionConfig = config;
+  }
+
+  public static class SapHanaQueryActionConfig extends DBSpecificQueryConfig {
+
+    @Override
+    public String getConnectionString() {
+      return String.format(SapHanaConstants.SAPHANA_CONNECTION_STRING_FORMAT, host, port);
+    }
   }
 }
