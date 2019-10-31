@@ -1,0 +1,165 @@
+{
+  "metadata": {
+    "spec-version": "1.5"
+  },
+  "display-name": "MemSQL",
+  "configuration-groups": [
+    {
+      "label": "Basic",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Reference Name",
+          "name": "referenceName",
+          "widget-attributes": {
+            "placeholder": "Name used to identify this sink for lineage"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Host",
+          "name": "host",
+          "widget-attributes": {
+            "default": "localhost"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Port",
+          "name": "port",
+          "widget-attributes": {
+            "default": "3306"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Database",
+          "name": "database"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Table Name",
+          "name": "tableName"
+        }
+      ]
+    },
+    {
+      "label": "Credentials",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Username",
+          "name": "user"
+        },
+        {
+          "widget-type": "password",
+          "label": "Password",
+          "name": "password"
+        }
+      ]
+    },
+    {
+      "label": "SSL",
+      "properties": [
+        {
+          "label": "Use SSL",
+          "name": "useSSL",
+          "widget-type": "select",
+          "widget-attributes": {
+            "default": "If available",
+            "values": [
+              "If available",
+              "Yes",
+              "No"
+            ]
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Keystore URL",
+          "name": "keyStore"
+        },
+        {
+          "widget-type": "password",
+          "label": "Keystore Password",
+          "name": "keyStorePassword"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Truststore URL",
+          "name": "trustStore"
+        },
+        {
+          "widget-type": "password",
+          "label": "Truststore Password",
+          "name": "trustStorePassword"
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Driver Name",
+          "name": "jdbcPluginName",
+          "widget-attributes": {
+            "default": "mariadb"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Use Compression",
+          "name": "useCompression",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Yes"
+            },
+            "off": {
+              "value": "false",
+              "label": "No"
+            },
+            "default": "false"
+          }
+        },
+        {
+          "widget-type": "keyvalue",
+          "label": "Connection Arguments",
+          "name": "connectionArguments",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value",
+            "kv-delimiter": "=",
+            "delimiter": ";"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Auto Reconnect",
+          "name": "autoReconnect",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Yes"
+            },
+            "off": {
+              "value": "false",
+              "label": "No"
+            },
+            "default": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [],
+  "jump-config": {
+    "datasets": [
+      {
+        "ref-property-name": "referenceName"
+      }
+    ]
+  }
+}

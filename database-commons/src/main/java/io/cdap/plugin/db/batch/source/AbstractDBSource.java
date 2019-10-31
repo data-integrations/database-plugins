@@ -32,8 +32,6 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
-import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
-import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSource;
@@ -259,7 +257,8 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
     Schema schemaFromDB = loadSchemaFromDB(driverClass);
     if (sourceConfig.schema != null) {
-      sourceConfig.validateSchema(schemaFromDB);
+      sourceConfig.validateSchema(schemaFromDB, collector);
+      collector.getOrThrowException();
       connectionConfigAccessor.setSchema(sourceConfig.schema);
     } else {
       String schemaStr = SCHEMA_TYPE_ADAPTER.toJson(schemaFromDB);
@@ -394,37 +393,43 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       }
     }
 
-    private void validateSchema(Schema actualSchema) {
-      validateSchema(actualSchema, getSchema());
+    protected void validateSchema(Schema actualSchema, FailureCollector collector) {
+      validateSchema(actualSchema, getSchema(), collector);
     }
 
     @VisibleForTesting
-    static void validateSchema(Schema actualSchema, Schema configSchema) {
+    static void validateSchema(Schema actualSchema, Schema configSchema, FailureCollector collector) {
       if (configSchema == null) {
-
-        throw new InvalidConfigPropertyException("Schema should not be null or empty", SCHEMA);
+        collector.addFailure("Schema should not be null or empty.", null)
+          .withConfigProperty(SCHEMA);
+        return;
       }
+
       for (Schema.Field field : configSchema.getFields()) {
         Schema.Field actualField = actualSchema.getField(field.getName());
         if (actualField == null) {
-          throw new InvalidConfigPropertyException(String.format("Schema field '%s' is not present in actual record",
-                                                                 field.getName()), SCHEMA);
+          collector.addFailure(
+            String.format("Schema field '%s' is not present in actual record", field.getName()), null)
+            .withOutputSchemaField(field.getName());
+          continue;
         }
+
         Schema actualFieldSchema = actualField.getSchema().isNullable() ?
           actualField.getSchema().getNonNullable() : actualField.getSchema();
         Schema expectedFieldSchema = field.getSchema().isNullable() ?
           field.getSchema().getNonNullable() : field.getSchema();
 
         if (!actualFieldSchema.equals(expectedFieldSchema)) {
-          throw new IllegalArgumentException(
+          collector.addFailure(
             String.format("Schema field '%s' has type '%s' but found '%s' in input record",
-                          field.getName(), expectedFieldSchema.getType(), actualFieldSchema.getType()));
+                          field.getName(), expectedFieldSchema.getType(), actualFieldSchema.getType()), null)
+            .withOutputSchemaField(field.getName());
         }
       }
     }
 
     @Nullable
-    private Schema getSchema() {
+    protected Schema getSchema() {
       try {
         return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
       } catch (IOException e) {
