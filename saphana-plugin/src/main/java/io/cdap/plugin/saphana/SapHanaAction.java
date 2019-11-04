@@ -38,6 +38,9 @@ public class SapHanaAction extends AbstractDBAction {
     this.sapHanaQueryActionConfig = config;
   }
 
+  /**
+   * SAP HANA Action config
+   */
   public static class SapHanaQueryActionConfig extends DBSpecificQueryConfig {
 
     @Override
