@@ -16,7 +16,7 @@ Properties
 ----------
 **Driver Name:** Name of the JDBC driver to use.
 
-**Database Command:** Database command to execute.
+**Database Query:** Database query to execute.
 
 **Host:** Host that MariaDB is running on.
 
@@ -62,7 +62,7 @@ port 3306, then configure the plugin with:
 
 ```
 Driver Name: "mariadb"
-Database Command: "UPDATE table_name SET price = 20 WHERE ID = 6"
+Database Query: "UPDATE table_name SET price = 20 WHERE ID = 6"
 Host: "localhost"
 Port: 3306
 Database: "prod"

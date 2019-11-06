@@ -30,7 +30,7 @@
         },
         {
           "widget-type": "textarea",
-          "label": "Database Command",
+          "label": "Database Query",
           "name": "query"
         }
       ]
