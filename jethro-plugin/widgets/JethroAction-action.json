@@ -1,0 +1,66 @@
+{
+  "metadata": {
+    "spec-version": "1.5"
+  },
+  "display-name": "Jethro Action",
+  "configuration-groups": [
+    {
+      "label": "Basic",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Driver Name",
+          "name": "jdbcPluginName",
+          "widget-attributes": {
+            "default": "jethro"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Host",
+          "name": "host",
+          "widget-attributes": {
+            "default": "localhost"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Port",
+          "name": "port",
+          "widget-attributes": {
+            "default": "9111"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Instance",
+          "name": "database"
+        },
+        {
+          "widget-type": "textarea",
+          "label": "Database Command",
+          "name": "query"
+        },
+        {
+          "widget-type": "hidden",
+          "name": "connectionArguments"
+        }
+      ]
+    },
+    {
+      "label": "Credentials",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Username",
+          "name": "user"
+        },
+        {
+          "widget-type": "password",
+          "label": "Password",
+          "name": "password"
+        }
+      ]
+    }
+  ]
+}

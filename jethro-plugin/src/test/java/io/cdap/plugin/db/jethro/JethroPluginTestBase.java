@@ -28,6 +28,10 @@ import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.batch.DatabasePluginTestBase;
 import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
+import io.cdap.plugin.db.jethro.action.JethroAction;
+import io.cdap.plugin.db.jethro.action.JethroActionConfig;
+import io.cdap.plugin.db.jethro.postaction.JethroPostAction;
+import io.cdap.plugin.db.jethro.postaction.JethroPostActionConfig;
 import io.cdap.plugin.db.jethro.source.JethroSource;
 import io.cdap.plugin.db.jethro.source.JethroSourceConfig;
 import org.junit.AfterClass;
@@ -80,7 +84,8 @@ public class JethroPluginTestBase extends DatabasePluginTestBase {
 
     addPluginArtifact(NamespaceId.DEFAULT.artifact(JDBC_DRIVER_NAME, "1.0.0"),
                       DATAPIPELINE_ARTIFACT_ID, JethroSource.class, JethroSourceConfig.class,
-                      DataDrivenETLDBInputFormat.class, DBRecord.class);
+                      DataDrivenETLDBInputFormat.class, DBRecord.class, JethroAction.class, JethroActionConfig.class,
+                      JethroPostAction.class, JethroPostActionConfig.class);
 
     Class<?> driverClass = Class.forName(DRIVER_CLASS);
 
@@ -113,12 +118,20 @@ public class JethroPluginTestBase extends DatabasePluginTestBase {
 
   protected static void createTestTables(Connection conn) throws SQLException {
     try (Statement stmt = conn.createStatement()) {
+      stmt.execute("CREATE TABLE dbActionTest (x INT, name STRING)");
+      stmt.execute("CREATE TABLE postActionTest (x int, name string)");
+
       stmt.execute("CREATE TABLE test_table (int_value int, long_value bigint, float_value float, " +
                      "double_value double, timestamp_value timestamp, string_value string)");
     }
   }
 
   private static void populateData(Connection conn) throws SQLException {
+
+    try (Statement stmt = conn.createStatement()) {
+      stmt.executeQuery("INSERT INTO dbActionTest VALUES (1, 'test')");
+      stmt.executeQuery("INSERT INTO postActionTest VALUES (1, 'test')");
+    }
 
     try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO test_table VALUES (?,?,?,?,?,?)")) {
       for (int i = 0; i < 4; i++) {
@@ -152,6 +165,8 @@ public class JethroPluginTestBase extends DatabasePluginTestBase {
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement()) {
       stmt.execute("DROP TABLE test_table");
+      stmt.execute("DROP TABLE dbActionTest");
+      stmt.execute("DROP TABLE postActionTest");
     }
   }
 }
