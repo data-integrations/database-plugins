@@ -17,14 +17,21 @@
 package io.cdap.plugin.db.batch.source;
 
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
+import io.cdap.cdap.etl.api.validation.CauseAttributes;
+import io.cdap.cdap.etl.api.validation.ValidationFailure;
+import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 
 /**
  * Test class for source schema validation.
  */
 public class AbstractDBSourceTest {
+  private static final String MOCK_STAGE = "mockStage";
   private static final Schema SCHEMA = Schema.recordOf(
     "schema",
     Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
@@ -39,7 +46,9 @@ public class AbstractDBSourceTest {
 
   @Test
   public void testValidateSourceSchemaCorrectSchema() {
-    AbstractDBSource.DBSourceConfig.validateSchema(SCHEMA, SCHEMA);
+    MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
+    AbstractDBSource.DBSourceConfig.validateSchema(SCHEMA, SCHEMA, collector);
+    Assert.assertEquals(0, collector.getValidationFailures().size());
   }
 
   @Test
@@ -55,12 +64,9 @@ public class AbstractDBSourceTest {
       Schema.Field.of("double_column", Schema.nullableOf(Schema.of(Schema.Type.DOUBLE)))
     );
 
-    try {
-      AbstractDBSource.DBSourceConfig.validateSchema(actualSchema, SCHEMA);
-      Assert.fail(String.format("Expected to throw %s", InvalidConfigPropertyException.class.getName()));
-    } catch (InvalidConfigPropertyException e) {
-      Assert.assertEquals(AbstractDBSource.DBSourceConfig.SCHEMA, e.getProperty());
-    }
+    MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
+    AbstractDBSource.DBSourceConfig.validateSchema(actualSchema, SCHEMA, collector);
+    assertPropertyValidationFailed(collector, "boolean_column");
   }
 
   @Test
@@ -77,12 +83,26 @@ public class AbstractDBSourceTest {
       Schema.Field.of("boolean_column", Schema.nullableOf(Schema.of(Schema.Type.INT)))
     );
 
-    try {
-      AbstractDBSource.DBSourceConfig.validateSchema(actualSchema, SCHEMA);
-      Assert.fail(String.format("Expected to throw %s", IllegalArgumentException.class.getName()));
-    } catch (IllegalArgumentException e) {
-      String errorMessage = "Schema field 'boolean_column' has type 'BOOLEAN' but found 'INT' in input record";
-      Assert.assertEquals(errorMessage, e.getMessage());
-    }
+    MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
+    AbstractDBSource.DBSourceConfig.validateSchema(actualSchema, SCHEMA, collector);
+    assertPropertyValidationFailed(collector, "boolean_column");
+  }
+
+  private static void assertPropertyValidationFailed(MockFailureCollector failureCollector, String paramName) {
+    List<ValidationFailure> failureList = failureCollector.getValidationFailures();
+    Assert.assertEquals(1, failureList.size());
+    ValidationFailure failure = failureList.get(0);
+    List<ValidationFailure.Cause> causeList = getCauses(failure, CauseAttributes.OUTPUT_SCHEMA_FIELD);
+    Assert.assertEquals(1, causeList.size());
+    ValidationFailure.Cause cause = causeList.get(0);
+    Assert.assertEquals(paramName, cause.getAttribute(CauseAttributes.OUTPUT_SCHEMA_FIELD));
+  }
+
+  @Nonnull
+  private static List<ValidationFailure.Cause> getCauses(ValidationFailure failure, String stacktrace) {
+    return failure.getCauses()
+      .stream()
+      .filter(cause -> cause.getAttribute(stacktrace) != null)
+      .collect(Collectors.toList());
   }
 }

@@ -37,6 +37,7 @@
     <module>netezza-plugin</module>
     <module>aurora-mysql-plugin</module>
     <module>aurora-postgresql-plugin</module>
+    <module>memsql-plugin</module>
     <module>saphana-plugin</module>
   </modules>
 
@@ -55,7 +56,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- version properties -->
     <cdap.version>6.1.0-SNAPSHOT</cdap.version>
-    <cdap.plugin.version>2.2.0-SNAPSHOT</cdap.plugin.version>
+    <cdap.plugin.version>2.3.0-SNAPSHOT</cdap.plugin.version>
     <guava.version>13.0.1</guava.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
@@ -337,8 +338,8 @@
           <version>1.1.0</version>
           <configuration>
             <cdapArtifacts>
-              <parent>system:cdap-data-pipeline[6.0.0-SNAPSHOT,7.0.0-SNAPSHOT)</parent>
-              <parent>system:cdap-data-streams[6.0.0-SNAPSHOT,7.0.0-SNAPSHOT)</parent>
+              <parent>system:cdap-data-pipeline[6.1.0-SNAPSHOT,7.0.0-SNAPSHOT)</parent>
+              <parent>system:cdap-data-streams[6.1.0-SNAPSHOT,7.0.0-SNAPSHOT)</parent>
             </cdapArtifacts>
           </configuration>
           <executions>

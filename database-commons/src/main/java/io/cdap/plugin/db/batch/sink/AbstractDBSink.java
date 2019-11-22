@@ -28,7 +28,9 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
@@ -64,6 +66,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -91,12 +94,16 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
+    StageConfigurer configurer = pipelineConfigurer.getStageConfigurer();
     DBUtils.validateJDBCPluginPipeline(pipelineConfigurer, dbSinkConfig, getJDBCPluginId());
-    Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
+    Schema inputSchema = configurer.getInputSchema();
     if (Objects.nonNull(inputSchema)) {
       Class<? extends Driver> driverClass = DBUtils.getDriverClass(
         pipelineConfigurer, dbSinkConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
-      validateSchema(driverClass, dbSinkConfig.tableName, inputSchema);
+      if (driverClass != null) {
+        FailureCollector collector = configurer.getFailureCollector();
+        validateSchema(collector, driverClass, dbSinkConfig.tableName, inputSchema);
+      }
     }
   }
 
@@ -117,7 +124,9 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     // make sure that the destination table exists and column types are correct
     try {
       if (Objects.nonNull(outputSchema)) {
-        validateSchema(driverClass, dbSinkConfig.tableName, outputSchema);
+        FailureCollector collector = context.getFailureCollector();
+        validateSchema(collector, driverClass, dbSinkConfig.tableName, outputSchema);
+        collector.getOrThrowException();
       } else {
         outputSchema = inferSchema(driverClass);
       }
@@ -269,15 +278,17 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     return columnTypes;
   }
 
-  private void validateSchema(Class<? extends Driver> jdbcDriverClass, String tableName, Schema inputSchema) {
+  private void validateSchema(FailureCollector collector, Class<? extends Driver> jdbcDriverClass, String tableName,
+                              Schema inputSchema) {
     String connectionString = dbSinkConfig.getConnectionString();
 
     try {
       DBUtils.ensureJDBCDriverIsAvailable(jdbcDriverClass, connectionString, dbSinkConfig.jdbcPluginName);
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
-      throw new InvalidStageException(String.format("Unable to load or register JDBC driver '%s' while checking for " +
-                                                      "the existence of the database table '%s'.",
-                                                    jdbcDriverClass, tableName), e);
+      collector.addFailure(String.format("Unable to load or register JDBC driver '%s' while checking for " +
+                                           "the existence of the database table '%s'.",
+                                         jdbcDriverClass, tableName), null).withStacktrace(e.getStackTrace());
+      throw collector.getOrThrowException();
     }
 
     Properties connectionProperties = new Properties();
@@ -286,23 +297,26 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       executeInitQueries(connection, dbSinkConfig.getInitQueries());
       try (ResultSet tables = connection.getMetaData().getTables(null, null, tableName, null)) {
         if (!tables.next()) {
-          throw new InvalidStageException("Table " + tableName + " does not exist. " +
-                                            "Please check that the 'tableName' property has been set correctly, " +
-                                            "and that the connection string  " + connectionString +
-                                            "points to a valid database.");
+          collector.addFailure(
+            String.format("Table '%s' does not exist.", tableName),
+            String.format("Ensure table '%s' is set correctly and that the connection string '%s' points " +
+                            "to a valid database.", tableName, connectionString))
+            .withConfigProperty(DBSinkConfig.TABLE_NAME);
+          return;
         }
       }
 
       try (PreparedStatement pStmt = connection.prepareStatement("SELECT * FROM " + dbSinkConfig.getEscapedTableName()
                                                                    + " WHERE 1 = 0");
            ResultSet rs = pStmt.executeQuery()) {
-        getFieldsValidator().validateFields(inputSchema, rs);
+        getFieldsValidator().validateFields(inputSchema, rs, collector);
       }
-
     } catch (SQLException e) {
       LOG.error("Exception while trying to validate schema of database table {} for connection {}.",
                 tableName, connectionString, e);
-      throw Throwables.propagate(e);
+      collector.addFailure(
+        String.format("Exception while trying to validate schema of database table '%s' for connection '%s'.",
+                      tableName, connectionString), null).withStacktrace(e.getStackTrace());
     }
   }
 

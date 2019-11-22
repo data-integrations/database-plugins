@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.db.batch.source;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
@@ -26,11 +27,11 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
-import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
-import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSource;
@@ -102,16 +103,22 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     Class<? extends Driver> driverClass = DBUtils.getDriverClass(
       pipelineConfigurer, sourceConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
 
-    sourceConfig.validate();
+    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    FailureCollector collector = stageConfigurer.getFailureCollector();
+    sourceConfig.validate(collector);
     if (!Strings.isNullOrEmpty(sourceConfig.schema)) {
-      pipelineConfigurer.getStageConfigurer().setOutputSchema(sourceConfig.getSchema());
+      stageConfigurer.setOutputSchema(sourceConfig.getSchema());
     } else if (sourceConfig.query != null) {
       try {
-        pipelineConfigurer.getStageConfigurer().setOutputSchema(getSchema(driverClass));
+        stageConfigurer.setOutputSchema(getSchema(driverClass));
       } catch (IllegalAccessException | InstantiationException e) {
-        throw new InvalidStageException("Unable to instantiate JDBC driver: " + e.getMessage(), e);
+        collector.addFailure("Unable to instantiate JDBC driver: " + e.getMessage(), null)
+          .withStacktrace(e.getStackTrace());
       } catch (SQLException e) {
-        throw new IllegalArgumentException("SQL error while getting query schema: " + e.getMessage(), e);
+        collector.addFailure("SQL error while getting query schema: " + e.getMessage(), null)
+          .withStacktrace(e.getStackTrace());
+      } catch (Exception e) {
+        collector.addFailure(e.getMessage(), null).withStacktrace(e.getStackTrace());
       }
     }
   }
@@ -205,7 +212,9 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
-    sourceConfig.validate();
+    FailureCollector collector = context.getFailureCollector();
+    sourceConfig.validate(collector);
+    collector.getOrThrowException();
 
     String connectionString = sourceConfig.getConnectionString();
 
@@ -248,7 +257,8 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
     Schema schemaFromDB = loadSchemaFromDB(driverClass);
     if (sourceConfig.schema != null) {
-      sourceConfig.validateSchema(schemaFromDB);
+      sourceConfig.validateSchema(schemaFromDB, collector);
+      collector.getOrThrowException();
       connectionConfigAccessor.setSchema(sourceConfig.schema);
     } else {
       String schemaStr = SCHEMA_TYPE_ADAPTER.toJson(schemaFromDB);
@@ -349,12 +359,13 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       return cleanQuery(boundingQuery);
     }
 
-    private void validate() {
+    private void validate(FailureCollector collector) {
       boolean hasOneSplit = false;
-      if (!containsMacro("numSplits") && numSplits != null) {
+      if (!containsMacro(NUM_SPLITS) && numSplits != null) {
         if (numSplits < 1) {
-          throw new IllegalArgumentException(
-            "Invalid value for numSplits. Must be at least 1, but got " + numSplits);
+          collector.addFailure(
+            String.format("Invalid value for numSplits '%d'. Must be at least 1.", numSplits), null)
+            .withConfigProperty(NUM_SPLITS);
         }
         if (numSplits == 1) {
           hasOneSplit = true;
@@ -362,53 +373,63 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       }
 
       if (getTransactionIsolationLevel() != null) {
-        TransactionIsolationLevel.validate(getTransactionIsolationLevel());
+        TransactionIsolationLevel.validate(getTransactionIsolationLevel(), collector);
       }
 
       if (!hasOneSplit && !containsMacro("importQuery") && !getImportQuery().contains("$CONDITIONS")) {
-        throw new IllegalArgumentException(String.format("Import Query %s must contain the string '$CONDITIONS'.",
-                                                         importQuery));
+        collector.addFailure("Invalid Import Query.",
+                             String.format("Import Query %s must contain the string '$CONDITIONS'.", importQuery))
+          .withConfigProperty(IMPORT_QUERY);
       }
 
       if (!hasOneSplit && !containsMacro("splitBy") && (splitBy == null || splitBy.isEmpty())) {
-        throw new IllegalArgumentException("The splitBy must be specified if numSplits is not set to 1.");
+        collector.addFailure("Split-By Field Name must be specified if Number of Splits is not set to 1.",
+                             null).withConfigProperty(SPLIT_BY).withConfigProperty(NUM_SPLITS);
       }
 
       if (!hasOneSplit && !containsMacro("boundingQuery") && (boundingQuery == null || boundingQuery.isEmpty())) {
-        throw new IllegalArgumentException("The boundingQuery must be specified if numSplits is not set to 1.");
+        collector.addFailure("Bounding Query must be specified if Number of Splits is not set to 1.", null)
+          .withConfigProperty(BOUNDING_QUERY).withConfigProperty(NUM_SPLITS);
       }
-
     }
 
-    private void validateSchema(Schema actualSchema) {
-      validateSchema(actualSchema, getSchema());
+    protected void validateSchema(Schema actualSchema, FailureCollector collector) {
+      validateSchema(actualSchema, getSchema(), collector);
     }
 
-    static void validateSchema(Schema actualSchema, Schema configSchema) {
+    @VisibleForTesting
+    static void validateSchema(Schema actualSchema, Schema configSchema, FailureCollector collector) {
       if (configSchema == null) {
-        throw new InvalidConfigPropertyException("Schema should not be null or empty", SCHEMA);
+        collector.addFailure("Schema should not be null or empty.", null)
+          .withConfigProperty(SCHEMA);
+        return;
       }
+
       for (Schema.Field field : configSchema.getFields()) {
         Schema.Field actualField = actualSchema.getField(field.getName());
         if (actualField == null) {
-          throw new InvalidConfigPropertyException(String.format("Schema field '%s' is not present in actual record",
-                                                                 field.getName()), SCHEMA);
+          collector.addFailure(
+            String.format("Schema field '%s' is not present in actual record", field.getName()), null)
+            .withOutputSchemaField(field.getName());
+          continue;
         }
+
         Schema actualFieldSchema = actualField.getSchema().isNullable() ?
           actualField.getSchema().getNonNullable() : actualField.getSchema();
         Schema expectedFieldSchema = field.getSchema().isNullable() ?
           field.getSchema().getNonNullable() : field.getSchema();
 
         if (!actualFieldSchema.equals(expectedFieldSchema)) {
-          throw new IllegalArgumentException(
+          collector.addFailure(
             String.format("Schema field '%s' has type '%s' but found '%s' in input record",
-                          field.getName(), expectedFieldSchema.getType(), actualFieldSchema.getType()));
+                          field.getName(), expectedFieldSchema.getType(), actualFieldSchema.getType()), null)
+            .withOutputSchemaField(field.getName());
         }
       }
     }
 
     @Nullable
-    private Schema getSchema() {
+    protected Schema getSchema() {
       try {
         return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
       } catch (IOException e) {
