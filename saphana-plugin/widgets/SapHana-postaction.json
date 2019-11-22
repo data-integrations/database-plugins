@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "spec-version": "1.0"
+    "spec-version": "1.6"
   },
   "configuration-groups": [
     {
@@ -49,7 +49,7 @@
           "name": "database"
         },
         {
-          "widget-type": "textarea",
+          "widget-type": "sql-editor",
           "label": "Query",
           "name": "query",
           "widget-attributes": {

@@ -24,8 +24,4 @@ public class SapHanaConstants {
   public static final String SAPHANA_CONNECTION_STRING_FORMAT = "jdbc:sap://%s:%s/";
   public static final String PLUGIN_NAME = "SapHana";
 
-  private SapHanaConstants() {
-    throw new AssertionError("Should not instantiate static utility class.");
-  }
-
 }

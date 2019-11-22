@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "spec-version": "1.0"
+    "spec-version": "1.6"
   },
   "display-name": "SAP HANA",
   "configuration-groups": [
@@ -45,7 +45,7 @@
           "name": "database"
         },
         {
-          "widget-type": "textarea",
+          "widget-type": "sql-editor",
           "label": "Import Query",
           "name": "importQuery",
           "widget-attributes": {
@@ -81,12 +81,12 @@
           }
         },
         {
-          "widget-type": "textbox",
+          "widget-type": "input-field-selector",
           "label": "Split-By Field Name",
           "name": "splitBy"
         },
         {
-          "widget-type": "textbox",
+          "widget-type": "number",
           "label": "Number of Splits to Generate",
           "name": "numSplits",
           "widget-attributes": {

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "spec-version": "1.0"
+    "spec-version": "1.6"
   },
   "display-name": "SAP HANA Execute",
   "configuration-groups": [
@@ -37,7 +37,7 @@
           "name": "database"
         },
         {
-          "widget-type": "textarea",
+          "widget-type": "sql-editor",
           "label": "Database Command",
           "name": "query"
         }
