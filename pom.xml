@@ -38,6 +38,7 @@
     <module>aurora-mysql-plugin</module>
     <module>aurora-postgresql-plugin</module>
     <module>memsql-plugin</module>
+    <module>saphana-plugin</module>
   </modules>
 
   <licenses>

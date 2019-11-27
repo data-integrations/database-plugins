@@ -57,6 +57,7 @@ services:
       - ORACLE_SID=cdap
       - ORACLE_PDB=mydb
       - ORACLE_PWD=123Qwe123
+
   memsql:
     image: memsql/cluster-in-a-box:centos-6.8.10-a53e479edc-1.9.0-1.3.0
     ports:
@@ -64,3 +65,24 @@ services:
       - 8888:8080
     environment:
       - LICENSE_KEY=${MEMSQL_LICENSE_KEY}
+
+  saphana:
+    image: store/saplabs/hanaexpress:2.00.040.00.20190729.1
+    hostname: hxehost
+    ports:
+      - 39017:39017
+      - 39013:39013
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    sysctls:
+      - kernel.shmmax=1073741824
+      - net.ipv4.ip_local_port_range=60000 65535
+      - kernel.shmmni=524288
+      - kernel.shmall=8388608
+    extra_hosts:
+      # Alter this if running on non-Linux machine
+      - "host:172.17.0.1"
+    command: --agree-to-sap-license  --passwords-url http://host:1500

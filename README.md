@@ -13,11 +13,19 @@ mvn clean test \
 ```
 Notice that you must change properties for Aurora MySQL and Aurora Postgresql to real before running tests.
 ## Setup Local Environment
-MySQL, Postgresql, MSSQL, DB2, MemSQL are using prebuild images.
+MySQL, Postgresql, MSSQL, DB2, MemSQL, SAP HANA are using prebuild images.
 
 Oracle DB image should be build separately.
 
 MemSQL image should be configure after start.
+
+Note that you should login into docker account to pull SAP HANA image. 
+Account can be created [here](https://hub.docker.com/signup)
+Also, please note SAP HANA is sensitive to some CPU instructions.
+CPU model "host-passthrough" or similar can be required if running inside VM.
+SAP HANA requires that password for DB is provided through url.
+Convenience script ```docker-compose/db-plugins-env/saphana-password-server.sh``` 
+provided for this purpose.
 
 Netezza requires VMware Player for running Netezza emulator.
 
@@ -36,8 +44,13 @@ export MEMSQL_LICENSE_KEY=YOUR_LICENSE_KEY
 ```bash
 docker-compose up memsql
 ```
+* Start SAP HANA password service
+```bash
+bash saphana-password-server.sh &
+```
 * Start docker environment by running commands:
 ```bash
+cd docker-compose/db-plugins-env/
 docker-compose up -d
 ```
 * Connect to MemSQL Studio at [http://localhost:8888](http://localhost:8888) 
