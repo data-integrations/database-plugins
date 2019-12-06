@@ -16,6 +16,8 @@ Properties
 ----------
 **Reference Name:** This will be used to uniquely identify this source for lineage, annotating metadata, etc.
 
+**Driver Name:** Name of the JDBC driver to use.
+
 **Neo4j Host:** Neo4j database host.
 
 **Neo4j Port:** Neo4j database port.

@@ -17,6 +17,14 @@
         },
         {
           "widget-type": "textbox",
+          "label": "Driver Name",
+          "name": "jdbcPluginName",
+          "widget-attributes": {
+            "default": "neo4j"
+          }
+        },
+        {
+          "widget-type": "textbox",
           "label": "Neo4j Host",
           "name": "neo4jHost",
           "widget-attributes": {

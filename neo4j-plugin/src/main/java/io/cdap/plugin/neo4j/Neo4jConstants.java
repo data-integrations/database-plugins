@@ -28,6 +28,7 @@ import java.util.List;
 public final class Neo4jConstants {
   public static final String NEO4J_CONNECTION_STRING_FORMAT = "jdbc:neo4j:bolt://%s:%s/?username=%s,password=%s";
   public static final String NAME_REFERENCE_NAME = "referenceName";
+  public static final String NAME_DRIVER_NAME = "jdbcPluginName";
   public static final String NAME_HOST_STRING = "neo4jHost";
   public static final String NAME_PORT_STRING = "neo4jPort";
   public static final String NAME_USERNAME = "username";

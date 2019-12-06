@@ -45,6 +45,12 @@ public class Neo4jSourceConfig extends PluginConfig {
   private String referenceName;
 
   @Macro
+  @Name(Neo4jConstants.NAME_DRIVER_NAME)
+  @Description("Name of the JDBC driver to use. This is the value of the 'jdbcPluginName' key defined in the JSON " +
+    "file for the JDBC plugin.")
+  private String jdbcPluginName;
+
+  @Macro
   @Name(Neo4jConstants.NAME_HOST_STRING)
   @Description("Neo4j database host.")
   private String neo4jHost;
@@ -82,9 +88,11 @@ public class Neo4jSourceConfig extends PluginConfig {
     "This is required unless numSplits is set to one and 'ORDER BY' keyword not exist in Input Query.")
   private String orderBy;
 
-  public Neo4jSourceConfig(String referenceName, String neo4jHost, Integer neo4jPort, String username, String password,
-                           String inputQuery, int splitNum, @Nullable String orderBy) {
+  public Neo4jSourceConfig(String referenceName, String jdbcPluginName, String neo4jHost, Integer neo4jPort,
+                           String username, String password, String inputQuery, int splitNum,
+                           @Nullable String orderBy) {
     this.referenceName = referenceName;
+    this.jdbcPluginName = jdbcPluginName;
     this.neo4jHost = neo4jHost;
     this.neo4jPort = neo4jPort;
     this.username = username;
@@ -96,6 +104,7 @@ public class Neo4jSourceConfig extends PluginConfig {
 
   private Neo4jSourceConfig(Builder builder) {
     referenceName = builder.referenceName;
+    jdbcPluginName = builder.jdbcPluginName;
     neo4jHost = builder.neo4jHost;
     neo4jPort = builder.neo4jPort;
     username = builder.username;
@@ -112,6 +121,7 @@ public class Neo4jSourceConfig extends PluginConfig {
   public static Builder builder(Neo4jSourceConfig copy) {
     return builder()
       .setReferenceName(copy.referenceName)
+      .setJdbcPluginName(copy.jdbcPluginName)
       .setNeo4jHost(copy.neo4jHost)
       .setNeo4jPort(copy.neo4jPort)
       .setUsername(copy.username)
@@ -123,6 +133,10 @@ public class Neo4jSourceConfig extends PluginConfig {
 
   public String getReferenceName() {
     return referenceName;
+  }
+
+  public String getJdbcPluginName() {
+    return jdbcPluginName;
   }
 
   public String getNeo4jHost() {
@@ -196,6 +210,7 @@ public class Neo4jSourceConfig extends PluginConfig {
    */
   public static final class Builder {
     private String referenceName;
+    private String jdbcPluginName;
     private String neo4jHost;
     private Integer neo4jPort;
     private String username;
@@ -211,6 +226,11 @@ public class Neo4jSourceConfig extends PluginConfig {
 
     public Builder setReferenceName(String referenceName) {
       this.referenceName = referenceName;
+      return this;
+    }
+
+    public Builder setJdbcPluginName(String jdbcPluginName) {
+      this.jdbcPluginName = jdbcPluginName;
       return this;
     }
 

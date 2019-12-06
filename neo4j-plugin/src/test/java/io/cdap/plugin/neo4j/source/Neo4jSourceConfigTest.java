@@ -32,6 +32,7 @@ public class Neo4jSourceConfigTest {
   private static final String MOCK_STAGE = "mockStage";
   private static final Neo4jSourceConfig VALID_CONFIG = new Neo4jSourceConfig(
     "ref_name",
+    "neo4j",
     "localhost",
     7687,
     "user",

@@ -43,6 +43,7 @@ public class Neo4jSinkConfigTest {
     );
   private static final Neo4jSinkConfig VALID_CONFIG = new Neo4jSinkConfig(
     "ref_name",
+    "neo4j",
     "localhost",
     7687,
     "user",

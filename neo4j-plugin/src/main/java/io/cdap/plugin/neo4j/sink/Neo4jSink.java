@@ -82,13 +82,13 @@ public class Neo4jSink extends ReferenceBatchSink<StructuredRecord, Neo4jRecord,
 
     Class<? extends Driver> driverClass = pipelineConfigurer.usePluginClass(
       ConnectionConfig.JDBC_PLUGIN_TYPE,
-      "neo4j",
+      config.getJdbcPluginName(),
       getJDBCPluginId(), PluginProperties.builder().build());
     Preconditions.checkArgument(
       driverClass != null, "Unable to load JDBC Driver class for plugin name '%s'. Please make sure " +
         "that the plugin '%s' of type '%s' containing the driver has been installed correctly.",
-      "neo4j",
-      "neo4j", ConnectionConfig.JDBC_PLUGIN_TYPE);
+      config.getJdbcPluginName(),
+      config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE);
     try {
       Class.forName(driverClass.getName());
     } catch (ClassNotFoundException e) {
