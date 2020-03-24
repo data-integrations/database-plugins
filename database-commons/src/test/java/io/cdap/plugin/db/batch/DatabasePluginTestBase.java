@@ -69,14 +69,17 @@ public abstract class DatabasePluginTestBase extends HydratorTestBase {
     }
   }
 
-  protected static void assertRuntimeFailure(ApplicationId appId, ETLBatchConfig etlConfig,
-                                             ArtifactSummary datapipelineArtifact, String failureMessage, int runCount)
-    throws Exception {
+  protected static void assertDeployAppFailure(ApplicationId appId, ETLBatchConfig etlConfig,
+                                               ArtifactSummary datapipelineArtifact) {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(datapipelineArtifact, etlConfig);
-    ApplicationManager appManager = deployApplication(appId, appRequest);
-    final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForRuns(ProgramRunStatus.FAILED, runCount, 3, TimeUnit.MINUTES);
+    try {
+      // this deploy application method will not throw appropriate exception, even it is 400, it will throw a
+      // IllegalStateException, so just catch Exception here
+      deployApplication(appId, appRequest);
+      Assert.fail("Deploy app should fail");
+    } catch (Exception e) {
+      // expected
+    }
   }
 
   protected ApplicationManager deployETL(ETLPlugin sourcePlugin, ETLPlugin sinkPlugin,
