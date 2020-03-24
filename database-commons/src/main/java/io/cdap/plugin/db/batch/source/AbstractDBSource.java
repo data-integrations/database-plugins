@@ -63,6 +63,7 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -266,7 +267,12 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       connectionConfigAccessor.setSchema(schemaStr);
     }
     LineageRecorder lineageRecorder = new LineageRecorder(context, sourceConfig.referenceName);
-    lineageRecorder.createExternalDataset(sourceConfig.getSchema());
+    Schema schema = sourceConfig.getSchema() == null ? schemaFromDB : sourceConfig.getSchema();
+    lineageRecorder.createExternalDataset(schema);
+    if (schema != null && schema.getFields() != null) {
+      lineageRecorder.recordRead("Read", "Read from database plugin",
+                                 schema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList()));
+    }
     context.setInput(Input.of(sourceConfig.referenceName, new SourceInputFormatProvider(
       DataDrivenETLDBInputFormat.class, connectionConfigAccessor.getConfiguration())));
   }
