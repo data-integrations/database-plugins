@@ -37,6 +37,10 @@
           "name": "database"
         },
         {
+          "widget-type": "get-schema",
+          "widget-category": "plugin"
+        },
+        {
           "widget-type": "textarea",
           "label": "Import Query",
           "name": "importQuery",

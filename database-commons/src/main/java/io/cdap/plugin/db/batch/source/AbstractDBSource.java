@@ -72,6 +72,12 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDBSource.class);
   private static final SchemaTypeAdapter SCHEMA_TYPE_ADAPTER = new SchemaTypeAdapter();
+  private static final Pattern CONDITIONS_AND = Pattern.compile("\\$conditions (and|or)\\s+",
+                                                                Pattern.CASE_INSENSITIVE);
+  private static final Pattern AND_CONDITIONS = Pattern.compile("\\s+(and|or) \\$conditions",
+                                                                Pattern.CASE_INSENSITIVE);
+  private static final Pattern WHERE_CONDITIONS = Pattern.compile("\\s+where \\$conditions",
+                                                                  Pattern.CASE_INSENSITIVE);
 
   protected final DBSourceConfig sourceConfig;
   protected Class<? extends Driver> driverClass;
@@ -79,20 +85,6 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   public AbstractDBSource(DBSourceConfig sourceConfig) {
     super(new ReferencePluginConfig(sourceConfig.referenceName));
     this.sourceConfig = sourceConfig;
-  }
-
-  private static String removeConditionsClause(String importQueryString) {
-    importQueryString = importQueryString.replaceAll("\\s{2,}", " ");
-    if (importQueryString.toUpperCase().contains("WHERE $CONDITIONS AND")) {
-      importQueryString = importQueryString.replaceAll("(?i)" + Pattern.quote("$CONDITIONS AND"), "");
-    } else if (importQueryString.toUpperCase().contains("WHERE $CONDITIONS")) {
-      importQueryString = importQueryString.replaceAll("(?i)" + Pattern.quote("WHERE $CONDITIONS"), "");
-    } else if (importQueryString.toUpperCase().contains("AND $CONDITIONS")) {
-      importQueryString = importQueryString.replaceAll("(?i)" + Pattern.quote("AND $CONDITIONS"), "");
-    } else if (importQueryString.toUpperCase().contains("$CONDITIONS")) {
-      throw new IllegalArgumentException("Please remove the $CONDITIONS clause when fetching the input schema.");
-    }
-    return importQueryString;
   }
 
   @Override
@@ -106,9 +98,9 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector collector = stageConfigurer.getFailureCollector();
     sourceConfig.validate(collector);
-    if (!Strings.isNullOrEmpty(sourceConfig.schema)) {
+    if (sourceConfig.getSchema() != null) {
       stageConfigurer.setOutputSchema(sourceConfig.getSchema());
-    } else if (sourceConfig.query != null) {
+    } else if (!sourceConfig.containsMacro(DBSourceConfig.IMPORT_QUERY)) {
       try {
         stageConfigurer.setOutputSchema(getSchema(driverClass));
       } catch (IllegalAccessException | InstantiationException e) {
@@ -131,7 +123,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       driverCleanup = loadPluginClassAndGetDriver(driverClass);
       try (Connection connection = getConnection()) {
         executeInitQueries(connection, sourceConfig.getInitQueries());
-        String query = sourceConfig.query;
+        String query = sourceConfig.importQuery;
         return loadSchemaFromDB(connection, query);
       } finally {
         driverCleanup.destroy();
@@ -150,6 +142,15 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     }
     ResultSet resultSet = statement.executeQuery(query);
     return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
+  }
+
+  @VisibleForTesting
+  static String removeConditionsClause(String importQueryString) {
+    String query = importQueryString;
+    query = CONDITIONS_AND.matcher(query).replaceAll("");
+    query = AND_CONDITIONS.matcher(query).replaceAll("");
+    query = WHERE_CONDITIONS.matcher(query).replaceAll("");
+    return query;
   }
 
   private Schema loadSchemaFromDB(Class<? extends Driver> driverClass)
@@ -307,12 +308,6 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     public static final String SCHEMA = "schema";
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
 
-    // this is a hidden property, only used to fetch schema
-    @Nullable
-    String query;
-
-    // only nullable for get schema button
-    @Nullable
     @Name(IMPORT_QUERY)
     @Description("The SELECT query to use to import data from the specified table. " +
       "You can specify an arbitrary number of columns to import, or import all columns using *. " +
@@ -376,7 +371,11 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
         TransactionIsolationLevel.validate(getTransactionIsolationLevel(), collector);
       }
 
-      if (!hasOneSplit && !containsMacro("importQuery") && !getImportQuery().contains("$CONDITIONS")) {
+      if (!containsMacro(IMPORT_QUERY) && Strings.isNullOrEmpty(importQuery)) {
+        collector.addFailure("Import Query must be specified.", null).withConfigProperty(IMPORT_QUERY);
+      }
+
+      if (!hasOneSplit && !containsMacro(IMPORT_QUERY) && !getImportQuery().contains("$CONDITIONS")) {
         collector.addFailure("Invalid Import Query.",
                              String.format("Import Query %s must contain the string '$CONDITIONS'.", importQuery))
           .withConfigProperty(IMPORT_QUERY);

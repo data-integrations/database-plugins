@@ -311,9 +311,7 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
       .addConnection(sourceBadName.getName(), sink.getName())
       .build();
     ApplicationId appId = NamespaceId.DEFAULT.app("dbSourceNonExistingTest");
-    assertRuntimeFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
-                         "ETL Application with DB Source should have failed because of a " +
-                           "non-existent source table.", 1);
+    assertDeployAppFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT);
 
     // Bad connection
     ETLPlugin sourceBadConnConfig = new ETLPlugin(
@@ -338,8 +336,6 @@ public class NetezzaSourceTestRun extends NetezzaPluginTestBase {
       .addStage(sink)
       .addConnection(sourceBadConn.getName(), sink.getName())
       .build();
-    assertRuntimeFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT,
-                         "ETL Application with DB Source should have failed because of a " +
-                           "non-existent source database.", 2);
+    assertDeployAppFailure(appId, etlConfig, DATAPIPELINE_ARTIFACT);
   }
 }
