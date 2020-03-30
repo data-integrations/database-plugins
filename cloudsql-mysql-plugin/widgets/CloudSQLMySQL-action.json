@@ -1,0 +1,117 @@
+{
+  "metadata": {
+    "spec-version": "1.5"
+  },
+  "display-name": "CloudSQL MySQL Execute",
+  "configuration-groups": [
+    {
+      "label": "Basic",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Driver Name",
+          "name": "jdbcPluginName",
+          "widget-attributes": {
+            "default": "cloudsql-mysql"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Database",
+          "name": "database"
+        }
+      ]
+    },
+    {
+      "label": "Credentials",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Username",
+          "name": "user",
+          "widget-attributes": {
+            "placeholder": "The username to use to connect to the CloudSQL database"
+          }
+        },
+        {
+          "widget-type": "password",
+          "label": "Password",
+          "name": "password",
+          "widget-attributes": {
+            "placeholder": "The password to use to connect to the CloudSQL database"
+          }
+        }
+      ]
+    },
+    {
+      "label": "CloudSQL Properties",
+      "properties": [
+        {
+          "widget-type": "radio-group",
+          "label": "CloudSQL Instance Type",
+          "name": "instanceType",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "public",
+            "options": [
+              {
+                "id": "public",
+                "label": "Public"
+              },
+              {
+                "id": "private",
+                "label": "Private"
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Connection Name",
+          "name": "connectionName",
+          "widget-attributes": {
+            "placeholder": "CloudSQL instance connection name"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Instance Name",
+          "name": "instanceName",
+          "widget-attributes": {
+            "placeholder": "CloudSQL instance connection name"
+          }
+        },
+        {
+          "widget-type": "textarea",
+          "label": "Database Command",
+          "name": "query"
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties":[
+        {
+          "widget-type": "number",
+          "label": "Connection Timeout",
+          "name":"connectionTimeout",
+          "widget-attributes": {
+            "default": "10"
+          }
+        },
+        {
+          "widget-type": "keyvalue",
+          "label": "Connection Arguments",
+          "name": "connectionArguments",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value",
+            "kv-delimiter": "=",
+            "delimiter": ";"
+          }
+        }
+      ]
+    }
+  ]
+}

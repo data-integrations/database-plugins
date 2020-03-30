@@ -1,0 +1,128 @@
+{
+  "artifact": {
+    "name": "cdap-data-pipeline",
+    "version": "6.1.2",
+    "scope": "SYSTEM"
+  },
+  "description": "",
+  "name": "bigquery-cloudsqlmysql",
+  "config": {
+    "resources": {
+      "memoryMB": 1024,
+      "virtualCores": 1
+    },
+    "driverResources": {
+      "memoryMB": 1024,
+      "virtualCores": 1
+    },
+    "connections": [
+      {
+        "from": "BigQuery",
+        "to": "CloudSQL MySQL"
+      },
+      {
+        "from": "CloudSQL MySQL",
+        "to": "CloudSQL MySQL Execute"
+      }
+    ],
+    "comments": [],
+    "postActions": [],
+    "properties": {},
+    "processTimingEnabled": true,
+    "stageLoggingEnabled": false,
+    "stages": [
+      {
+        "name": "BigQuery",
+        "plugin": {
+          "name": "BigQueryTable",
+          "type": "batchsource",
+          "label": "BigQuery",
+          "artifact": {
+            "name": "google-cloud",
+            "version": "0.14.2",
+            "scope": "SYSTEM"
+          },
+          "properties": {
+            "project": "auto-detect",
+            "serviceFilePath": "auto-detect",
+            "referenceName": "source",
+            "dataset": "postgresOrders",
+            "table": "orders",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+          }
+        },
+        "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+      },
+      {
+        "name": "CloudSQL MySQL",
+        "plugin": {
+          "name": "CloudSQLMySQL",
+          "type": "batchsink",
+          "label": "CloudSQL MySQL",
+          "artifact": {
+            "name": "cloudsql-mysql-plugin",
+            "version": "1.4.0-SNAPSHOT",
+            "scope": "USER"
+          },
+          "properties": {
+            "jdbcPluginName": "cloudsql-mysql",
+            "instanceType": "public",
+            "transactionIsolationLevel": "TRANSACTION_REPEATABLE_READ",
+            "connectionTimeout": "10",
+            "referenceName": "sink",
+            "database": "testdb",
+            "user": "root",
+            "password": "",
+            "connectionName": "",
+            "tableName": "orders"
+          }
+        },
+        "outputSchema": [
+          {
+            "name": "etlSchemaBody",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+          }
+        ],
+        "inputSchema": [
+          {
+            "name": "BigQuery",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+          }
+        ]
+      },
+      {
+        "name": "CloudSQL MySQL Execute",
+        "plugin": {
+          "name": "CloudSQLMySQL",
+          "type": "action",
+          "label": "CloudSQL MySQL Execute",
+          "artifact": {
+            "name": "cloudsql-mysql-plugin",
+            "version": "1.4.0-SNAPSHOT",
+            "scope": "USER"
+          },
+          "properties": {
+            "jdbcPluginName": "cloudsql-mysql",
+            "instanceType": "public",
+            "connectionTimeout": "10",
+            "database": "testdb",
+            "user": "root",
+            "password": "",
+            "connectionName": "",
+            "query": "UPDATE orders SET CLERK=\"Clerk#000049252\" WHERE ORDERKEY=182250663;"
+          }
+        },
+        "outputSchema": [
+          {
+            "name": "etlSchemaBody",
+            "schema": ""
+          }
+        ]
+      }
+    ],
+    "schedule": "0 * * * *",
+    "engine": "spark",
+    "numOfRecordsPreview": 100,
+    "maxConcurrentRuns": 1
+  }
+}
