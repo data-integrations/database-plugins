@@ -424,10 +424,12 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
         Schema expectedFieldSchema = field.getSchema().isNullable() ?
           field.getSchema().getNonNullable() : field.getSchema();
 
-        if (!actualFieldSchema.equals(expectedFieldSchema)) {
+        if (actualFieldSchema.getType() != expectedFieldSchema.getType() ||
+          actualFieldSchema.getLogicalType() != expectedFieldSchema.getLogicalType()) {
           collector.addFailure(
-            String.format("Schema field '%s' has type '%s' but found '%s' in input record",
-                          field.getName(), expectedFieldSchema.getType(), actualFieldSchema.getType()), null)
+            String.format("Schema field '%s' has type '%s but found '%s'.",
+                          field.getName(), expectedFieldSchema.getDisplayName(),
+                          actualFieldSchema.getDisplayName()), null)
             .withOutputSchemaField(field.getName());
         }
       }
