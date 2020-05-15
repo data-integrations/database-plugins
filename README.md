@@ -27,7 +27,7 @@ SAP HANA requires that password for DB is provided through url.
 Convenience script ```docker-compose/db-plugins-env/saphana-password-server.sh``` 
 provided for this purpose.
 
-Netezza requires VMware Player for running Netezza emulator.
+Netezza and Teradata require VMware Player for running emulator.
 
 * [Install Docker Compose](https://docs.docker.com/compose/install/)
 * Build local docker images
@@ -65,6 +65,9 @@ grant all on *.* to 'root'@'%' identified by 'root' with grant option;
 ```
 * [Install and start Netezza emulator](http://dwgeek.com/install-vmware-player-netezza-emulator.html/)
 * Create database `mydb` in Netezza emulator
+* [Install and start Teradata Express](https://downloads.teradata.com/download/files/7671/200652/1/B035-5948-018K.pdf)
+* Create database `mydb` in Teradata Express
+* Create user `test` with password `test` in Teradata Express
 
 ### Properties
 #### MySQL
@@ -110,6 +113,12 @@ grant all on *.* to 'root'@'%' identified by 'root' with grant option;
 * **memsql.database** - Server namespace for test databases. Default: mydb.
 * **memsql.username** - Server username. Default: root.
 * **memsql.password** - Server password. Default: root.
+#### Teradata
+* **teradata.host** - Server host. Default: localhost.
+* **teradata.port** - Server port. Default: 1025.
+* **teradata.database** - Server namespace for test databases. Default: mydb.
+* **teradata.username** - Server username. Default: test.
+* **teradata.password** - Server password. Default: test.
 #### Aurora MySQL
 * **auroraMysql.clusterEndpoint** - Cluster endpoint.
 * **auroraMysql.port** - Server port.
