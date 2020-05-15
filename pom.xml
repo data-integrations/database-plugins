@@ -30,6 +30,7 @@
     <module>database-commons</module>
     <module>generic-database-plugin</module>
     <module>mysql-plugin</module>
+    <module>mariadb-plugin</module>
     <module>postgresql-plugin</module>
     <module>mssql-plugin</module>
     <module>oracle-plugin</module>
