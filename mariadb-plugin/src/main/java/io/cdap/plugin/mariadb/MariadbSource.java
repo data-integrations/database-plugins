@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * MariaDB source
+ * MariaDB source.
  */
 @Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name(MariadbConstants.PLUGIN_NAME)
@@ -38,6 +38,10 @@ public class MariadbSource extends AbstractDBSource {
 
   private final MariadbSourceConfig mariadbSourceConfig;
 
+  /**
+   * This is the constructor for MariadbSource.
+   * @param mariadbSourceConfig It takes Mariadb source config object as the parameter.
+   */
   public MariadbSource(MariadbSourceConfig mariadbSourceConfig) {
     super(mariadbSourceConfig);
     this.mariadbSourceConfig = mariadbSourceConfig;
@@ -50,7 +54,7 @@ public class MariadbSource extends AbstractDBSource {
   }
 
   /**
-   * MaraiDB source mariadbSourceConfig
+   * MaraiDB source mariadbSourceConfig.
    */
   public static class MariadbSourceConfig extends DBSpecificSourceConfig {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * MariaDB action that runs MariaDB command
+ * MariaDB action that runs MariaDB command.
  */
 @Plugin(type = Action.PLUGIN_TYPE)
 @Name(MariadbConstants.PLUGIN_NAME)
@@ -37,13 +37,17 @@ public class MariadbAction extends AbstractDBAction {
 
   private final MariadbActionConfig mariadbActionConfig;
 
+  /**
+   * This is the constructor for MariadbAction.
+   * @param mariadbActionConfig It takes Mariadb Action config object as the parameter.
+   */
   public MariadbAction(MariadbActionConfig mariadbActionConfig) {
     super(mariadbActionConfig, false);
     this.mariadbActionConfig = mariadbActionConfig;
   }
 
   /**
-   * MariaDB Action Config
+   * MariaDB Action Config.
    */
   public static class MariadbActionConfig extends DBSpecificQueryConfig {
 

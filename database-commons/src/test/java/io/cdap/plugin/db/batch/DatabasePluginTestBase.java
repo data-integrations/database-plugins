@@ -57,6 +57,16 @@ public abstract class DatabasePluginTestBase extends HydratorTestBase {
     );
   }
 
+  protected static void assertRuntimeFailure(ApplicationId appId, ETLBatchConfig etlConfig,
+                                             ArtifactSummary datapipelineArtifact, String failureMessage, int runCount)
+          throws Exception {
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(datapipelineArtifact, etlConfig);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+    final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForRuns(ProgramRunStatus.FAILED, runCount, 3, TimeUnit.MINUTES);
+  }
+
   protected static void assertDeploymentFailure(ApplicationId appId, ETLBatchConfig etlConfig,
                                                 ArtifactSummary datapipelineArtifact, String  failureMessage)
     throws Exception {

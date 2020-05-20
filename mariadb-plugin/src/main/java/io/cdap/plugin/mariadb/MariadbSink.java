@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,12 +23,11 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * MariaDB Sink
+ * MariaDB Sink.
  */
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(MariadbConstants.PLUGIN_NAME)
@@ -37,13 +36,17 @@ public class MariadbSink extends AbstractDBSink {
 
   private final MariadbSinkConfig mariadbSinkConfig;
 
+  /**
+   * This is the constructor for MariadbSink.
+   * @param mariadbSinkConfig It takes Mariadb sink config object as the parameter.
+   */
   public MariadbSink(MariadbSinkConfig mariadbSinkConfig) {
     super(mariadbSinkConfig);
     this.mariadbSinkConfig = mariadbSinkConfig;
   }
 
   /**
-   * MariaDB Sink Config
+   * MariaDB Sink Config.
    */
   public static class MariadbSinkConfig extends DBSpecificSinkConfig {
 

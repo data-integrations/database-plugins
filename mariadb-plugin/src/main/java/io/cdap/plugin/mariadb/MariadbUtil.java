@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.mariadb;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -25,7 +24,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * MariaDB util methods
+ * MariaDB util methods.
  */
 public final class MariadbUtil {
   private MariadbUtil() {

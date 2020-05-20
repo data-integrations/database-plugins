@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Represents MariaDB post action
+ * Represents MariaDB post action.
  */
 @Plugin(type = PostAction.PLUGIN_TYPE)
 @Name(MariadbConstants.PLUGIN_NAME)
@@ -37,13 +37,17 @@ public class MariadbPostAction extends AbstractQueryAction {
 
   private final MariadbQueryActionConfig mariadbQueryActionConfig;
 
+  /**
+   * This is the constructor for MariadbPostAction.
+   * @param mariadbQueryActionConfig It takes Mariadb query action config object as the parameter.
+   */
   public MariadbPostAction(MariadbQueryActionConfig mariadbQueryActionConfig) {
     super(mariadbQueryActionConfig, false);
     this.mariadbQueryActionConfig = mariadbQueryActionConfig;
   }
 
   /**
-   * MariaDB post action mariadbQueryActionConfig
+   * MariaDB post action mariadbQueryActionConfig.
    */
   public static class MariadbQueryActionConfig extends DBSpecificQueryActionConfig {
 
