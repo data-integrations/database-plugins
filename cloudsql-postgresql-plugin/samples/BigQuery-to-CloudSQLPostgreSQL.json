@@ -1,0 +1,129 @@
+{
+  "artifact": {
+    "name": "cdap-data-pipeline",
+    "version": "6.1.2",
+    "scope": "SYSTEM",
+    "label": "Data Pipeline - Batch"
+  },
+  "description": "",
+  "name": "bigquery-cloudsqlpostgresql",
+  "config": {
+    "resources": {
+      "memoryMB": 1024,
+      "virtualCores": 1
+    },
+    "driverResources": {
+      "memoryMB": 1024,
+      "virtualCores": 1
+    },
+    "connections": [
+      {
+        "from": "BigQuery",
+        "to": "CloudSQL PostgreSQL"
+      },
+      {
+        "from": "CloudSQL PostgreSQL",
+        "to": "CloudSQL PostgreSQL Execute"
+      }
+    ],
+    "comments": [],
+    "postActions": [],
+    "properties": {},
+    "processTimingEnabled": true,
+    "stageLoggingEnabled": false,
+    "stages": [
+      {
+        "name": "BigQuery",
+        "plugin": {
+          "name": "BigQueryTable",
+          "type": "batchsource",
+          "label": "BigQuery",
+          "artifact": {
+            "name": "google-cloud",
+            "version": "0.14.2",
+            "scope": "SYSTEM"
+          },
+          "properties": {
+            "project": "auto-detect",
+            "serviceFilePath": "auto-detect",
+            "referenceName": "source",
+            "dataset": "postgresOrders",
+            "table": "orders",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+          }
+        },
+        "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+      },
+      {
+        "name": "CloudSQL PostgreSQL",
+        "plugin": {
+          "name": "CloudSQLPostgreSQL",
+          "type": "batchsink",
+          "label": "CloudSQL PostgreSQL",
+          "artifact": {
+            "name": "cloudsql-postgresql-plugin",
+            "version": "1.4.0-SNAPSHOT",
+            "scope": "USER"
+          },
+          "properties": {
+            "jdbcPluginName": "cloudsql-postgresql",
+            "instanceType": "public",
+            "transactionIsolationLevel": "TRANSACTION_READ_COMMITTED",
+            "connectionTimeout": "10",
+            "referenceName": "sink",
+            "database": "postgres",
+            "user": "postgres",
+            "password": "",
+            "connectionName": "",
+            "tableName": "orders"
+          }
+        },
+        "outputSchema": [
+          {
+            "name": "etlSchemaBody",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":\"int\"},{\"name\":\"CUSTKEY\",\"type\":\"int\"},{\"name\":\"ORDERSTATUS\",\"type\":\"string\"},{\"name\":\"TOTALPRICE\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":38,\"scale\":9}},{\"name\":\"ORDERDATE\",\"type\":{\"type\":\"int\",\"logicalType\":\"date\"}},{\"name\":\"ORDERPRIORITY\",\"type\":\"string\"},{\"name\":\"CLERK\",\"type\":\"string\"},{\"name\":\"SHIPPRIORITY\",\"type\":\"int\"},{\"name\":\"O_COMMENT\",\"type\":\"string\"}]}"
+          }
+        ],
+        "inputSchema": [
+          {
+            "name": "BigQuery",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+          }
+        ]
+      },
+      {
+        "name": "CloudSQL PostgreSQL Execute",
+        "plugin": {
+          "name": "CloudSQLPostgreSQL",
+          "type": "action",
+          "label": "CloudSQL PostgreSQL Execute",
+          "artifact": {
+            "name": "cloudsql-postgresql-plugin",
+            "version": "1.4.0-SNAPSHOT",
+            "scope": "USER"
+          },
+          "properties": {
+            "jdbcPluginName": "cloudsql-postgresql",
+            "instanceType": "public",
+            "connectionTimeout": "10",
+            "database": "postgres",
+            "user": "postgres",
+            "password": "",
+            "connectionName": "",
+            "query": "UPDATE orders SET \"CLERK\"='Clerk#000049252' WHERE \"ORDERKEY\"=182250663;"
+          }
+        },
+        "outputSchema": [
+          {
+            "name": "etlSchemaBody",
+            "schema": ""
+          }
+        ]
+      }
+    ],
+    "schedule": "0 * * * *",
+    "engine": "spark",
+    "numOfRecordsPreview": 100,
+    "maxConcurrentRuns": 1
+  }
+}
