@@ -1,0 +1,113 @@
+{
+  "name": "cloudsqlpostgresql-bigquery",
+  "description": "Data Pipeline Application",
+  "artifact": {
+    "name": "cdap-data-pipeline",
+    "version": "6.1.2",
+    "scope": "SYSTEM"
+  },
+  "config": {
+    "stages": [
+      {
+        "name": "CloudSQL PostgreSQL",
+        "plugin": {
+          "name": "CloudSQLPostgreSQL",
+          "type": "batchsource",
+          "label": "CloudSQL PostgreSQL",
+          "artifact": {
+            "name": "cloudsql-postgresql-plugin",
+            "version": "1.4.0-SNAPSHOT",
+            "scope": "USER"
+          },
+          "properties": {
+            "jdbcPluginName": "cloudsql-postgresql",
+            "instanceType": "public",
+            "numSplits": "500",
+            "referenceName": "source",
+            "database": "postgres",
+            "user": "postgres",
+            "password": "",
+            "connectionName": "",
+            "importQuery": "select * from orders where $CONDITIONS;",
+            "boundingQuery": "select min(\"ORDERKEY\"), max(\"ORDERKEY\") from qin1tb_orders;",
+            "splitBy": "\"ORDERKEY\"",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+          }
+        },
+        "outputSchema": [
+          {
+            "name": "etlSchemaBody",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+          }
+        ],
+        "type": "batchsource",
+        "label": "CloudSQL PostgreSQL",
+        "icon": "fa-plug"
+      },
+      {
+        "name": "BigQuery",
+        "plugin": {
+          "name": "BigQueryTable",
+          "type": "batchsink",
+          "label": "BigQuery",
+          "artifact": {
+            "name": "google-cloud",
+            "version": "0.14.2",
+            "scope": "SYSTEM"
+          },
+          "properties": {
+            "project": "auto-detect",
+            "serviceFilePath": "auto-detect",
+            "operation": "insert",
+            "truncateTable": "false",
+            "allowSchemaRelaxation": "false",
+            "location": "US",
+            "createPartitionedTable": "false",
+            "partitionFilterRequired": "false",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}",
+            "referenceName": "sink",
+            "dataset": "postgresOrders",
+            "table": "orders"
+          }
+        },
+        "outputSchema": [
+          {
+            "name": "etlSchemaBody",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+          }
+        ],
+        "inputSchema": [
+          {
+            "name": "CloudSQL PostgreSQL",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ORDERKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"CUSTKEY\",\"type\":[\"int\",\"null\"]},{\"name\":\"ORDERSTATUS\",\"type\":[\"string\",\"null\"]},{\"name\":\"ORDERDATE\",\"type\":[{\"type\":\"int\",\"logicalType\":\"date\"},\"null\"]},{\"name\":\"ORDERPRIORITY\",\"type\":[\"string\",\"null\"]},{\"name\":\"CLERK\",\"type\":[\"string\",\"null\"]},{\"name\":\"SHIPPRIORITY\",\"type\":[\"int\",\"null\"]},{\"name\":\"O_COMMENT\",\"type\":[\"string\",\"null\"]}]}"
+          }
+        ],
+        "type": "batchsink",
+        "label": "BigQuery",
+        "icon": "fa-plug"
+      }
+    ],
+    "connections": [
+      {
+        "from": "CloudSQL PostgreSQL",
+        "to": "BigQuery"
+      }
+    ],
+    "comments": [],
+    "resources": {
+      "memoryMB": 1024,
+      "virtualCores": 1
+    },
+    "driverResources": {
+      "memoryMB": 1024,
+      "virtualCores": 1
+    },
+    "postActions": [],
+    "properties": {},
+    "processTimingEnabled": true,
+    "stageLoggingEnabled": false,
+    "engine": "spark",
+    "schedule": "0 * * * *",
+    "maxConcurrentRuns": 1
+  }
+}
