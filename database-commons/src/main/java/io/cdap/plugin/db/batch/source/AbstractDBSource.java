@@ -101,7 +101,14 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     sourceConfig.validate(collector);
     if (sourceConfig.getSchema() != null) {
       stageConfigurer.setOutputSchema(sourceConfig.getSchema());
-    } else if (!sourceConfig.containsMacro(DBSourceConfig.IMPORT_QUERY)) {
+      return;
+    }
+    if (!sourceConfig.containsMacro(ConnectionConfig.HOST) &&
+      !sourceConfig.containsMacro(ConnectionConfig.PORT) &&
+      !sourceConfig.containsMacro(ConnectionConfig.USER) &&
+      !sourceConfig.containsMacro(ConnectionConfig.PASSWORD) &&
+      !sourceConfig.containsMacro(DBSourceConfig.DATABASE) &&
+      !sourceConfig.containsMacro(DBSourceConfig.IMPORT_QUERY)) {
       try {
         stageConfigurer.setOutputSchema(getSchema(driverClass));
       } catch (IllegalAccessException | InstantiationException e) {
