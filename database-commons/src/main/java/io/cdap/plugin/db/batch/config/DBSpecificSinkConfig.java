@@ -17,6 +17,7 @@
 package io.cdap.plugin.db.batch.config;
 
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 
@@ -27,13 +28,16 @@ import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 public abstract class DBSpecificSinkConfig extends AbstractDBSink.DBSinkConfig {
   @Name(HOST)
   @Description("Database host")
+  @Macro
   public String host;
 
   @Name(PORT)
   @Description("Specific database port")
+  @Macro
   public Integer port;
 
   @Name(DATABASE)
   @Description("Database name to connect to")
+  @Macro
   public String database;
 }
