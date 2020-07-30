@@ -48,6 +48,9 @@ public class MariadbAction extends AbstractDBAction {
 
   /**
    * MariaDB Action Config.
+   * TO DO
+   * Most of these configs are common to all mariadb plugins. These needs to be put into common class to avoid
+   * code duplication. https://issues.cask.co/browse/PLUGIN-358
    */
   public static class MariadbActionConfig extends DBSpecificQueryConfig {
 
