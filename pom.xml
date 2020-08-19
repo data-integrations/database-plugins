@@ -20,7 +20,7 @@
 
   <groupId>io.cdap.plugin</groupId>
   <artifactId>database-plugins</artifactId>
-  <version>1.4.0-SNAPSHOT</version>
+  <version>1.5.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Database Plugins</name>
   <description>Collection of database plugins</description>
@@ -40,6 +40,8 @@
     <module>aurora-postgresql-plugin</module>
     <module>memsql-plugin</module>
     <module>saphana-plugin</module>
+    <module>cloudsql-mysql-plugin</module>
+    <module>cloudsql-postgresql-plugin</module>
   </modules>
 
   <licenses>
