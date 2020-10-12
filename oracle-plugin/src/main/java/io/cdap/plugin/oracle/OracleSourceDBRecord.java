@@ -212,7 +212,7 @@ public class OracleSourceDBRecord extends DBRecord {
         // This is the only way to differentiate FLOAT/REAL columns from other numeric columns, that based on NUMBER.
         // Since FLOAT is a subtype of the NUMBER data type, 'getColumnType' and 'getColumnTypeName' can not be used.
         if (Double.class.getTypeName().equals(resultSet.getMetaData().getColumnClassName(columnIndex))) {
-          recordBuilder.set(field.getName(), resultSet.getDouble(columnIndex));
+          recordBuilder.setDecimal(field.getName(), BigDecimal.valueOf(resultSet.getDouble(columnIndex)));
         } else {
           // It's required to pass 'scale' parameter since in the case of Oracle, scale of 'BigDecimal' depends on the
           // scale of actual value. For example for value '77.12' scale will be '2' even if sql scale is '6'
