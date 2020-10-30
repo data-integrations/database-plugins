@@ -43,6 +43,7 @@
     <module>cloudsql-mysql-plugin</module>
     <module>cloudsql-postgresql-plugin</module>
     <module>teradata-plugin</module>
+    <module>generic-db-argument-setter</module>
   </modules>
 
   <licenses>
