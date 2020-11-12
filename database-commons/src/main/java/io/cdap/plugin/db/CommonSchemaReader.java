@@ -90,6 +90,15 @@ public class CommonSchemaReader implements SchemaReader {
       case Types.DECIMAL:
         int precision = metadata.getPrecision(index); // total number of digits
         int scale = metadata.getScale(index); // digits after the decimal point
+        // decimal type with scale 0 is not supported
+        // possible cases are:
+        //    - scale is set to 0
+        //    - only precision is set - by default scale is 0
+        //    - precision and scale are set as dynamic - by default scale is 0
+        if (scale == 0) {
+          throw new SQLException(new UnsupportedTypeException(String.format("Unsupported SQL Type: %s with scale 0.",
+                                                                            metadata.getColumnTypeName(index))));
+        }
         return Schema.decimalOf(precision, scale);
 
       case Types.DOUBLE:
