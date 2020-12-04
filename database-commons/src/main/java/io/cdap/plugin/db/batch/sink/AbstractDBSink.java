@@ -100,7 +100,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     if (Objects.nonNull(inputSchema)) {
       Class<? extends Driver> driverClass = DBUtils.getDriverClass(
         pipelineConfigurer, dbSinkConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
-      if (driverClass != null) {
+      if (driverClass != null && !dbSinkConfig.connectionParamsContainsMacro()) {
         FailureCollector collector = configurer.getFailureCollector();
         validateSchema(collector, driverClass, dbSinkConfig.tableName, inputSchema);
       }
@@ -362,6 +362,11 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
      */
     protected String getEscapedTableName() {
       return tableName;
+    }
+
+    public boolean connectionParamsContainsMacro() {
+      return (containsMacro(ConnectionConfig.HOST) || containsMacro(ConnectionConfig.PORT) ||
+        containsMacro(ConnectionConfig.DATABASE) || containsMacro(TABLE_NAME) || containsMacro(USER) || containsMacro(PASSWORD));
     }
   }
 }
