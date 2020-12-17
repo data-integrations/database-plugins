@@ -18,7 +18,6 @@ package io.cdap.plugin.db.batch.sink;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -66,7 +65,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -366,7 +364,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
     public boolean connectionParamsContainsMacro() {
       return (containsMacro(ConnectionConfig.HOST) || containsMacro(ConnectionConfig.PORT) ||
-        containsMacro(ConnectionConfig.DATABASE) || containsMacro(TABLE_NAME) || containsMacro(USER) || containsMacro(PASSWORD));
+        containsMacro(ConnectionConfig.DATABASE) || containsMacro(TABLE_NAME) || containsMacro(USER) ||
+        containsMacro(PASSWORD));
     }
   }
 }
