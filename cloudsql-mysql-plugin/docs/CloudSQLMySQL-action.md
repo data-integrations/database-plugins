@@ -48,7 +48,7 @@ Suppose you want to execute a query against a CloudSQL MySQL database named "pro
 ```
 Driver Name: "cloudsql-mysql"
 Database Command: "UPDATE table_name SET price = 20 WHERE ID = 6"
-Instance Name: [PROJECT_ID]:[REGION]:[INSTANCE_NAME]
+Connection Name: [PROJECT_ID]:[REGION]:[INSTANCE_NAME]
 CloudSQL Instance Type: "Public"
 Database: "prod"
 Username: "root"
@@ -91,6 +91,14 @@ grep "networkIP" | awk '{print $2}'`
 # Promote the VM internal IP to static IP
 gcloud compute addresses create mysql-proxy --addresses ${IP} --region
 ${REGION} --subnet ${SUBNET}
+
+# Note down the IP to be used in MySQL or PostgreSQL JDBC 
+# connection string
+echo Proxy IP: ${IP}
+
+echo "JDBC Connection strings:"
+echo "jdbc:postgresql://${IP}:5432/{PostgreSQL_DB_NAME}"
+echo "jdbc:mysql://${IP}:3306/{MySQL_DB_NAME}"
 ```
 
 Get the latest version of the CloudSQL socket factory jar with driver and dependencies from
@@ -99,7 +107,7 @@ Get the latest version of the CloudSQL socket factory jar with driver and depend
 ```
 Driver Name: "cloudsql-mysql"
 Database Command: "UPDATE table_name SET price = 20 WHERE ID = 6"
-Instance Name: [PROJECT_ID]:[REGION]:[INSTANCE_NAME]
+Connection Name: <proxy-ip> (obtained from commands above)
 CloudSQL Instance Type: "Private"
 Database: "prod"
 Username: "root"
