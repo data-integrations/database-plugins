@@ -57,7 +57,7 @@ user with "postgres" password (Get the latest version of the CloudSQL socket fac
 Reference Name: "sink1"
 Driver Name: "cloudsql-postgresql"
 Database: "prod"
-Instance Name: [PROJECT_ID]:[REGION]:[INSTANCE_NAME]
+Connection Name: [PROJECT_ID]:[REGION]:[INSTANCE_NAME]
 CloudSQL Instance Type: "Public"
 Table Name: "users"
 Username: "postgres"
@@ -100,6 +100,14 @@ grep "networkIP" | awk '{print $2}'`
 # Promote the VM internal IP to static IP
 gcloud compute addresses create postgresql-proxy --addresses ${IP} --region
 ${REGION} --subnet ${SUBNET}
+
+# Note down the IP to be used in MySQL or PostgreSQL JDBC 
+# connection string
+echo Proxy IP: ${IP}
+
+echo "JDBC Connection strings:"
+echo "jdbc:postgresql://${IP}:5432/{PostgreSQL_DB_NAME}"
+echo "jdbc:mysql://${IP}:3306/{MySQL_DB_NAME}"
 ```
 
 Get the latest version of the CloudSQL socket factory jar with driver and dependencies from
@@ -109,7 +117,7 @@ Get the latest version of the CloudSQL socket factory jar with driver and depend
 Reference Name: "sink1"
 Driver Name: "cloudsql-postgresql"
 Database: "prod"
-Instance Name: [PROJECT_ID]:[REGION]:[INSTANCE_NAME]
+Connection Name: <proxy-ip> (obtained from commands above)
 CloudSQL Instance Type: "Private"
 Table Name: "users"
 Username: "postgres"
