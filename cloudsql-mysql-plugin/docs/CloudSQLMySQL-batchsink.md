@@ -92,7 +92,7 @@ Suppose you want to write output records to "users" table of CloudSQL MySQL data
 ```
 Reference Name: "sink1"
 Driver Name: "cloudsql-mysql"
-Instance Name: [PROJECT_ID]:[REGION_ID]:[INSTANCE_NAME]
+Connection Name: [PROJECT_ID]:[REGION_ID]:[INSTANCE_NAME]
 CloudSQL Instance Type: "Public"
 Database: "prod"
 Table Name: "users"
@@ -136,6 +136,14 @@ grep "networkIP" | awk '{print $2}'`
 # Promote the VM internal IP to static IP
 gcloud compute addresses create mysql-proxy --addresses ${IP} --region
 ${REGION} --subnet ${SUBNET}
+
+# Note down the IP to be used in MySQL or PostgreSQL JDBC 
+# connection string
+echo Proxy IP: ${IP}
+
+echo "JDBC Connection strings:"
+echo "jdbc:postgresql://${IP}:5432/{PostgreSQL_DB_NAME}"
+echo "jdbc:mysql://${IP}:3306/{MySQL_DB_NAME}"
 ```
 
 Get the latest version of the CloudSQL socket factory jar with driver and dependencies from
@@ -144,7 +152,7 @@ Get the latest version of the CloudSQL socket factory jar with driver and depend
 ```
 Reference Name: "sink1"
 Driver Name: "cloudsql-mysql"
-Instance Name: [PROJECT_ID]:[REGION_ID]:[INSTANCE_NAME]
+Connection Name: <proxy-ip> (obtained from commands above)
 CloudSQL Instance Type: "Private"
 Database: "prod"
 Table Name: "users"
