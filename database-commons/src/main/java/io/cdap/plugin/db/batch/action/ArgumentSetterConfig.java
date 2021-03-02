@@ -138,4 +138,19 @@ public abstract class ArgumentSetterConfig extends ConnectionConfig {
     }
     collector.getOrThrowException();
   }
+
+  /**
+   * @return {@code true} if any of the database configuration value is provided as macro,
+   * otherwise {@code false} is returned
+   */
+  public boolean macroUsedInDatabaseConfig() {
+    return (containsMacro(ConnectionConfig.CONNECTION_STRING)
+      || containsMacro(ConnectionConfig.USER)
+      || containsMacro(ConnectionConfig.PASSWORD)
+      || containsMacro(ArgumentSetterConfig.DATABASE_NAME)
+      || containsMacro(ArgumentSetterConfig.TABLE_NAME)
+      || containsMacro(ArgumentSetterConfig.ARGUMENT_SELECTION_CONDITIONS)
+      || containsMacro(ArgumentSetterConfig.ARGUMENTS_COLUMNS)
+      || containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS));
+  }
 }
