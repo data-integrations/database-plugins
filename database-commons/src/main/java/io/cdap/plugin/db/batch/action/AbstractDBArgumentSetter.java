@@ -63,6 +63,9 @@ public class AbstractDBArgumentSetter extends Action {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector collector = stageConfigurer.getFailureCollector();
     config.validate(collector);
+    if (config.macroUsedInDatabaseConfig()) {
+      return;
+    }
     try {
       processArguments(driverClass, collector, null);
     } catch (SQLException e) {
