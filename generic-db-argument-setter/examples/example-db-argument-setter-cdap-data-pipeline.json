@@ -44,7 +44,7 @@
                     },
                     "properties": {
                         "referenceName": "file_source",
-                        "path": "${file_path}",
+                        "path": "/${path}/${name}/${timestamp}",
                         "format": "text",
                         "skipHeader": "false",
                         "filenameOnly": "false",
@@ -109,7 +109,7 @@
                         "databaseName": "${database}",
                         "tableName": "${table}",
                         "argumentSelectionConditions": "project=test_project;environment=production;location=US",
-                        "argumentsColumns": "file_path"
+                        "argumentsColumns": "timestamp,name,path"
                     }
                 },
                 "outputSchema": [
