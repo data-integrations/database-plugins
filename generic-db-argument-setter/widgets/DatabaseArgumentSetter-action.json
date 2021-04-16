@@ -46,12 +46,12 @@
       "label": "Configuration",
       "properties": [
         {
-          "widget-type": "text",
+          "widget-type": "textbox",
           "label": "Database",
           "name": "databaseName"
         },
         {
-          "widget-type": "text",
+          "widget-type": "textbox",
           "label": "Table",
           "name": "tableName"
         },
@@ -61,16 +61,19 @@
           "name": "argumentSelectionConditions",
           "widget-attributes": {
             "showDelimiter": "false",
-            "key-placeholder": "Key",
+            "key-placeholder": "Column name",
             "value-placeholder": "Value",
             "kv-delimiter" : "=",
             "delimiter" : ";"
           }
         },
         {
-          "widget-type": "text",
-          "label": "Arguments column",
-          "name": "argumentsColumns"
+          "widget-type": "csv",
+          "label": "Argument columns",
+          "name": "argumentsColumns",
+          "widget-attributes": {
+            "value-placeholder": "Column name"
+          }
         }
       ]
     },
