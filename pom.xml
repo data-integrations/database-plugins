@@ -67,6 +67,7 @@
     <hsql.version>2.2.4</hsql.version>
     <junit.version>4.11</junit.version>
     <mockrunner.version>2.0.1</mockrunner.version>
+    <mockito.version>3.3.3</mockito.version>
     <slf4j.version>1.7.5</slf4j.version>
     <twill.version>0.9.0</twill.version>
     <!-- For plugins that don't require jdbc driver for tests -->
