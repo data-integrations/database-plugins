@@ -35,6 +35,8 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.WorkflowManager;
 import org.junit.Assert;
+import org.junit.Assume;
+import org.slf4j.Logger;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -198,5 +200,29 @@ public abstract class DatabasePluginTestBase extends HydratorTestBase {
       users.add(resultSet.getString(columnName).trim());
     }
     Assert.assertFalse(users.contains("1"));
+  }
+
+  //TODO Most of the test suite of Database plugins in this repo rely on manually setting up a local/remote database
+  // sever
+  // Should consider automatically bring up a local database server in test suite, e.g. using docker images via
+  // docker-maven-plugin
+  protected static String getPropertyOrSkip(String propertyName) {
+    String value = System.getProperty(propertyName);
+    Assume.assumeFalse("There is no value for property " + propertyName, value == null);
+    return value;
+  }
+
+  @FunctionalInterface
+  protected interface Cleanup {
+    void run() throws Exception;
+  }
+  protected static void executeCleanup(List<Cleanup> cleanups, Logger logger) {
+    for (Cleanup cleanup : cleanups) {
+      try {
+        cleanup.run();
+      } catch (Exception e) {
+        logger.warn("Fail to cleanup.", e);
+      }
+    }
   }
 }

@@ -17,7 +17,6 @@
 package io.cdap.plugin.oracle;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -33,6 +32,8 @@ import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.Clob;
@@ -46,13 +47,16 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
 
 public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
+  private static final Logger LOGGER = LoggerFactory.getLogger(OraclePluginTestBase.class);
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
@@ -65,6 +69,7 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
   protected static final String YOUR_TABLE = "your_table";
   protected static final String MY_TABLE_FOR_LONG = "my_table_long";
   protected static final String MY_DEST_TABLE_FOR_LONG = "MY_DEST_LONG";
+  protected static final Map<String, String> BASE_PROPS = new HashMap<>();
 
   protected static String connectionUrl;
   protected static final int YEAR;
@@ -73,7 +78,6 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
   protected static final int SCALE = 6;
   protected static final ZoneId UTC = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
 
-  protected static boolean tearDown = true;
   private static int startCount;
 
   @ClassRule
@@ -85,22 +89,24 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
     YEAR = calendar.get(Calendar.YEAR);
   }
 
-  protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("oracle.host", "localhost"))
-    .put(ConnectionConfig.PORT, System.getProperty("oracle.port", "1521"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("oracle.database", "cdap"))
-    .put(ConnectionConfig.USER, System.getProperty("oracle.username", "SYSTEM"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("oracle.password", "123Qwe123"))
-    .put(OracleConstants.CONNECTION_TYPE, System.getProperty("oracle.connectionType", "sid"))
-    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
-    .put(OracleConstants.DEFAULT_BATCH_VALUE, "10")
-    .build();
+  private static void getProperties() {
+    BASE_PROPS.put(ConnectionConfig.HOST, getPropertyOrSkip("oracle.host"));
+    BASE_PROPS.put(ConnectionConfig.PORT, getPropertyOrSkip("oracle.port"));
+    BASE_PROPS.put(ConnectionConfig.DATABASE, getPropertyOrSkip("oracle.database"));
+    BASE_PROPS.put(ConnectionConfig.USER, getPropertyOrSkip("oracle.username"));
+    BASE_PROPS.put(ConnectionConfig.PASSWORD, getPropertyOrSkip("oracle.password"));
+    BASE_PROPS.put(OracleConstants.CONNECTION_TYPE, getPropertyOrSkip("oracle.connectionType"));
+    BASE_PROPS.put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME);
+    BASE_PROPS.put(OracleConstants.DEFAULT_BATCH_VALUE, "10");
+  }
 
   @BeforeClass
   public static void setupTest() throws Exception {
     if (startCount++ > 0) {
       return;
     }
+
+    getProperties();
 
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
@@ -329,22 +335,23 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
   }
 
   @AfterClass
-  public static void tearDownDB() throws SQLException {
-    if (!tearDown) {
-      return;
-    }
+  public static void tearDownDB() {
 
     String dropTableFormat = "DROP TABLE %s";
 
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement()) {
-      stmt.execute(String.format(dropTableFormat, MY_TABLE));
-      stmt.execute(String.format(dropTableFormat, MY_TABLE_FOR_LONG));
-      stmt.execute(String.format(dropTableFormat, YOUR_TABLE));
-      stmt.execute(String.format(dropTableFormat, "postActionTest"));
-      stmt.execute(String.format(dropTableFormat, "dbActionTest"));
-      stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE));
-      stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE_FOR_LONG));
+      executeCleanup(Arrays.<Cleanup>asList(() -> stmt.execute(String.format(dropTableFormat, MY_TABLE)),
+                                            () -> stmt.execute(String.format(dropTableFormat, MY_TABLE_FOR_LONG)),
+                                            () -> stmt.execute(String.format(dropTableFormat, YOUR_TABLE)),
+                                            () -> stmt.execute(String.format(dropTableFormat, "postActionTest")),
+                                            () -> stmt.execute(String.format(dropTableFormat, "dbActionTest")),
+                                            () -> stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE)),
+                                            () -> stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE_FOR_LONG))),
+                     LOGGER);
+
+    } catch (Exception e) {
+      LOGGER.warn("Fail to tear down.", e);
     }
   }
 }

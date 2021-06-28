@@ -18,7 +18,6 @@ package io.cdap.plugin.auroradb.postgres;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -35,6 +34,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.postgresql.Driver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -45,42 +46,38 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
 public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
+  private static final Logger LOGGER = LoggerFactory.getLogger(AuroraPostgresPluginTestBase.class);
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
 
   protected static final String JDBC_DRIVER_NAME = "postrgesql";
+  protected static final Map<String, String> BASE_PROPS = new HashMap<>();
 
   protected static String connectionUrl;
   protected static int year;
   protected static final int PRECISION = 10;
   protected static final int SCALE = 6;
-  protected static boolean tearDown = true;
   private static int startCount;
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
-
-  protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, getPropertyOrFail("auroraPostgresql.clusterEndpoint"))
-    .put(ConnectionConfig.PORT, getPropertyOrFail("auroraPostgresql.port"))
-    .put(ConnectionConfig.DATABASE, getPropertyOrFail("auroraPostgresql.database"))
-    .put(ConnectionConfig.USER, getPropertyOrFail("auroraPostgresql.username"))
-    .put(ConnectionConfig.PASSWORD, getPropertyOrFail("auroraPostgresql.password"))
-    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
-    .build();
 
   @BeforeClass
   public static void setupTest() throws Exception {
     if (startCount++ > 0) {
       return;
     }
+
+    getProperties();
 
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(new Date(CURRENT_TS));
@@ -109,6 +106,15 @@ public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBas
     Connection conn = createConnection();
     createTestTables(conn);
     prepareTestData(conn);
+  }
+
+  private static void getProperties() {
+    BASE_PROPS.put(ConnectionConfig.HOST, getPropertyOrSkip("auroraPostgresql.clusterEndpoint"));
+    BASE_PROPS.put(ConnectionConfig.PORT, getPropertyOrSkip("auroraPostgresql.port"));
+    BASE_PROPS.put(ConnectionConfig.DATABASE, getPropertyOrSkip("auroraPostgresql.database"));
+    BASE_PROPS.put(ConnectionConfig.USER, getPropertyOrSkip("auroraPostgresql.username"));
+    BASE_PROPS.put(ConnectionConfig.PASSWORD, getPropertyOrSkip("auroraPostgresql.password"));
+    BASE_PROPS.put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME);
   }
 
   protected static void createTestTables(Connection conn) throws SQLException {
@@ -189,16 +195,6 @@ public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBas
     }
   }
 
-  private static String getPropertyOrFail(String propertyName) {
-    String value = System.getProperty(propertyName);
-
-    if (value == null) {
-      throw new IllegalStateException("There is no value for property " + propertyName);
-    }
-
-    return value;
-  }
-
   public static Connection createConnection() {
     try {
       Class.forName(Driver.class.getCanonicalName());
@@ -210,18 +206,16 @@ public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBas
   }
 
   @AfterClass
-  public static void tearDownDB() throws SQLException {
-    if (!tearDown) {
-      return;
-    }
-
+  public static void tearDownDB() {
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement()) {
-      stmt.execute("DROP TABLE my_table");
-      stmt.execute("DROP TABLE your_table");
-      stmt.execute("DROP TABLE \"postActionTest\"");
-      stmt.execute("DROP TABLE \"dbActionTest\"");
-      stmt.execute("DROP TABLE \"MY_DEST_TABLE\"");
+      executeCleanup(Arrays.<Cleanup>asList(() -> stmt.execute("DROP TABLE my_table"),
+                                            () -> stmt.execute("DROP TABLE your_table"),
+                                            () -> stmt.execute("DROP TABLE postActionTest"),
+                                            () -> stmt.execute("DROP TABLE dbActionTest"),
+                                            () -> stmt.execute("DROP TABLE MY_DEST_TABLE")), LOGGER);
+    } catch (Exception e) {
+      LOGGER.warn("Fail to tear down.", e);
     }
   }
 }

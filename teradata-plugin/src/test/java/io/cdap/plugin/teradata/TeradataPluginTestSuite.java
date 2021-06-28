@@ -21,8 +21,6 @@ import io.cdap.plugin.teradata.action.TeradataActionTestRun;
 import io.cdap.plugin.teradata.postaction.TeradataPostActionTestRun;
 import io.cdap.plugin.teradata.sink.TeradataSinkTestRun;
 import io.cdap.plugin.teradata.source.TeradataSourceTestRun;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -37,14 +35,4 @@ import org.junit.runners.Suite;
   TeradataPostActionTestRun.class
 })
 public class TeradataPluginTestSuite extends TeradataPluginTestBase {
-
-  @BeforeClass
-  public static void setup() {
-    tearDown = false;
-  }
-
-  @AfterClass
-  public static void tearDown() throws Exception {
-    tearDown = true;
-  }
 }

@@ -18,7 +18,6 @@ package io.cdap.plugin.netezza;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -34,6 +33,8 @@ import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -46,23 +47,26 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
 public abstract class NetezzaPluginTestBase extends DatabasePluginTestBase {
+  private static final Logger LOGGER = LoggerFactory.getLogger(NetezzaPluginTestBase.class);
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
 
   protected static final String JDBC_DRIVER_NAME = "netezza";
+  protected static final Map<String, String> BASE_PROPS = new HashMap<>();
 
   protected static String connectionUrl;
   protected static final int YEAR;
   protected static final int PRECISION = 16;
   protected static final int SCALE = 6;
-  protected static boolean tearDown = true;
   private static int startCount;
 
   @ClassRule
@@ -74,20 +78,12 @@ public abstract class NetezzaPluginTestBase extends DatabasePluginTestBase {
     YEAR = calendar.get(Calendar.YEAR);
   }
 
-  protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("netezza.host", "localhost"))
-    .put(ConnectionConfig.PORT, System.getProperty("netezza.port", "5480"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("netezza.database", "mydb"))
-    .put(ConnectionConfig.USER, System.getProperty("netezza.username", "admin"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("netezza.password", "password"))
-    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
-    .build();
-
   @BeforeClass
   public static void setupTest() throws Exception {
     if (startCount++ > 0) {
       return;
     }
+    getProperties();
 
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
@@ -114,6 +110,15 @@ public abstract class NetezzaPluginTestBase extends DatabasePluginTestBase {
     Connection conn = createConnection();
     createTestTables(conn);
     prepareTestData(conn);
+  }
+
+  private static void getProperties() {
+    BASE_PROPS.put(ConnectionConfig.HOST, getPropertyOrSkip("netezza.host"));
+    BASE_PROPS.put(ConnectionConfig.PORT, getPropertyOrSkip("netezza.port"));
+    BASE_PROPS.put(ConnectionConfig.DATABASE, getPropertyOrSkip("netezza.database"));
+    BASE_PROPS.put(ConnectionConfig.USER, getPropertyOrSkip("netezza.username"));
+    BASE_PROPS.put(ConnectionConfig.PASSWORD, getPropertyOrSkip("netezza.password"));
+    BASE_PROPS.put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME);
   }
 
   protected static void createTestTables(Connection conn) throws SQLException {
@@ -219,18 +224,16 @@ public abstract class NetezzaPluginTestBase extends DatabasePluginTestBase {
   }
 
   @AfterClass
-  public static void tearDownDB() throws SQLException {
-    if (!tearDown) {
-      return;
-    }
-
+  public static void tearDownDB() {
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement()) {
-      stmt.execute("DROP TABLE my_table");
-      stmt.execute("DROP TABLE your_table");
-      stmt.execute("DROP TABLE post_action_test");
-      stmt.execute("DROP TABLE db_action_test");
-      stmt.execute("DROP TABLE MY_DEST_TABLE");
+      executeCleanup(Arrays.<Cleanup>asList(() -> stmt.execute("DROP TABLE my_table"),
+                                            () -> stmt.execute("DROP TABLE your_table"),
+                                            () -> stmt.execute("DROP TABLE post_action_test"),
+                                            () -> stmt.execute("DROP TABLE db_action_test"),
+                                            () -> stmt.execute("DROP TABLE MY_DEST_TABLE")), LOGGER);
+    } catch (Exception e) {
+      LOGGER.warn("Fail to tear down.", e);
     }
   }
 }

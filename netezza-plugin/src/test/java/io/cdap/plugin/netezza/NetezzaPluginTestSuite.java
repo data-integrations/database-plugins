@@ -17,8 +17,6 @@
 package io.cdap.plugin.netezza;
 
 import io.cdap.cdap.common.test.TestSuite;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -34,14 +32,4 @@ import org.junit.runners.Suite;
   NetezzaPostActionTestRun.class
 })
 public class NetezzaPluginTestSuite extends NetezzaPluginTestBase {
-
-  @BeforeClass
-  public static void setup() {
-    tearDown = false;
-  }
-
-  @AfterClass
-  public static void tearDown() throws Exception {
-    tearDown = true;
-  }
 }
