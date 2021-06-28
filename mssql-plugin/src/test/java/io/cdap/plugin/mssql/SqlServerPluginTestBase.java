@@ -33,6 +33,8 @@ import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -56,6 +58,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public abstract class SqlServerPluginTestBase extends DatabasePluginTestBase {
+  private static Logger logger = LoggerFactory.getLogger(SqlServerPluginTestBase.class);
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
@@ -75,7 +78,6 @@ public abstract class SqlServerPluginTestBase extends DatabasePluginTestBase {
   protected static final int SMALL_MONEY_PRECISION = 10;
   protected static final int SMALL_MONEY_SCALE = 4;
   protected static final LocalTime TIME_MICROS = LocalTime.of(16, 17, 18, 123456000);
-  protected static boolean tearDown = false;
   protected static final ZoneId UTC = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
   private static int startCount;
 
@@ -117,7 +119,6 @@ public abstract class SqlServerPluginTestBase extends DatabasePluginTestBase {
         createTestTables(conn);
         prepareTestData(conn);
         conn.commit();
-        tearDown = true;
       } catch (SQLException e) {
         conn.rollback();
         throw e;
@@ -291,11 +292,7 @@ public abstract class SqlServerPluginTestBase extends DatabasePluginTestBase {
   }
 
   @AfterClass
-  public static void tearDownDB() throws SQLException {
-    if (!tearDown) {
-      return;
-    }
-
+  public static void tearDownDB() {
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement()) {
       stmt.execute("DROP TABLE my_table");
@@ -305,6 +302,8 @@ public abstract class SqlServerPluginTestBase extends DatabasePluginTestBase {
       stmt.execute("DROP TABLE MY_DEST_TABLE");
       stmt.execute("DROP TYPE SSN");
       stmt.execute("DROP TYPE BIG_UDT");
+    } catch (Exception e) {
+      logger.warn("Fail to tear down.", e);
     }
   }
 }

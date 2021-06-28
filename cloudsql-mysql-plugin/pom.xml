@@ -66,6 +66,10 @@
           </instructions>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>io.cdap</groupId>
+        <artifactId>cdap-maven-plugin</artifactId>
+      </plugin>
     </plugins>
   </build>
 </project>

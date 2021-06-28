@@ -36,6 +36,8 @@ import io.cdap.plugin.teradata.source.TeradataSource;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -55,6 +57,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public abstract class TeradataPluginTestBase extends DatabasePluginTestBase {
+  private static final Logger logger = LoggerFactory.getLogger(TeradataPluginTestBase.class);
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
@@ -68,7 +71,6 @@ public abstract class TeradataPluginTestBase extends DatabasePluginTestBase {
   protected static final int PRECISION = 10;
   protected static final int SCALE = 6;
   protected static final ZoneId UTC_ZONE = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
-  protected static boolean tearDown = false;
   private static int startCount;
 
   @ClassRule
@@ -119,7 +121,6 @@ public abstract class TeradataPluginTestBase extends DatabasePluginTestBase {
     );
     Connection conn = createConnection();
     createTestTables(conn);
-    tearDown = true;
     prepareTestData(conn);
   }
 
@@ -256,11 +257,7 @@ public abstract class TeradataPluginTestBase extends DatabasePluginTestBase {
   }
 
   @AfterClass
-  public static void tearDownDB() throws SQLException {
-    if (!tearDown) {
-      return;
-    }
-
+  public static void tearDownDB() {
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement()) {
       stmt.execute("DROP TABLE my_table");
@@ -268,6 +265,8 @@ public abstract class TeradataPluginTestBase extends DatabasePluginTestBase {
       stmt.execute("DROP TABLE MY_DEST_TABLE");
       stmt.execute("DROP TABLE postActionTest");
       stmt.execute("DROP TABLE dbActionTest");
+    } catch (Exception e) {
+      logger.warn("Fail to tear down.", e);
     }
   }
 }

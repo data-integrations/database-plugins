@@ -34,6 +34,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.postgresql.Driver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -51,6 +53,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
+  private static Logger logger = LoggerFactory.getLogger(AuroraPostgresPluginTestBase.class);
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
@@ -62,7 +65,6 @@ public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBas
   protected static int year;
   protected static final int PRECISION = 10;
   protected static final int SCALE = 6;
-  protected static boolean tearDown = false;
   private static int startCount;
 
   @ClassRule
@@ -102,7 +104,6 @@ public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBas
       BASE_PROPS.get(ConnectionConfig.PORT) + "/" + BASE_PROPS.get(ConnectionConfig.DATABASE);
     Connection conn = createConnection();
     createTestTables(conn);
-    tearDown = true;
     prepareTestData(conn);
   }
 
@@ -204,11 +205,7 @@ public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBas
   }
 
   @AfterClass
-  public static void tearDownDB() throws SQLException {
-    if (!tearDown) {
-      return;
-    }
-
+  public static void tearDownDB() {
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement()) {
       stmt.execute("DROP TABLE my_table");
@@ -216,6 +213,8 @@ public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBas
       stmt.execute("DROP TABLE \"postActionTest\"");
       stmt.execute("DROP TABLE \"dbActionTest\"");
       stmt.execute("DROP TABLE \"MY_DEST_TABLE\"");
+    } catch (Exception e) {
+      logger.warn("Fail to tear down.", e);
     }
   }
 }

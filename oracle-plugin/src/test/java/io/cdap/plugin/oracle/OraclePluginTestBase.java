@@ -32,6 +32,8 @@ import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.Clob;
@@ -53,6 +55,7 @@ import java.util.Objects;
 import java.util.TimeZone;
 
 public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
+  private static Logger logger = LoggerFactory.getLogger(OraclePluginTestBase.class);
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
@@ -74,7 +77,6 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
   protected static final int SCALE = 6;
   protected static final ZoneId UTC = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
 
-  protected static boolean tearDown = false;
   private static int startCount;
 
   @ClassRule
@@ -140,7 +142,6 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
 
     Connection conn = createConnection();
     createTestTables(conn);
-    tearDown = true;
     prepareTestData(conn);
   }
 
@@ -333,10 +334,7 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
   }
 
   @AfterClass
-  public static void tearDownDB() throws SQLException {
-    if (!tearDown) {
-      return;
-    }
+  public static void tearDownDB() {
 
     String dropTableFormat = "DROP TABLE %s";
 
@@ -349,6 +347,8 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
       stmt.execute(String.format(dropTableFormat, "dbActionTest"));
       stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE));
       stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE_FOR_LONG));
+    } catch (Exception e) {
+      logger.warn("Fail to tear down.", e);
     }
   }
 }
