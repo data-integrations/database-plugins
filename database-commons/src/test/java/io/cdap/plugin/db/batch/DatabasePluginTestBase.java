@@ -36,6 +36,7 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.WorkflowManager;
 import org.junit.Assert;
 import org.junit.Assume;
+import org.slf4j.Logger;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -209,5 +210,19 @@ public abstract class DatabasePluginTestBase extends HydratorTestBase {
     String value = System.getProperty(propertyName);
     Assume.assumeFalse("There is no value for property " + propertyName, value == null);
     return value;
+  }
+
+  @FunctionalInterface
+  protected interface Cleanup {
+    void run() throws Exception;
+  }
+  protected static void executeCleanup(List<Cleanup> cleanups, Logger logger) {
+    for (Cleanup cleanup : cleanups) {
+      try {
+        cleanup.run();
+      } catch (Exception e) {
+        logger.warn("Fail to cleanup.", e);
+      }
+    }
   }
 }

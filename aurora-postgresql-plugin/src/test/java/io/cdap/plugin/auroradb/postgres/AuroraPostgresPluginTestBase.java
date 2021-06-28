@@ -46,6 +46,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBase {
-  private static Logger logger = LoggerFactory.getLogger(AuroraPostgresPluginTestBase.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AuroraPostgresPluginTestBase.class);
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
@@ -208,13 +209,13 @@ public abstract class AuroraPostgresPluginTestBase extends DatabasePluginTestBas
   public static void tearDownDB() {
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement()) {
-      stmt.execute("DROP TABLE my_table");
-      stmt.execute("DROP TABLE your_table");
-      stmt.execute("DROP TABLE \"postActionTest\"");
-      stmt.execute("DROP TABLE \"dbActionTest\"");
-      stmt.execute("DROP TABLE \"MY_DEST_TABLE\"");
+      executeCleanup(Arrays.<Cleanup>asList(() -> stmt.execute("DROP TABLE my_table"),
+                                            () -> stmt.execute("DROP TABLE your_table"),
+                                            () -> stmt.execute("DROP TABLE postActionTest"),
+                                            () -> stmt.execute("DROP TABLE dbActionTest"),
+                                            () -> stmt.execute("DROP TABLE MY_DEST_TABLE")), LOGGER);
     } catch (Exception e) {
-      logger.warn("Fail to tear down.", e);
+      LOGGER.warn("Fail to tear down.", e);
     }
   }
 }

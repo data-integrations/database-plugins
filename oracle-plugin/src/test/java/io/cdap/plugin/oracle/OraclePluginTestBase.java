@@ -47,6 +47,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,7 +56,7 @@ import java.util.Objects;
 import java.util.TimeZone;
 
 public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
-  private static Logger logger = LoggerFactory.getLogger(OraclePluginTestBase.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(OraclePluginTestBase.class);
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
@@ -340,15 +341,17 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
 
     try (Connection conn = createConnection();
          Statement stmt = conn.createStatement()) {
-      stmt.execute(String.format(dropTableFormat, MY_TABLE));
-      stmt.execute(String.format(dropTableFormat, MY_TABLE_FOR_LONG));
-      stmt.execute(String.format(dropTableFormat, YOUR_TABLE));
-      stmt.execute(String.format(dropTableFormat, "postActionTest"));
-      stmt.execute(String.format(dropTableFormat, "dbActionTest"));
-      stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE));
-      stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE_FOR_LONG));
+      executeCleanup(Arrays.<Cleanup>asList(() -> stmt.execute(String.format(dropTableFormat, MY_TABLE)),
+                                            () -> stmt.execute(String.format(dropTableFormat, MY_TABLE_FOR_LONG)),
+                                            () -> stmt.execute(String.format(dropTableFormat, YOUR_TABLE)),
+                                            () -> stmt.execute(String.format(dropTableFormat, "postActionTest")),
+                                            () -> stmt.execute(String.format(dropTableFormat, "dbActionTest")),
+                                            () -> stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE)),
+                                            () -> stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE_FOR_LONG))),
+                     LOGGER);
+
     } catch (Exception e) {
-      logger.warn("Fail to tear down.", e);
+      LOGGER.warn("Fail to tear down.", e);
     }
   }
 }
