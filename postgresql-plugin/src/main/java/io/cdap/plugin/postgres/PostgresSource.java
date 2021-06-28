@@ -18,9 +18,13 @@ package io.cdap.plugin.postgres;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
@@ -36,6 +40,7 @@ import javax.annotation.Nullable;
 @Name(PostgresConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = PostgresConnector.NAME)})
 public class PostgresSource extends AbstractDBSource {
 
   private final PostgresSourceConfig postgresSourceConfig;
@@ -47,8 +52,7 @@ public class PostgresSource extends AbstractDBSource {
 
   @Override
   protected String createConnectionString() {
-    return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, postgresSourceConfig.host,
-                         postgresSourceConfig.port, postgresSourceConfig.database);
+    return postgresSourceConfig.getConnectionString();
   }
 
   @Override
@@ -66,6 +70,20 @@ public class PostgresSource extends AbstractDBSource {
    */
   public static class PostgresSourceConfig extends DBSpecificSourceConfig {
 
+    public static final String NAME_USE_CONNECTION = "useConnection";
+    public static final String NAME_CONNECTION = "connection";
+
+    @Name(NAME_USE_CONNECTION)
+    @Nullable
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private PostgresConnectorConfig connection;
+
     @Name(PostgresConstants.CONNECTION_TIMEOUT)
     @Description("The timeout value used for socket connect operations. If connecting to the server takes longer" +
       " than this value, the connection is broken. " +
@@ -75,7 +93,9 @@ public class PostgresSource extends AbstractDBSource {
 
     @Override
     public String getConnectionString() {
-      return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
+      return String
+        .format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, connection.getHost(), connection.getPort(),
+                database);
     }
 
     @Override

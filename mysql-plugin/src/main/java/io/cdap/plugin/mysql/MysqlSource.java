@@ -18,8 +18,13 @@ package io.cdap.plugin.mysql;
 
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 
@@ -31,10 +36,11 @@ import javax.annotation.Nullable;
 /**
  * Batch source to read from MySQL.
  */
-@Plugin(type = "batchsource")
+@Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name(MysqlConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = MysqlConnector.NAME)})
 public class MysqlSource extends AbstractDBSource {
 
   private final MysqlSourceConfig mysqlSourceConfig;
@@ -46,14 +52,27 @@ public class MysqlSource extends AbstractDBSource {
 
   @Override
   protected String createConnectionString() {
-    return String.format(MysqlConstants.MYSQL_CONNECTION_STRING_FORMAT,
-                         mysqlSourceConfig.host, mysqlSourceConfig.port, mysqlSourceConfig.database);
+    return mysqlSourceConfig.getConnectionString();
   }
 
   /**
    * MySQL source config.
    */
   public static class MysqlSourceConfig extends DBSpecificSourceConfig {
+
+    public static final String NAME_USE_CONNECTION = "useConnection";
+    public static final String NAME_CONNECTION = "connection";
+
+    @Name(NAME_USE_CONNECTION)
+    @Nullable
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private MysqlConnectorConfig connection;
 
     @Name(MysqlConstants.AUTO_RECONNECT)
     @Description("Should the driver try to re-establish stale and/or dead connections")
@@ -102,7 +121,7 @@ public class MysqlSource extends AbstractDBSource {
 
     @Override
     public String getConnectionString() {
-      return MysqlUtil.getConnectionString(host, port, database);
+      return MysqlUtil.getConnectionString(connection.getHost(), connection.getPort(), database);
     }
 
     @Override
@@ -125,5 +144,11 @@ public class MysqlSource extends AbstractDBSource {
       }
       return initQueries;
     }
+
+    @Override
+    public MysqlConnectorConfig getConnection() {
+      return connection;
+    }
   }
+
 }

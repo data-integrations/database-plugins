@@ -48,21 +48,21 @@ public abstract class ConnectionConfig extends PluginConfig {
   @Name(JDBC_PLUGIN_NAME)
   @Description("Name of the JDBC driver to use. This is the value of the 'jdbcPluginName' key defined in the JSON " +
     "file for the JDBC plugin.")
-  public String jdbcPluginName;
+  private String jdbcPluginName;
 
   @Name(USER)
   @Description("User to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
   @Nullable
   @Macro
-  public String user;
+  private String user;
 
   @Name(PASSWORD)
   @Description("Password to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
   @Nullable
   @Macro
-  public String password;
+  private String password;
 
   @Name(CONNECTION_ARGUMENTS)
   @Description("A list of arbitrary string key/value pairs as connection arguments.")
@@ -78,7 +78,7 @@ public abstract class ConnectionConfig extends PluginConfig {
    * @return a {@link Map} of connection arguments, parsed from the config.
    */
   public Map<String, String> getConnectionArguments() {
-    Map<String, String> arguments = getConnectionArguments(this.connectionArguments, user, password);
+    Map<String, String> arguments = getConnectionArguments(connectionArguments, user, password);
     arguments.putAll(getDBSpecificArguments());
     return arguments;
   }
@@ -132,4 +132,15 @@ public abstract class ConnectionConfig extends PluginConfig {
     return Collections.emptyMap();
   }
 
+  public String getJdbcPlughinName() {
+    return jdbcPluginName;
+  }
+
+  public String getUser() {
+    return user;
+  }
+
+  public String getPassword() {
+    return password;
+  }
 }

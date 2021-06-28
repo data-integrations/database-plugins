@@ -165,7 +165,7 @@ public final class DBUtils {
                                                 String jdbcPluginId) {
     FailureCollector collector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     if (!config.containsMacro(DBConfig.USER) && !config.containsMacro(DBConfig.PASSWORD) &&
-      Objects.isNull(config.user) && Objects.nonNull(config.password)) {
+      Objects.isNull(config.getUser()) && Objects.nonNull(config.getPassword())) {
       collector.addFailure("Username is required when password is given.", null)
         .withConfigProperty(ConnectionConfig.USER);
     }
@@ -173,11 +173,11 @@ public final class DBUtils {
     Class<? extends Driver> jdbcDriverClass = getDriverClass(pipelineConfigurer, config, jdbcPluginId);
     if (jdbcDriverClass == null) {
       collector.addFailure(
-        String.format("Unable to load JDBC Driver class for plugin name '%s'.", config.jdbcPluginName),
+        String.format("Unable to load JDBC Driver class for plugin name '%s'.", config.getJdbcPlughinName()),
         String.format("Ensure that the plugin '%s' of type '%s' containing the driver has been installed correctly.",
-                      config.jdbcPluginName, ConnectionConfig.JDBC_PLUGIN_TYPE))
+                      config.getJdbcPlughinName(), ConnectionConfig.JDBC_PLUGIN_TYPE))
         .withConfigProperty(ConnectionConfig.JDBC_PLUGIN_NAME)
-        .withPluginNotFound(jdbcPluginId, config.jdbcPluginName, ConnectionConfig.JDBC_PLUGIN_TYPE);
+        .withPluginNotFound(jdbcPluginId, config.getJdbcPlughinName(), ConnectionConfig.JDBC_PLUGIN_TYPE);
     }
     collector.getOrThrowException();
   }
@@ -186,7 +186,7 @@ public final class DBUtils {
                                                        String jdbcPluginId) {
     return pipelineConfigurer.usePluginClass(
       ConnectionConfig.JDBC_PLUGIN_TYPE,
-      config.jdbcPluginName,
+      config.getJdbcPlughinName(),
       jdbcPluginId, PluginProperties.builder().build());
   }
 

@@ -5,22 +5,38 @@
   "display-name": "Oracle",
   "configuration-groups": [
     {
-      "label": "Basic",
+      "label": "Connection",
       "properties": [
         {
-          "widget-type": "textbox",
-          "label": "Reference Name",
-          "name": "referenceName",
+          "widget-type": "toggle",
+          "label": "Use connection",
+          "name": "useConnection",
           "widget-attributes": {
-            "placeholder": "Name used to identify this source for lineage"
+            "on": {
+              "value": "true",
+              "label": "YES"
+            },
+            "off": {
+              "value": "false",
+              "label": "NO"
+            },
+            "default": "false"
           }
         },
         {
-          "widget-type": "textbox",
-          "label": "Driver Name",
+          "widget-type": "connection-select",
+          "label": "Connection",
+          "name": "connection",
+          "widget-attributes": {
+            "connectionType": "Oracle"
+          }
+        },
+        {
+          "widget-type": "plugin-list",
+          "label": "JDBC Driver name",
           "name": "jdbcPluginName",
           "widget-attributes": {
-            "default": "oracle"
+            "plugin-type": "jdbc"
           }
         },
         {
@@ -40,6 +56,16 @@
           }
         },
         {
+          "widget-type": "textbox",
+          "label": "Username",
+          "name": "user"
+        },
+        {
+          "widget-type": "password",
+          "label": "Password",
+          "name": "password"
+        },
+        {
           "name": "connectionType",
           "label": "Connection Type",
           "widget-type": "radio-group",
@@ -56,6 +82,31 @@
                 "label": "Service Name"
               }
             ]
+          }
+        },
+        {
+          "widget-type": "keyvalue",
+          "label": "Connection Arguments",
+          "name": "connectionArguments",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value",
+            "kv-delimiter" : "=",
+            "delimiter" : ";"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Basic",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Reference Name",
+          "name": "referenceName",
+          "widget-attributes": {
+            "placeholder": "Name used to identify this source for lineage"
           }
         },
         {
@@ -99,35 +150,8 @@
       ]
     },
     {
-      "label": "Credentials",
-      "properties": [
-        {
-          "widget-type": "textbox",
-          "label": "Username",
-          "name": "user"
-        },
-        {
-          "widget-type": "password",
-          "label": "Password",
-          "name": "password"
-        }
-      ]
-    },
-    {
       "label": "Advanced",
       "properties": [
-        {
-          "widget-type": "keyvalue",
-          "label": "Connection Arguments",
-          "name": "connectionArguments",
-          "widget-attributes": {
-            "showDelimiter": "false",
-            "key-placeholder": "Key",
-            "value-placeholder": "Value",
-            "kv-delimiter": "=",
-            "delimiter": ";"
-          }
-        },
         {
           "widget-type": "number",
           "label": "Default Batch Value",
@@ -165,6 +189,56 @@
         ],
         "schema-default-type": "string"
       }
+    }
+  ],
+  "filters": [
+    {
+      "name": "showConnectionProperties ",
+      "condition": {
+        "expression": "useConnection == false"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "jdbcPluginName"
+        },
+        {
+          "type": "property",
+          "name": "user"
+        },
+        {
+          "type": "property",
+          "name": "password"
+        },
+        {
+          "type": "property",
+          "name": "host"
+        },
+        {
+          "type": "property",
+          "name": "port"
+        },
+        {
+          "type": "property",
+          "name": "connectionType"
+        },
+        {
+          "type": "property",
+          "name": "connectionArguments"
+        }
+      ]
+    },
+    {
+      "name": "showConnectionId",
+      "condition": {
+        "expression": "useConnection == true"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "connection"
+        }
+      ]
     }
   ],
   "jump-config": {

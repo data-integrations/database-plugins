@@ -165,7 +165,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     throws SQLException, IllegalAccessException, InstantiationException {
     String connectionString = sourceConfig.getConnectionString();
     DriverCleanup driverCleanup
-      = DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.jdbcPluginName);
+      = DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.getJdbcPlughinName());
 
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(sourceConfig.getConnectionArguments());
@@ -199,13 +199,13 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     if (driverClass == null) {
       throw new InstantiationException(
         String.format("Unable to load Driver class with plugin type %s and plugin name %s",
-                      ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.jdbcPluginName));
+                      ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.getJdbcPlughinName()));
     }
 
     try {
       String connectionString = createConnectionString();
 
-      return DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.jdbcPluginName);
+      return DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.getJdbcPlughinName());
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
       LOG.error("Unable to load or register driver {}", driverClass, e);
       throw e;
@@ -229,18 +229,18 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
     LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
                 "boundingQuery = {};",
-              ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.jdbcPluginName,
+              ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.getJdbcPlughinName(),
               connectionString,
               sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery());
     ConnectionConfigAccessor connectionConfigAccessor = new ConnectionConfigAccessor();
 
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
-    if (sourceConfig.user == null && sourceConfig.password == null) {
+    if (sourceConfig.getUser() == null && sourceConfig.getPassword() == null) {
       DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(), connectionString);
     } else {
       DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(), connectionString,
-                                  sourceConfig.user, sourceConfig.password);
+                                  sourceConfig.getUser(), sourceConfig.getPassword());
     }
 
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
@@ -305,7 +305,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   }
 
   private String getJDBCPluginId() {
-    return String.format("%s.%s.%s", "source", ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.jdbcPluginName);
+    return String.format("%s.%s.%s", "source", ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.getJdbcPlughinName());
   }
 
   protected abstract String createConnectionString();

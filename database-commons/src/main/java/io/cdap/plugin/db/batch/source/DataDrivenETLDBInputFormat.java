@@ -50,11 +50,11 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
   private Driver driver;
   private JDBCDriverShim driverShim;
 
-  static void setInput(Configuration conf,
-                       Class<? extends DBWritable> inputClass,
-                       String inputQuery,
-                       String inputBoundingQuery,
-                       boolean enableAutoCommit) {
+  public static void setInput(Configuration conf,
+                              Class<? extends DBWritable> inputClass,
+                              String inputQuery,
+                              String inputBoundingQuery,
+                              boolean enableAutoCommit) {
     DBConfiguration dbConf = new DBConfiguration(conf);
     dbConf.setInputClass(inputClass);
     dbConf.setInputQuery(inputQuery);

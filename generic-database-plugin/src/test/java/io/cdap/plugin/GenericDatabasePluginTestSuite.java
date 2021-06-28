@@ -23,6 +23,7 @@ import io.cdap.plugin.db.batch.sink.DBSinkTestRun;
 import io.cdap.plugin.db.batch.sink.DBSourceTestRun;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -30,6 +31,7 @@ import org.junit.runners.Suite;
 /**
  * This is a test suite that runs all the tests for Database plugins.
  */
+@Ignore
 @RunWith(TestSuite.class)
 @Suite.SuiteClasses({
   DBSinkTestRun.class,
