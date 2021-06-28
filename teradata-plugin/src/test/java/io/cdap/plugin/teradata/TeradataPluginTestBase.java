@@ -17,7 +17,6 @@
 package io.cdap.plugin.teradata;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -51,6 +50,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -61,13 +61,14 @@ public abstract class TeradataPluginTestBase extends DatabasePluginTestBase {
 
   protected static final String JDBC_DRIVER_NAME = "teradata";
   protected static final String DRIVER_CLASS = "com.teradata.jdbc.TeraDriver";
+  protected static final Map<String, String> BASE_PROPS = new HashMap<>();
 
   protected static String connectionUrl;
   protected static final int YEAR;
   protected static final int PRECISION = 10;
   protected static final int SCALE = 6;
   protected static final ZoneId UTC_ZONE = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
-  protected static boolean tearDown = true;
+  protected static boolean tearDown = false;
   private static int startCount;
 
   @ClassRule
@@ -79,20 +80,13 @@ public abstract class TeradataPluginTestBase extends DatabasePluginTestBase {
     YEAR = calendar.get(Calendar.YEAR);
   }
 
-  protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("teradata.host", "localhost"))
-    .put(ConnectionConfig.PORT, System.getProperty("teradata.port", "1025"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("teradata.database", "mydb"))
-    .put(ConnectionConfig.USER, System.getProperty("teradata.username", "test"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("teradata.password", "test"))
-    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
-    .build();
-
   @BeforeClass
   public static void setupTest() throws Exception {
     if (startCount++ > 0) {
       return;
     }
+
+    getProperties();
 
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
@@ -124,9 +118,18 @@ public abstract class TeradataPluginTestBase extends DatabasePluginTestBase {
       ""
     );
     Connection conn = createConnection();
-
     createTestTables(conn);
+    tearDown = true;
     prepareTestData(conn);
+  }
+
+  private static void getProperties() {
+    BASE_PROPS.put(ConnectionConfig.HOST, getPropertyOrSkip("teradata.host"));
+    BASE_PROPS.put(ConnectionConfig.PORT, getPropertyOrSkip("teradata.port"));
+    BASE_PROPS.put(ConnectionConfig.DATABASE, getPropertyOrSkip("teradata.database"));
+    BASE_PROPS.put(ConnectionConfig.USER, getPropertyOrSkip("teradata.username"));
+    BASE_PROPS.put(ConnectionConfig.PASSWORD, getPropertyOrSkip("teradata.password"));
+    BASE_PROPS.put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME);
   }
 
   protected static void createTestTables(Connection conn) throws SQLException {

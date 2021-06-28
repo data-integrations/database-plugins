@@ -17,7 +17,6 @@
 package io.cdap.plugin.db2;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -45,6 +44,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 import javax.sql.rowset.serial.SerialBlob;
@@ -56,12 +56,13 @@ public abstract class Db2PluginTestBase extends DatabasePluginTestBase {
   protected static final long CURRENT_TS = System.currentTimeMillis();
   private static final String DRIVER_CLASS = "com.ibm.db2.jcc.DB2Driver";
   protected static final String JDBC_DRIVER_NAME = "db211";
+  protected static final Map<String, String> BASE_PROPS = new HashMap<>();
 
   protected static String connectionUrl;
   protected static int year;
   protected static final int PRECISION = 10;
   protected static final int SCALE = 6;
-  protected static boolean tearDown = true;
+  protected static boolean tearDown = false;
   private static int startCount;
 
   @ClassRule
@@ -73,21 +74,14 @@ public abstract class Db2PluginTestBase extends DatabasePluginTestBase {
     year = calendar.get(Calendar.YEAR);
   }
 
-  protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("db2.host", "localhost"))
-    .put(ConnectionConfig.PORT, System.getProperty("db2.port", "50000"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("db2.database", "mydb"))
-    .put(ConnectionConfig.USER, System.getProperty("db2.username", "db2inst1"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("db2.password", "123Qwe123"))
-    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
-    .build();
-
   @BeforeClass
   public static void setupTest() throws Exception {
 
     if (startCount++ > 0) {
       return;
     }
+    
+    getProperties();
 
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(new Date(CURRENT_TS));
@@ -116,7 +110,17 @@ public abstract class Db2PluginTestBase extends DatabasePluginTestBase {
       BASE_PROPS.get(ConnectionConfig.PORT) + "/" + BASE_PROPS.get(ConnectionConfig.DATABASE);
     Connection conn = createConnection();
     createTestTables(conn);
+    tearDown = true;
     prepareTestData(conn);
+  }
+
+  private static void getProperties() {
+    BASE_PROPS.put(ConnectionConfig.HOST, getPropertyOrSkip("db2.host"));
+    BASE_PROPS.put(ConnectionConfig.PORT, getPropertyOrSkip("db2.port"));
+    BASE_PROPS.put(ConnectionConfig.DATABASE, getPropertyOrSkip("db2.database"));
+    BASE_PROPS.put(ConnectionConfig.USER, getPropertyOrSkip("db2.username"));
+    BASE_PROPS.put(ConnectionConfig.PASSWORD, getPropertyOrSkip("db2.password"));
+    BASE_PROPS.put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME);
   }
 
   protected static void createTestTables(Connection conn) throws SQLException {

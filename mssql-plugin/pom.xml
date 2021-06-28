@@ -39,11 +39,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.microsoft.azure</groupId>
-      <artifactId>adal4j</artifactId>
-      <version>1.6.4</version>
-    </dependency>
-    <dependency>
       <groupId>io.cdap.plugin</groupId>
       <artifactId>hydrator-common</artifactId>
     </dependency>
@@ -66,7 +61,7 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-data-pipeline</artifactId>
+      <artifactId>cdap-data-pipeline3_2.12</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -76,6 +71,12 @@
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <version>8.2.1.jre8</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.jetbrains</groupId>
@@ -90,8 +91,6 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <version>3.3.0</version>
-        <extensions>true</extensions>
         <configuration>
           <instructions>
             <_exportcontents>
@@ -106,18 +105,6 @@
             <Embed-Directory>lib</Embed-Directory>
           </instructions>
         </configuration>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>bundle</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>io.cdap</groupId>
-        <artifactId>cdap-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

@@ -18,7 +18,6 @@ package io.cdap.plugin.mysql;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -49,6 +48,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 import javax.sql.rowset.serial.SerialBlob;
@@ -57,7 +57,7 @@ public abstract class MysqlPluginTestBase extends DatabasePluginTestBase {
   protected static final ArtifactId DATAPIPELINE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("data-pipeline", "3.2.0");
   protected static final ArtifactSummary DATAPIPELINE_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
   protected static final long CURRENT_TS = System.currentTimeMillis();
-  protected static final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
+  protected static final String DRIVER_CLASS = "com.mysql.cj.jdbc.Driver";
   protected static final String JDBC_DRIVER_NAME = "mysql";
 
   protected static String connectionUrl;
@@ -65,8 +65,9 @@ public abstract class MysqlPluginTestBase extends DatabasePluginTestBase {
   protected static final int PRECISION = 10;
   protected static final int SCALE = 6;
   protected static final ZoneId UTC_ZONE = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
-  protected static boolean tearDown = true;
+  protected static boolean tearDown = false;
   private static int startCount;
+  protected static final Map<String, String> BASE_PROPS = new HashMap<>();
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
@@ -77,20 +78,13 @@ public abstract class MysqlPluginTestBase extends DatabasePluginTestBase {
     YEAR = calendar.get(Calendar.YEAR);
   }
 
-  protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("mysql.host", "localhost"))
-    .put(ConnectionConfig.PORT, System.getProperty("mysql.port", "3306"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("mysql.database", "mydb"))
-    .put(ConnectionConfig.USER, System.getProperty("mysql.username", "root"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("mysql.password", "123Qwe123"))
-    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
-    .build();
 
   @BeforeClass
   public static void setupTest() throws Exception {
     if (startCount++ > 0) {
       return;
     }
+    getProperties();
 
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
@@ -115,7 +109,17 @@ public abstract class MysqlPluginTestBase extends DatabasePluginTestBase {
       BASE_PROPS.get(ConnectionConfig.PORT) + "/" + BASE_PROPS.get(ConnectionConfig.DATABASE);
     Connection conn = createConnection();
     createTestTables(conn);
+    tearDown = true;
     prepareTestData(conn);
+  }
+
+  private static void getProperties() {
+    BASE_PROPS.put(ConnectionConfig.HOST, getPropertyOrSkip("mysql.host"));
+    BASE_PROPS.put(ConnectionConfig.PORT, getPropertyOrSkip("mysql.port"));
+    BASE_PROPS.put(ConnectionConfig.DATABASE, getPropertyOrSkip("mysql.database"));
+    BASE_PROPS.put(ConnectionConfig.USER, getPropertyOrSkip("mysql.username"));
+    BASE_PROPS.put(ConnectionConfig.PASSWORD, getPropertyOrSkip("mysql.password"));
+    BASE_PROPS.put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME);
   }
 
   protected static void createTestTables(Connection conn) throws SQLException {

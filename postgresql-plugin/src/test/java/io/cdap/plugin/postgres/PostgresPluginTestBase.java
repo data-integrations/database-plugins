@@ -18,7 +18,6 @@ package io.cdap.plugin.postgres;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -53,6 +52,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -62,12 +62,13 @@ public abstract class PostgresPluginTestBase extends DatabasePluginTestBase {
   protected static final long CURRENT_TS = System.currentTimeMillis();
 
   protected static final String JDBC_DRIVER_NAME = "postrgesql";
+  protected static final Map<String, String> BASE_PROPS = new HashMap<>();
 
   protected static String connectionUrl;
   protected static final int YEAR;
   protected static final int PRECISION = 10;
   protected static final int SCALE = 6;
-  protected static boolean tearDown = true;
+  protected static boolean tearDown = false;
   protected static final OffsetDateTime OFFSET_TIME = OffsetDateTime.of(
     1992,
     3,
@@ -90,20 +91,12 @@ public abstract class PostgresPluginTestBase extends DatabasePluginTestBase {
 
   }
 
-  protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("postgresql.host", "localhost"))
-    .put(ConnectionConfig.PORT, System.getProperty("postgresql.port", "5432"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("postgresql.database", "mydb"))
-    .put(ConnectionConfig.USER, System.getProperty("postgresql.username", "postgres"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("postgresql.password", "123Qwe123"))
-    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
-    .build();
-
   @BeforeClass
   public static void setupTest() throws Exception {
     if (startCount++ > 0) {
       return;
     }
+    getProperties();
 
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
@@ -126,7 +119,17 @@ public abstract class PostgresPluginTestBase extends DatabasePluginTestBase {
       BASE_PROPS.get(ConnectionConfig.PORT) + "/" + BASE_PROPS.get(ConnectionConfig.DATABASE);
     Connection conn = createConnection();
     createTestTables(conn);
+    tearDown = true;
     prepareTestData(conn);
+  }
+
+  private static void getProperties() {
+    BASE_PROPS.put(ConnectionConfig.HOST, getPropertyOrSkip("postgresql.host"));
+    BASE_PROPS.put(ConnectionConfig.PORT, getPropertyOrSkip("postgresql.port"));
+    BASE_PROPS.put(ConnectionConfig.DATABASE, getPropertyOrSkip("postgresql.database"));
+    BASE_PROPS.put(ConnectionConfig.USER, getPropertyOrSkip("postgresql.username"));
+    BASE_PROPS.put(ConnectionConfig.PASSWORD, getPropertyOrSkip("postgresql.password"));
+    BASE_PROPS.put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME);
   }
 
   protected static void createTestTables(Connection conn) throws SQLException {

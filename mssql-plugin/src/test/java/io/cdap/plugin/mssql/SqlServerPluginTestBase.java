@@ -18,7 +18,6 @@ package io.cdap.plugin.mssql;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -51,6 +50,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -65,6 +65,7 @@ public abstract class SqlServerPluginTestBase extends DatabasePluginTestBase {
   protected static final List<ByteBuffer> TIMESTAMP_VALUES = new ArrayList<>();
   protected static final List<ByteBuffer> GEOMETRY_VALUES = new ArrayList<>();
   protected static final List<ByteBuffer> GEOGRAPHY_VALUES = new ArrayList<>();
+  protected static final Map<String, String> BASE_PROPS = new HashMap<>();
 
   protected static String connectionUrl;
   protected static final int PRECISION = 10;
@@ -74,27 +75,20 @@ public abstract class SqlServerPluginTestBase extends DatabasePluginTestBase {
   protected static final int SMALL_MONEY_PRECISION = 10;
   protected static final int SMALL_MONEY_SCALE = 4;
   protected static final LocalTime TIME_MICROS = LocalTime.of(16, 17, 18, 123456000);
-  protected static boolean tearDown = true;
+  protected static boolean tearDown = false;
   protected static final ZoneId UTC = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
   private static int startCount;
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
-  protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("mssql.host", "localhost"))
-    .put(ConnectionConfig.PORT, System.getProperty("mssql.port", "1433"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("mssql.database", "tempdb"))
-    .put(ConnectionConfig.USER, System.getProperty("mssql.username", "sa"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("mssql.password", "123Qwe123"))
-    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
-    .build();
-
   @BeforeClass
   public static void setupTest() throws Exception {
     if (startCount++ > 0) {
       return;
     }
+
+    getProperties();
 
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
@@ -123,11 +117,21 @@ public abstract class SqlServerPluginTestBase extends DatabasePluginTestBase {
         createTestTables(conn);
         prepareTestData(conn);
         conn.commit();
+        tearDown = true;
       } catch (SQLException e) {
         conn.rollback();
         throw e;
       }
     }
+  }
+
+  private static void getProperties() {
+    BASE_PROPS.put(ConnectionConfig.HOST, getPropertyOrSkip("mssql.host"));
+    BASE_PROPS.put(ConnectionConfig.PORT, getPropertyOrSkip("mssql.port"));
+    BASE_PROPS.put(ConnectionConfig.DATABASE, getPropertyOrSkip("mssql.database"));
+    BASE_PROPS.put(ConnectionConfig.USER, getPropertyOrSkip("mssql.username"));
+    BASE_PROPS.put(ConnectionConfig.PASSWORD, getPropertyOrSkip("mssql.password"));
+    BASE_PROPS.put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME);
   }
 
   protected static void createTestTables(Connection conn) throws SQLException {

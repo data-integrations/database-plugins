@@ -17,7 +17,6 @@
 package io.cdap.plugin.oracle;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -48,6 +47,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -65,6 +65,7 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
   protected static final String YOUR_TABLE = "your_table";
   protected static final String MY_TABLE_FOR_LONG = "my_table_long";
   protected static final String MY_DEST_TABLE_FOR_LONG = "MY_DEST_LONG";
+  protected static final Map<String, String> BASE_PROPS = new HashMap<>();
 
   protected static String connectionUrl;
   protected static final int YEAR;
@@ -73,7 +74,7 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
   protected static final int SCALE = 6;
   protected static final ZoneId UTC = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
 
-  protected static boolean tearDown = true;
+  protected static boolean tearDown = false;
   private static int startCount;
 
   @ClassRule
@@ -85,22 +86,24 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
     YEAR = calendar.get(Calendar.YEAR);
   }
 
-  protected static final Map<String, String> BASE_PROPS = ImmutableMap.<String, String>builder()
-    .put(ConnectionConfig.HOST, System.getProperty("oracle.host", "localhost"))
-    .put(ConnectionConfig.PORT, System.getProperty("oracle.port", "1521"))
-    .put(ConnectionConfig.DATABASE, System.getProperty("oracle.database", "cdap"))
-    .put(ConnectionConfig.USER, System.getProperty("oracle.username", "SYSTEM"))
-    .put(ConnectionConfig.PASSWORD, System.getProperty("oracle.password", "123Qwe123"))
-    .put(OracleConstants.CONNECTION_TYPE, System.getProperty("oracle.connectionType", "sid"))
-    .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
-    .put(OracleConstants.DEFAULT_BATCH_VALUE, "10")
-    .build();
+  private static void getProperties() {
+    BASE_PROPS.put(ConnectionConfig.HOST, getPropertyOrSkip("oracle.host"));
+    BASE_PROPS.put(ConnectionConfig.PORT, getPropertyOrSkip("oracle.port"));
+    BASE_PROPS.put(ConnectionConfig.DATABASE, getPropertyOrSkip("oracle.database"));
+    BASE_PROPS.put(ConnectionConfig.USER, getPropertyOrSkip("oracle.username"));
+    BASE_PROPS.put(ConnectionConfig.PASSWORD, getPropertyOrSkip("oracle.password"));
+    BASE_PROPS.put(OracleConstants.CONNECTION_TYPE, getPropertyOrSkip("oracle.connectionType"));
+    BASE_PROPS.put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME);
+    BASE_PROPS.put(OracleConstants.DEFAULT_BATCH_VALUE, "10");
+  }
 
   @BeforeClass
   public static void setupTest() throws Exception {
     if (startCount++ > 0) {
       return;
     }
+
+    getProperties();
 
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
 
@@ -137,6 +140,7 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
 
     Connection conn = createConnection();
     createTestTables(conn);
+    tearDown = true;
     prepareTestData(conn);
   }
 
