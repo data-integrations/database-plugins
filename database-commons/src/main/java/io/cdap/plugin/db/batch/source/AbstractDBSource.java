@@ -44,6 +44,7 @@ import io.cdap.plugin.db.DBConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.TransactionIsolationLevel;
+import io.cdap.plugin.db.batch.config.DatabaseSourceConfig;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
 import org.apache.hadoop.io.LongWritable;
@@ -80,11 +81,11 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   private static final Pattern WHERE_CONDITIONS = Pattern.compile("\\s+where \\$conditions",
                                                                   Pattern.CASE_INSENSITIVE);
 
-  protected final DBSourceConfig sourceConfig;
+  protected final DatabaseSourceConfig sourceConfig;
   protected Class<? extends Driver> driverClass;
 
-  public AbstractDBSource(DBSourceConfig sourceConfig) {
-    super(new ReferencePluginConfig(sourceConfig.referenceName));
+  public AbstractDBSource(DatabaseSourceConfig sourceConfig) {
+    super(new ReferencePluginConfig(sourceConfig.getReferenceName()));
     this.sourceConfig = sourceConfig;
   }
 
@@ -131,7 +132,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       driverCleanup = loadPluginClassAndGetDriver(driverClass);
       try (Connection connection = getConnection()) {
         executeInitQueries(connection, sourceConfig.getInitQueries());
-        String query = sourceConfig.importQuery;
+        String query = sourceConfig.getImportQuery();
         return loadSchemaFromDB(connection, query);
       } finally {
         driverCleanup.destroy();
@@ -165,13 +166,13 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     throws SQLException, IllegalAccessException, InstantiationException {
     String connectionString = sourceConfig.getConnectionString();
     DriverCleanup driverCleanup
-      = DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.getJdbcPlughinName());
+      = DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.getJdbcPluginName());
 
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(sourceConfig.getConnectionArguments());
     try (Connection connection = DriverManager.getConnection(connectionString, connectionProperties)) {
       executeInitQueries(connection, sourceConfig.getInitQueries());
-      return loadSchemaFromDB(connection, sourceConfig.importQuery);
+      return loadSchemaFromDB(connection, sourceConfig.getImportQuery());
 
     } catch (SQLException e) {
       // wrap exception to ensure SQLException-child instances not exposed to contexts without jdbc driver in classpath
@@ -199,13 +200,13 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     if (driverClass == null) {
       throw new InstantiationException(
         String.format("Unable to load Driver class with plugin type %s and plugin name %s",
-                      ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.getJdbcPlughinName()));
+                      ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.getJdbcPluginName()));
     }
 
     try {
       String connectionString = createConnectionString();
 
-      return DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.getJdbcPlughinName());
+      return DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.getJdbcPluginName());
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
       LOG.error("Unable to load or register driver {}", driverClass, e);
       throw e;
@@ -229,7 +230,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
 
     LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
                 "boundingQuery = {};",
-              ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.getJdbcPlughinName(),
+              ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.getJdbcPluginName(),
               connectionString,
               sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery());
     ConnectionConfigAccessor connectionConfigAccessor = new ConnectionConfigAccessor();
@@ -253,34 +254,35 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     }
     connectionConfigAccessor.setConnectionArguments(sourceConfig.getConnectionArguments());
     connectionConfigAccessor.setInitQueries(sourceConfig.getInitQueries());
-    if (sourceConfig.numSplits == null || sourceConfig.numSplits != 1) {
+    if (sourceConfig.getNumSplits() == null || sourceConfig.getNumSplits() != 1) {
       if (!sourceConfig.getImportQuery().contains("$CONDITIONS")) {
         throw new IllegalArgumentException(String.format("Import Query %s must contain the string '$CONDITIONS'.",
-                                                         sourceConfig.importQuery));
+                                                         sourceConfig.getImportQuery()));
       }
-      connectionConfigAccessor.getConfiguration().set(DBConfiguration.INPUT_ORDER_BY_PROPERTY, sourceConfig.splitBy);
+      connectionConfigAccessor.getConfiguration()
+        .set(DBConfiguration.INPUT_ORDER_BY_PROPERTY, sourceConfig.getSplitBy());
     }
-    if (sourceConfig.numSplits != null) {
-      connectionConfigAccessor.getConfiguration().setInt(MRJobConfig.NUM_MAPS, sourceConfig.numSplits);
+    if (sourceConfig.getNumSplits() != null) {
+      connectionConfigAccessor.getConfiguration().setInt(MRJobConfig.NUM_MAPS, sourceConfig.getNumSplits());
     }
 
     Schema schemaFromDB = loadSchemaFromDB(driverClass);
-    if (sourceConfig.schema != null) {
+    if (sourceConfig.getSchema() != null) {
       sourceConfig.validateSchema(schemaFromDB, collector);
       collector.getOrThrowException();
-      connectionConfigAccessor.setSchema(sourceConfig.schema);
+      connectionConfigAccessor.setSchema(sourceConfig.getSchema().toString());
     } else {
       String schemaStr = SCHEMA_TYPE_ADAPTER.toJson(schemaFromDB);
       connectionConfigAccessor.setSchema(schemaStr);
     }
-    LineageRecorder lineageRecorder = new LineageRecorder(context, sourceConfig.referenceName);
+    LineageRecorder lineageRecorder = new LineageRecorder(context, sourceConfig.getReferenceName());
     Schema schema = sourceConfig.getSchema() == null ? schemaFromDB : sourceConfig.getSchema();
     lineageRecorder.createExternalDataset(schema);
     if (schema != null && schema.getFields() != null) {
       lineageRecorder.recordRead("Read", "Read from database plugin",
                                  schema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList()));
     }
-    context.setInput(Input.of(sourceConfig.referenceName, new SourceInputFormatProvider(
+    context.setInput(Input.of(sourceConfig.getReferenceName(), new SourceInputFormatProvider(
       DataDrivenETLDBInputFormat.class, connectionConfigAccessor.getConfiguration())));
   }
 
@@ -305,7 +307,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   }
 
   private String getJDBCPluginId() {
-    return String.format("%s.%s.%s", "source", ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.getJdbcPlughinName());
+    return String.format("%s.%s.%s", "source", ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.getJdbcPluginName());
   }
 
   protected abstract String createConnectionString();
@@ -313,7 +315,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   /**
    * {@link PluginConfig} for {@link AbstractDBSource}
    */
-  public abstract static class DBSourceConfig extends DBConfig {
+  public abstract static class DBSourceConfig extends DBConfig implements DatabaseSourceConfig {
     public static final String IMPORT_QUERY = "importQuery";
     public static final String BOUNDING_QUERY = "boundingQuery";
     public static final String SPLIT_BY = "splitBy";
@@ -359,15 +361,25 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       "is not correctly getting marked as nullable.")
     public String schema;
 
-    private String getImportQuery() {
+    public String getImportQuery() {
       return cleanQuery(importQuery);
     }
 
-    private String getBoundingQuery() {
+    public String getBoundingQuery() {
       return cleanQuery(boundingQuery);
     }
 
-    private void validate(FailureCollector collector) {
+    @Override
+    public Integer getNumSplits() {
+      return numSplits;
+    }
+
+    @Override
+    public String getSplitBy() {
+      return splitBy;
+    }
+
+    public void validate(FailureCollector collector) {
       boolean hasOneSplit = false;
       if (!containsMacro(NUM_SPLITS) && numSplits != null) {
         if (numSplits < 1) {
@@ -405,7 +417,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
       }
     }
 
-    protected void validateSchema(Schema actualSchema, FailureCollector collector) {
+    public void validateSchema(Schema actualSchema, FailureCollector collector) {
       validateSchema(actualSchema, getSchema(), collector);
     }
 
@@ -443,7 +455,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     }
 
     @Nullable
-    protected Schema getSchema() {
+    public Schema getSchema() {
       try {
         return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
       } catch (IOException e) {

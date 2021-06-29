@@ -42,7 +42,7 @@ public class MysqlConnectorConfig extends AbstractDBSpecificConnectorConfig {
   }
 
   @Override
-  public int getPort() {
-    return port == null ? 3306 : port;
+  public int getDefaultPort() {
+    return 3306;
   }
 }

@@ -16,22 +16,16 @@
 
 package io.cdap.plugin.db.batch.config;
 
-import com.google.common.collect.Maps;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
-import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
-
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
  * Base config class for every database specific source plugin.
  */
 public abstract class DBSpecificSourceConfig extends AbstractDBSource.DBSourceConfig {
-
   @Name(HOST)
   @Description("Database host")
   @Macro
@@ -46,43 +40,4 @@ public abstract class DBSpecificSourceConfig extends AbstractDBSource.DBSourceCo
   @Description("Database name to connect to")
   @Macro
   public String database;
-
-  protected AbstractDBSpecificConnectorConfig getConnection() {
-    return null;
-  }
-
-  @Override
-  public Map<String, String> getConnectionArguments() {
-    AbstractDBSpecificConnectorConfig connection = getConnection();
-    if (connection == null) {
-      return super.getConnectionArguments();
-    }
-    Map<String, String> arguments = new HashMap<>();
-    arguments.putAll(Maps.fromProperties(connection.getConnectionArgumentsProperties()));
-    arguments.putAll(getDBSpecificArguments());
-    return arguments;
-  }
-  public String getJdbcPlughinName() {
-    AbstractDBSpecificConnectorConfig connection = getConnection();
-    if (connection == null) {
-      return super.getJdbcPlughinName();
-    }
-    return connection.getJdbcPluginName();
-  }
-
-  public String getUser() {
-    AbstractDBSpecificConnectorConfig connection = getConnection();
-    if (connection == null) {
-      return super.getUser();
-    }
-    return connection.getJdbcPluginName();
-  }
-
-  public String getPassword() {
-    AbstractDBSpecificConnectorConfig connection = getConnection();
-    if (connection == null) {
-      return super.getPassword();
-    }
-    return connection.getPassword();
-  }
 }

@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.KeyValueListParser;
+import io.cdap.plugin.db.batch.config.DatabaseConnectionConfig;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,7 +34,7 @@ import javax.annotation.Nullable;
 /**
  * Defines a base {@link PluginConfig} that Database source, sink, and action can all re-use.
  */
-public abstract class ConnectionConfig extends PluginConfig {
+public abstract class ConnectionConfig extends PluginConfig implements DatabaseConnectionConfig {
   public static final String CONNECTION_STRING = "connectionString";
   public static final String ENABLE_AUTO_COMMIT = "enableAutoCommit";
   public static final String USER = "user";
@@ -84,12 +85,6 @@ public abstract class ConnectionConfig extends PluginConfig {
   }
 
   /**
-   * Constructs a connection string from host, port and database properties in a database-specific format.
-   * @return connection string specific to a particular database.
-   */
-  public abstract String getConnectionString();
-
-  /**
    * Returns list of initialization queries. Initialization queries supposed to be executed preserving order right after
    * connection establishing. In the case when there are no initialization queries, an empty list will be returned.
    * @return list of initialization queries.
@@ -132,7 +127,7 @@ public abstract class ConnectionConfig extends PluginConfig {
     return Collections.emptyMap();
   }
 
-  public String getJdbcPlughinName() {
+  public String getJdbcPluginName() {
     return jdbcPluginName;
   }
 

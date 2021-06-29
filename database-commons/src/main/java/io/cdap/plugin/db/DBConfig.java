@@ -57,4 +57,8 @@ public abstract class DBConfig extends ConnectionConfig {
   public String getTransactionIsolationLevel() {
     return null;
   }
+
+  public String getReferenceName() {
+    return referenceName;
+  }
 }

@@ -26,8 +26,9 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.db.SchemaReader;
-import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Collections;
@@ -70,7 +71,7 @@ public class SqlServerSource extends AbstractDBSource {
   /**
    * MSSQL source config.
    */
-  public static class SqlServerSourceConfig extends DBSpecificSourceConfig {
+  public static class SqlServerSourceConfig extends AbstractDBSpecificSourceConfig {
 
     public static final String NAME_USE_CONNECTION = "useConnection";
     public static final String NAME_CONNECTION = "connection";
@@ -154,6 +155,11 @@ public class SqlServerSource extends AbstractDBSource {
                                                          connectTimeout, columnEncryption, encrypt,
                                                          trustServerCertificate, workstationId, failoverPartner,
                                                          packetSize, queryTimeout);
+    }
+
+    @Override
+    protected AbstractDBSpecificConnectorConfig getConnection() {
+      return connection;
     }
 
     @Override

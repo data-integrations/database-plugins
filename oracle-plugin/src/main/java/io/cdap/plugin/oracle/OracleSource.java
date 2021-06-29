@@ -25,8 +25,9 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.db.SchemaReader;
-import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Map;
@@ -67,7 +68,7 @@ public class OracleSource extends AbstractDBSource {
   /**
    * Oracle source config.
    */
-  public static class OracleSourceConfig extends DBSpecificSourceConfig {
+  public static class OracleSourceConfig extends AbstractDBSpecificSourceConfig {
 
     public static final String NAME_USE_CONNECTION = "useConnection";
     public static final String NAME_CONNECTION = "connection";
@@ -115,6 +116,11 @@ public class OracleSource extends AbstractDBSource {
       builder.put(OracleConstants.DEFAULT_ROW_PREFETCH, String.valueOf(defaultRowPrefetch));
 
       return builder.build();
+    }
+
+    @Override
+    protected AbstractDBSpecificConnectorConfig getConnection() {
+      return connection;
     }
   }
 

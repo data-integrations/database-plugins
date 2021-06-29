@@ -25,7 +25,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
-import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 
 import java.util.ArrayList;
@@ -58,7 +58,7 @@ public class MysqlSource extends AbstractDBSource {
   /**
    * MySQL source config.
    */
-  public static class MysqlSourceConfig extends DBSpecificSourceConfig {
+  public static class MysqlSourceConfig extends AbstractDBSpecificSourceConfig {
 
     public static final String NAME_USE_CONNECTION = "useConnection";
     public static final String NAME_CONNECTION = "connection";

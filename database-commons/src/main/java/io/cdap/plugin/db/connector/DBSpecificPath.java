@@ -39,19 +39,29 @@ import javax.annotation.Nullable;
  */
 public class DBSpecificPath implements DBConnectorPath {
   private final boolean supportSchema;
-  private String database;
-  private String schema;
-  private String table;
+  private final String database;
+  private final String schema;
+  private final String table;
 
-  public DBSpecificPath(String path, boolean supportSchema) {
+  public DBSpecificPath(boolean supportSchema, @Nullable String database, @Nullable String schema,
+                        @Nullable String table) {
+    if (!supportSchema && schema != null) {
+      throw new IllegalArgumentException("Schema is not supported but it's not null.");
+    }
     this.supportSchema = supportSchema;
-    parsePath(path);
+    this.database = database;
+    this.schema = schema;
+    this.table = table;
   }
 
-  private void parsePath(String path) {
+  public static DBSpecificPath of(String path, boolean supportSchema) {
     if (path == null) {
       throw new IllegalArgumentException("Path should not be null.");
     }
+
+    String database = null;
+    String schema = null;
+    String table = null;
 
     //remove heading "/" if exists
     if (path.startsWith("/")) {
@@ -60,7 +70,7 @@ public class DBSpecificPath implements DBConnectorPath {
 
     // both "" and "/" are taken as root path
     if (path.isEmpty()) {
-      return;
+      return new DBSpecificPath(supportSchema, database, schema, table);
     }
 
     if (path.endsWith("/")) {
@@ -92,9 +102,10 @@ public class DBSpecificPath implements DBConnectorPath {
         validateName("Table", table);
       }
     }
+    return new DBSpecificPath(supportSchema, database, schema, table);
   }
 
-  private void validateName(String property, String name) {
+  private static void validateName(String property, String name) {
     if (name.isEmpty()) {
       throw new IllegalArgumentException(
         String.format("%s should not be empty.", property));

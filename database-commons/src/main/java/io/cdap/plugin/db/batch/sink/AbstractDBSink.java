@@ -86,7 +86,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   }
 
   private String getJDBCPluginId() {
-    return String.format("%s.%s.%s", "sink", ConnectionConfig.JDBC_PLUGIN_TYPE, dbSinkConfig.getJdbcPlughinName());
+    return String.format("%s.%s.%s", "sink", ConnectionConfig.JDBC_PLUGIN_TYPE, dbSinkConfig.getJdbcPluginName());
   }
 
   @Override
@@ -112,7 +112,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {};",
               dbSinkConfig.tableName,
               ConnectionConfig.JDBC_PLUGIN_TYPE,
-              dbSinkConfig.getJdbcPlughinName(),
+              dbSinkConfig.getJdbcPluginName(),
               connectionString);
 
     Schema outputSchema = context.getInputSchema();
@@ -186,7 +186,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     List<Schema.Field> inferredFields = new ArrayList<>();
     try {
       DBUtils.ensureJDBCDriverIsAvailable(driverClass, dbSinkConfig.getConnectionString(),
-                                          dbSinkConfig.getJdbcPlughinName());
+                                          dbSinkConfig.getJdbcPluginName());
       Properties connectionProperties = new Properties();
       connectionProperties.putAll(dbSinkConfig.getConnectionArguments());
       try (Connection connection = DriverManager.getConnection(dbSinkConfig.getConnectionString(),
@@ -203,7 +203,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
       }
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
-      throw new InvalidStageException("JDBC Driver unavailable: " + dbSinkConfig.getJdbcPlughinName(), e);
+      throw new InvalidStageException("JDBC Driver unavailable: " + dbSinkConfig.getJdbcPluginName(), e);
     }
     return Schema.recordOf("inferredSchema", inferredFields);
   }
@@ -234,7 +234,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     String connectionString = dbSinkConfig.getConnectionString();
 
     driverCleanup = DBUtils
-      .ensureJDBCDriverIsAvailable(driverClass, connectionString, dbSinkConfig.getJdbcPlughinName());
+      .ensureJDBCDriverIsAvailable(driverClass, connectionString, dbSinkConfig.getJdbcPluginName());
 
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(dbSinkConfig.getConnectionArguments());
@@ -283,7 +283,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     String connectionString = dbSinkConfig.getConnectionString();
 
     try {
-      DBUtils.ensureJDBCDriverIsAvailable(jdbcDriverClass, connectionString, dbSinkConfig.getJdbcPlughinName());
+      DBUtils.ensureJDBCDriverIsAvailable(jdbcDriverClass, connectionString, dbSinkConfig.getJdbcPluginName());
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
       collector.addFailure(String.format("Unable to load or register JDBC driver '%s' while checking for " +
                                            "the existence of the database table '%s'.",

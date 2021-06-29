@@ -126,5 +126,9 @@ public abstract class AbstractDBSpecificConnectorConfig extends PluginConfig imp
     return host;
   }
 
-  public abstract int getPort();
+  public int getPort() {
+    return port == null ? getDefaultPort() : port;
+  }
+
+  protected abstract int getDefaultPort();
 }

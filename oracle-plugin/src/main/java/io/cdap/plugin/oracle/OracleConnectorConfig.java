@@ -59,8 +59,8 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   public String connectionType;
 
   @Override
-  public int getPort() {
-    return port == null ? 1521 : port;
+  protected int getDefaultPort() {
+    return 1521;
   }
 
   public String getConnectionType() {

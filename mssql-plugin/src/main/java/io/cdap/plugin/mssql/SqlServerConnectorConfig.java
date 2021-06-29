@@ -61,8 +61,8 @@ public class SqlServerConnectorConfig extends AbstractDBSpecificConnectorConfig 
   }
 
   @Override
-  public int getPort() {
-    return port == null ? 1433 : port;
+  protected int getDefaultPort() {
+    return 1433;
   }
 
   public String getAuthenticationType() {

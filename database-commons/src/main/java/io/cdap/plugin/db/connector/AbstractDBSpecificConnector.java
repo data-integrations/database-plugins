@@ -20,11 +20,7 @@ import com.google.common.collect.Maps;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchConnector;
-import io.cdap.cdap.etl.api.connector.BrowseDetail;
-import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.ConnectorContext;
-import io.cdap.cdap.etl.api.connector.ConnectorSpec;
-import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.plugin.common.SourceInputFormatProvider;
 import io.cdap.plugin.common.db.AbstractDBConnector;
@@ -43,7 +39,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import javax.annotation.Nullable;
 
 /**
  * An Abstract DB Specific Connector those specific DB connectors can inherits
@@ -68,36 +63,14 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   }
 
   @Override
-  protected DBConnectorPath getDBConnectorPath(Connection connection, String path) throws IOException {
-    return new DBSpecificPath(path, supportSchema());
-  }
-
-  @Override
-  public ConnectorSpec generateSpec(ConnectorContext connectorContext,
-                                    ConnectorSpecRequest request) throws IOException {
-
-    DBConnectorPath dbConnectorPath = new DBSpecificPath(request.getPath(), supportSchema());
-    try (Connection connection = getConnection(dbConnectorPath.getDatabase())) {
-      return generateSpec(request, connection, dbConnectorPath);
-    } catch (SQLException e) {
-      throw new IOException(String.format("Failed to generate spec for path %s", request.getPath()), e);
-    }
-  }
-
-  @Override
-  public BrowseDetail browse(ConnectorContext connectorContext, BrowseRequest request) throws IOException {
-    DBConnectorPath dbConnectorPath = new DBSpecificPath(request.getPath(), supportSchema());
-    try (Connection connection = getConnection(dbConnectorPath.getDatabase())) {
-      return browse(request, connection, dbConnectorPath);
-    } catch (SQLException e) {
-      throw new IOException(String.format("Failed to browse for path %s", request.getPath()), e);
-    }
+  protected DBConnectorPath getDBConnectorPath(String path) throws IOException {
+    return DBSpecificPath.of(path, supportSchema());
   }
 
   @Override
   public InputFormatProvider getInputFormatProvider(ConnectorContext context, SampleRequest request)
     throws IOException {
-    DBSpecificPath path = new DBSpecificPath(request.getPath(), supportSchema());
+    DBSpecificPath path = DBSpecificPath.of(request.getPath(), supportSchema());
     if (path.getTable() == null) {
       throw new IllegalArgumentException(
         String.format("Path %s cannot be sampled. Must have table name in the path.", request.getPath()));
@@ -120,7 +93,7 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     connectionConfigAccessor.setConnectionArguments(Maps.fromProperties(config.getConnectionArgumentsProperties()));
     connectionConfigAccessor.getConfiguration().setInt(MRJobConfig.NUM_MAPS, 1);
     try {
-      connectionConfigAccessor.setSchema(loadTableSchema(getConnection(path.getDatabase()),  tableQuery).toString());
+      connectionConfigAccessor.setSchema(loadTableSchema(getConnection(path),  tableQuery).toString());
     } catch (SQLException e) {
       throw new IOException(String.format("Failed to get table schema due to: %s.", e.getMessage()), e);
     }
@@ -129,8 +102,8 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     return new SourceInputFormatProvider(DataDrivenETLDBInputFormat.class, connectionConfigAccessor.getConfiguration());
   }
 
-  protected Connection getConnection(@Nullable String database) {
-    return getConnection(getConnectionString(database) , config.getConnectionArgumentsProperties());
+  protected Connection getConnection(DBConnectorPath path) {
+    return getConnection(getConnectionString(path.getDatabase()) , config.getConnectionArgumentsProperties());
   }
 
   protected String getConnectionString(String database) {

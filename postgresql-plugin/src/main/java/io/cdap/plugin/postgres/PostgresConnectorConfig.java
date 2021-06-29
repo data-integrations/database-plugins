@@ -40,7 +40,7 @@ public class PostgresConnectorConfig extends AbstractDBSpecificConnectorConfig {
   }
 
   @Override
-  public int getPort() {
-    return port == null ? 5432 : port;
+  protected int getDefaultPort() {
+    return 5432;
   }
 }
