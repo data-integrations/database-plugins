@@ -22,7 +22,7 @@ import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
  * Configuration for Postgres SQL Database Connector
  */
 public class PostgresConnectorConfig extends AbstractDBSpecificConnectorConfig {
-  private static final String POSTGRE_CONNECTION_STRING_FORMAT = "jdbc:postgresql://%s:%s/";
+  private static final String POSTGRE_CONNECTION_STRING_WITHOUT_DB_FORMAT = "jdbc:postgresql://%s:%s/";
   public PostgresConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                                  String connectionArguments) {
 
@@ -36,7 +36,7 @@ public class PostgresConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   @Override
   public String getConnectionString() {
-    return String.format(POSTGRE_CONNECTION_STRING_FORMAT, host, getPort());
+    return String.format(POSTGRE_CONNECTION_STRING_WITHOUT_DB_FORMAT, host, getPort());
   }
 
   @Override

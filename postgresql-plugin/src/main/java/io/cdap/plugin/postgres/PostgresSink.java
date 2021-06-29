@@ -98,7 +98,7 @@ public class PostgresSink extends AbstractDBSink {
 
     @Override
     public String getConnectionString() {
-      return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, host, port, database);
+      return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_WITH_DB_FORMAT, host, port, database);
     }
 
     @Override

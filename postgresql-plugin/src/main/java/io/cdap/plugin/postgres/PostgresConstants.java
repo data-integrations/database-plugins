@@ -27,5 +27,5 @@ public final class PostgresConstants {
 
   public static final String PLUGIN_NAME = "Postgres";
   public static final String CONNECTION_TIMEOUT = "connectionTimeout";
-  public static final String POSTGRES_CONNECTION_STRING_FORMAT = "jdbc:postgresql://%s:%s/%s";
+  public static final String POSTGRES_CONNECTION_STRING_WITH_DB_FORMAT = "jdbc:postgresql://%s:%s/%s";
 }

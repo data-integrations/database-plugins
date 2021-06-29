@@ -103,6 +103,6 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
       return config.getConnectionString();
     }
     return String
-      .format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, config.getHost(), config.getPort(), database);
+      .format(PostgresConstants.POSTGRES_CONNECTION_STRING_WITH_DB_FORMAT, config.getHost(), config.getPort(), database);
   }
 }

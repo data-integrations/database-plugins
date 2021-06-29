@@ -107,7 +107,8 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
     if (!containsMacro(NUM_SPLITS) && numSplits != null) {
       if (numSplits < 1) {
         collector.addFailure(
-          String.format("Invalid value for numSplits '%d'. Must be at least 1.", numSplits), null)
+          String.format("Invalid value for Number of Splits '%d'. Must be at least 1.", numSplits),
+          "Specify a Number of Splits no less than 1.")
           .withConfigProperty(NUM_SPLITS);
       }
       if (numSplits == 1) {
@@ -120,22 +121,26 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
     }
 
     if (!containsMacro(IMPORT_QUERY) && Strings.isNullOrEmpty(importQuery)) {
-      collector.addFailure("Import Query must be specified.", null).withConfigProperty(IMPORT_QUERY);
+      collector.addFailure("Import Query is empty.", "Specify the Import Query.")
+        .withConfigProperty(IMPORT_QUERY);
     }
 
     if (!hasOneSplit && !containsMacro(IMPORT_QUERY) && !getImportQuery().contains("$CONDITIONS")) {
-      collector.addFailure("Invalid Import Query.",
-                           String.format("Import Query %s must contain the string '$CONDITIONS'.", importQuery))
+      collector.addFailure(String.format(
+        "Import Query %s must contain the string '$CONDITIONS'. if Number of Splits is not set to 1.", importQuery),
+                           "Include '$CONDITIONS' in the Import Query")
         .withConfigProperty(IMPORT_QUERY);
     }
 
     if (!hasOneSplit && !containsMacro("splitBy") && (splitBy == null || splitBy.isEmpty())) {
       collector.addFailure("Split-By Field Name must be specified if Number of Splits is not set to 1.",
-                           null).withConfigProperty(SPLIT_BY).withConfigProperty(NUM_SPLITS);
+                           "Specify the Split-by Field Name.").withConfigProperty(SPLIT_BY)
+        .withConfigProperty(NUM_SPLITS);
     }
 
     if (!hasOneSplit && !containsMacro("boundingQuery") && (boundingQuery == null || boundingQuery.isEmpty())) {
-      collector.addFailure("Bounding Query must be specified if Number of Splits is not set to 1.", null)
+      collector.addFailure("Bounding Query must be specified if Number of Splits is not set to 1.",
+                           "Specify the Bounding Query.")
         .withConfigProperty(BOUNDING_QUERY).withConfigProperty(NUM_SPLITS);
     }
   }
@@ -143,7 +148,7 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
   public void validateSchema(Schema actualSchema, FailureCollector collector) {
     Schema configSchema = getSchema();
     if (configSchema == null) {
-      collector.addFailure("Schema should not be null or empty.", null)
+      collector.addFailure("Schema should not be null or empty.", "Fill in the Schema.")
         .withConfigProperty(SCHEMA);
       return;
     }
@@ -152,7 +157,8 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
       Schema.Field actualField = actualSchema.getField(field.getName());
       if (actualField == null) {
         collector.addFailure(
-          String.format("Schema field '%s' is not present in actual record", field.getName()), null)
+          String.format("Schema field '%s' is not present in actual record", field.getName()),
+          String.format("Remove the field %s in the schema.", field.getName()))
           .withOutputSchemaField(field.getName());
         continue;
       }
@@ -167,7 +173,8 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
         collector.addFailure(
           String.format("Schema field '%s' has type '%s but found '%s'.",
                         field.getName(), expectedFieldSchema.getDisplayName(),
-                        actualFieldSchema.getDisplayName()), null)
+                        actualFieldSchema.getDisplayName()),
+          String.format("Change the data type of field %s to %s.", field.getName(), actualFieldSchema.getDisplayName()))
           .withOutputSchemaField(field.getName());
       }
     }

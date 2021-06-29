@@ -95,7 +95,7 @@ public class PostgresSource extends AbstractDBSource {
     @Override
     public String getConnectionString() {
       return String
-        .format(PostgresConstants.POSTGRES_CONNECTION_STRING_FORMAT, connection.getHost(), connection.getPort(),
+        .format(PostgresConstants.POSTGRES_CONNECTION_STRING_WITH_DB_FORMAT, connection.getHost(), connection.getPort(),
                 database);
     }
 

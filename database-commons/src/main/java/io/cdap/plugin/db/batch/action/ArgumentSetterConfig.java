@@ -113,13 +113,13 @@ public abstract class ArgumentSetterConfig extends ConnectionConfig {
    */
   public void validate(FailureCollector collector) {
     if (!containsMacro(CONNECTION_STRING) && Strings.isNullOrEmpty(this.connectionString)) {
-      collector.addFailure("Invalid connection string.", "Connection string cannot be empty.");
+      collector.addFailure("Connection string cannot be empty.", "Specify a connection string.");
     }
     if (!containsMacro(ConnectionConfig.USER) && Strings.isNullOrEmpty(this.getUser())) {
-      collector.addFailure("Invalid username.", "Username cannot be empty.");
+      collector.addFailure("Username cannot be empty.", "Specify a Username.");
     }
     if (!containsMacro(ConnectionConfig.PASSWORD) && Strings.isNullOrEmpty(this.getPassword())) {
-      collector.addFailure("Invalid password.", "Password cannot be empty.");
+      collector.addFailure("Password cannot be empty.", "Specify a Password.");
     }
     if (!containsMacro(DATABASE_NAME) && Strings.isNullOrEmpty(this.getDatabaseName())) {
       collector.addFailure("Invalid database.", "Valid database must be specified.");
