@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.util;
 
+import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
@@ -162,8 +163,8 @@ public final class DBUtils {
     }
   }
 
-  public static void validateJDBCPluginPipeline(PipelineConfigurer pipelineConfigurer, DatabaseConnectionConfig config,
-                                                String jdbcPluginId) {
+  public static <T extends PluginConfig & DatabaseConnectionConfig> void validateJDBCPluginPipeline(
+    PipelineConfigurer pipelineConfigurer, T config, String jdbcPluginId) {
     FailureCollector collector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     if (!config.containsMacro(DBConfig.USER) && !config.containsMacro(DBConfig.PASSWORD) &&
       Objects.isNull(config.getUser()) && Objects.nonNull(config.getPassword())) {

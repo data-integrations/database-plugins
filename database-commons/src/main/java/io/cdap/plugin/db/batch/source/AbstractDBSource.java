@@ -69,8 +69,10 @@ import javax.annotation.Nullable;
 
 /**
  * Batch source to read from a DB table
+ * @param <T> the DB Source config
  */
-public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable, DBRecord, StructuredRecord> {
+public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceConfig>
+  extends ReferenceBatchSource<LongWritable, DBRecord, StructuredRecord> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDBSource.class);
   private static final SchemaTypeAdapter SCHEMA_TYPE_ADAPTER = new SchemaTypeAdapter();
@@ -81,10 +83,10 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
   private static final Pattern WHERE_CONDITIONS = Pattern.compile("\\s+where \\$conditions",
                                                                   Pattern.CASE_INSENSITIVE);
 
-  protected final DatabaseSourceConfig sourceConfig;
+  protected final T sourceConfig;
   protected Class<? extends Driver> driverClass;
 
-  public AbstractDBSource(DatabaseSourceConfig sourceConfig) {
+  public AbstractDBSource(T sourceConfig) {
     super(new ReferencePluginConfig(sourceConfig.getReferenceName()));
     this.sourceConfig = sourceConfig;
   }

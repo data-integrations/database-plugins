@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
 @Name(AuroraPostgresConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class AuroraPostgresSource extends AbstractDBSource {
+public class AuroraPostgresSource extends AbstractDBSource<AuroraPostgresSource.AuroraPostgresSourceConfig> {
 
   private final AuroraPostgresSourceConfig auroraPostgresSourceConfig;
 

@@ -33,7 +33,7 @@ import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 @Name(Db2Constants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class Db2Source extends AbstractDBSource {
+public class Db2Source extends AbstractDBSource<Db2Source.Db2SourceConfig> {
 
   private final Db2SourceConfig db2SourceConfig;
 

@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
 @Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = PostgresConnector.NAME)})
-public class PostgresSource extends AbstractDBSource {
+public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSourceConfig> {
 
   private final PostgresSourceConfig postgresSourceConfig;
 

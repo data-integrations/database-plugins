@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
 @Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = SqlServerConnector.NAME)})
-public class SqlServerSource extends AbstractDBSource {
+public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerSourceConfig> {
 
   private final SqlServerSourceConfig sqlServerSourceConfig;
 

@@ -31,7 +31,7 @@ import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 @Name(MemsqlConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class MemsqlSource extends AbstractDBSource {
+public class MemsqlSource extends AbstractDBSource<MemsqlSourceConfig> {
 
   private final MemsqlSourceConfig memsqlSourceConfig;
 

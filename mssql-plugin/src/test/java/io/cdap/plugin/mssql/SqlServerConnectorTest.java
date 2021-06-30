@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-
 public class SqlServerConnectorTest extends DBSpecificConnectorBaseTest {
 
   private static final String JDBC_DRIVER_CLASS_NAME = "com.microsoft.sqlserver.jdbc.SQLServerDriver";

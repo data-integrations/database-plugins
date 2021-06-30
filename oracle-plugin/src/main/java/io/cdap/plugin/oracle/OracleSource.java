@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
 @Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = OracleConnector.NAME)})
-public class OracleSource extends AbstractDBSource {
+public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConfig> {
 
   private final OracleSourceConfig oracleSourceConfig;
 

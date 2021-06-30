@@ -36,7 +36,8 @@ import javax.annotation.Nullable;
 @Description(
     "Reads from a CloudSQL PostgreSQL database table(s) using a configurable SQL query."
         + " Outputs one record for each row returned by the query.")
-public class CloudSQLPostgreSQLSource extends AbstractDBSource {
+public class CloudSQLPostgreSQLSource
+  extends AbstractDBSource<CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig> {
 
   private final CloudSQLPostgreSQLSourceConfig cloudsqlPostgresqlSourceConfig;
 

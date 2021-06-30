@@ -23,8 +23,6 @@ import java.util.Map;
  */
 public interface DatabaseConnectionConfig {
 
-  boolean containsMacro(String property);
-
   /**
    * Constructs a connection string from host, port and database properties in a database-specific format.
    * @return connection string specific to a particular database.

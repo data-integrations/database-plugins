@@ -34,7 +34,7 @@ import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 @Name(TeradataConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class TeradataSource extends AbstractDBSource {
+public class TeradataSource extends AbstractDBSource<TeradataSourceConfig> {
   private final TeradataSourceConfig config;
 
   public TeradataSource(TeradataSourceConfig config) {

@@ -78,14 +78,11 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
 
     ConnectionConfigAccessor connectionConfigAccessor = new ConnectionConfigAccessor();
     if (config.getUser() == null && config.getPassword() == null) {
-      DBConfiguration
-        .configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(),
+      DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(),
                      getConnectionString(path.getDatabase()));
     } else {
-      DBConfiguration
-        .configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(),
-                     getConnectionString(path.getDatabase()),
-                     config.getPassword(), config.getPassword());
+      DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(),
+                     getConnectionString(path.getDatabase()), config.getPassword(), config.getPassword());
     }
     String tableQuery = getTableQuery(path);
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),

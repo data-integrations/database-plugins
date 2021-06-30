@@ -32,7 +32,7 @@ import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 @Name(NetezzaConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class NetezzaSource extends AbstractDBSource {
+public class NetezzaSource extends AbstractDBSource<NetezzaSource.NetezzaSourceConfig> {
 
   private final NetezzaSourceConfig netezzaSourceConfig;
 
