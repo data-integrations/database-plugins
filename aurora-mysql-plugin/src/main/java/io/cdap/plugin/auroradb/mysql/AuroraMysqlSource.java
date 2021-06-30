@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 @Name(AuroraMysqlConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class AuroraMysqlSource extends AbstractDBSource {
+public class AuroraMysqlSource extends AbstractDBSource<AuroraMysqlSource.AuroraMysqlSourceConfig> {
 
   private final AuroraMysqlSourceConfig auroraMysqlSourceConfig;
 

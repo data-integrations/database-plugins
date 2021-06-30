@@ -93,7 +93,7 @@ public class MemsqlSourceConfig extends DBSpecificSourceConfig {
   }
 
   @Override
-  protected void validateSchema(Schema actualSchema, FailureCollector collector) {
+  public void validateSchema(Schema actualSchema, FailureCollector collector) {
     Schema configSchema = getSchema();
 
     if (configSchema == null) {

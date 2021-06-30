@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 @Name(MariadbConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class MariadbSource extends AbstractDBSource {
+public class MariadbSource extends AbstractDBSource<MariadbSource.MariadbSourceConfig> {
 
   private final MariadbSourceConfig mariadbSourceConfig;
 

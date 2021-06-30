@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.cloudsql.mysql;
 
-import com.google.common.net.InetAddresses;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
@@ -26,8 +25,6 @@ import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /** Batch source to read from CloudSQL MySQL. */
@@ -36,7 +33,7 @@ import javax.annotation.Nullable;
 @Description(
     "Reads from a CloudSQL database table using a configurable SQL query."
         + " Outputs one record for each row returned by the query.")
-public class CloudSQLMySQLSource extends AbstractDBSource {
+public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.CloudSQLMySQLSourceConfig> {
 
   private final CloudSQLMySQLSourceConfig cloudsqlMysqlSourceConfig;
 

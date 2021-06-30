@@ -51,7 +51,7 @@ public class DBRun {
     DriverCleanup driverCleanup = null;
     try {
       driverCleanup = DBUtils.ensureJDBCDriverIsAvailable(driverClass, config.getConnectionString(),
-                                                          config.jdbcPluginName);
+                                                          config.getJdbcPluginName());
 
       Properties connectionProperties = new Properties();
       connectionProperties.putAll(config.getConnectionArguments());

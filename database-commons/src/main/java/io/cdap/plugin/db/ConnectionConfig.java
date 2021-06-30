@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.KeyValueListParser;
+import io.cdap.plugin.db.batch.config.DatabaseConnectionConfig;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,7 +34,7 @@ import javax.annotation.Nullable;
 /**
  * Defines a base {@link PluginConfig} that Database source, sink, and action can all re-use.
  */
-public abstract class ConnectionConfig extends PluginConfig {
+public abstract class ConnectionConfig extends PluginConfig implements DatabaseConnectionConfig {
   public static final String CONNECTION_STRING = "connectionString";
   public static final String ENABLE_AUTO_COMMIT = "enableAutoCommit";
   public static final String USER = "user";
@@ -48,21 +49,21 @@ public abstract class ConnectionConfig extends PluginConfig {
   @Name(JDBC_PLUGIN_NAME)
   @Description("Name of the JDBC driver to use. This is the value of the 'jdbcPluginName' key defined in the JSON " +
     "file for the JDBC plugin.")
-  public String jdbcPluginName;
+  private String jdbcPluginName;
 
   @Name(USER)
   @Description("User to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
   @Nullable
   @Macro
-  public String user;
+  private String user;
 
   @Name(PASSWORD)
   @Description("Password to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
   @Nullable
   @Macro
-  public String password;
+  private String password;
 
   @Name(CONNECTION_ARGUMENTS)
   @Description("A list of arbitrary string key/value pairs as connection arguments.")
@@ -78,16 +79,10 @@ public abstract class ConnectionConfig extends PluginConfig {
    * @return a {@link Map} of connection arguments, parsed from the config.
    */
   public Map<String, String> getConnectionArguments() {
-    Map<String, String> arguments = getConnectionArguments(this.connectionArguments, user, password);
+    Map<String, String> arguments = getConnectionArguments(connectionArguments, user, password);
     arguments.putAll(getDBSpecificArguments());
     return arguments;
   }
-
-  /**
-   * Constructs a connection string from host, port and database properties in a database-specific format.
-   * @return connection string specific to a particular database.
-   */
-  public abstract String getConnectionString();
 
   /**
    * Returns list of initialization queries. Initialization queries supposed to be executed preserving order right after
@@ -132,4 +127,15 @@ public abstract class ConnectionConfig extends PluginConfig {
     return Collections.emptyMap();
   }
 
+  public String getJdbcPluginName() {
+    return jdbcPluginName;
+  }
+
+  public String getUser() {
+    return user;
+  }
+
+  public String getPassword() {
+    return password;
+  }
 }

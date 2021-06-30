@@ -33,7 +33,7 @@ import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 @Name(SapHanaConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class SapHanaSource extends AbstractDBSource {
+public class SapHanaSource extends AbstractDBSource<SapHanaSource.SapHanaSourceConfig> {
 
   private final SapHanaSourceConfig sapHanaSourceConfig;
 

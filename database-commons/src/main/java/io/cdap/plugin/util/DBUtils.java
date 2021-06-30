@@ -16,12 +16,14 @@
 
 package io.cdap.plugin.util;
 
+import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBConfig;
 import io.cdap.plugin.db.JDBCDriverShim;
+import io.cdap.plugin.db.batch.config.DatabaseConnectionConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -161,11 +163,11 @@ public final class DBUtils {
     }
   }
 
-  public static void validateJDBCPluginPipeline(PipelineConfigurer pipelineConfigurer, ConnectionConfig config,
-                                                String jdbcPluginId) {
+  public static <T extends PluginConfig & DatabaseConnectionConfig> void validateJDBCPluginPipeline(
+    PipelineConfigurer pipelineConfigurer, T config, String jdbcPluginId) {
     FailureCollector collector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     if (!config.containsMacro(DBConfig.USER) && !config.containsMacro(DBConfig.PASSWORD) &&
-      Objects.isNull(config.user) && Objects.nonNull(config.password)) {
+      Objects.isNull(config.getUser()) && Objects.nonNull(config.getPassword())) {
       collector.addFailure("Username is required when password is given.", null)
         .withConfigProperty(ConnectionConfig.USER);
     }
@@ -173,20 +175,21 @@ public final class DBUtils {
     Class<? extends Driver> jdbcDriverClass = getDriverClass(pipelineConfigurer, config, jdbcPluginId);
     if (jdbcDriverClass == null) {
       collector.addFailure(
-        String.format("Unable to load JDBC Driver class for plugin name '%s'.", config.jdbcPluginName),
+        String.format("Unable to load JDBC Driver class for plugin name '%s'.", config.getJdbcPluginName()),
         String.format("Ensure that the plugin '%s' of type '%s' containing the driver has been installed correctly.",
-                      config.jdbcPluginName, ConnectionConfig.JDBC_PLUGIN_TYPE))
+                      config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE))
         .withConfigProperty(ConnectionConfig.JDBC_PLUGIN_NAME)
-        .withPluginNotFound(jdbcPluginId, config.jdbcPluginName, ConnectionConfig.JDBC_PLUGIN_TYPE);
+        .withPluginNotFound(jdbcPluginId, config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE);
     }
     collector.getOrThrowException();
   }
 
-  public static Class<? extends Driver> getDriverClass(PipelineConfigurer pipelineConfigurer, ConnectionConfig config,
+  public static Class<? extends Driver> getDriverClass(PipelineConfigurer pipelineConfigurer,
+                                                       DatabaseConnectionConfig config,
                                                        String jdbcPluginId) {
     return pipelineConfigurer.usePluginClass(
       ConnectionConfig.JDBC_PLUGIN_TYPE,
-      config.jdbcPluginName,
+      config.getJdbcPluginName(),
       jdbcPluginId, PluginProperties.builder().build());
   }
 

@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 @Name(DatabaseConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class DatabaseSource extends AbstractDBSource {
+public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSourceConfig> {
 
   private final DatabaseSourceConfig databaseSourceConfig;
 
@@ -49,7 +49,7 @@ public class DatabaseSource extends AbstractDBSource {
   /**
    * Generic database source configuration.
    */
-  public static class DatabaseSourceConfig extends DBSourceConfig {
+  public static class DatabaseSourceConfig extends AbstractDBSource.DBSourceConfig {
     @Name(ConnectionConfig.CONNECTION_STRING)
     @Description("JDBC connection string including database name.")
     @Macro
@@ -67,11 +67,6 @@ public class DatabaseSource extends AbstractDBSource {
     @Override
     public String getConnectionString() {
       return connectionString;
-    }
-
-    @Override
-    public String getTransactionIsolationLevel() {
-      return transactionIsolationLevel;
     }
   }
 }

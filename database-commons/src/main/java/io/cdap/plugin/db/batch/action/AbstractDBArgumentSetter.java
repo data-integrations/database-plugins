@@ -96,7 +96,7 @@ public class AbstractDBArgumentSetter extends Action {
     DriverCleanup driverCleanup;
 
     driverCleanup = DBUtils.ensureJDBCDriverIsAvailable(driverClass, config.getConnectionString(),
-                                                        config.jdbcPluginName);
+                                                        config.getJdbcPluginName());
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(config.getConnectionArguments());
     try {

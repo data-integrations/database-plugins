@@ -86,7 +86,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   }
 
   private String getJDBCPluginId() {
-    return String.format("%s.%s.%s", "sink", ConnectionConfig.JDBC_PLUGIN_TYPE, dbSinkConfig.jdbcPluginName);
+    return String.format("%s.%s.%s", "sink", ConnectionConfig.JDBC_PLUGIN_TYPE, dbSinkConfig.getJdbcPluginName());
   }
 
   @Override
@@ -112,7 +112,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {};",
               dbSinkConfig.tableName,
               ConnectionConfig.JDBC_PLUGIN_TYPE,
-              dbSinkConfig.jdbcPluginName,
+              dbSinkConfig.getJdbcPluginName(),
               connectionString);
 
     Schema outputSchema = context.getInputSchema();
@@ -144,11 +144,11 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_TABLE_NAME_PROPERTY,
                                           dbSinkConfig.getEscapedTableName());
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_FIELD_NAMES_PROPERTY, dbColumns);
-    if (dbSinkConfig.user != null) {
-      configAccessor.getConfiguration().set(DBConfiguration.USERNAME_PROPERTY, dbSinkConfig.user);
+    if (dbSinkConfig.getUser() != null) {
+      configAccessor.getConfiguration().set(DBConfiguration.USERNAME_PROPERTY, dbSinkConfig.getUser());
     }
-    if (dbSinkConfig.password != null) {
-      configAccessor.getConfiguration().set(DBConfiguration.PASSWORD_PROPERTY, dbSinkConfig.password);
+    if (dbSinkConfig.getPassword() != null) {
+      configAccessor.getConfiguration().set(DBConfiguration.PASSWORD_PROPERTY, dbSinkConfig.getPassword());
     }
 
     if (!Strings.isNullOrEmpty(dbSinkConfig.getTransactionIsolationLevel())) {
@@ -185,7 +185,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   private Schema inferSchema(Class<? extends Driver> driverClass) {
     List<Schema.Field> inferredFields = new ArrayList<>();
     try {
-      DBUtils.ensureJDBCDriverIsAvailable(driverClass, dbSinkConfig.getConnectionString(), dbSinkConfig.jdbcPluginName);
+      DBUtils.ensureJDBCDriverIsAvailable(driverClass, dbSinkConfig.getConnectionString(),
+                                          dbSinkConfig.getJdbcPluginName());
       Properties connectionProperties = new Properties();
       connectionProperties.putAll(dbSinkConfig.getConnectionArguments());
       try (Connection connection = DriverManager.getConnection(dbSinkConfig.getConnectionString(),
@@ -202,7 +203,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
       }
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
-      throw new InvalidStageException("JDBC Driver unavailable: " + dbSinkConfig.jdbcPluginName, e);
+      throw new InvalidStageException("JDBC Driver unavailable: " + dbSinkConfig.getJdbcPluginName(), e);
     }
     return Schema.recordOf("inferredSchema", inferredFields);
   }
@@ -232,7 +233,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     List<ColumnType> columnTypes = new ArrayList<>(columns.size());
     String connectionString = dbSinkConfig.getConnectionString();
 
-    driverCleanup = DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, dbSinkConfig.jdbcPluginName);
+    driverCleanup = DBUtils
+      .ensureJDBCDriverIsAvailable(driverClass, connectionString, dbSinkConfig.getJdbcPluginName());
 
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(dbSinkConfig.getConnectionArguments());
@@ -281,7 +283,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     String connectionString = dbSinkConfig.getConnectionString();
 
     try {
-      DBUtils.ensureJDBCDriverIsAvailable(jdbcDriverClass, connectionString, dbSinkConfig.jdbcPluginName);
+      DBUtils.ensureJDBCDriverIsAvailable(jdbcDriverClass, connectionString, dbSinkConfig.getJdbcPluginName());
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
       collector.addFailure(String.format("Unable to load or register JDBC driver '%s' while checking for " +
                                            "the existence of the database table '%s'.",

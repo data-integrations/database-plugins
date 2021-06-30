@@ -18,11 +18,16 @@ package io.cdap.plugin.oracle;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.db.SchemaReader;
-import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Map;
@@ -35,7 +40,8 @@ import javax.annotation.Nullable;
 @Name(OracleConstants.PLUGIN_NAME)
 @Description("Reads from a database table(s) using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
-public class OracleSource extends AbstractDBSource {
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = OracleConnector.NAME)})
+public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConfig> {
 
   private final OracleSourceConfig oracleSourceConfig;
 
@@ -46,13 +52,7 @@ public class OracleSource extends AbstractDBSource {
 
   @Override
   protected String createConnectionString() {
-    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(oracleSourceConfig.connectionType)) {
-      return String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT,
-                           oracleSourceConfig.host, oracleSourceConfig.port, oracleSourceConfig.database);
-    }
-
-    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, oracleSourceConfig.host,
-                         oracleSourceConfig.port, oracleSourceConfig.database);
+    return oracleSourceConfig.getConnectionString();
   }
 
   @Override
@@ -68,7 +68,22 @@ public class OracleSource extends AbstractDBSource {
   /**
    * Oracle source config.
    */
-  public static class OracleSourceConfig extends DBSpecificSourceConfig {
+  public static class OracleSourceConfig extends AbstractDBSpecificSourceConfig {
+
+    public static final String NAME_USE_CONNECTION = "useConnection";
+    public static final String NAME_CONNECTION = "connection";
+
+    @Name(NAME_USE_CONNECTION)
+    @Nullable
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private OracleConnectorConfig connection;
+
     @Name(OracleConstants.DEFAULT_BATCH_VALUE)
     @Description("The default batch value that triggers an execution request.")
     @Nullable
@@ -85,10 +100,12 @@ public class OracleSource extends AbstractDBSource {
 
     @Override
     public String getConnectionString() {
-      if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(this.connectionType)) {
-        return String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT, host, port, database);
+      if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(connection.getConnectionType())) {
+        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_WITH_DB_FORMAT, connection.getHost(),
+                             connection.getPort(), database);
       }
-      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, host, port, database);
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_WITH_DB_FORMAT,
+                           connection.getHost(), connection.getPort(), database);
     }
 
     @Override
@@ -99,6 +116,11 @@ public class OracleSource extends AbstractDBSource {
       builder.put(OracleConstants.DEFAULT_ROW_PREFETCH, String.valueOf(defaultRowPrefetch));
 
       return builder.build();
+    }
+
+    @Override
+    protected AbstractDBSpecificConnectorConfig getConnection() {
+      return connection;
     }
   }
 
