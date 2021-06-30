@@ -400,18 +400,21 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
         collector.addFailure("Import Query must be specified.", null).withConfigProperty(IMPORT_QUERY);
       }
 
-      if (!hasOneSplit && !containsMacro(IMPORT_QUERY) && !getImportQuery().contains("$CONDITIONS")) {
+      if (!hasOneSplit && !containsMacro(NUM_SPLITS) && !containsMacro(IMPORT_QUERY) && !getImportQuery()
+        .contains("$CONDITIONS")) {
         collector.addFailure("Invalid Import Query.",
                              String.format("Import Query %s must contain the string '$CONDITIONS'.", importQuery))
           .withConfigProperty(IMPORT_QUERY);
       }
 
-      if (!hasOneSplit && !containsMacro("splitBy") && (splitBy == null || splitBy.isEmpty())) {
+      if (!hasOneSplit && !containsMacro(NUM_SPLITS) && !containsMacro("splitBy") && (splitBy == null || splitBy
+        .isEmpty())) {
         collector.addFailure("Split-By Field Name must be specified if Number of Splits is not set to 1.",
                              null).withConfigProperty(SPLIT_BY).withConfigProperty(NUM_SPLITS);
       }
 
-      if (!hasOneSplit && !containsMacro("boundingQuery") && (boundingQuery == null || boundingQuery.isEmpty())) {
+      if (!hasOneSplit && !containsMacro(NUM_SPLITS) && !containsMacro(
+        "boundingQuery") && (boundingQuery == null || boundingQuery.isEmpty())) {
         collector.addFailure("Bounding Query must be specified if Number of Splits is not set to 1.", null)
           .withConfigProperty(BOUNDING_QUERY).withConfigProperty(NUM_SPLITS);
       }

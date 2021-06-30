@@ -74,6 +74,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
     properties.put(MysqlSource.MysqlSourceConfig.IMPORT_QUERY,
                    String.format("SELECT * FROM %s.%s;", path.getDatabase(), table));
     properties.put(MysqlSource.MysqlSourceConfig.NUM_SPLITS, "1");
+    properties.put(MysqlSource.MysqlSourceConfig.DATABASE, path.getDatabase());
   }
 
   @Override

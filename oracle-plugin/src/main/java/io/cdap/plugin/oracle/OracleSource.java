@@ -101,11 +101,11 @@ public class OracleSource extends AbstractDBSource {
     @Override
     public String getConnectionString() {
       if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(connection.getConnectionType())) {
-        return String.format(OracleConstants.ORACLE_CONNECTION_SERVICE_NAME_STRING_FORMAT, connection.getHost(),
+        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_WITH_DB_FORMAT, connection.getHost(),
                              connection.getPort(), database);
       }
-      return String
-        .format(OracleConstants.ORACLE_CONNECTION_STRING_FORMAT, connection.getHost(), connection.getPort(), database);
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_WITH_DB_FORMAT,
+                           connection.getHost(), connection.getPort(), database);
     }
 
     @Override

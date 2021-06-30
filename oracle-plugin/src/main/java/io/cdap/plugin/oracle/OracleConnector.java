@@ -29,7 +29,6 @@ import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
-import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 import io.cdap.plugin.db.connector.DBSpecificPath;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
@@ -39,6 +38,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A Oracle Database Connector that connects to Oracle database via JDBC.
@@ -49,9 +49,11 @@ import java.util.Map;
 @Category("Database")
 public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBRecord> {
   public static final String NAME = "Oracle";
+  private final OracleConnectorConfig config;
 
-  protected OracleConnector(AbstractDBSpecificConnectorConfig config) {
+  protected OracleConnector(OracleConnectorConfig config) {
     super(config);
+    this.config = config;
   }
 
   @Override
@@ -79,6 +81,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     properties.put(OracleSource.OracleSourceConfig.IMPORT_QUERY,
                    String.format("SELECT * FROM %s.%s.%s;", path.getDatabase(), path.getSchema(), table));
     properties.put(OracleSource.OracleSourceConfig.NUM_SPLITS, "1");
+    properties.put(OracleSource.OracleSourceConfig.DATABASE, path.getDatabase());
   }
 
   @Override
@@ -92,10 +95,24 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   }
 
   @Override
+  protected String getConnectionString(@Nullable String database) {
+    if (database == null) {
+      return config.getConnectionString();
+    }
+    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(config)) {
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_WITH_DB_FORMAT, config.getHost(),
+                           config.getPort(), database);
+    }
+    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_WITH_DB_FORMAT,
+                         config.getHost(), config.getPort(), database);
+  }
+
+  @Override
   protected ResultSet queryDatabases(Connection connection) throws SQLException {
     return connection.createStatement()
       .executeQuery(String.format("SELECT NAME AS %s FROM V$DATABASE", RESULTSET_COLUMN_TABLE_CAT));
   }
+
   @Override
   protected String getTableQuery(DBSpecificPath path) {
     return String.format("SELECT * from %s.%s", path.getSchema(), path.getTable());

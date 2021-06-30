@@ -132,13 +132,13 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
         .withConfigProperty(IMPORT_QUERY);
     }
 
-    if (!hasOneSplit && !containsMacro("splitBy") && (splitBy == null || splitBy.isEmpty())) {
+    if (!hasOneSplit && !containsMacro(SPLIT_BY) && (splitBy == null || splitBy.isEmpty())) {
       collector.addFailure("Split-By Field Name must be specified if Number of Splits is not set to 1.",
                            "Specify the Split-by Field Name.").withConfigProperty(SPLIT_BY)
         .withConfigProperty(NUM_SPLITS);
     }
 
-    if (!hasOneSplit && !containsMacro("boundingQuery") && (boundingQuery == null || boundingQuery.isEmpty())) {
+    if (!hasOneSplit && !containsMacro(BOUNDING_QUERY) && (boundingQuery == null || boundingQuery.isEmpty())) {
       collector.addFailure("Bounding Query must be specified if Number of Splits is not set to 1.",
                            "Specify the Bounding Query.")
         .withConfigProperty(BOUNDING_QUERY).withConfigProperty(NUM_SPLITS);

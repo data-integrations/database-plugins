@@ -25,8 +25,8 @@ import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
  */
 public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
-  private static final String ORACLE_CONNECTION_STRING_SID_FORMAT = "jdbc:oracle:thin:@%s:%s";
-  private static final String ORACLE_CONNECTION__STRING_SERVICE_NAME_FORMAT = "jdbc:oracle:thin:@//%s:%s";
+  private static final String ORACLE_CONNECTION_STRING_SID_WITHOUT_DB_FORMAT = "jdbc:oracle:thin:@%s:%s";
+  private static final String ORACLE_CONNECTION_STRING_SERVICE_NAME_WITHOUT_DB_FORMAT = "jdbc:oracle:thin:@//%s:%s";
 
   public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                                String connectionArguments) {
@@ -48,10 +48,9 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   @Override
   public String getConnectionString() {
     if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(connectionType)) {
-      return String.format(ORACLE_CONNECTION__STRING_SERVICE_NAME_FORMAT, host, getPort());
+      return String.format(ORACLE_CONNECTION_STRING_SERVICE_NAME_WITHOUT_DB_FORMAT, host, getPort());
     }
-    return String
-      .format(ORACLE_CONNECTION_STRING_SID_FORMAT, host, getPort());
+    return String.format(ORACLE_CONNECTION_STRING_SID_WITHOUT_DB_FORMAT, host, getPort());
   }
 
   @Name(OracleConstants.CONNECTION_TYPE)

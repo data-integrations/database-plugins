@@ -75,6 +75,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
     properties.put(SqlServerSource.SqlServerSourceConfig.IMPORT_QUERY,
                    String.format("SELECT * FROM %s.%s.%s;", path.getDatabase(), path.getSchema(), table));
     properties.put(SqlServerSource.SqlServerSourceConfig.NUM_SPLITS, "1");
+    properties.put(SqlServerSource.SqlServerSourceConfig.DATABASE, path.getDatabase());
   }
 
   @Override
