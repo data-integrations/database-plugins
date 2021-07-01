@@ -29,7 +29,6 @@ import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
-import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
@@ -45,9 +44,11 @@ import java.util.Map;
 @Category("Database")
 public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSourceDBRecord> {
   public static final String NAME = "SqlServer";
+  private final SqlServerConnectorConfig config;
 
-  protected SqlServerConnector(AbstractDBSpecificConnectorConfig config) {
+  public SqlServerConnector(SqlServerConnectorConfig config) {
     super(config);
+    this.config = config;
   }
 
   @Override

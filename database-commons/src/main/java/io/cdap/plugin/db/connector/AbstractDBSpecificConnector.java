@@ -47,7 +47,7 @@ import java.sql.Statement;
 public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends AbstractDBConnector
   implements BatchConnector<LongWritable, T> {
 
-  protected final AbstractDBSpecificConnectorConfig config;
+  private final AbstractDBSpecificConnectorConfig config;
 
   protected AbstractDBSpecificConnector(AbstractDBSpecificConnectorConfig config) {
     super(config);

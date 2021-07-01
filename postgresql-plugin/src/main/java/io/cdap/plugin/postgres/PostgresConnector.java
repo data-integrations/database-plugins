@@ -29,7 +29,6 @@ import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
-import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
@@ -49,9 +48,11 @@ import javax.annotation.Nullable;
 @Category("Database")
 public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRecord> {
   public static final String NAME = "Postgres";
+  private final PostgresConnectorConfig config;
 
-  protected PostgresConnector(AbstractDBSpecificConnectorConfig config) {
+  public PostgresConnector(PostgresConnectorConfig config) {
     super(config);
+    this.config = config;
   }
 
   @Override
