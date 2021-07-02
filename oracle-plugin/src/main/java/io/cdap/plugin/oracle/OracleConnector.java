@@ -51,7 +51,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   public static final String NAME = "Oracle";
   private final OracleConnectorConfig config;
 
-  protected OracleConnector(OracleConnectorConfig config) {
+  public OracleConnector(OracleConnectorConfig config) {
     super(config);
     this.config = config;
   }

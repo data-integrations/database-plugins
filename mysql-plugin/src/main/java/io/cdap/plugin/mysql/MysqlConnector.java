@@ -29,7 +29,6 @@ import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
-import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
@@ -45,8 +44,11 @@ import java.util.Map;
 @Category("Database")
 public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
   public static final String NAME = "Mysql";
-  MysqlConnector(AbstractDBSpecificConnectorConfig config) {
+  private final MysqlConnectorConfig config;
+
+  public MysqlConnector(MysqlConnectorConfig config) {
     super(config);
+    this.config = config;
   }
 
   @Override
