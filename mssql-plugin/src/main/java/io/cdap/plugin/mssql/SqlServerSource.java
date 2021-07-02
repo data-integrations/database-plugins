@@ -97,11 +97,6 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
     @Nullable
     public Integer queryTimeout = -1;
 
-    @Name(SqlServerConstants.AUTHENTICATION)
-    @Description(SqlServerConstants.AUTHENTICATION_DESCRIPTION)
-    @Nullable
-    public String authenticationType;
-
     @Name(SqlServerConstants.CONNECT_TIMEOUT)
     @Description(SqlServerConstants.CONNECT_TIMEOUT_DESCRIPTION)
     @Nullable
