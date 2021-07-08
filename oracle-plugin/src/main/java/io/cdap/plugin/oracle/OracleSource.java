@@ -94,10 +94,6 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     @Nullable
     public Integer defaultRowPrefetch;
 
-    @Name(OracleConstants.CONNECTION_TYPE)
-    @Description("Whether to use an SID or Service Name when connecting to the database.")
-    public String connectionType;
-
     @Override
     public String getConnectionString() {
       if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(connection.getConnectionType())) {
