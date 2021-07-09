@@ -21,7 +21,6 @@ import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.plugin.db.ConnectionConfig;
-import io.cdap.plugin.db.DBConfig;
 import io.cdap.plugin.db.JDBCDriverShim;
 import io.cdap.plugin.db.batch.config.DatabaseConnectionConfig;
 import org.slf4j.Logger;
@@ -166,20 +165,22 @@ public final class DBUtils {
   public static <T extends PluginConfig & DatabaseConnectionConfig> void validateJDBCPluginPipeline(
     PipelineConfigurer pipelineConfigurer, T config, String jdbcPluginId) {
     FailureCollector collector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
-    if (!config.containsMacro(DBConfig.USER) && !config.containsMacro(DBConfig.PASSWORD) &&
+    if (!config.containsMacro(ConnectionConfig.USER) && !config.containsMacro(ConnectionConfig.PASSWORD) &&
       Objects.isNull(config.getUser()) && Objects.nonNull(config.getPassword())) {
       collector.addFailure("Username is required when password is given.", null)
         .withConfigProperty(ConnectionConfig.USER);
     }
 
-    Class<? extends Driver> jdbcDriverClass = getDriverClass(pipelineConfigurer, config, jdbcPluginId);
-    if (jdbcDriverClass == null) {
-      collector.addFailure(
-        String.format("Unable to load JDBC Driver class for plugin name '%s'.", config.getJdbcPluginName()),
-        String.format("Ensure that the plugin '%s' of type '%s' containing the driver has been installed correctly.",
-                      config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE))
-        .withConfigProperty(ConnectionConfig.JDBC_PLUGIN_NAME)
-        .withPluginNotFound(jdbcPluginId, config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE);
+    if (!config.containsMacro(ConnectionConfig.JDBC_PLUGIN_NAME)) {
+      Class<? extends Driver> jdbcDriverClass = getDriverClass(pipelineConfigurer, config, jdbcPluginId);
+      if (jdbcDriverClass == null) {
+        collector.addFailure(
+          String.format("Unable to load JDBC Driver class for plugin name '%s'.", config.getJdbcPluginName()),
+          String.format("Ensure that the plugin '%s' of type '%s' containing the driver has been installed correctly.",
+                        config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE))
+          .withConfigProperty(ConnectionConfig.JDBC_PLUGIN_NAME)
+          .withPluginNotFound(jdbcPluginId, config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE);
+      }
     }
     collector.getOrThrowException();
   }

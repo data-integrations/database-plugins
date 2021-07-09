@@ -24,6 +24,7 @@ import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.KeyValueListParser;
 import io.cdap.plugin.common.db.DBConnectorProperties;
+import io.cdap.plugin.db.ConnectionConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,44 +36,39 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractDBSpecificConnectorConfig extends PluginConfig implements DBConnectorProperties {
 
-  public static final String USER = "user";
-  public static final String HOST = "host";
-  public static final String PORT = "port";
-  public static final String PASSWORD = "password";
-  public static final String CONNECTION_ARGUMENTS = "connectionArguments";
-  public static final String JDBC_PLUGIN_NAME = "jdbcPluginName";
-
-  @Name(HOST)
+  @Name(ConnectionConfig.HOST)
   @Description("Database host")
   @Macro
+  @Nullable
   protected String host;
 
-  @Name(PORT)
+  @Name(ConnectionConfig.PORT)
   @Description("Database port number")
   @Macro
   @Nullable
   protected Integer port;
 
-  @Name(JDBC_PLUGIN_NAME)
+  @Name(ConnectionConfig.JDBC_PLUGIN_NAME)
   @Description("Name of the JDBC driver to use. This is the value of the 'jdbcPluginName' key defined in the JSON " +
     "file for the JDBC plugin.")
+  @Nullable
   protected String jdbcPluginName;
 
-  @Name(USER)
+  @Name(ConnectionConfig.USER)
   @Description("User to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
   @Nullable
   @Macro
   protected String user;
 
-  @Name(PASSWORD)
+  @Name(ConnectionConfig.PASSWORD)
   @Description("Password to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
   @Nullable
   @Macro
   protected String password;
 
-  @Name(CONNECTION_ARGUMENTS)
+  @Name(ConnectionConfig.CONNECTION_ARGUMENTS)
   @Description("A list of arbitrary string key/value pairs as connection arguments.")
   @Nullable
   @Macro

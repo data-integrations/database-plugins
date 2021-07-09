@@ -96,6 +96,14 @@
           "name": "database"
         },
         {
+          "widget-type": "connection-browser",
+          "widget-category": "plugin",
+          "widget-attributes": {
+            "connectionType": "Mysql",
+            "label": "Browse Database"
+          }
+        },
+        {
           "widget-type": "get-schema",
           "widget-category": "plugin"
         },
@@ -203,18 +211,6 @@
           "widget-type": "textbox",
           "label": "SQL_MODE",
           "name": "sqlMode"
-        },
-        {
-          "widget-type": "keyvalue",
-          "label": "Connection Arguments",
-          "name": "connectionArguments",
-          "widget-attributes": {
-            "showDelimiter": "false",
-            "key-placeholder": "Key",
-            "value-placeholder": "Value",
-            "kv-delimiter": "=",
-            "delimiter": ";"
-          }
         },
         {
           "widget-type": "toggle",
