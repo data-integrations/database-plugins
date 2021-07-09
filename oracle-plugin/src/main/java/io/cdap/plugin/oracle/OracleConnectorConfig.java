@@ -20,6 +20,9 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 
+import java.util.Properties;
+import javax.annotation.Nullable;
+
 /**
  * Configuration for Oracle Database Connector
  */
@@ -27,6 +30,8 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   private static final String ORACLE_CONNECTION_STRING_SID_WITHOUT_DB_FORMAT = "jdbc:oracle:thin:@%s:%s";
   private static final String ORACLE_CONNECTION_STRING_SERVICE_NAME_WITHOUT_DB_FORMAT = "jdbc:oracle:thin:@//%s:%s";
+  private static final String TIME_ZONE_AS_REGION_PROPERTY = "oracle.jdbc.timezoneAsRegion";
+  private static final String INTERNAL_LOGON_PROPERTY = "internal_logon";
 
   public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                                String connectionArguments) {
@@ -55,7 +60,12 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   @Name(OracleConstants.CONNECTION_TYPE)
   @Description("Whether to use an SID or Service Name when connecting to the database.")
-  public String connectionType;
+  private String connectionType;
+
+  @Name(OracleConstants.ROLE)
+  @Description("The login role of the user when connecting to the database.")
+  @Nullable
+  private String role;
 
   @Override
   protected int getDefaultPort() {
@@ -64,5 +74,19 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   public String getConnectionType() {
     return connectionType;
+  }
+
+  public String getRole() {
+    return role == null ? "normal" : role;
+  }
+
+  @Override
+  public Properties getConnectionArgumentsProperties() {
+    Properties prop = super.getConnectionArgumentsProperties();
+    // To solve the "ORA-01882: timezone region not found" issue, see:
+    // https://stackoverflow.com/questions/9156379/ora-01882-timezone-region-not-found
+    prop.put(TIME_ZONE_AS_REGION_PROPERTY, "false");
+    prop.put(INTERNAL_LOGON_PROPERTY, getRole());
+    return prop;
   }
 }

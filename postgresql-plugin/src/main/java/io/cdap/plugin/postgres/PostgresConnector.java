@@ -77,8 +77,7 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
       return;
     }
 
-    properties.put(PostgresSource.PostgresSourceConfig.IMPORT_QUERY,
-                   String.format("SELECT * FROM %s.%s.%s;", path.getDatabase(), path.getSchema(), table));
+    properties.put(PostgresSource.PostgresSourceConfig.IMPORT_QUERY, getTableQuery(path));
     properties.put(PostgresSource.PostgresSourceConfig.NUM_SPLITS, "1");
     properties.put(PostgresSource.PostgresSourceConfig.DATABASE, path.getDatabase());
   }
