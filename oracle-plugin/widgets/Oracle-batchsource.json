@@ -66,6 +66,29 @@
           "name": "password"
         },
         {
+          "label": "Role",
+          "name": "role",
+          "widget-type": "radio-group",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "normal",
+            "options": [
+              {
+                "id": "normal",
+                "label": "Normal"
+              },
+              {
+                "id": "sysdba",
+                "label": "SYSDBA"
+              },
+              {
+                "id": "sysoper",
+                "label": "SYSOPER"
+              }
+            ]
+          }
+        },
+        {
           "name": "connectionType",
           "label": "Connection Type",
           "widget-type": "radio-group",
@@ -225,6 +248,10 @@
         {
           "type": "property",
           "name": "port"
+        },
+        {
+          "type": "property",
+          "name": "role"
         },
         {
           "type": "property",

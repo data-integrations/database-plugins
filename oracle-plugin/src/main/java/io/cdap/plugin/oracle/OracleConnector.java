@@ -29,7 +29,6 @@ import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
-import io.cdap.plugin.db.connector.DBSpecificPath;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
@@ -78,8 +77,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
       return;
     }
 
-    properties.put(OracleSource.OracleSourceConfig.IMPORT_QUERY,
-                   String.format("SELECT * FROM %s.%s.%s;", path.getDatabase(), path.getSchema(), table));
+    properties.put(OracleSource.OracleSourceConfig.IMPORT_QUERY, getTableQuery(path));
     properties.put(OracleSource.OracleSourceConfig.NUM_SPLITS, "1");
     properties.put(OracleSource.OracleSourceConfig.DATABASE, path.getDatabase());
   }
@@ -114,7 +112,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   }
 
   @Override
-  protected String getTableQuery(DBSpecificPath path) {
+  protected String getTableQuery(DBConnectorPath path) {
     return String.format("SELECT * from %s.%s", path.getSchema(), path.getTable());
   }
 }

@@ -107,7 +107,7 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     return config.getConnectionString();
   }
 
-  protected String getTableQuery(DBSpecificPath path) {
+  protected String getTableQuery(DBConnectorPath path) {
     return path.getSchema() == null ? String.format("SELECT * from %s.%s", path.getDatabase(), path.getTable()) : String
       .format("SELECT * from %s.%s.%s", path.getDatabase(), path.getSchema(), path.getTable());
   }
