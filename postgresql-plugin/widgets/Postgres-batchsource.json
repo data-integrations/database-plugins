@@ -96,6 +96,14 @@
           "name": "database"
         },
         {
+          "widget-type": "connection-browser",
+          "widget-category": "plugin",
+          "widget-attributes": {
+            "connectionType": "Postgres",
+            "label": "Browse Database"
+          }
+        },
+        {
           "widget-type": "get-schema",
           "widget-category": "plugin"
         },
