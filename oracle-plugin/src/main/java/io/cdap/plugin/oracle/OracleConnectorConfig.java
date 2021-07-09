@@ -63,7 +63,7 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   private String connectionType;
 
   @Name(OracleConstants.ROLE)
-  @Description("The login role of the user when connecting to the database.")
+  @Description("Login role of the user when connecting to the database.")
   @Nullable
   private String role;
 

@@ -26,6 +26,8 @@ Properties
 
 **SID/Service Name:** Oracle connection point (Database name or Service name).
 
+**Role** Login role of the user when connecting to the database.
+
 **Connection Type** Whether to use an SID or Service Name when connecting to the database.
 
 **Import Query:** The SELECT query to use to import data from the specified table.
