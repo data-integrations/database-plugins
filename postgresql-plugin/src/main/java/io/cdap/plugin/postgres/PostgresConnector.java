@@ -27,17 +27,15 @@ import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.DBPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * A Postgre SQL Database Connector that connects to Postgre SQL database via JDBC.
@@ -65,11 +63,15 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     return PostgresDBRecord.class;
   }
 
+  @Override
+  protected DBConnectorPath getDBConnectorPath(String path) throws IOException {
+      return new DBPath(path, true);
+  }
+
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
-    properties.put(PostgresSource.PostgresSourceConfig.NAME_USE_CONNECTION, "true");
-    properties.put(PostgresSource.PostgresSourceConfig.NAME_CONNECTION, request.getConnectionWithMacro());
+    setConnectionProperties(properties);
     builder.addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties));
 
     String table = path.getTable();
@@ -79,7 +81,13 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
 
     properties.put(PostgresSource.PostgresSourceConfig.IMPORT_QUERY, getTableQuery(path));
     properties.put(PostgresSource.PostgresSourceConfig.NUM_SPLITS, "1");
-    properties.put(PostgresSource.PostgresSourceConfig.DATABASE, path.getDatabase());
+
+  }
+
+  @Override
+  protected void setConnectionProperties(Map<String, String> properties) {
+    super.setConnectionProperties(properties);
+    properties.put(PostgresConnectorConfig.NAME_DATABASE, config.getDatabase());
   }
 
   @Override
@@ -92,19 +100,8 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     return record.getRecord();
   }
 
-  protected ResultSet queryDatabases(Connection connection) throws SQLException {
-    return connection.createStatement().executeQuery(String.format(
-      "SELECT datname AS %s FROM pg_database WHERE datistemplate = false;",
-      RESULTSET_COLUMN_TABLE_CAT));
+  protected String getTableQuery(DBConnectorPath path) {
+    return String.format("SELECT * FROM %s.%s", path.getSchema(), path.getTable());
   }
 
-  @Override
-  protected String getConnectionString(@Nullable String database) {
-    if (database == null) {
-      return config.getConnectionString();
-    }
-    return String
-      .format(PostgresConstants.POSTGRES_CONNECTION_STRING_WITH_DB_FORMAT, config.getHost(), config.getPort(),
-              database);
-  }
 }

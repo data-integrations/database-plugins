@@ -64,10 +64,8 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
-    properties.put(SqlServerSource.SqlServerSourceConfig.NAME_USE_CONNECTION, "true");
-    properties.put(SqlServerSource.SqlServerSourceConfig.NAME_CONNECTION, request.getConnectionWithMacro());
+    setConnectionProperties(properties);
     builder.addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties));
-
     String table = path.getTable();
     if (table == null) {
       return;

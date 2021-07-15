@@ -8,18 +8,9 @@
       "label": "Connection",
       "properties": [
         {
-          "widget-type": "toggle",
-          "label": "Use connection",
+          "widget-type": "hidden",
           "name": "useConnection",
           "widget-attributes": {
-            "on": {
-              "value": "true",
-              "label": "YES"
-            },
-            "off": {
-              "value": "false",
-              "label": "NO"
-            },
             "default": "false"
           }
         },
@@ -76,6 +67,11 @@
             "kv-delimiter" : "=",
             "delimiter" : ";"
           }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Database",
+          "name": "database"
         }
       ]
     },
@@ -89,11 +85,6 @@
           "widget-attributes": {
             "placeholder": "Name used to identify this source for lineage"
           }
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Database",
-          "name": "database"
         },
         {
           "widget-type": "connection-browser",
@@ -196,6 +187,10 @@
         {
           "type": "property",
           "name": "port"
+        },
+        {
+          "type": "property",
+          "name": "database"
         },
         {
           "type": "property",

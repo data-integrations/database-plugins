@@ -48,6 +48,7 @@ import javax.annotation.Nullable;
 @Category("Database")
 public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBRecord> {
   public static final String NAME = "Oracle";
+
   private final OracleConnectorConfig config;
 
   public OracleConnector(OracleConnectorConfig config) {
@@ -68,8 +69,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
-    properties.put(OracleSource.OracleSourceConfig.NAME_USE_CONNECTION, "true");
-    properties.put(OracleSource.OracleSourceConfig.NAME_CONNECTION, request.getConnectionWithMacro());
+    setConnectionProperties(properties);
     builder.addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties));
 
     String table = path.getTable();
@@ -80,6 +80,12 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     properties.put(OracleSource.OracleSourceConfig.IMPORT_QUERY, getTableQuery(path));
     properties.put(OracleSource.OracleSourceConfig.NUM_SPLITS, "1");
     properties.put(OracleSource.OracleSourceConfig.DATABASE, path.getDatabase());
+  }
+
+  @Override
+  protected void setConnectionProperties(Map<String, String> properties) {
+    super.setConnectionProperties(properties);
+    properties.put(OracleConstants.ROLE, config.getRole());
   }
 
   @Override

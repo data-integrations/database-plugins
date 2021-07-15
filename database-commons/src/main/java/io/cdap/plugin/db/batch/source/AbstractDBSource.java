@@ -277,6 +277,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
       String schemaStr = SCHEMA_TYPE_ADAPTER.toJson(schemaFromDB);
       connectionConfigAccessor.setSchema(schemaStr);
     }
+
     LineageRecorder lineageRecorder = new LineageRecorder(context, sourceConfig.getReferenceName());
     Schema schema = sourceConfig.getSchema() == null ? schemaFromDB : sourceConfig.getSchema();
     lineageRecorder.createExternalDataset(schema);
