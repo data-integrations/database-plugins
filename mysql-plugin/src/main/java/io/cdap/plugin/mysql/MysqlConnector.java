@@ -64,8 +64,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
-    properties.put(MysqlSource.MysqlSourceConfig.NAME_USE_CONNECTION, "true");
-    properties.put(MysqlSource.MysqlSourceConfig.NAME_CONNECTION, request.getConnectionWithMacro());
+    setConnectionProperties(properties);
     builder.addRelatedPlugin(new PluginSpec(MysqlConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties));
 
     String table = path.getTable();

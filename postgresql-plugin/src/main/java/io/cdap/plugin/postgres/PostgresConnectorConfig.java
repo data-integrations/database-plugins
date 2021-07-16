@@ -16,13 +16,15 @@
 
 package io.cdap.plugin.postgres;
 
+import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 
 /**
  * Configuration for Postgres SQL Database Connector
  */
 public class PostgresConnectorConfig extends AbstractDBSpecificConnectorConfig {
-  private static final String POSTGRE_CONNECTION_STRING_WITHOUT_DB_FORMAT = "jdbc:postgresql://%s:%s/";
+  public static final String NAME_DATABASE = "database";
   public PostgresConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                                  String connectionArguments) {
 
@@ -34,11 +36,18 @@ public class PostgresConnectorConfig extends AbstractDBSpecificConnectorConfig {
     this.connectionArguments = connectionArguments;
   }
 
+  @Name(NAME_DATABASE)
+  @Description("Database to connect to.")
+  private String database;
+
   @Override
   public String getConnectionString() {
-    return String.format(POSTGRE_CONNECTION_STRING_WITHOUT_DB_FORMAT, host, getPort());
+    return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_WITH_DB_FORMAT, host, getPort(), database);
   }
 
+  public String getDatabase() {
+    return database;
+  }
   @Override
   protected int getDefaultPort() {
     return 5432;

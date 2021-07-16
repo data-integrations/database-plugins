@@ -51,11 +51,6 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
   @Description(Constants.Reference.REFERENCE_NAME_DESCRIPTION)
   public String referenceName;
 
-  @Name(DATABASE)
-  @Description("Database name to connect to")
-  @Macro
-  public String database;
-
   @Name(IMPORT_QUERY)
   @Description("The SELECT query to use to import data from the specified table. " +
     "You can specify an arbitrary number of columns to import, or import all columns using *. " +

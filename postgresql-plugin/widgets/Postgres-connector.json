@@ -30,6 +30,11 @@
           "widget-attributes": {
             "default": "5432"
           }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Database",
+          "name": "database"
         }
       ]
     },

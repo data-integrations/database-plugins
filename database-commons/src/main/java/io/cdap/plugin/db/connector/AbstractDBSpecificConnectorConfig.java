@@ -96,6 +96,11 @@ public abstract class AbstractDBSpecificConnectorConfig extends PluginConfig imp
     return jdbcPluginName;
   }
 
+  @Override
+  public String getConnectionArguments() {
+    return connectionArguments;
+  }
+
   protected static Properties getConnectionArgumentsProperties(@Nullable String connectionArguments,
                                                             @Nullable String user, @Nullable String password) {
     KeyValueListParser kvParser = new KeyValueListParser("\\s*;\\s*", "=");
@@ -127,4 +132,8 @@ public abstract class AbstractDBSpecificConnectorConfig extends PluginConfig imp
   }
 
   protected abstract int getDefaultPort();
+
+  public String getTransactionIsolationLevel() {
+    return null;
+  }
 }

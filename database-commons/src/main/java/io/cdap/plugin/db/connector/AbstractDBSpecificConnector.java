@@ -26,8 +26,10 @@ import io.cdap.plugin.common.SourceInputFormatProvider;
 import io.cdap.plugin.common.db.AbstractDBConnector;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.db.CommonSchemaReader;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -39,6 +41,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Map;
 
 /**
  * An Abstract DB Specific Connector those specific DB connectors can inherits
@@ -70,7 +73,7 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   @Override
   public InputFormatProvider getInputFormatProvider(ConnectorContext context, SampleRequest request)
     throws IOException {
-    DBSpecificPath path = DBSpecificPath.of(request.getPath(), supportSchema());
+    DBConnectorPath path = getDBConnectorPath(request.getPath());
     if (path.getTable() == null) {
       throw new IllegalArgumentException(
         String.format("Path %s cannot be sampled. Must have table name in the path.", request.getPath()));
@@ -82,13 +85,15 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
                      getConnectionString(path.getDatabase()));
     } else {
       DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(),
-                     getConnectionString(path.getDatabase()), config.getPassword(), config.getPassword());
+                     getConnectionString(path.getDatabase()), config.getUser(), config.getPassword());
     }
     String tableQuery = getTableQuery(path);
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
                                         tableQuery, null, false);
     connectionConfigAccessor.setConnectionArguments(Maps.fromProperties(config.getConnectionArgumentsProperties()));
     connectionConfigAccessor.getConfiguration().setInt(MRJobConfig.NUM_MAPS, 1);
+    connectionConfigAccessor.getConfiguration()
+      .set(TransactionIsolationLevel.CONF_KEY, config.getTransactionIsolationLevel());
     try {
       connectionConfigAccessor.setSchema(loadTableSchema(getConnection(path),  tableQuery).toString());
     } catch (SQLException e) {
@@ -108,8 +113,8 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   }
 
   protected String getTableQuery(DBConnectorPath path) {
-    return path.getSchema() == null ? String.format("SELECT * from %s.%s", path.getDatabase(), path.getTable()) : String
-      .format("SELECT * from %s.%s.%s", path.getDatabase(), path.getSchema(), path.getTable());
+    return path.getSchema() == null ? String.format("SELECT * FROM %s.%s", path.getDatabase(), path.getTable()) : String
+      .format("SELECT * FROM %s.%s.%s", path.getDatabase(), path.getSchema(), path.getTable());
   }
 
   protected Schema loadTableSchema(Connection connection, String query) throws SQLException {
@@ -117,5 +122,14 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     statement.setMaxRows(1);
     ResultSet resultSet = statement.executeQuery(query);
     return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
+  }
+
+  protected void setConnectionProperties(Map<String, String> properties) {
+    properties.put(ConnectionConfig.HOST, config.getHost());
+    properties.put(ConnectionConfig.PORT, String.valueOf(config.getPort()));
+    properties.put(ConnectionConfig.JDBC_PLUGIN_NAME, config.getJdbcPluginName());
+    properties.put(ConnectionConfig.USER, config.getUser());
+    properties.put(ConnectionConfig.PASSWORD, config.getPassword());
+    properties.put(ConnectionConfig.CONNECTION_ARGUMENTS, config.getConnectionArguments());
   }
 }

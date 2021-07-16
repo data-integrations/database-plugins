@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
@@ -73,6 +74,11 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
     @Nullable
     @Description("The existing connection to use.")
     private MysqlConnectorConfig connection;
+
+    @Name(DATABASE)
+    @Description("Database name to connect to")
+    @Macro
+    public String database;
 
     @Name(MysqlConstants.AUTO_RECONNECT)
     @Description("Should the driver try to re-establish stale and/or dead connections")
@@ -148,6 +154,19 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
     @Override
     public MysqlConnectorConfig getConnection() {
       return connection;
+    }
+
+    @Override
+    public void validate(FailureCollector collector) {
+      if (Boolean.TRUE.equals(useConnection)) {
+        collector.addFailure("Mysql batch source plugin doesn't support using existing connection.",
+                             "Don't set useConnection property to true.");
+      }
+      if (containsMacro(NAME_CONNECTION)) {
+        collector.addFailure("Mysql batch source plugin doesn't support using existing connection.",
+                             "Remove macro in connection property.");
+      }
+      super.validate(collector);
     }
   }
 

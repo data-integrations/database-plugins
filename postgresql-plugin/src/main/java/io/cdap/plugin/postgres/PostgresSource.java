@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.db.SchemaReader;
@@ -96,7 +97,7 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
     public String getConnectionString() {
       return String
         .format(PostgresConstants.POSTGRES_CONNECTION_STRING_WITH_DB_FORMAT, connection.getHost(), connection.getPort(),
-                database);
+                connection.getDatabase());
     }
 
     @Override
@@ -107,6 +108,19 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
     @Override
     protected AbstractDBSpecificConnectorConfig getConnection() {
       return connection;
+    }
+
+    @Override
+    public void validate(FailureCollector collector) {
+      if (Boolean.TRUE.equals(useConnection)) {
+        collector.addFailure("Postgres batch source plugin doesn't support using existing connection.",
+                             "Don't set useConnection property to true.");
+      }
+      if (containsMacro(NAME_CONNECTION)) {
+        collector.addFailure("Postgres batch source plugin doesn't support using existing connection.",
+                             "Remove macro in connection property.");
+      }
+      super.validate(collector);
     }
   }
 }
