@@ -38,11 +38,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A Postgre SQL Database Connector that connects to Postgre SQL database via JDBC.
+ * A Postgre SQL Database Connector that connects to PostgreSQL database via JDBC.
  */
 @Plugin(type = Connector.PLUGIN_TYPE)
 @Name(PostgresConnector.NAME)
-@Description("This connector creates connections to a Postgre SQL database.")
+@Description("Connection to browse and sample data from PostgreSQL databases using JDBC.")
 @Category("Database")
 public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRecord> {
   public static final String NAME = "Postgres";

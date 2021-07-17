@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = Connector.PLUGIN_TYPE)
 @Name(OracleConnector.NAME)
-@Description("This connector creates connections to a Oracle database.")
+@Description("Connection to browse and sample data from Oracle databases using JDBC.")
 @Category("Database")
 public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBRecord> {
   public static final String NAME = "Oracle";
