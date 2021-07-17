@@ -36,11 +36,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A SqlServer Database Connector that connects to SqlServer database via JDBC.
+ * A SQL Server Database Connector that connects to SQL Server database via JDBC.
  */
 @Plugin(type = Connector.PLUGIN_TYPE)
 @Name(SqlServerConnector.NAME)
-@Description("This connector creates connections to a SqlServer database.")
+@Description("Connection to browse and sample data from SQL Server databases using JDBC.")
 @Category("Database")
 public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSourceDBRecord> {
   public static final String NAME = "SqlServer";

@@ -40,7 +40,7 @@ import java.util.Map;
  */
 @Plugin(type = Connector.PLUGIN_TYPE)
 @Name(MysqlConnector.NAME)
-@Description("This connector creates connections to a Mysql database.")
+@Description("This connector creates connections to a MySQL database.")
 @Category("Database")
 public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
   public static final String NAME = "Mysql";

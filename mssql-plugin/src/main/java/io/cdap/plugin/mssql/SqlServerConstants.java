@@ -61,7 +61,7 @@ public final class SqlServerConstants {
   /**
    * Description of the {@link SqlServerConstants#AUTHENTICATION} property.
    */
-  public static final String AUTHENTICATION_DESCRIPTION = "Indicates which SQL authentication method will be used " +
+  public static final String AUTHENTICATION_DESCRIPTION = "Indicates which authentication method will be used " +
     "for the connection. Use 'SQL Login'. to connect to a SQL Server using username and password properties. " +
     "Use 'Active Directory Password' to connect to an Azure SQL Database/Data Warehouse using an Azure AD principal " +
     "name and password.";
