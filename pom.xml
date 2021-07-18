@@ -19,7 +19,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.cdap.plugin</groupId>
-  <artifactId>database-plugins</artifactId>
+  <artifactId>database-plugins-parent</artifactId>
   <version>1.6.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Database Plugins</name>
