@@ -26,6 +26,8 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.PluginSpec;
+import io.cdap.plugin.common.Constants;
+import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.common.db.DBPath;
 import io.cdap.plugin.db.SchemaReader;
@@ -81,6 +83,7 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
 
     properties.put(PostgresSource.PostgresSourceConfig.IMPORT_QUERY, getTableQuery(path));
     properties.put(PostgresSource.PostgresSourceConfig.NUM_SPLITS, "1");
+    properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
 
   }
 
