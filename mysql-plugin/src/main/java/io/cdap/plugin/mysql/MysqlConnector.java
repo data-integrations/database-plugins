@@ -26,6 +26,8 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.PluginSpec;
+import io.cdap.plugin.common.Constants;
+import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
@@ -75,6 +77,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
     properties.put(MysqlSource.MysqlSourceConfig.IMPORT_QUERY, getTableQuery(path));
     properties.put(MysqlSource.MysqlSourceConfig.NUM_SPLITS, "1");
     properties.put(MysqlSource.MysqlSourceConfig.DATABASE, path.getDatabase());
+    properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
   }
 
   @Override
