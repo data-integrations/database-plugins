@@ -26,6 +26,8 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.PluginSpec;
+import io.cdap.plugin.common.Constants;
+import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
@@ -74,6 +76,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
     properties.put(SqlServerSource.SqlServerSourceConfig.IMPORT_QUERY, getTableQuery(path));
     properties.put(SqlServerSource.SqlServerSourceConfig.NUM_SPLITS, "1");
     properties.put(SqlServerSource.SqlServerSourceConfig.DATABASE, path.getDatabase());
+    properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
   }
 
   @Override
