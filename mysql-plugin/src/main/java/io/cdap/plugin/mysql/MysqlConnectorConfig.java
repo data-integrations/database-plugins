@@ -18,12 +18,16 @@ package io.cdap.plugin.mysql;
 
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 
+import java.util.Properties;
+
 /**
  * Configuration for Mysql Connector
  */
 public class MysqlConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   private static final String MYSQL_CONNECTION_STRING_FORMAT = "jdbc:mysql://%s:%s";
+  private static final String JDBC_PROPERTY_CONNECT_TIMEOUT = "connectTimeout";
+  private static final String JDBC_PROPERTY_SOCKET_TIMEOUT = "socketTimeout";
 
   public MysqlConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                               String connectionArguments) {
@@ -44,5 +48,14 @@ public class MysqlConnectorConfig extends AbstractDBSpecificConnectorConfig {
   @Override
   public int getDefaultPort() {
     return 3306;
+  }
+
+  @Override
+  public Properties getConnectionArgumentsProperties() {
+    Properties prop = super.getConnectionArgumentsProperties();
+    // the unit below is milli-second
+    prop.put(JDBC_PROPERTY_CONNECT_TIMEOUT, "20000");
+    prop.put(JDBC_PROPERTY_SOCKET_TIMEOUT, "20000");
+    return prop;
   }
 }
