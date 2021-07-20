@@ -88,4 +88,10 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   public StructuredRecord transform(LongWritable longWritable, SqlServerSourceDBRecord record) {
     return record.getRecord();
   }
+
+  @Override
+  protected String getTableQuery(DBConnectorPath path, int limit) {
+    return String
+      .format("SELECT TOP(%d) * FROM %s.%s.%s", limit, path.getDatabase(), path.getSchema(), path.getTable());
+  }
 }

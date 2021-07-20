@@ -124,4 +124,9 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   protected String getTableQuery(DBConnectorPath path) {
     return String.format("SELECT * from %s.%s", path.getSchema(), path.getTable());
   }
+
+  @Override
+  protected String getTableQuery(DBConnectorPath path, int limit) {
+    return String.format("SELECT * FROM %s.%s WHERE ROWNUM <= %d", path.getSchema(), path.getTable(), limit);
+  }
 }
