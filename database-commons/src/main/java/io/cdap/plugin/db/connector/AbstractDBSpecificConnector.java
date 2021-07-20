@@ -87,13 +87,15 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
       DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(),
                      getConnectionString(path.getDatabase()), config.getUser(), config.getPassword());
     }
-    String tableQuery = getTableQuery(path);
+    String tableQuery = getTableQuery(path, request.getLimit());
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
                                         tableQuery, null, false);
     connectionConfigAccessor.setConnectionArguments(Maps.fromProperties(config.getConnectionArgumentsProperties()));
     connectionConfigAccessor.getConfiguration().setInt(MRJobConfig.NUM_MAPS, 1);
-    connectionConfigAccessor.getConfiguration()
-      .set(TransactionIsolationLevel.CONF_KEY, config.getTransactionIsolationLevel());
+    if (config.getTransactionIsolationLevel() != null) {
+      connectionConfigAccessor.getConfiguration()
+        .set(TransactionIsolationLevel.CONF_KEY, config.getTransactionIsolationLevel());
+    }
     try {
       connectionConfigAccessor.setSchema(loadTableSchema(getConnection(path),  tableQuery).toString());
     } catch (SQLException e) {
@@ -115,6 +117,12 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   protected String getTableQuery(DBConnectorPath path) {
     return path.getSchema() == null ? String.format("SELECT * FROM %s.%s", path.getDatabase(), path.getTable()) : String
       .format("SELECT * FROM %s.%s.%s", path.getDatabase(), path.getSchema(), path.getTable());
+  }
+
+  protected String getTableQuery(DBConnectorPath path, int limit) {
+    return path.getSchema() == null ?
+      String.format("SELECT * FROM %s.%s LIMIT %d", path.getDatabase(), path.getTable(), limit) :
+      String.format("SELECT * FROM %s.%s.%s LIMIT %d", path.getDatabase(), path.getSchema(), path.getTable(), limit);
   }
 
   protected Schema loadTableSchema(Connection connection, String query) throws SQLException {
