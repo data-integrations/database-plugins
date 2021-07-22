@@ -3,7 +3,7 @@
 
 Description
 -----------
-Use this connection to access data in a Postgres database using JDBC.
+Use this connection to access data in a PostgreSQL database using JDBC.
 
 Properties
 ----------
