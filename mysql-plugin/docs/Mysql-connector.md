@@ -3,12 +3,15 @@
 
 Description
 -----------
-This plugin can be used to browse and sample data from MySQL database using JDBC.
+Use this connection to access data in a MySQL database using JDBC.
 
 Properties
 ----------
-**Plugin Name:** Name of the MySQL JDBC plugin to use. This is the value of the 'name' key
-defined in the JSON file for the JDBC plugin.
+**Name:** Name of the connection. Connection names must be unique in a namespace.
+
+**Description:** Description of the connection.
+
+**JDBC Driver name:** Select the JDBC driver to use.
 
 **Host:** Host name or IP address of the database server to connect to.
 

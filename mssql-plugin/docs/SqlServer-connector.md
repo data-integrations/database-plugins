@@ -3,16 +3,19 @@
 
 Description
 -----------
-This plugin can be used to browse and sample data from SQL Server database using JDBC.
+Use this connection to access data in a SQL Server database using JDBC.
 
 Properties
 ----------
-**Plugin Name:** Name of the SQL Server JDBC plugin to use. This is the value of the 'name' key
-defined in the JSON file for the JDBC plugin.
+**Name:** Name of the connection. Connection names must be unique in a namespace.
+
+**Description:** Description of the connection.
+
+**JDBC Driver name:** Select the JDBC driver to use.
 
 **Host:** Host name or IP address of the database server to connect to.
 
-**Port:** Port number of the database server to connect to. If not specified will default to 1433.
+**Port:** Port number of the database server to connect to. Default is 1433.
 
 **Username:** User identity for connecting to the specified database. Required for databases that need
 authentication. Optional for databases that do not require authentication.
