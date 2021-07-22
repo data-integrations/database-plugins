@@ -21,6 +21,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
@@ -88,6 +89,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   @Override
   protected void setConnectionProperties(Map<String, String> properties) {
     super.setConnectionProperties(properties);
+    properties.put(OracleConstants.CONNECTION_TYPE, config.getConnectionType());
     properties.put(OracleConstants.ROLE, config.getRole());
   }
 
@@ -128,5 +130,17 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   @Override
   protected String getTableQuery(DBConnectorPath path, int limit) {
     return String.format("SELECT * FROM %s.%s WHERE ROWNUM <= %d", path.getSchema(), path.getTable(), limit);
+  }
+
+  @Override
+  protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
+                             boolean handleAsDecimal) throws SQLException {
+    // For a Number type without specified precision and scale, precision will be 0 and scale will be -127
+    if (precision == 0) {
+      // reference : https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT1832
+      precision = 38;
+      scale = 0;
+    }
+    return super.getSchema(sqlType, typeName, scale, precision, columnName, handleAsDecimal);
   }
 }
