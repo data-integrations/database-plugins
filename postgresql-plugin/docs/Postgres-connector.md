@@ -3,13 +3,15 @@
 
 Description
 -----------
-This plugin can be used to browse and sample data from PostgreSQL database using JDBC.
-Since database must be specified when connecting to the database. Users can only browse from database schema.
+Use this connection to access data in a Postgres database using JDBC.
 
 Properties
 ----------
-**Plugin Name:** Name of the PostgreSQL JDBC plugin to use. This is the value of the 'name' key
-defined in the JSON file for the JDBC plugin.
+**Name:** Name of the connection. Connection names must be unique in a namespace.
+
+**Description:** Description of the connection.
+
+**JDBC Driver name:** Select the JDBC driver to use.
 
 **Host:** Host name or IP address of the database server to connect to.
 
