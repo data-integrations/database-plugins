@@ -84,6 +84,12 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
         } else {
           int precision = metadata.getPrecision(index); // total number of digits
           int scale = metadata.getScale(index); // digits after the decimal point
+          // For a Number type without specified precision and scale, precision will be 0 and scale will be -127
+          if (precision == 0) {
+            // reference : https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT1832
+            precision = 38;
+            scale = 0;
+          }
           return Schema.decimalOf(precision, scale);
         }
       default:
