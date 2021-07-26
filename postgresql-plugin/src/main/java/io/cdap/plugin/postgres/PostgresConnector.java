@@ -44,7 +44,7 @@ import java.util.Map;
  */
 @Plugin(type = Connector.PLUGIN_TYPE)
 @Name(PostgresConnector.NAME)
-@Description("Connection to browse and sample data from PostgreSQL databases using JDBC.")
+@Description("Connection to access data in PostgreSQL databases using JDBC.")
 @Category("Database")
 public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRecord> {
   public static final String NAME = "Postgres";

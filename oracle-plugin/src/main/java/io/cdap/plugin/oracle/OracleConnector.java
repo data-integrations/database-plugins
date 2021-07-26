@@ -47,7 +47,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = Connector.PLUGIN_TYPE)
 @Name(OracleConnector.NAME)
-@Description("Connection to browse and sample data from Oracle databases using JDBC.")
+@Description("Connection to access data in Oracle databases using JDBC.")
 @Category("Database")
 public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBRecord> {
   public static final String NAME = "Oracle";
