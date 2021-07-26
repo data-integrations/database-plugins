@@ -42,7 +42,7 @@ import java.util.Map;
  */
 @Plugin(type = Connector.PLUGIN_TYPE)
 @Name(SqlServerConnector.NAME)
-@Description("Connection to browse and sample data from SQL Server databases using JDBC.")
+@Description("Connection to access data in SQL Server databases using JDBC.")
 @Category("Database")
 public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSourceDBRecord> {
   public static final String NAME = "SqlServer";
