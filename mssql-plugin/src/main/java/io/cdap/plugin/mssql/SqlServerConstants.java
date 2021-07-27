@@ -56,7 +56,7 @@ public final class SqlServerConstants {
   /**
    * JDBC Driver property name used to specify which SQL authentication method to use for connection.
    */
-  public static final String AUTHENTICATION = "authentication";
+  public static final String AUTHENTICATION = "authenticationType";
 
   /**
    * Description of the {@link SqlServerConstants#AUTHENTICATION} property.

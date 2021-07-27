@@ -81,6 +81,16 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
   }
 
   @Override
+  protected String getTableQuery(DBConnectorPath path) {
+    return String.format("SELECT * FROM `%s`.`%s`", path.getDatabase(), path.getTable());
+  }
+
+  @Override
+  protected String getTableQuery(DBConnectorPath path, int limit) {
+    return String.format("SELECT * FROM `%s`.`%s` LIMIT %d", path.getDatabase(), path.getTable(), limit);
+  }
+
+  @Override
   public StructuredRecord transform(LongWritable longWritable, DBRecord record) {
     return record.getRecord();
   }
