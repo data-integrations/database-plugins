@@ -104,12 +104,12 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
   }
 
   protected String getTableQuery(DBConnectorPath path) {
-    return String.format("SELECT * FROM %s.%s", path.getSchema(), path.getTable());
+    return String.format("SELECT * FROM \"%s\".\"%s\"", path.getSchema(), path.getTable());
   }
 
   @Override
   protected String getTableQuery(DBConnectorPath path, int limit) {
-    return String.format("SELECT * FROM %s.%s LIMIT %d", path.getSchema(), path.getTable(), limit);
+    return String.format("SELECT * FROM \"%s\".\"%s\" LIMIT %d", path.getSchema(), path.getTable(), limit);
   }
 
 }

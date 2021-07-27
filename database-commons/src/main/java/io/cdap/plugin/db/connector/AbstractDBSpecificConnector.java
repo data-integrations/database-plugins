@@ -115,14 +115,15 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   }
 
   protected String getTableQuery(DBConnectorPath path) {
-    return path.getSchema() == null ? String.format("SELECT * FROM %s.%s", path.getDatabase(), path.getTable()) : String
-      .format("SELECT * FROM %s.%s.%s", path.getDatabase(), path.getSchema(), path.getTable());
+    return path.getSchema() == null ? String.format("SELECT * FROM \"%s\".\"%s\"", path.getDatabase(), path.getTable())
+      : String.format("SELECT * FROM \"%s\".\"%s\".\"%s\"", path.getDatabase(), path.getSchema(), path.getTable());
   }
 
   protected String getTableQuery(DBConnectorPath path, int limit) {
     return path.getSchema() == null ?
-      String.format("SELECT * FROM %s.%s LIMIT %d", path.getDatabase(), path.getTable(), limit) :
-      String.format("SELECT * FROM %s.%s.%s LIMIT %d", path.getDatabase(), path.getSchema(), path.getTable(), limit);
+      String.format("SELECT * FROM \"%s\".\"%s\" LIMIT %d", path.getDatabase(), path.getTable(), limit) :
+      String.format(
+        "SELECT * FROM \"%s\".\"%s\".\"%s\" LIMIT %d", path.getDatabase(), path.getSchema(), path.getTable(), limit);
   }
 
   protected Schema loadTableSchema(Connection connection, String query) throws SQLException {
