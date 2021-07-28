@@ -32,16 +32,44 @@ public class SqlServerSourceSchemaReader extends CommonSchemaReader {
   public static final int GEOMETRY_TYPE = -157;
   public static final int GEOGRAPHY_TYPE = -158;
   public static final int SQL_VARIANT = -156;
+  public static final String DATETIME_TYPE_PREFIX = "datetime";
 
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     int columnSqlType = metadata.getColumnType(index);
-    if (DATETIME_OFFSET_TYPE == columnSqlType) {
-      return Schema.of(Schema.Type.STRING);
+
+    if (shouldConvertToDatetime(metadata, index)) {
+      return Schema.of(Schema.LogicalType.DATETIME);
+
     }
     if (GEOMETRY_TYPE == columnSqlType || GEOGRAPHY_TYPE == columnSqlType) {
       return Schema.of(Schema.Type.BYTES);
     }
     return super.getSchema(metadata, index);
+  }
+
+  /**
+   * Whether the corresponding column should be converted to CDAP Datetime Logical Type
+   * @param metadata result set metadata
+   * @param index index of the column
+   * @return whether the corresponding column should be converted to CDAP Datetime Logical Type
+   * @throws SQLException
+   */
+  public static boolean shouldConvertToDatetime(ResultSetMetaData metadata, int index) throws SQLException {
+    // datetimeoffset will have type DATETIME_OFFSET_TYPE
+    // datetime and datetime2 will have type Types.TIMESTAMP
+    // cannot decide based on sql type
+    String columnTypeName = metadata.getColumnTypeName(index);
+    return shouldConvertToDatetime(columnTypeName);
+  }
+
+  /**
+   * Whether the corresponding data type shoul dbe converted to CDAP Datetime Logical Type
+   * SQL Server data type datetime, datetime2 and datetimeoffset will be converted to CDAP Datetime Logical Type
+   * @param typeName the data type name
+   * @return Whether the corresponding data type shoul dbe converted to CDAP Datetime Logical Type
+   */
+  public static boolean shouldConvertToDatetime(String typeName) {
+    return typeName.startsWith(DATETIME_TYPE_PREFIX);
   }
 }

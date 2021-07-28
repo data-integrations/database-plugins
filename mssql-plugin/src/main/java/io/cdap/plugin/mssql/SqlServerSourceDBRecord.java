@@ -21,6 +21,8 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
+
+import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -45,6 +47,17 @@ public class SqlServerSourceDBRecord extends DBRecord {
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder,
       Schema.Field field,
       int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+    if (SqlServerSourceSchemaReader.shouldConvertToDatetime(resultSet.getMetaData(), columnIndex)) {
+      try {
+        Method getLocalDateTime = resultSet.getClass().getMethod("getDateTime", int.class);
+        recordBuilder.setDateTime(field.getName(),
+                                  ((Timestamp) getLocalDateTime.invoke(resultSet, columnIndex)).toLocalDateTime());
+        return;
+      } catch (Exception e) {
+        throw new RuntimeException(String.format("Fail to call 'getDateTime' on the ResultSet %s. Error: %s.",
+                                                 resultSet.toString(), e.getMessage()), e);
+      }
+    }
     switch (sqlType) {
       case Types.TIME:
         // Handle reading SQL Server 'TIME' data type to avoid accuracy loss.
