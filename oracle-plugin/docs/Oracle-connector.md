@@ -1,4 +1,4 @@
-# Oracle Connector
+# Oracle Connection
 
 
 Description
@@ -24,7 +24,7 @@ authentication. Optional for databases that do not require authentication.
 
 **Connection Type:** Whether to use an SID or Service Name when connecting to the database.
 
-**Role** Login role of the user when connecting to the database.
+**Role:** Login role of the user when connecting to the database.
 
 **Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
 will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
