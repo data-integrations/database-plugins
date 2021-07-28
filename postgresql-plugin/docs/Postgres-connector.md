@@ -1,4 +1,4 @@
-# PostgreSQL Connector
+# PostgreSQL Connection
 
 
 Description
@@ -22,7 +22,7 @@ authentication. Optional for databases that do not require authentication.
 
 **Password:** Password to use to connect to the specified database.
 
-**Database** The name of the database to connect to.
+**Database:** The name of the database to connect to.
 
 **Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
 will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
