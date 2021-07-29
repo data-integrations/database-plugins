@@ -22,6 +22,7 @@ import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -53,9 +54,11 @@ public class SqlServerSourceDBRecord extends DBRecord {
         recordBuilder.setDateTime(field.getName(),
                                   ((Timestamp) getLocalDateTime.invoke(resultSet, columnIndex)).toLocalDateTime());
         return;
-      } catch (Exception e) {
-        throw new RuntimeException(String.format("Fail to call 'getDateTime' on the ResultSet %s. Error: %s.",
-                                                 resultSet.toString(), e.getMessage()), e);
+      } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+        throw new RuntimeException(String.format("Fail to convert column %s of type %s to datetime. Error: %s.",
+                                                 resultSet.getMetaData().getColumnName(columnIndex),
+                                                 resultSet.getMetaData().getColumnTypeName(columnIndex),
+                                                 e.getMessage()), e);
       }
     }
     switch (sqlType) {

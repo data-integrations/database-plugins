@@ -64,10 +64,10 @@ public class SqlServerSourceSchemaReader extends CommonSchemaReader {
   }
 
   /**
-   * Whether the corresponding data type shoul dbe converted to CDAP Datetime Logical Type
+   * Whether the corresponding data type should be converted to CDAP Datetime Logical Type
    * SQL Server data type datetime, datetime2 and datetimeoffset will be converted to CDAP Datetime Logical Type
    * @param typeName the data type name
-   * @return Whether the corresponding data type shoul dbe converted to CDAP Datetime Logical Type
+   * @return Whether the corresponding data type should be converted to CDAP Datetime Logical Type
    */
   public static boolean shouldConvertToDatetime(String typeName) {
     return typeName.startsWith(DATETIME_TYPE_PREFIX);
