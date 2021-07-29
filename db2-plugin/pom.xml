@@ -20,12 +20,12 @@
   <parent>
     <artifactId>database-plugins</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.5.4-SNAPSHOT</version>
+    <version>1.5.5-SNAPSHOT</version>
   </parent>
 
   <name>IBM DB2 plugin</name>
   <artifactId>db2-plugin</artifactId>
-  <version>1.5.4-SNAPSHOT</version>
+  <version>1.5.5-SNAPSHOT</version>
   <modelVersion>4.0.0</modelVersion>
 
   <dependencies>
