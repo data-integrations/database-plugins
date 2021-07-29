@@ -21,6 +21,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
@@ -34,6 +35,7 @@ import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -93,5 +95,18 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   protected String getTableQuery(DBConnectorPath path, int limit) {
     return String.format(
       "SELECT TOP(%d) * FROM \"%s\".\"%s\".\"%s\"", limit, path.getDatabase(), path.getSchema(), path.getTable());
+  }
+
+  @Override
+  protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
+                             boolean handleAsDecimal) throws SQLException {
+    if (SqlServerSourceSchemaReader.shouldConvertToDatetime(typeName)) {
+      return Schema.of(Schema.LogicalType.DATETIME);
+    }
+
+    if (SqlServerSourceSchemaReader.GEOMETRY_TYPE == sqlType || SqlServerSourceSchemaReader.GEOGRAPHY_TYPE == sqlType) {
+      return Schema.of(Schema.Type.BYTES);
+    }
+    return super.getSchema(sqlType, typeName, scale, precision, columnName, handleAsDecimal);
   }
 }
