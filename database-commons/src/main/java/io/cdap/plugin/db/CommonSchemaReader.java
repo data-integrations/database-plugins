@@ -84,6 +84,7 @@ public class CommonSchemaReader implements SchemaReader {
           type = Schema.Type.LONG;
           break;
         } else {
+          // by default scale is 0, big integer won't have any fraction part
           return Schema.decimalOf(metadata.getPrecision(index));
         }
 
