@@ -78,8 +78,15 @@ public class CommonSchemaReader implements SchemaReader {
         break;
 
       case Types.BIGINT:
-        type = Schema.Type.LONG;
-        break;
+        //SQL BIGINT is 64 bit, thus signed can be stored in long without losing precision
+        //or unsigned BIGINT is within the scope of signed long
+        if (metadata.isSigned(index) || metadata.getPrecision(index) < 19) {
+          type = Schema.Type.LONG;
+          break;
+        } else {
+          // by default scale is 0, big integer won't have any fraction part
+          return Schema.decimalOf(metadata.getPrecision(index));
+        }
 
       case Types.REAL:
       case Types.FLOAT:
