@@ -80,7 +80,13 @@ public class CommonSchemaReaderTest {
   @Test
   public void testGetSchemaHandlesLong() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.BIGINT);
+    when(metadata.isSigned(eq(1))).thenReturn(true);
     Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.Type.LONG));
+
+    when(metadata.getColumnType(eq(1))).thenReturn(Types.BIGINT);
+    when(metadata.isSigned(eq(1))).thenReturn(false);
+    when(metadata.getPrecision(eq(1))).thenReturn(19);
+    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.decimalOf(19));
   }
 
   @Test

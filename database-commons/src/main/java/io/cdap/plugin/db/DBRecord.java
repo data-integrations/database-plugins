@@ -31,6 +31,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -150,6 +151,15 @@ public class DBRecord implements Writable, DBWritable, Configurable {
       recordBuilder.setTimestamp(field.getName(), instant.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
     } else if (o instanceof BigDecimal) {
       recordBuilder.setDecimal(field.getName(), (BigDecimal) o);
+    } else if (o instanceof BigInteger) {
+      if (sqlType == Types.BIGINT && (resultSet.getMetaData().isSigned(columnIndex) ||
+          resultSet.getMetaData().getPrecision(columnIndex) < 19)) {
+        //SQL BIGINT type is 64-bit long thus signed should be able to convert to long without loosing precisions
+        // or UNSIGNED type is within the scope of signed long
+        recordBuilder.set(field.getName(), ((BigInteger) o).longValueExact());
+      } else {
+        recordBuilder.setDecimal(field.getName(), new BigDecimal((BigInteger) o, 0));
+      }
     } else {
       recordBuilder.set(field.getName(), o);
     }
