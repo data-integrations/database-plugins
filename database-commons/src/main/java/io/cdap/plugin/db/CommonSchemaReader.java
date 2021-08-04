@@ -78,7 +78,7 @@ public class CommonSchemaReader implements SchemaReader {
         break;
 
       case Types.BIGINT:
-        //SQL BIGINT is 64 bit, thus signed can be stored in long without loosing precision
+        //SQL BIGINT is 64 bit, thus signed can be stored in long without losing precision
         //or unsigned BIGINT is within the scope of signed long
         if (metadata.isSigned(index) || metadata.getPrecision(index) < 19) {
           type = Schema.Type.LONG;
