@@ -20,12 +20,12 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>1.7.0-SNAPSHOT</version>
   </parent>
 
   <name>Microsoft SQL Server plugin</name>
   <artifactId>mssql-plugin</artifactId>
-  <version>1.6.0-SNAPSHOT</version>
+  <version>1.7.0-SNAPSHOT</version>
   <modelVersion>4.0.0</modelVersion>
 
   <dependencies>
