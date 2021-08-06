@@ -99,7 +99,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
 
   @Override
   protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
-                             boolean handleAsDecimal) throws SQLException {
+                             boolean isSigned, boolean handleAsDecimal) throws SQLException {
     if (SqlServerSourceSchemaReader.shouldConvertToDatetime(typeName)) {
       return Schema.of(Schema.LogicalType.DATETIME);
     }
@@ -107,6 +107,6 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
     if (SqlServerSourceSchemaReader.GEOMETRY_TYPE == sqlType || SqlServerSourceSchemaReader.GEOGRAPHY_TYPE == sqlType) {
       return Schema.of(Schema.Type.BYTES);
     }
-    return super.getSchema(sqlType, typeName, scale, precision, columnName, handleAsDecimal);
+    return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
   }
 }
