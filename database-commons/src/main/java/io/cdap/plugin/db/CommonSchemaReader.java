@@ -18,12 +18,11 @@ package io.cdap.plugin.db;
 
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.plugin.common.db.DBUtils;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.List;
 
 /**
@@ -53,87 +52,9 @@ public class CommonSchemaReader implements SchemaReader {
 
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
-    // Type.STRING covers sql types - VARCHAR,CHAR,CLOB,LONGNVARCHAR,LONGVARCHAR,NCHAR,NCLOB,NVARCHAR
-
-    int sqlType = metadata.getColumnType(index);
-
-    Schema.Type type = Schema.Type.STRING;
-    switch (sqlType) {
-      case Types.NULL:
-        type = Schema.Type.NULL;
-        break;
-
-      case Types.ROWID:
-        break;
-
-      case Types.BOOLEAN:
-      case Types.BIT:
-        type = Schema.Type.BOOLEAN;
-        break;
-
-      case Types.TINYINT:
-      case Types.SMALLINT:
-      case Types.INTEGER:
-        type = Schema.Type.INT;
-        break;
-
-      case Types.BIGINT:
-        //SQL BIGINT is 64 bit, thus signed can be stored in long without losing precision
-        //or unsigned BIGINT is within the scope of signed long
-        if (metadata.isSigned(index) || metadata.getPrecision(index) < 19) {
-          type = Schema.Type.LONG;
-          break;
-        } else {
-          // by default scale is 0, big integer won't have any fraction part
-          return Schema.decimalOf(metadata.getPrecision(index));
-        }
-
-      case Types.REAL:
-      case Types.FLOAT:
-        type = Schema.Type.FLOAT;
-        break;
-
-      case Types.NUMERIC:
-      case Types.DECIMAL:
-        int precision = metadata.getPrecision(index); // total number of digits
-        int scale = metadata.getScale(index); // digits after the decimal point
-        // decimal type with precision 0 is not supported
-        if (precision == 0) {
-          throw new SQLException(new UnsupportedTypeException(
-              String.format("Unsupported SQL Type: %s with precision 0.", metadata.getColumnTypeName(index))));
-        }
-        return Schema.decimalOf(precision, scale);
-
-      case Types.DOUBLE:
-        type = Schema.Type.DOUBLE;
-        break;
-
-      case Types.DATE:
-        return Schema.of(Schema.LogicalType.DATE);
-      case Types.TIME:
-        return Schema.of(Schema.LogicalType.TIME_MICROS);
-      case Types.TIMESTAMP:
-        return Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
-
-      case Types.BINARY:
-      case Types.VARBINARY:
-      case Types.LONGVARBINARY:
-      case Types.BLOB:
-        type = Schema.Type.BYTES;
-        break;
-
-      case Types.ARRAY:
-      case Types.DATALINK:
-      case Types.DISTINCT:
-      case Types.JAVA_OBJECT:
-      case Types.OTHER:
-      case Types.REF:
-      case Types.SQLXML:
-      case Types.STRUCT:
-        throw new SQLException(new UnsupportedTypeException("Unsupported SQL Type: " + sqlType));
-    }
-
-    return Schema.of(type);
+    return DBUtils.getSchema(metadata.getColumnTypeName(index), metadata.getColumnType(index),
+                             metadata.getPrecision(index), metadata.getScale(index), metadata.getColumnName(index),
+                             metadata.isSigned(index), true);
   }
 
   @Override

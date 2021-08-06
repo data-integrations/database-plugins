@@ -134,13 +134,13 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
 
   @Override
   protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
-                             boolean handleAsDecimal) throws SQLException {
+                             boolean isSigned, boolean handleAsDecimal) throws SQLException {
     // For a Number type without specified precision and scale, precision will be 0 and scale will be -127
     if (precision == 0) {
       // reference : https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT1832
       precision = 38;
       scale = 0;
     }
-    return super.getSchema(sqlType, typeName, scale, precision, columnName, handleAsDecimal);
+    return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
   }
 }
