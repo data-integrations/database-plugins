@@ -45,7 +45,7 @@ import java.util.Map;
 @Description("Connection to access data in Mysql databases using JDBC.")
 @Category("Database")
 public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
-  public static final String NAME = "Mysql";
+  public static final String NAME = "MySQL";
   private final MysqlConnectorConfig config;
 
   public MysqlConnector(MysqlConnectorConfig config) {
