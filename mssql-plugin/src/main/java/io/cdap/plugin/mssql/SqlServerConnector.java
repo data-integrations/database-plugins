@@ -47,7 +47,7 @@ import java.util.Map;
 @Description("Connection to access data in SQL Server databases using JDBC.")
 @Category("Database")
 public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSourceDBRecord> {
-  public static final String NAME = "SqlServer";
+  public static final String NAME = "SQL Server";
   private final SqlServerConnectorConfig config;
 
   public SqlServerConnector(SqlServerConnectorConfig config) {
