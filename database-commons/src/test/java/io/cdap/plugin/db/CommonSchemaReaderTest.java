@@ -47,55 +47,59 @@ public class CommonSchemaReaderTest {
   @Test
   public void testGetSchemaHandlesNull() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.NULL);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.Type.NULL));
+    Assert.assertEquals(Schema.of(Schema.Type.NULL), reader.getSchema(metadata, 1));
   }
 
   @Test
   public void testGetSchemaHandlesRowID() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.ROWID);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.Type.STRING));
+    Assert.assertEquals(Schema.of(Schema.Type.STRING), reader.getSchema(metadata, 1));
   }
 
   @Test
   public void testGetSchemaHandlesBoolean() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.BOOLEAN);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.Type.BOOLEAN));
+    Assert.assertEquals(Schema.of(Schema.Type.BOOLEAN), reader.getSchema(metadata, 1));
 
     when(metadata.getColumnType(eq(2))).thenReturn(Types.BIT);
-    Assert.assertEquals(reader.getSchema(metadata, 2), Schema.of(Schema.Type.BOOLEAN));
+    Assert.assertEquals(Schema.of(Schema.Type.BOOLEAN), reader.getSchema(metadata, 2));
   }
 
   @Test
   public void testGetSchemaHandlesInt() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.TINYINT);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.Type.INT));
+    Assert.assertEquals(Schema.of(Schema.Type.INT), reader.getSchema(metadata, 1));
 
     when(metadata.getColumnType(eq(2))).thenReturn(Types.SMALLINT);
-    Assert.assertEquals(reader.getSchema(metadata, 2), Schema.of(Schema.Type.INT));
+    Assert.assertEquals(Schema.of(Schema.Type.INT), reader.getSchema(metadata, 2));
 
     when(metadata.getColumnType(eq(3))).thenReturn(Types.INTEGER);
-    Assert.assertEquals(reader.getSchema(metadata, 3), Schema.of(Schema.Type.INT));
+    when(metadata.isSigned(eq(3))).thenReturn(true);
+    Assert.assertEquals(Schema.of(Schema.Type.INT), reader.getSchema(metadata, 3));
+    when(metadata.getColumnType(eq(3))).thenReturn(Types.INTEGER);
+    when(metadata.isSigned(eq(3))).thenReturn(false);
+    Assert.assertEquals(Schema.of(Schema.Type.LONG), reader.getSchema(metadata, 3));
   }
 
   @Test
   public void testGetSchemaHandlesLong() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.BIGINT);
     when(metadata.isSigned(eq(1))).thenReturn(true);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.Type.LONG));
+    Assert.assertEquals(Schema.of(Schema.Type.LONG), reader.getSchema(metadata, 1));
 
     when(metadata.getColumnType(eq(1))).thenReturn(Types.BIGINT);
     when(metadata.isSigned(eq(1))).thenReturn(false);
     when(metadata.getPrecision(eq(1))).thenReturn(19);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.decimalOf(19));
+    Assert.assertEquals(Schema.decimalOf(19), reader.getSchema(metadata, 1));
   }
 
   @Test
   public void testGetSchemaHandlesFloat() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.REAL);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.Type.FLOAT));
+    Assert.assertEquals(Schema.of(Schema.Type.FLOAT), reader.getSchema(metadata, 1));
 
     when(metadata.getColumnType(eq(2))).thenReturn(Types.FLOAT);
-    Assert.assertEquals(reader.getSchema(metadata, 2), Schema.of(Schema.Type.FLOAT));
+    Assert.assertEquals(Schema.of(Schema.Type.FLOAT), reader.getSchema(metadata, 2));
   }
 
   @Test
@@ -103,51 +107,51 @@ public class CommonSchemaReaderTest {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.NUMERIC);
     when(metadata.getPrecision(eq(1))).thenReturn(10);
     when(metadata.getScale(eq(1))).thenReturn(0);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.decimalOf(10, 0));
+    Assert.assertEquals(Schema.decimalOf(10, 0), reader.getSchema(metadata, 1));
 
     when(metadata.getColumnType(eq(2))).thenReturn(Types.DECIMAL);
     when(metadata.getPrecision(eq(2))).thenReturn(10);
     when(metadata.getScale(eq(2))).thenReturn(1);
-    Assert.assertEquals(reader.getSchema(metadata, 2), Schema.decimalOf(10, 1));
+    Assert.assertEquals(Schema.decimalOf(10, 1), reader.getSchema(metadata, 2));
   }
 
   @Test
   public void testGetSchemaHandlesDouble() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.DOUBLE);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.Type.DOUBLE));
+    Assert.assertEquals(Schema.of(Schema.Type.DOUBLE), reader.getSchema(metadata, 1));
   }
 
   @Test
   public void testGetSchemaHandlesDate() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.DATE);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.LogicalType.DATE));
+    Assert.assertEquals(Schema.of(Schema.LogicalType.DATE), reader.getSchema(metadata, 1));
   }
 
   @Test
   public void testGetSchemaHandlesTime() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.TIME);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.LogicalType.TIME_MICROS));
+    Assert.assertEquals(Schema.of(Schema.LogicalType.TIME_MICROS), reader.getSchema(metadata, 1));
   }
 
   @Test
   public void testGetSchemaHandlesTimestamp() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.TIMESTAMP);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.LogicalType.TIMESTAMP_MICROS));
+    Assert.assertEquals(Schema.of(Schema.LogicalType.TIMESTAMP_MICROS), reader.getSchema(metadata, 1));
   }
 
   @Test
   public void testGetSchemaHandlesBytes() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.BINARY);
-    Assert.assertEquals(reader.getSchema(metadata, 1), Schema.of(Schema.Type.BYTES));
+    Assert.assertEquals(Schema.of(Schema.Type.BYTES), reader.getSchema(metadata, 1));
 
     when(metadata.getColumnType(eq(2))).thenReturn(Types.VARBINARY);
-    Assert.assertEquals(reader.getSchema(metadata, 2), Schema.of(Schema.Type.BYTES));
+    Assert.assertEquals(Schema.of(Schema.Type.BYTES), reader.getSchema(metadata, 2));
 
     when(metadata.getColumnType(eq(3))).thenReturn(Types.LONGVARBINARY);
-    Assert.assertEquals(reader.getSchema(metadata, 3), Schema.of(Schema.Type.BYTES));
+    Assert.assertEquals(Schema.of(Schema.Type.BYTES), reader.getSchema(metadata, 3));
 
     when(metadata.getColumnType(eq(4))).thenReturn(Types.BLOB);
-    Assert.assertEquals(reader.getSchema(metadata, 4), Schema.of(Schema.Type.BYTES));
+    Assert.assertEquals(Schema.of(Schema.Type.BYTES), reader.getSchema(metadata, 4));
   }
 
   @Test(expected = SQLException.class)
