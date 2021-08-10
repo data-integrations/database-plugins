@@ -51,8 +51,8 @@ public class SqlServerSourceDBRecord extends DBRecord {
     if (SqlServerSourceSchemaReader.shouldConvertToDatetime(resultSet.getMetaData(), columnIndex)) {
       try {
         Method getLocalDateTime = resultSet.getClass().getMethod("getDateTime", int.class);
-        recordBuilder.setDateTime(field.getName(),
-                                  ((Timestamp) getLocalDateTime.invoke(resultSet, columnIndex)).toLocalDateTime());
+        Timestamp value = (Timestamp) getLocalDateTime.invoke(resultSet, columnIndex);
+        recordBuilder.setDateTime(field.getName(), value == null ? null : value.toLocalDateTime());
         return;
       } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
         throw new RuntimeException(String.format("Fail to convert column %s of type %s to datetime. Error: %s.",
