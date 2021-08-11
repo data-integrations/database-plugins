@@ -90,7 +90,7 @@
           "widget-type": "connection-browser",
           "widget-category": "plugin",
           "widget-attributes": {
-            "connectionType": "Mysql",
+            "connectionType": "MySQL",
             "label": "Browse Database"
           }
         },

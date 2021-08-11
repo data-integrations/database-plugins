@@ -47,7 +47,7 @@ import java.util.Map;
 @Description("Connection to access data in PostgreSQL databases using JDBC.")
 @Category("Database")
 public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRecord> {
-  public static final String NAME = "Postgres";
+  public static final String NAME = "PostgreSQL";
   private final PostgresConnectorConfig config;
 
   public PostgresConnector(PostgresConnectorConfig config) {
