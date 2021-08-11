@@ -109,7 +109,7 @@
           "widget-type": "connection-browser",
           "widget-category": "plugin",
           "widget-attributes": {
-            "connectionType": "SqlServer",
+            "connectionType": "SQL Server",
             "label": "Browse Database"
           }
         },

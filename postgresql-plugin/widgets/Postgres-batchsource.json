@@ -90,7 +90,7 @@
           "widget-type": "connection-browser",
           "widget-category": "plugin",
           "widget-attributes": {
-            "connectionType": "Postgres",
+            "connectionType": "PostgreSQL",
             "label": "Browse Database"
           }
         },
