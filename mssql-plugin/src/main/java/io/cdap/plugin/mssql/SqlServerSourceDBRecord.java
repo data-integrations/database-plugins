@@ -46,9 +46,14 @@ public class SqlServerSourceDBRecord extends DBRecord {
 
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder,
-      Schema.Field field,
-      int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
-    if (SqlServerSourceSchemaReader.shouldConvertToDatetime(resultSet.getMetaData(), columnIndex)) {
+      Schema.Field field, int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+    Schema fieldSchema = field.getSchema();
+    if (fieldSchema.isNullable()) {
+      fieldSchema = fieldSchema.getNonNullable();
+    }
+
+    if (SqlServerSourceSchemaReader.shouldConvertToDatetime(resultSet.getMetaData(), columnIndex) &&
+          fieldSchema.getLogicalType() == Schema.LogicalType.DATETIME) {
       try {
         Method getLocalDateTime = resultSet.getClass().getMethod("getDateTime", int.class);
         Timestamp value = (Timestamp) getLocalDateTime.invoke(resultSet, columnIndex);
