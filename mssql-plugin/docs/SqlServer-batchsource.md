@@ -100,9 +100,9 @@ Data Types Mapping
     | BIT              | boolean                |                                                                |
     | CHAR             | string                 |                                                                |
     | DATE             | date                   |                                                                |
-    | DATETIME         | timestamp              |                                                                |
-    | DATETIME2        | timestamp              |                                                                |
-    | DATETIMEOFFSET   | string                 |                                                                |
+    | DATETIME         | datetime               | Users can manually set output schema to map it to timestamp.   |
+    | DATETIME2        | datetime               | Users can manually set output schema to map it to timestamp.   |
+    | DATETIMEOFFSET   | datetime                 | Users can manually set output schema to map it to string.      |
     | DECIMAL          | decimal                |                                                                |
     | FLOAT            | double                 |                                                                |
     | IMAGE            | bytes                  |                                                                |

@@ -320,6 +320,17 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     public static final String NUM_SPLITS = "numSplits";
     public static final String SCHEMA = "schema";
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
+    protected static final FieldValidator FIELD_VALIDATOR =
+      (collector, field, actualFieldSchema, expectedFieldSchema) -> {
+        if (actualFieldSchema.getType() != expectedFieldSchema.getType() ||
+              actualFieldSchema.getLogicalType() != expectedFieldSchema.getLogicalType()) {
+          collector.addFailure(
+            String.format("Schema field '%s' has type '%s but found '%s'.",
+                          field.getName(), expectedFieldSchema.getDisplayName(),
+                          actualFieldSchema.getDisplayName()), null)
+            .withOutputSchemaField(field.getName());
+        }
+      };
 
     @Name(IMPORT_QUERY)
     @Description("The SELECT query to use to import data from the specified table. " +
@@ -406,11 +417,11 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     }
 
     protected void validateSchema(Schema actualSchema, FailureCollector collector) {
-      validateSchema(actualSchema, getSchema(), collector);
+      validateSchema(actualSchema, getSchema(), collector, FIELD_VALIDATOR);
     }
 
-    @VisibleForTesting
-    static void validateSchema(Schema actualSchema, Schema configSchema, FailureCollector collector) {
+    protected static void validateSchema(Schema actualSchema, Schema configSchema, FailureCollector collector,
+                                         FieldValidator fieldValidator) {
       if (configSchema == null) {
         collector.addFailure("Schema should not be null or empty.", null)
           .withConfigProperty(SCHEMA);
@@ -431,14 +442,7 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
         Schema expectedFieldSchema = field.getSchema().isNullable() ?
           field.getSchema().getNonNullable() : field.getSchema();
 
-        if (actualFieldSchema.getType() != expectedFieldSchema.getType() ||
-          actualFieldSchema.getLogicalType() != expectedFieldSchema.getLogicalType()) {
-          collector.addFailure(
-            String.format("Schema field '%s' has type '%s but found '%s'.",
-                          field.getName(), expectedFieldSchema.getDisplayName(),
-                          actualFieldSchema.getDisplayName()), null)
-            .withOutputSchemaField(field.getName());
-        }
+        fieldValidator.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
       }
     }
 
@@ -453,6 +457,14 @@ public abstract class AbstractDBSource extends ReferenceBatchSource<LongWritable
     }
   }
 
+  /**
+   * Functional interface for validating field
+   */
+  @FunctionalInterface
+  protected interface FieldValidator {
+    void validateField(FailureCollector collector, Schema.Field field, Schema actualFieldSchema,
+                       Schema expectedFieldSchema);
+  }
   /**
    * Request schema class.
    */

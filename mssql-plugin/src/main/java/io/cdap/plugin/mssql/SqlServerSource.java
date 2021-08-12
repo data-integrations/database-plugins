@@ -20,6 +20,8 @@ import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
@@ -143,6 +145,24 @@ public class SqlServerSource extends AbstractDBSource {
       }
 
       return Collections.emptyList();
+    }
+
+    @Override
+    protected void validateSchema(Schema actualSchema, FailureCollector collector) {
+      validateSchema(actualSchema, getSchema(), collector, (c, field, actualFieldSchema, expectedFieldSchema) -> {
+        // we allow the case when actual type is Datetime but user manually set it to timestamp (datetime and datetime2)
+        // or string (datetimeoffset). To make it compatible with old behavior that convert datetime to timestamp.
+        // below validation is kind of loose, it's possible users try to manually map datetime to string or
+        // map datetimeoffset to timestamp which is invalid. In such case runtime will still fail even validation passes
+        // But we don't have the original source type information here and don't want to do big refactoring here
+        if (actualFieldSchema.getLogicalType() == Schema.LogicalType.DATETIME &&
+              expectedFieldSchema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS ||
+              actualFieldSchema.getLogicalType() == Schema.LogicalType.DATETIME &&
+                expectedFieldSchema.getType() == Schema.Type.STRING) {
+          return;
+        }
+        FIELD_VALIDATOR.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
+      });
     }
   }
 }
