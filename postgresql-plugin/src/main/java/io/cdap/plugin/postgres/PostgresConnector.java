@@ -90,7 +90,8 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
   @Override
   protected void setConnectionProperties(Map<String, String> properties) {
     super.setConnectionProperties(properties);
-    properties.put(PostgresConnectorConfig.NAME_DATABASE, config.getDatabase());
+    properties.put(PostgresConnectorConfig.NAME_DATABASE, config.getRawProperties().getProperties()
+                                                            .get(PostgresConnectorConfig.NAME_DATABASE));
   }
 
   @Override
