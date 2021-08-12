@@ -134,11 +134,12 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   }
 
   protected void setConnectionProperties(Map<String, String> properties) {
-    properties.put(ConnectionConfig.HOST, config.getHost());
-    properties.put(ConnectionConfig.PORT, String.valueOf(config.getPort()));
-    properties.put(ConnectionConfig.JDBC_PLUGIN_NAME, config.getJdbcPluginName());
-    properties.put(ConnectionConfig.USER, config.getUser());
-    properties.put(ConnectionConfig.PASSWORD, config.getPassword());
-    properties.put(ConnectionConfig.CONNECTION_ARGUMENTS, config.getConnectionArguments());
+    Map<String, String> rawProperties = config.getRawProperties().getProperties();
+    properties.put(ConnectionConfig.HOST, rawProperties.get(ConnectionConfig.HOST));
+    properties.put(ConnectionConfig.PORT, rawProperties.get(ConnectionConfig.PORT));
+    properties.put(ConnectionConfig.JDBC_PLUGIN_NAME, rawProperties.get(ConnectionConfig.JDBC_PLUGIN_NAME));
+    properties.put(ConnectionConfig.USER, rawProperties.get(ConnectionConfig.USER));
+    properties.put(ConnectionConfig.PASSWORD, rawProperties.get(ConnectionConfig.PASSWORD));
+    properties.put(ConnectionConfig.CONNECTION_ARGUMENTS, rawProperties.get(ConnectionConfig.CONNECTION_ARGUMENTS));
   }
 }
