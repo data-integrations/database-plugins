@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
@@ -183,6 +184,23 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
                              "Remove macro in connection property.");
       }
       super.validate(collector);
+    }
+
+    @Override
+    protected void validateField(FailureCollector collector, Schema.Field field, Schema actualFieldSchema,
+                                 Schema expectedFieldSchema) {
+      // we allow the case when actual type is Datetime but user manually set it to timestamp (datetime and datetime2)
+      // or string (datetimeoffset). To make it compatible with old behavior that convert datetime to timestamp.
+      // below validation is kind of loose, it's possible users try to manually map datetime to string or
+      // map datetimeoffset to timestamp which is invalid. In such case runtime will still fail even validation passes.
+      // But we don't have the original source type information here and don't want to do big refactoring here
+      if (actualFieldSchema.getLogicalType() == Schema.LogicalType.DATETIME &&
+            expectedFieldSchema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS ||
+            actualFieldSchema.getLogicalType() == Schema.LogicalType.DATETIME &&
+              expectedFieldSchema.getType() == Schema.Type.STRING) {
+        return;
+      }
+      super.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
     }
   }
 }
