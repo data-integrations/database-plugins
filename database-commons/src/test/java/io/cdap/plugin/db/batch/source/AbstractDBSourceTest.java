@@ -47,7 +47,8 @@ public class AbstractDBSourceTest {
   @Test
   public void testValidateSourceSchemaCorrectSchema() {
     MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
-    AbstractDBSource.DBSourceConfig.validateSchema(SCHEMA, SCHEMA, collector);
+    AbstractDBSource.DBSourceConfig.validateSchema(SCHEMA, SCHEMA, collector,
+                                                   AbstractDBSource.DBSourceConfig.FIELD_VALIDATOR);
     Assert.assertEquals(0, collector.getValidationFailures().size());
   }
 
@@ -65,7 +66,8 @@ public class AbstractDBSourceTest {
     );
 
     MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
-    AbstractDBSource.DBSourceConfig.validateSchema(actualSchema, SCHEMA, collector);
+    AbstractDBSource.DBSourceConfig.validateSchema(actualSchema, SCHEMA, collector,
+                                                   AbstractDBSource.DBSourceConfig.FIELD_VALIDATOR);
     assertPropertyValidationFailed(collector, "boolean_column");
   }
 
@@ -84,7 +86,8 @@ public class AbstractDBSourceTest {
     );
 
     MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
-    AbstractDBSource.DBSourceConfig.validateSchema(actualSchema, SCHEMA, collector);
+    AbstractDBSource.DBSourceConfig.validateSchema(actualSchema, SCHEMA, collector,
+                                                   AbstractDBSource.DBSourceConfig.FIELD_VALIDATOR);
     assertPropertyValidationFailed(collector, "boolean_column");
   }
 
