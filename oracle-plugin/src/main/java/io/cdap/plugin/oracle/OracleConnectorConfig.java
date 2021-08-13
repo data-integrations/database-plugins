@@ -17,6 +17,7 @@
 package io.cdap.plugin.oracle;
 
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
@@ -29,8 +30,6 @@ import javax.annotation.Nullable;
  */
 public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
-  private static final String ORACLE_CONNECTION_STRING_SID_WITHOUT_DB_FORMAT = "jdbc:oracle:thin:@%s:%s";
-  private static final String ORACLE_CONNECTION_STRING_SERVICE_NAME_WITHOUT_DB_FORMAT = "jdbc:oracle:thin:@//%s:%s";
   private static final String TIME_ZONE_AS_REGION_PROPERTY = "oracle.jdbc.timezoneAsRegion";
   private static final String INTERNAL_LOGON_PROPERTY = "internal_logon";
   private static final String ROLE_NORMAL = "normal";
@@ -55,9 +54,9 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   @Override
   public String getConnectionString() {
     if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(connectionType)) {
-      return String.format(ORACLE_CONNECTION_STRING_SERVICE_NAME_WITHOUT_DB_FORMAT, host, getPort());
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT, host, getPort(), database);
     }
-    return String.format(ORACLE_CONNECTION_STRING_SID_WITHOUT_DB_FORMAT, host, getPort());
+    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, getPort(), database);
   }
 
   @Name(OracleConstants.CONNECTION_TYPE)
@@ -68,6 +67,11 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   @Description("Login role of the user when connecting to the database.")
   @Nullable
   private String role;
+
+  @Name(OracleConstants.NAME_DATABASE)
+  @Description("SID or Service Name to connect to")
+  @Macro
+  private String database;
 
   @Override
   protected int getDefaultPort() {
@@ -80,6 +84,10 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   public String getRole() {
     return role == null ? "normal" : role;
+  }
+
+  public String getDatabase() {
+    return database;
   }
 
   @Override
