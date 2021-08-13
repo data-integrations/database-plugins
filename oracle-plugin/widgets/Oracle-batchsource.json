@@ -99,6 +99,12 @@
           }
         },
         {
+          "widget-type": "textbox",
+          "label": "SID/Service Name",
+          "description": "Oracle connection point (Database name or Service name)",
+          "name": "database"
+        },
+        {
           "widget-type": "keyvalue",
           "label": "Connection Arguments",
           "name": "connectionArguments",
@@ -122,11 +128,6 @@
           "widget-attributes": {
             "placeholder": "Name used to identify this source for lineage"
           }
-        },
-        {
-          "widget-type": "textbox",
-          "label": "SID/Service Name",
-          "name": "database"
         },
         {
           "widget-type": "connection-browser",

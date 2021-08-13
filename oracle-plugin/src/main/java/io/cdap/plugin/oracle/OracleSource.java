@@ -83,11 +83,6 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     @Description("The existing connection to use.")
     private OracleConnectorConfig connection;
 
-    @Name(DATABASE)
-    @Description("Database name to connect to")
-    @Macro
-    public String database;
-
     @Name(OracleConstants.DEFAULT_BATCH_VALUE)
     @Description("The default batch value that triggers an execution request.")
     @Nullable
@@ -101,11 +96,11 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     @Override
     public String getConnectionString() {
       if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(connection.getConnectionType())) {
-        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_WITH_DB_FORMAT, connection.getHost(),
-                             connection.getPort(), database);
+        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT, connection.getHost(),
+                             connection.getPort(), connection.getDatabase());
       }
-      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_WITH_DB_FORMAT,
-                           connection.getHost(), connection.getPort(), database);
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT,
+                           connection.getHost(), connection.getPort(), connection.getDatabase());
     }
 
     @Override

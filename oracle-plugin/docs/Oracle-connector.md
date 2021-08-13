@@ -24,6 +24,8 @@ authentication. Optional for databases that do not require authentication.
 
 **Connection Type:** Whether to use an SID or Service Name when connecting to the database.
 
+**SID/Service Name:** Oracle connection point (Database name or Service name).
+
 **Role:** Login role of the user when connecting to the database.
 
 **Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
@@ -38,14 +40,11 @@ To browse, get a sample from, or get the specification for this connection throu
 [Pipeline Microservices](https://cdap.atlassian.net/wiki/spaces/DOCS/pages/975929350/Pipeline+Microservices), the `path`
 property is required in the request body. It can be in the following form :
 
-1. `/{database}/{schema}/{table}`
+1. `/{schema}/{table}`
    This path indicates a table. A table is the only one that can be sampled. Browse on this path to return the specified table.
 
-2. `/{database}/{schema}`
+2. `/{schema}`
    This path indicates a schema. A schema cannot be sampled. Browse on this path to get all the tables under this schema.
 
-3. `/{database}`
-   This path indicates a database. A database cannot be sampled. Browse on this path to get all the schemas under this database.
-
-4. `/`
-   This path indicates the root. A root cannot be sampled. Browse on this path to get all the databases visible through this connection.
+3. `/`
+   This path indicates the root. A root cannot be sampled. Browse on this path to get all the schemas visible through this connection.
