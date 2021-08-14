@@ -25,6 +25,7 @@ import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.plugin.common.SourceInputFormatProvider;
 import io.cdap.plugin.common.db.AbstractDBConnector;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.util.ExceptionUtils;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
@@ -99,7 +100,8 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     try {
       connectionConfigAccessor.setSchema(loadTableSchema(getConnection(path),  tableQuery).toString());
     } catch (SQLException e) {
-      throw new IOException(String.format("Failed to get table schema due to: %s.", e.getMessage()), e);
+      throw new IOException(String.format("Failed to get table schema due to: %s.",
+                                          ExceptionUtils.getRootCauseMessage(e)), e);
     }
 
 
