@@ -128,13 +128,13 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
     if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(BASE_PROPS.get("oracle.connectionType"))) {
-      connectionUrl = String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_WITH_DB_FORMAT,
+      connectionUrl = String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT,
                                     BASE_PROPS.get(ConnectionConfig.HOST),
                                     BASE_PROPS.get(ConnectionConfig.PORT),
                                     BASE_PROPS.get(ConnectionConfig.DATABASE)
       );
     } else {
-      connectionUrl = String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_WITH_DB_FORMAT,
+      connectionUrl = String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT,
                                     BASE_PROPS.get(ConnectionConfig.HOST),
                                     BASE_PROPS.get(ConnectionConfig.PORT),
                                     BASE_PROPS.get(ConnectionConfig.DATABASE)

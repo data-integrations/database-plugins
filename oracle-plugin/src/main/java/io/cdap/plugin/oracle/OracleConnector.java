@@ -30,13 +30,13 @@ import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.DBPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,13 +82,19 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
 
     properties.put(OracleSource.OracleSourceConfig.IMPORT_QUERY, getTableQuery(path));
     properties.put(OracleSource.OracleSourceConfig.NUM_SPLITS, "1");
-    properties.put(OracleSource.OracleSourceConfig.DATABASE, path.getDatabase());
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
+  }
+
+  @Override
+  protected DBConnectorPath getDBConnectorPath(String path) throws IOException {
+    return new DBPath(path, true);
   }
 
   @Override
   protected void setConnectionProperties(Map<String, String> properties) {
     super.setConnectionProperties(properties);
+    properties.put(OracleConstants.NAME_DATABASE, config.getRawProperties().getProperties()
+                                                    .get(OracleConstants.NAME_DATABASE));
     properties.put(OracleConstants.CONNECTION_TYPE, config.getConnectionType());
     properties.put(OracleConstants.ROLE, config.getRole());
   }
@@ -109,17 +115,11 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
       return config.getConnectionString();
     }
     if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(config)) {
-      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_WITH_DB_FORMAT, config.getHost(),
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT, config.getHost(),
                            config.getPort(), database);
     }
-    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_WITH_DB_FORMAT,
+    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT,
                          config.getHost(), config.getPort(), database);
-  }
-
-  @Override
-  protected ResultSet queryDatabases(Connection connection) throws SQLException {
-    return connection.createStatement()
-      .executeQuery(String.format("SELECT NAME AS %s FROM V$DATABASE", RESULTSET_COLUMN_TABLE_CAT));
   }
 
   @Override

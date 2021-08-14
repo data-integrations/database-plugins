@@ -49,6 +49,11 @@
               }
             ]
           }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "SID/Service Name",
+          "name": "database"
         }
       ]
     },

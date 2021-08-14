@@ -58,10 +58,10 @@ public class OracleAction extends AbstractDBAction {
     @Override
     public String getConnectionString() {
       if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(this.connectionType)) {
-        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_WITH_DB_FORMAT,
+        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT,
                              host, port, database);
       }
-      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_WITH_DB_FORMAT, host, port, database);
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, port, database);
     }
 
 
