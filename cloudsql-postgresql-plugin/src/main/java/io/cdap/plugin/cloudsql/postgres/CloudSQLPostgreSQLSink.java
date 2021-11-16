@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
 @Name(CloudSQLPostgreSQLConstants.PLUGIN_NAME)
 @Description(
     "Writes records to a CloudSQL PostgreSQL table. Each record will be written in a row in the table")
-public class CloudSQLPostgreSQLSink extends AbstractDBSink {
+public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSink.CloudSQLPostgreSQLSinkConfig> {
 
   private static final Character ESCAPE_CHAR = '"';
 
@@ -138,7 +138,7 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink {
     }
 
     @Override
-    protected String getEscapedTableName() {
+    public String getEscapedTableName() {
       return ESCAPE_CHAR + tableName + ESCAPE_CHAR;
     }
 

@@ -52,4 +52,9 @@ public class PostgresConnectorConfig extends AbstractDBSpecificConnectorConfig {
   protected int getDefaultPort() {
     return 5432;
   }
+
+  @Override
+  public boolean canConnect() {
+    return super.canConnect() && !containsMacro(NAME_DATABASE);
+  }
 }

@@ -18,16 +18,25 @@ package io.cdap.plugin.postgres;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.db.batch.sink.FieldsValidator;
+import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +53,8 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(PostgresConstants.PLUGIN_NAME)
 @Description("Writes records to a PostgreSQL table. Each record will be written in a row in the table")
-public class PostgresSink extends AbstractDBSink {
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = PostgresConnector.NAME)})
+public class PostgresSink extends AbstractDBSink<PostgresSink.PostgresSinkConfig> {
   private static final Logger LOG = LoggerFactory.getLogger(PostgresSink.class);
 
   private static final Character ESCAPE_CHAR = '"';
@@ -87,7 +97,18 @@ public class PostgresSink extends AbstractDBSink {
   /**
    * PostgreSQL action configuration.
    */
-  public static class PostgresSinkConfig extends DBSpecificSinkConfig {
+  public static class PostgresSinkConfig extends AbstractDBSpecificSinkConfig {
+
+    @Name(ConfigUtil.NAME_USE_CONNECTION)
+    @Nullable
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(ConfigUtil.NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private PostgresConnectorConfig connection;
 
     @Name(PostgresConstants.CONNECTION_TIMEOUT)
     @Description("The timeout value used for socket connect operations. If connecting to the server takes longer" +
@@ -97,18 +118,18 @@ public class PostgresSink extends AbstractDBSink {
     public Integer connectionTimeout;
 
     @Override
-    public String getConnectionString() {
-      return String.format(PostgresConstants.POSTGRES_CONNECTION_STRING_WITH_DB_FORMAT, host, port, database);
-    }
-
-    @Override
-    protected String getEscapedTableName() {
-      return ESCAPE_CHAR + tableName + ESCAPE_CHAR;
+    public String getEscapedTableName() {
+      return ESCAPE_CHAR + getTableName() + ESCAPE_CHAR;
     }
 
     @Override
     public Map<String, String> getDBSpecificArguments() {
       return ImmutableMap.of(PostgresConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
+    }
+
+    @Override
+    protected PostgresConnectorConfig getConnection() {
+      return connection;
     }
   }
 }

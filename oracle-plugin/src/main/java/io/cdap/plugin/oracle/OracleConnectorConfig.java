@@ -106,4 +106,9 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
       TransactionIsolationLevel.Level.TRANSACTION_READ_COMMITTED.name();
   }
 
+  @Override
+  public boolean canConnect() {
+    return super.canConnect() && !containsMacro(OracleConstants.NAME_DATABASE);
+  }
+
 }

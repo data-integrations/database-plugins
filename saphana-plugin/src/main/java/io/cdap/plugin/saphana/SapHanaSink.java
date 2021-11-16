@@ -39,15 +39,10 @@ import java.util.StringJoiner;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(SapHanaConstants.PLUGIN_NAME)
 @Description("Writes records to a SAP HANA table. Each record will be written in a row in the table")
-public class SapHanaSink extends AbstractDBSink {
+public class SapHanaSink extends AbstractDBSink<SapHanaSink.SapHanaSinkConfig> {
 
   private final SapHanaSinkConfig sapHanaSinkConfig;
   private static final Character ESCAPE_CHAR = '"';
-
-  public SapHanaSink(DBSinkConfig dbSinkConfig, SapHanaSinkConfig sapHanaSinkConfig) {
-    super(dbSinkConfig);
-    this.sapHanaSinkConfig = sapHanaSinkConfig;
-  }
 
   public SapHanaSink(SapHanaSinkConfig sapHanaSinkConfig) {
     super(sapHanaSinkConfig);
@@ -93,7 +88,7 @@ public class SapHanaSink extends AbstractDBSink {
     }
 
     @Override
-    protected String getEscapedTableName() {
+    public String getEscapedTableName() {
       return ESCAPE_CHAR + tableName + ESCAPE_CHAR;
     }
 

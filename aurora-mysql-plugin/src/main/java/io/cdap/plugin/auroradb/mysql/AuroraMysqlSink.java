@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(AuroraMysqlConstants.PLUGIN_NAME)
 @Description("Writes records to a table of Aurora DB MySQL cluster. Each record will be written in a row in the table.")
-public class AuroraMysqlSink extends AbstractDBSink {
+public class AuroraMysqlSink extends AbstractDBSink<AuroraMysqlSink.AuroraMysqlSinkConfig> {
 
   private final AuroraMysqlSinkConfig auroraMysqlSinkConfig;
 

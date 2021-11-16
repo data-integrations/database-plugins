@@ -44,6 +44,7 @@ import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.DBConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.db.batch.config.DatabaseSinkConfig;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
 import org.apache.hadoop.io.NullWritable;
@@ -69,19 +70,21 @@ import java.util.stream.Collectors;
 
 /**
  * Sink that can be configured to export data to a database table.
+ * @param <T> the DB Sink config
  */
-public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord, DBRecord, NullWritable> {
+public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig>
+  extends ReferenceBatchSink<StructuredRecord, DBRecord, NullWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDBSink.class);
 
-  private final DBSinkConfig dbSinkConfig;
+  private final T dbSinkConfig;
   private Class<? extends Driver> driverClass;
   private DriverCleanup driverCleanup;
   protected List<String> columns;
   protected List<ColumnType> columnTypes;
   protected String dbColumns;
 
-  public AbstractDBSink(DBSinkConfig dbSinkConfig) {
-    super(new ReferencePluginConfig(dbSinkConfig.referenceName));
+  public AbstractDBSink(T dbSinkConfig) {
+    super(new ReferencePluginConfig(dbSinkConfig.getReferenceName()));
     this.dbSinkConfig = dbSinkConfig;
   }
 
@@ -98,9 +101,9 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     if (Objects.nonNull(inputSchema)) {
       Class<? extends Driver> driverClass = DBUtils.getDriverClass(
         pipelineConfigurer, dbSinkConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
-      if (driverClass != null && !dbSinkConfig.connectionParamsContainsMacro()) {
+      if (driverClass != null && dbSinkConfig.canConnect()) {
         FailureCollector collector = configurer.getFailureCollector();
-        validateSchema(collector, driverClass, dbSinkConfig.tableName, inputSchema);
+        validateSchema(collector, driverClass, dbSinkConfig.getTableName(), inputSchema);
       }
     }
   }
@@ -110,7 +113,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     String connectionString = dbSinkConfig.getConnectionString();
 
     LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {};",
-              dbSinkConfig.tableName,
+              dbSinkConfig.getTableName(),
               ConnectionConfig.JDBC_PLUGIN_TYPE,
               dbSinkConfig.getJdbcPluginName(),
               connectionString);
@@ -123,7 +126,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     try {
       if (Objects.nonNull(outputSchema)) {
         FailureCollector collector = context.getFailureCollector();
-        validateSchema(collector, driverClass, dbSinkConfig.tableName, outputSchema);
+        validateSchema(collector, driverClass, dbSinkConfig.getTableName(), outputSchema);
         collector.getOrThrowException();
       } else {
         outputSchema = inferSchema(driverClass);
@@ -155,7 +158,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       configAccessor.setTransactionIsolationLevel(dbSinkConfig.getTransactionIsolationLevel());
     }
 
-    context.addOutput(Output.of(dbSinkConfig.referenceName, new SinkOutputFormatProvider(ETLDBOutputFormat.class,
+    context.addOutput(Output.of(dbSinkConfig.getReferenceName(), new SinkOutputFormatProvider(ETLDBOutputFormat.class,
       configAccessor.getConfiguration())));
   }
 
@@ -325,7 +328,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   }
 
   private void emitLineage(BatchSinkContext context, List<Schema.Field> fields) {
-    LineageRecorder lineageRecorder = new LineageRecorder(context, dbSinkConfig.referenceName);
+    LineageRecorder lineageRecorder = new LineageRecorder(context, dbSinkConfig.getReferenceName());
 
     if (!fields.isEmpty()) {
       lineageRecorder.recordWrite("Write", "Wrote to DB table.",
@@ -344,7 +347,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   /**
    * {@link PluginConfig} for {@link AbstractDBSink}
    */
-  public abstract static class DBSinkConfig extends DBConfig {
+  public abstract static class DBSinkConfig extends DBConfig implements DatabaseSinkConfig {
     public static final String TABLE_NAME = "tableName";
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
 
@@ -353,6 +356,10 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     @Macro
     public String tableName;
 
+    public String getTableName() {
+      return tableName;
+    }
+
     /**
      * Adds escape characters (back quotes, double quotes, etc.) to the table name for
      * databases with case-sensitive identifiers.
@@ -360,14 +367,14 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
      * @return tableName with leading and trailing escape characters appended.
      * Default implementation returns unchanged table name string.
      */
-    protected String getEscapedTableName() {
+    public String getEscapedTableName() {
       return tableName;
     }
 
-    public boolean connectionParamsContainsMacro() {
-      return (containsMacro(ConnectionConfig.HOST) || containsMacro(ConnectionConfig.PORT) ||
-        containsMacro(ConnectionConfig.DATABASE) || containsMacro(TABLE_NAME) || containsMacro(USER) ||
-        containsMacro(PASSWORD));
+    public boolean canConnect() {
+      return (!containsMacro(ConnectionConfig.HOST) && !containsMacro(ConnectionConfig.PORT) &&
+        !containsMacro(ConnectionConfig.DATABASE) && !containsMacro(TABLE_NAME) && !containsMacro(USER) &&
+        !containsMacro(PASSWORD));
     }
   }
 }

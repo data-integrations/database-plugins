@@ -35,7 +35,7 @@ import io.cdap.plugin.teradata.TeradataSchemaReader;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(TeradataConstants.PLUGIN_NAME)
 @Description("Writes records to a Teradata table. Each record will be written in a row in the table")
-public class TeradataSink  extends AbstractDBSink {
+public class TeradataSink  extends AbstractDBSink<TeradataSinkConfig> {
   private final TeradataSinkConfig config;
 
   public TeradataSink(TeradataSinkConfig config) {

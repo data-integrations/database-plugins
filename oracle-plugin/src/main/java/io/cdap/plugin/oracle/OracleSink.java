@@ -18,13 +18,18 @@ package io.cdap.plugin.oracle;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
-import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.db.batch.sink.FieldsValidator;
 
@@ -37,7 +42,8 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(OracleConstants.PLUGIN_NAME)
 @Description("Writes records to Oracle table. Each record will be written in a row in the table")
-public class OracleSink extends AbstractDBSink {
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = OracleConnector.NAME)})
+public class OracleSink extends AbstractDBSink<OracleSink.OracleSinkConfig> {
 
   private final OracleSinkConfig oracleSinkConfig;
 
@@ -64,28 +70,44 @@ public class OracleSink extends AbstractDBSink {
   /**
    * Oracle action configuration.
    */
-  public static class OracleSinkConfig extends DBSpecificSinkConfig {
+  public static class OracleSinkConfig extends AbstractDBSpecificSinkConfig {
+
+    private static final Character ESCAPE_CHAR = '"';
+
+    @Name(ConfigUtil.NAME_USE_CONNECTION)
+    @Nullable
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(ConfigUtil.NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private OracleConnectorConfig connection;
+
     @Name(OracleConstants.DEFAULT_BATCH_VALUE)
     @Description("The default batch value that triggers an execution request.")
     @Nullable
     public Integer defaultBatchValue;
 
-    @Name(OracleConstants.CONNECTION_TYPE)
-    @Description("Whether to use an SID or Service Name when connecting to the database.")
-    public String connectionType;
-
-    @Override
-    public String getConnectionString() {
-      if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(this.connectionType)) {
-        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT,
-                             host, port, database);
-      }
-      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, port, database);
-    }
-
     @Override
     protected Map<String, String> getDBSpecificArguments() {
       return ImmutableMap.of(OracleConstants.DEFAULT_BATCH_VALUE, String.valueOf(defaultBatchValue));
+    }
+
+    @Override
+    public String getTransactionIsolationLevel() {
+      return connection.getTransactionIsolationLevel();
+    }
+
+    @Override
+    public String getEscapedTableName() {
+      return ESCAPE_CHAR + getTableName() + ESCAPE_CHAR;
+    }
+
+    @Override
+    protected OracleConnectorConfig getConnection() {
+      return connection;
     }
   }
 }

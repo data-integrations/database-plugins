@@ -30,7 +30,7 @@ import io.cdap.plugin.memsql.MemsqlConstants;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(MemsqlConstants.PLUGIN_NAME)
 @Description("Writes records to a MemSQL table. Each record will be written in a row in the table")
-public class MemsqlSink extends AbstractDBSink {
+public class MemsqlSink extends AbstractDBSink<MemsqlSinkConfig> {
 
   private final MemsqlSinkConfig memsqlSinkConfig;
 

@@ -18,10 +18,16 @@ package io.cdap.plugin.mysql;
 
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSink;
-import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
+import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.db.ConnectionConfig;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 
 import java.util.Collections;
@@ -35,7 +41,8 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(MysqlConstants.PLUGIN_NAME)
 @Description("Writes records to a MySQL table. Each record will be written in a row in the table")
-public class MysqlSink extends AbstractDBSink {
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = MysqlConnector.NAME)})
+public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
 
   private final MysqlSinkConfig mysqlSinkConfig;
 
@@ -47,7 +54,23 @@ public class MysqlSink extends AbstractDBSink {
   /**
    * MySQL action configuration.
    */
-  public static class MysqlSinkConfig extends DBSpecificSinkConfig {
+  public static class MysqlSinkConfig extends AbstractDBSpecificSinkConfig {
+    
+    @Name(ConfigUtil.NAME_USE_CONNECTION)
+    @Nullable
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(ConfigUtil.NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private MysqlConnectorConfig connection;
+
+    @Name(ConnectionConfig.DATABASE)
+    @Description("Database name to connect to")
+    @Macro
+    private String database;
 
     @Name(MysqlConstants.AUTO_RECONNECT)
     @Description("Should the driver try to re-establish stale and/or dead connections")
@@ -91,7 +114,7 @@ public class MysqlSink extends AbstractDBSink {
 
     @Override
     public String getConnectionString() {
-      return MysqlUtil.getConnectionString(host, port, database);
+      return MysqlUtil.getConnectionString(connection.getHost(), connection.getPort(), database);
     }
 
     @Override
@@ -104,11 +127,21 @@ public class MysqlSink extends AbstractDBSink {
     }
 
     @Override
+    public MysqlConnectorConfig getConnection() {
+      return connection;
+    }
+
+    @Override
     public List<String> getInitQueries() {
       if (!Strings.isNullOrEmpty(sqlMode)) {
         return Collections.singletonList(String.format(MysqlConstants.SET_SQL_MODE_QUERY_FORMAT, sqlMode));
       }
       return Collections.emptyList();
+    }
+
+    @Override
+    public boolean canConnect() {
+      return super.canConnect() && !containsMacro(ConnectionConfig.DATABASE);
     }
   }
 }

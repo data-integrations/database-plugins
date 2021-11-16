@@ -106,12 +106,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
       stageConfigurer.setOutputSchema(sourceConfig.getSchema());
       return;
     }
-    if (!sourceConfig.containsMacro(ConnectionConfig.HOST) &&
-      !sourceConfig.containsMacro(ConnectionConfig.PORT) &&
-      !sourceConfig.containsMacro(ConnectionConfig.USER) &&
-      !sourceConfig.containsMacro(ConnectionConfig.PASSWORD) &&
-      !sourceConfig.containsMacro(DBSourceConfig.DATABASE) &&
-      !sourceConfig.containsMacro(DBSourceConfig.IMPORT_QUERY)) {
+    if (sourceConfig.canConnect()) {
       try {
         stageConfigurer.setOutputSchema(getSchema(driverClass));
       } catch (IllegalAccessException | InstantiationException e) {
@@ -468,6 +463,13 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
         throw new IllegalArgumentException(String.format("Unable to parse schema '%s'. Reason: %s",
                                                          schema, e.getMessage()), e);
       }
+    }
+
+    @Override
+    public boolean canConnect() {
+      return !containsMacro(ConnectionConfig.HOST) && !containsMacro(ConnectionConfig.PORT) &&
+        !containsMacro(ConnectionConfig.USER) && !containsMacro(ConnectionConfig.PASSWORD) &&
+        !containsMacro(DBSourceConfig.DATABASE) && !containsMacro(DBSourceConfig.IMPORT_QUERY);
     }
   }
 

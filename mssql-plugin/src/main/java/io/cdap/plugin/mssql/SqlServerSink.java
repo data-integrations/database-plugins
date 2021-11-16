@@ -18,13 +18,19 @@ package io.cdap.plugin.mssql;
 
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
-import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.db.batch.sink.FieldsValidator;
 import org.slf4j.Logger;
@@ -41,7 +47,8 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(SqlServerConstants.PLUGIN_NAME)
 @Description("Writes records to a MSSQL table. Each record will be written in a row in the table")
-public class SqlServerSink extends AbstractDBSink {
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = SqlServerConnector.NAME)})
+public class SqlServerSink extends AbstractDBSink<SqlServerSink.SqlServerSinkConfig> {
   private static final Logger LOG = LoggerFactory.getLogger(SqlServerSink.class);
 
   private final SqlServerSinkConfig sqlServerSinkConfig;
@@ -69,7 +76,23 @@ public class SqlServerSink extends AbstractDBSink {
   /**
    * MSSQL action configuration.
    */
-  public static class SqlServerSinkConfig extends DBSpecificSinkConfig {
+  public static class SqlServerSinkConfig extends AbstractDBSpecificSinkConfig {
+
+    @Name(ConfigUtil.NAME_USE_CONNECTION)
+    @Nullable
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(ConfigUtil.NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private SqlServerConnectorConfig connection;
+
+    @Name(ConnectionConfig.DATABASE)
+    @Description("Database name to connect to")
+    @Macro
+    private String database;
 
     @Name(SqlServerConstants.INSTANCE_NAME)
     @Description(SqlServerConstants.INSTANCE_NAME_DESCRIPTION)
@@ -80,11 +103,6 @@ public class SqlServerSink extends AbstractDBSink {
     @Description(SqlServerConstants.QUERY_TIMEOUT_DESCRIPTION)
     @Nullable
     public Integer queryTimeout = -1;
-
-    @Name(SqlServerConstants.AUTHENTICATION)
-    @Description(SqlServerConstants.AUTHENTICATION_DESCRIPTION)
-    @Nullable
-    public String authenticationType;
 
     @Name(SqlServerConstants.CONNECT_TIMEOUT)
     @Description(SqlServerConstants.CONNECT_TIMEOUT_DESCRIPTION)
@@ -127,16 +145,22 @@ public class SqlServerSink extends AbstractDBSink {
     public String currentLanguage;
 
     @Override
-    public String getConnectionString() {
-      return String.format(SqlServerConstants.SQL_SERVER_CONNECTION_STRING_FORMAT, host, port, database);
-    }
-
-    @Override
     public Map<String, String> getDBSpecificArguments() {
-      return SqlServerUtil.composeDbSpecificArgumentsMap(instanceName, authenticationType, null,
+      return SqlServerUtil.composeDbSpecificArgumentsMap(instanceName, connection.getAuthenticationType(), null,
                                                          connectTimeout, columnEncryption, encrypt,
                                                          trustServerCertificate, workstationId, failoverPartner,
                                                          packetSize, queryTimeout);
+    }
+
+    @Override
+    public String getConnectionString() {
+      return String.format(SqlServerConstants.SQL_SERVER_CONNECTION_STRING_FORMAT,
+                           connection.getHost(), connection.getPort(), database);
+    }
+
+    @Override
+    protected SqlServerConnectorConfig getConnection() {
+      return connection;
     }
 
     @Override
@@ -146,6 +170,11 @@ public class SqlServerSink extends AbstractDBSink {
       }
 
       return Collections.emptyList();
+    }
+
+    @Override
+    public boolean canConnect() {
+      return super.canConnect() && !containsMacro(ConnectionConfig.DATABASE);
     }
   }
 }
