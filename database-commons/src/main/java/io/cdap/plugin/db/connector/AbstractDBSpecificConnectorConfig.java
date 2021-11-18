@@ -136,4 +136,9 @@ public abstract class AbstractDBSpecificConnectorConfig extends PluginConfig imp
   public String getTransactionIsolationLevel() {
     return null;
   }
+
+  public boolean canConnect() {
+    return !containsMacro(ConnectionConfig.HOST) && !containsMacro(ConnectionConfig.PORT)
+      && !containsMacro(ConnectionConfig.USER) && !containsMacro(ConnectionConfig.PASSWORD);
+  }
 }

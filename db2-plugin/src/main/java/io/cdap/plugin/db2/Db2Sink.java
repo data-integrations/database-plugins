@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(Db2Constants.PLUGIN_NAME)
 @Description("Writes records to a DB2 table. Each record will be written in a row in the table.")
-public class Db2Sink extends AbstractDBSink {
+public class Db2Sink extends AbstractDBSink<Db2Sink.Db2SinkConfig> {
   private static final Logger LOG = LoggerFactory.getLogger(Db2Sink.class);
 
   private final Db2SinkConfig db2SinkConfig;

@@ -22,6 +22,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
@@ -69,7 +70,9 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
     setConnectionProperties(properties);
-    builder.addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties));
+    builder
+      .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
+      .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));
     String table = path.getTable();
     if (table == null) {
       return;
@@ -79,6 +82,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
     properties.put(SqlServerSource.SqlServerSourceConfig.NUM_SPLITS, "1");
     properties.put(SqlServerSource.SqlServerSourceConfig.DATABASE, path.getDatabase());
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
+    properties.put(SqlServerSink.SqlServerSinkConfig.TABLE_NAME, table);
   }
 
   @Override

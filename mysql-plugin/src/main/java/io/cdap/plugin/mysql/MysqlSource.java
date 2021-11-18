@@ -168,6 +168,11 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
       }
       super.validate(collector);
     }
+
+    @Override
+    public boolean canConnect() {
+      return super.canConnect() && !containsMacro(DATABASE);
+    }
   }
 
 }

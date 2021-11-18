@@ -21,6 +21,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
@@ -74,7 +75,9 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
     setConnectionProperties(properties);
-    builder.addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties));
+    builder
+      .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
+      .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));
 
     String table = path.getTable();
     if (table == null) {
@@ -84,6 +87,7 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     properties.put(PostgresSource.PostgresSourceConfig.IMPORT_QUERY, getTableQuery(path));
     properties.put(PostgresSource.PostgresSourceConfig.NUM_SPLITS, "1");
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
+    properties.put(PostgresSink.PostgresSinkConfig.TABLE_NAME, table);
 
   }
 

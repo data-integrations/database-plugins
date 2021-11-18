@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(DatabaseConstants.PLUGIN_NAME)
 @Description("Writes records to a database table. Each record will be written in a row in the table")
-public class DatabaseSink extends AbstractDBSink {
+public class DatabaseSink extends AbstractDBSink<DatabaseSink.DatabaseSinkConfig> {
 
   private final DatabaseSinkConfig databaseSinkConfig;
 
@@ -44,7 +44,7 @@ public class DatabaseSink extends AbstractDBSink {
   /**
    * Generic database sink configuration.
    */
-  public static class DatabaseSinkConfig extends DBSinkConfig {
+  public static class DatabaseSinkConfig extends AbstractDBSink.DBSinkConfig {
     @Name(ConnectionConfig.CONNECTION_STRING)
     @Description("JDBC connection string including database name.")
     @Macro

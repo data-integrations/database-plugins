@@ -80,4 +80,9 @@ public interface DatabaseSourceConfig extends DatabaseConnectionConfig {
    * @return the initial query to be run upon connecting to database
    */
   List<String> getInitQueries();
+
+  /**
+   * @return true if none of the connection parameters is macro, otherwise false
+   */
+  boolean canConnect();
 }

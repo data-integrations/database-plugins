@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 @Name(CloudSQLMySQLConstants.PLUGIN_NAME)
 @Description(
     "Writes records to a CloudSQL MySQL table. Each record will be written in a row in the table.")
-public class CloudSQLMySQLSink extends AbstractDBSink {
+public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQLMySQLSinkConfig> {
 
   private final CloudSQLMySQLSinkConfig cloudsqlMysqlSinkConfig;
 

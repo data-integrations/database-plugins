@@ -33,7 +33,7 @@ import io.cdap.plugin.db.batch.sink.FieldsValidator;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(NetezzaConstants.PLUGIN_NAME)
 @Description("Writes records to a Netezza table. Each record will be written in a row in the table")
-public class NetezzaSink extends AbstractDBSink {
+public class NetezzaSink extends AbstractDBSink<NetezzaSink.NetezzaSinkConfig> {
 
   private final NetezzaSinkConfig netezzaSinkConfig;
 

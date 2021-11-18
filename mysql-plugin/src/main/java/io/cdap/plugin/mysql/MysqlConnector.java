@@ -21,6 +21,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
@@ -67,7 +68,9 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
     setConnectionProperties(properties);
-    builder.addRelatedPlugin(new PluginSpec(MysqlConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties));
+    builder
+      .addRelatedPlugin(new PluginSpec(MysqlConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
+      .addRelatedPlugin(new PluginSpec(MysqlConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));
 
     String table = path.getTable();
     if (table == null) {
@@ -78,6 +81,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
     properties.put(MysqlSource.MysqlSourceConfig.NUM_SPLITS, "1");
     properties.put(MysqlSource.MysqlSourceConfig.DATABASE, path.getDatabase());
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
+    properties.put(MysqlSink.MysqlSinkConfig.TABLE_NAME, table);
   }
 
   @Override

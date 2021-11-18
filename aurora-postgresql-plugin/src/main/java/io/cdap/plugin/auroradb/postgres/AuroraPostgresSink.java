@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
 @Name(AuroraPostgresConstants.PLUGIN_NAME)
 @Description("Writes records to a table of Aurora DB PostgreSQL cluster. " +
   "Each record will be written in a row in the table.")
-public class AuroraPostgresSink extends AbstractDBSink {
+public class AuroraPostgresSink extends AbstractDBSink<AuroraPostgresSink.AuroraPostgresSinkConfig> {
   private static final Character ESCAPE_CHAR = '"';
 
   private final AuroraPostgresSinkConfig auroraPostgresSinkConfig;
@@ -78,7 +78,7 @@ public class AuroraPostgresSink extends AbstractDBSink {
     }
 
     @Override
-    protected String getEscapedTableName() {
+    public String getEscapedTableName() {
       return ESCAPE_CHAR + tableName + ESCAPE_CHAR;
     }
 

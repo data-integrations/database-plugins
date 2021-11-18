@@ -202,5 +202,10 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
       }
       super.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
     }
+
+    @Override
+    public boolean canConnect() {
+      return super.canConnect() && !containsMacro(DATABASE);
+    }
   }
 }

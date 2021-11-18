@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(MariadbConstants.PLUGIN_NAME)
 @Description("Writes records to a MariaDB table. Each record will be written in a row in the table")
-public class MariadbSink extends AbstractDBSink {
+public class MariadbSink extends AbstractDBSink<MariadbSink.MariadbSinkConfig> {
 
   private final MariadbSinkConfig mariadbSinkConfig;
 

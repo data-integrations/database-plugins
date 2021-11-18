@@ -22,6 +22,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
@@ -73,7 +74,9 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
     setConnectionProperties(properties);
-    builder.addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties));
+    builder
+      .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
+      .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));
 
     String table = path.getTable();
     if (table == null) {
@@ -83,6 +86,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     properties.put(OracleSource.OracleSourceConfig.IMPORT_QUERY, getTableQuery(path));
     properties.put(OracleSource.OracleSourceConfig.NUM_SPLITS, "1");
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
+    properties.put(OracleSink.OracleSinkConfig.TABLE_NAME, table);
   }
 
   @Override
