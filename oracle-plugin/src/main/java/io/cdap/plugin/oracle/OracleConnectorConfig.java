@@ -22,6 +22,9 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
 
@@ -99,11 +102,17 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
     prop.put(INTERNAL_LOGON_PROPERTY, getRole());
     return prop;
   }
-
-  @Override
+  
   public String getTransactionIsolationLevel() {
     return ROLE_NORMAL.equals(getRole()) ? null :
       TransactionIsolationLevel.Level.TRANSACTION_READ_COMMITTED.name();
+  }
+
+  @Override
+  public Map<String, String> getAdditionalArguments() {
+    Map<String, String> additonalArguments = new HashMap<>();
+    additonalArguments.put(TransactionIsolationLevel.CONF_KEY, getTransactionIsolationLevel());
+    return additonalArguments;
   }
 
   @Override

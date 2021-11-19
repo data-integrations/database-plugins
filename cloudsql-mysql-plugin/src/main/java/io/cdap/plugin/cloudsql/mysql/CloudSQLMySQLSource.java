@@ -17,22 +17,32 @@
 package io.cdap.plugin.cloudsql.mysql;
 
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 
+import java.util.Collections;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Batch source to read from CloudSQL MySQL. */
-@Plugin(type = "batchsource")
+@Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name(CloudSQLMySQLConstants.PLUGIN_NAME)
 @Description(
     "Reads from a CloudSQL database table using a configurable SQL query."
         + " Outputs one record for each row returned by the query.")
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = CloudSQLMySQLConnector.NAME)})
 public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.CloudSQLMySQLSourceConfig> {
 
   private final CloudSQLMySQLSourceConfig cloudsqlMysqlSourceConfig;
@@ -48,8 +58,8 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
 
     CloudSQLMySQLUtil.checkConnectionName(
         failureCollector,
-        cloudsqlMysqlSourceConfig.instanceType,
-        cloudsqlMysqlSourceConfig.connectionName);
+        cloudsqlMysqlSourceConfig.connection.getInstanceType(),
+        cloudsqlMysqlSourceConfig.connection.getConnectionName());
 
     super.configurePipeline(pipelineConfigurer);
   }
@@ -62,55 +72,41 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
   @Override
   protected String createConnectionString() {
     if (CloudSQLMySQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(
-        cloudsqlMysqlSourceConfig.instanceType)) {
+        cloudsqlMysqlSourceConfig.connection.getInstanceType())) {
       return String.format(
           CloudSQLMySQLConstants.PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
-          cloudsqlMysqlSourceConfig.connectionName,
-          cloudsqlMysqlSourceConfig.database);
+          cloudsqlMysqlSourceConfig.connection.getConnectionName(),
+          cloudsqlMysqlSourceConfig.connection.getDatabase());
     }
 
     return String.format(
         CloudSQLMySQLConstants.PUBLIC_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
-        cloudsqlMysqlSourceConfig.database,
-        cloudsqlMysqlSourceConfig.connectionName);
+        cloudsqlMysqlSourceConfig.connection.getDatabase(),
+        cloudsqlMysqlSourceConfig.connection.getConnectionName());
   }
 
   /** CloudSQL MySQL source config. */
-  public static class CloudSQLMySQLSourceConfig extends AbstractDBSource.DBSourceConfig {
-  
-    public CloudSQLMySQLSourceConfig() {
-      this.instanceType = CloudSQLMySQLConstants.PUBLIC_INSTANCE;
-    }
+  public static class CloudSQLMySQLSourceConfig extends AbstractDBSpecificSourceConfig {
 
-    @Name(CloudSQLMySQLConstants.CONNECTION_NAME)
-    @Description(
-        "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
-            + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
-            + "instance, enter the internal IP address of the Compute Engine VM cloudsql proxy is running on.")
-    public String connectionName;
-
-    @Name(DATABASE)
-    @Description("Database name to connect to")
-    public String database;
-
-    @Name(CloudSQLMySQLConstants.INSTANCE_TYPE)
-    @Description("Whether the CloudSQL instance to connect to is private or public.")
+    @Name(ConfigUtil.NAME_USE_CONNECTION)
     @Nullable
-    public String instanceType;
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(ConfigUtil.NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private CloudSQLMySQLConnectorConfig connection;
 
     @Override
-    public String getConnectionString() {
-      if (CloudSQLMySQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
-        return String.format(
-            CloudSQLMySQLConstants.PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
-            connectionName,
-            database);
-      }
+    protected Map<String, String> getDBSpecificArguments() {
+      return Collections.emptyMap();
+    }
 
-      return String.format(
-          CloudSQLMySQLConstants.PUBLIC_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
-          database,
-          connectionName);
+    @Override
+    protected CloudSQLMySQLConnectorConfig getConnection() {
+      return connection;
     }
   }
 }

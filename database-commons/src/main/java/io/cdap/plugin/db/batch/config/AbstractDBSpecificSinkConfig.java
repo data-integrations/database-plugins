@@ -22,7 +22,7 @@ import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.Constants;
-import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
+import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,7 +81,7 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
 
   protected abstract Map<String, String> getDBSpecificArguments();
 
-  protected abstract AbstractDBSpecificConnectorConfig getConnection();
+  protected abstract AbstractDBConnectorConfig getConnection();
 
   @Override
   public String getConnectionString() {
