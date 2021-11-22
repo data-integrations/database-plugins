@@ -1,0 +1,92 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "display-name": "CloudSQLPostgreSQL",
+  "configuration-groups": [
+    {
+      "label": "Basic",
+      "properties": [
+        {
+          "widget-type": "plugin-list",
+          "label": "JDBC Driver name",
+          "name": "jdbcPluginName",
+          "widget-attributes": {
+            "plugin-type": "jdbc"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Database",
+          "name": "database"
+        },
+        {
+          "widget-type": "radio-group",
+          "label": "CloudSQL Instance Type",
+          "name": "instanceType",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "public",
+            "options": [
+              {
+                "id": "public",
+                "label": "Public"
+              },
+              {
+                "id": "private",
+                "label": "Private"
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Connection Name",
+          "name": "connectionName",
+          "widget-attributes": {
+            "placeholder": "CloudSQL instance connection name"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Credentials",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Username",
+          "name": "user",
+          "widget-attributes": {
+            "placeholder": "The username to use to connect to the CloudSQL database"
+          }
+        },
+        {
+          "widget-type": "password",
+          "label": "Password",
+          "name": "password",
+          "widget-attributes": {
+            "placeholder": "The password to use to connect to the CloudSQL database"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
+        {
+          "widget-type": "keyvalue",
+          "label": "Connection Arguments",
+          "name": "connectionArguments",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value",
+            "kv-delimiter": "=",
+            "delimiter": ";"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}
