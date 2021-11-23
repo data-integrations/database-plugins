@@ -308,9 +308,10 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
           return;
         }
       }
-
-      try (PreparedStatement pStmt = connection.prepareStatement("SELECT * FROM " + dbSinkConfig.getEscapedTableName()
-                                                                   + " WHERE 1 = 0");
+      setColumnsInfo(inputSchema.getFields());
+      try (PreparedStatement pStmt = connection.prepareStatement(String.format("SELECT %s FROM %s WHERE 1 = 0",
+                                                                               dbColumns,
+                                                                               dbSinkConfig.getEscapedTableName()));
            ResultSet rs = pStmt.executeQuery()) {
         getFieldsValidator().validateFields(inputSchema, rs, collector);
       }
@@ -318,8 +319,9 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
       LOG.error("Exception while trying to validate schema of database table {} for connection {}.",
                 tableName, connectionString, e);
       collector.addFailure(
-        String.format("Exception while trying to validate schema of database table '%s' for connection '%s'.",
-                      tableName, connectionString), null).withStacktrace(e.getStackTrace());
+        String.format("Exception while trying to validate schema of database table '%s' for connection '%s' with %s",
+                      tableName, connectionString, e.getMessage()),
+        null).withStacktrace(e.getStackTrace());
     }
   }
 
