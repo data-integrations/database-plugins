@@ -48,6 +48,17 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
   @Nullable
   private String instanceType;
 
+  public CloudSQLMySQLConnectorConfig(String user, String password, String jdbcPluginName, String connectionArguments,
+                                      String instanceType, String connectionName, String database) {
+    this.user = user;
+    this.password = password;
+    this.jdbcPluginName = jdbcPluginName;
+    this.connectionArguments = connectionArguments;
+    this.instanceType = instanceType;
+    this.connectionName = connectionName;
+    this.database = database;
+  }
+
   public String getDatabase() {
     return database;
   }

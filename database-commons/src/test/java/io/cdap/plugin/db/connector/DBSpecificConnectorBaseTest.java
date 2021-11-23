@@ -21,6 +21,7 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.batch.BatchConnector;
+import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.BrowseDetail;
 import io.cdap.cdap.etl.api.connector.BrowseEntity;
@@ -46,6 +47,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
+import org.apache.parquet.Strings;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -53,6 +55,7 @@ import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,10 +93,11 @@ public abstract class DBSpecificConnectorBaseTest {
     String messageTemplate = "%s is not configured, please refer to javadoc of this class for details.";
 
     host = System.getProperty("host");
-    Assume.assumeFalse(String.format(messageTemplate, "host"), host == null);
 
     String portStr = System.getProperty("port");
-    port = Integer.parseInt(portStr);
+    if (!Strings.isNullOrEmpty(portStr)) {
+      port = Integer.parseInt(portStr);
+    }
 
     username = System.getProperty("username");
     Assume.assumeFalse(String.format(messageTemplate, "username"), username == null);
@@ -152,7 +156,7 @@ public abstract class DBSpecificConnectorBaseTest {
     Assert.assertTrue(detail.getEntities().size() > 0);
     for (BrowseEntity entity : detail.getEntities()) {
       System.out.println(entity.getType() + " : " + entity.getName());
-      Assert.assertEquals("DATABASE", entity.getType());
+      Assert.assertEquals("database", entity.getType());
       Assert.assertTrue(entity.canBrowse());
       Assert.assertFalse(entity.canSample());
     }
@@ -165,7 +169,7 @@ public abstract class DBSpecificConnectorBaseTest {
       Assert.assertTrue(detail.getEntities().size() > 0);
       for (BrowseEntity entity : detail.getEntities()) {
         System.out.println(entity.getType() + " : " + entity.getName());
-        Assert.assertEquals("SCHEMA", entity.getType());
+        Assert.assertEquals("schema", entity.getType());
         Assert.assertTrue(entity.canBrowse());
         Assert.assertFalse(entity.canSample());
       }
@@ -232,7 +236,7 @@ public abstract class DBSpecificConnectorBaseTest {
     Assert.assertTrue(validationException.getFailures().isEmpty());
   }
 
-  protected void testGenerateSpec(AbstractDBSpecificConnector connector, String sourceName) throws IOException {
+  protected void testGenerateSpec(AbstractDBSpecificConnector connector, String pluginName) throws IOException {
     ConnectorSpec connectorSpec = connector.generateSpec(new MockConnectorContext((new MockConnectorConfigurer())),
                                                          ConnectorSpecRequest.builder()
                                                            .setPath(
@@ -244,16 +248,25 @@ public abstract class DBSpecificConnectorBaseTest {
       Assert.assertNotNull(field.getSchema());
     }
     Set<PluginSpec> relatedPlugins = connectorSpec.getRelatedPlugins();
-    Assert.assertEquals(1, relatedPlugins.size());
-    PluginSpec pluginSpec = relatedPlugins.iterator().next();
-    Assert.assertEquals(sourceName, pluginSpec.getName());
-    Assert.assertEquals(BatchSource.PLUGIN_TYPE, pluginSpec.getType());
+    Assert.assertEquals(2, relatedPlugins.size());
+    Iterator<PluginSpec> relatedPluginsIterator = relatedPlugins.iterator();
+    PluginSpec pluginSpec = relatedPluginsIterator.next();
+    Assert.assertEquals(pluginName, pluginSpec.getName());
+    Assert.assertTrue(pluginSpec.getType().equals(BatchSource.PLUGIN_TYPE) ||
+                        pluginSpec.getType().equals(BatchSink.PLUGIN_TYPE));
+    PluginSpec pluginSpec1 = relatedPluginsIterator.next();
+    Assert.assertEquals(pluginName, pluginSpec1.getName());
+    if (pluginSpec.getType().equals(BatchSink.PLUGIN_TYPE)) {
+      Assert.assertEquals(BatchSource.PLUGIN_TYPE, pluginSpec1.getType());
+    } else {
+      Assert.assertEquals(BatchSink.PLUGIN_TYPE, pluginSpec1.getType());
+    }
 
     Map<String, String> properties = pluginSpec.getProperties();
-    Assert.assertEquals("true", properties.get(NAME_USE_CONNECTION));
-    Assert.assertEquals("${conn(connection-id)}", properties.get(NAME_CONNECTION));
-    Assert.assertEquals(schema == null ? String.format("SELECT * FROM %s.%s", database, table) :
-                          String.format("SELECT * FROM %s.%s.%s", database, schema, table),
+    Assert.assertNull(properties.get(NAME_USE_CONNECTION));
+    Assert.assertNull(properties.get(NAME_CONNECTION));
+    Assert.assertEquals(connector.getTableQuery(connector.getDBConnectorPath(schema == null ? database + "/" + table :
+                                                                               database + "/" + schema + "/" + table)),
                         properties.get(IMPORT_QUERY));
     properties.put("1", properties.get(NUM_SPLITS));
   }
