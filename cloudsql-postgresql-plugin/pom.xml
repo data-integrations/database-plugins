@@ -68,6 +68,7 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-data-pipeline2_2.11</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

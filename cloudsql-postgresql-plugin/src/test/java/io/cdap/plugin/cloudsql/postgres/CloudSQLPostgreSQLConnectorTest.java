@@ -51,9 +51,13 @@ public class CloudSQLPostgreSQLConnectorTest extends DBSpecificConnectorBaseTest
 
   @Test
   public void test() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
-    test(new CloudSQLPostgreSQLConnector(
-           new CloudSQLPostgreSQLConnectorConfig(username, password, JDBC_PLUGIN_NAME, connectionArguments,
-                                                 instanceType, connectionName, database)), JDBC_DRIVER_CLASS_NAME,
-         CloudSQLPostgreSQLConstants.PLUGIN_NAME);
+    test(
+      new CloudSQLPostgreSQLConnector(
+        new CloudSQLPostgreSQLConnectorConfig(username, password, JDBC_PLUGIN_NAME, connectionArguments, instanceType,
+                                              connectionName, database)
+      ),
+      JDBC_DRIVER_CLASS_NAME,
+      CloudSQLPostgreSQLConstants.PLUGIN_NAME
+    );
   }
 }

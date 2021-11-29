@@ -147,6 +147,7 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
     }
 
     @Override
+    @Nullable
     protected CloudSQLPostgreSQLConnectorConfig getConnection() {
       return connection;
     }

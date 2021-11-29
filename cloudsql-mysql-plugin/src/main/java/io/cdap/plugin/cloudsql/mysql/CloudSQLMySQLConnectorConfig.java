@@ -29,8 +29,8 @@ import javax.annotation.Nullable;
  */
 public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
 
-  private static final String JDBC_PROPERTY_CONNECT_TIMEOUT = "connectTimeout";
-  private static final String JDBC_PROPERTY_SOCKET_TIMEOUT = "socketTimeout";
+  private static final String JDBC_PROPERTY_CONNECT_TIMEOUT_MILLIS = "connectTimeout";
+  private static final String JDBC_PROPERTY_SOCKET_TIMEOUT_MILLIS = "socketTimeout";
 
   @Name(CloudSQLMySQLConstants.CONNECTION_NAME)
   @Description(
@@ -89,9 +89,8 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
   @Override
   public Properties getConnectionArgumentsProperties() {
     Properties properties = super.getConnectionArgumentsProperties();
-    // the unit below is milli-second
-    properties.put(JDBC_PROPERTY_CONNECT_TIMEOUT, "20000");
-    properties.put(JDBC_PROPERTY_SOCKET_TIMEOUT, "20000");
+    properties.put(JDBC_PROPERTY_CONNECT_TIMEOUT_MILLIS, "20000");
+    properties.put(JDBC_PROPERTY_SOCKET_TIMEOUT_MILLIS, "20000");
     return properties;
   }
 }

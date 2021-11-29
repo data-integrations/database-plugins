@@ -107,6 +107,7 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
     }
 
     @Override
+    @Nullable
     protected CloudSQLMySQLConnectorConfig getConnection() {
       return connection;
     }

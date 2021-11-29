@@ -51,9 +51,13 @@ public class CloudSQLMySQLConnectorTest extends DBSpecificConnectorBaseTest {
 
   @Test
   public void test() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
-    test(new CloudSQLMySQLConnector(
-      new CloudSQLMySQLConnectorConfig(username, password, JDBC_PLUGIN_NAME, connectionArguments, instanceType,
-                                       connectionName, database)), JDBC_DRIVER_CLASS_NAME,
-         CloudSQLMySQLConstants.PLUGIN_NAME);
+    test(
+      new CloudSQLMySQLConnector(
+        new CloudSQLMySQLConnectorConfig(username, password, JDBC_PLUGIN_NAME, connectionArguments, instanceType,
+                                         connectionName, database)
+      ),
+      JDBC_DRIVER_CLASS_NAME,
+      CloudSQLMySQLConstants.PLUGIN_NAME
+    );
   }
 }
