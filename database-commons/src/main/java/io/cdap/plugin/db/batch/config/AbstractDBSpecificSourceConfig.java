@@ -27,7 +27,7 @@ import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
-import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
+import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -242,7 +242,7 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
 
   protected abstract Map<String, String> getDBSpecificArguments();
 
-  protected abstract AbstractDBSpecificConnectorConfig getConnection();
+  protected abstract AbstractDBConnectorConfig getConnection();
 
   @Override
   public boolean canConnect() {

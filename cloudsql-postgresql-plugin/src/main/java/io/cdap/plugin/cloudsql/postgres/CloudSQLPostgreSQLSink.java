@@ -18,6 +18,9 @@ package io.cdap.plugin.cloudsql.postgres;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -25,8 +28,11 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.db.batch.sink.FieldsValidator;
 import io.cdap.plugin.postgres.PostgresDBRecord;
@@ -45,6 +51,7 @@ import javax.annotation.Nullable;
 @Name(CloudSQLPostgreSQLConstants.PLUGIN_NAME)
 @Description(
     "Writes records to a CloudSQL PostgreSQL table. Each record will be written in a row in the table")
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = CloudSQLPostgreSQLConnector.NAME)})
 public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSink.CloudSQLPostgreSQLSinkConfig> {
 
   private static final Character ESCAPE_CHAR = '"';
@@ -62,8 +69,8 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
     
     CloudSQLPostgreSQLUtil.checkConnectionName(
         failureCollector,
-        cloudsqlPostgresqlSinkConfig.instanceType,
-        cloudsqlPostgresqlSinkConfig.connectionName);
+        cloudsqlPostgresqlSinkConfig.connection.getInstanceType(),
+        cloudsqlPostgresqlSinkConfig.connection.getConnectionName());
     
     super.configurePipeline(pipelineConfigurer);
   }
@@ -97,18 +104,18 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
   }
 
   /** CloudSQL PostgreSQL sink config. */
-  public static class CloudSQLPostgreSQLSinkConfig extends AbstractDBSink.DBSinkConfig {
-    
-    public CloudSQLPostgreSQLSinkConfig() {
-      this.instanceType = CloudSQLPostgreSQLConstants.PUBLIC_INSTANCE;
-    }
+  public static class CloudSQLPostgreSQLSinkConfig extends AbstractDBSpecificSinkConfig {
 
-    @Name(CloudSQLPostgreSQLConstants.CONNECTION_NAME)
-    @Description(
-        "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
-            + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
-            + "instance, enter the internal IP address of the Compute Engine VM cloudsql proxy is running on.")
-    public String connectionName;
+    @Name(ConfigUtil.NAME_USE_CONNECTION)
+    @Nullable
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(ConfigUtil.NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private CloudSQLPostgreSQLConnectorConfig connection;
 
     @Name(CloudSQLPostgreSQLConstants.CONNECTION_TIMEOUT)
     @Description(
@@ -116,21 +123,12 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
             + "than this value, the connection is broken. The timeout is specified in seconds and a value "
             + "of zero means that it is disabled")
     @Nullable
-    public Integer connectionTimeout;
-
-    @Name(DATABASE)
-    @Description("Database name to connect to")
-    public String database;
+    private Integer connectionTimeout;
 
     @Name(TRANSACTION_ISOLATION_LEVEL)
     @Description("Transaction isolation level for queries run by this sink.")
     @Nullable
-    public String transactionIsolationLevel;
-
-    @Name(CloudSQLPostgreSQLConstants.INSTANCE_TYPE)
-    @Description("Whether the CloudSQL instance to connect to is private or public.")
-    @Nullable
-    public String instanceType;
+    private String transactionIsolationLevel;
 
     @Override
     public String getTransactionIsolationLevel() {
@@ -139,7 +137,7 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
 
     @Override
     public String getEscapedTableName() {
-      return ESCAPE_CHAR + tableName + ESCAPE_CHAR;
+      return ESCAPE_CHAR + getTableName() + ESCAPE_CHAR;
     }
 
     @Override
@@ -149,18 +147,9 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
     }
 
     @Override
-    public String getConnectionString() {
-      if (CloudSQLPostgreSQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
-        return String.format(
-            CloudSQLPostgreSQLConstants.PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
-            connectionName,
-            database);
-      }
-
-      return String.format(
-          CloudSQLPostgreSQLConstants.PUBLIC_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
-          database,
-          connectionName);
+    @Nullable
+    protected CloudSQLPostgreSQLConnectorConfig getConnection() {
+      return connection;
     }
   }
 }

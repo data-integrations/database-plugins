@@ -30,7 +30,6 @@ import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.SchemaReader;
-import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -51,9 +50,9 @@ import java.util.Map;
 public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends AbstractDBConnector
   implements BatchConnector<LongWritable, T> {
 
-  private final AbstractDBSpecificConnectorConfig config;
+  private final AbstractDBConnectorConfig config;
 
-  protected AbstractDBSpecificConnector(AbstractDBSpecificConnectorConfig config) {
+  protected AbstractDBSpecificConnector(AbstractDBConnectorConfig config) {
     super(config);
     this.config = config;
   }
@@ -93,9 +92,9 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
                                         tableQuery, null, false);
     connectionConfigAccessor.setConnectionArguments(Maps.fromProperties(config.getConnectionArgumentsProperties()));
     connectionConfigAccessor.getConfiguration().setInt(MRJobConfig.NUM_MAPS, 1);
-    if (config.getTransactionIsolationLevel() != null) {
-      connectionConfigAccessor.getConfiguration()
-        .set(TransactionIsolationLevel.CONF_KEY, config.getTransactionIsolationLevel());
+    Map<String, String> additionalArguments = config.getAdditionalArguments();
+    for (Map.Entry<String, String> argument : additionalArguments.entrySet()) {
+      connectionConfigAccessor.getConfiguration().set(argument.getKey(), argument.getValue());
     }
     try {
       connectionConfigAccessor.setSchema(loadTableSchema(getConnection(path),  tableQuery).toString());

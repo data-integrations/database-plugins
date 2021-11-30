@@ -17,17 +17,25 @@
 package io.cdap.plugin.cloudsql.postgres;
 
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import io.cdap.plugin.postgres.PostgresDBRecord;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.util.Collections;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Batch source to read from a CloudSQL PostgreSQL instance database. */
@@ -36,6 +44,7 @@ import javax.annotation.Nullable;
 @Description(
     "Reads from a CloudSQL PostgreSQL database table(s) using a configurable SQL query."
         + " Outputs one record for each row returned by the query.")
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = CloudSQLPostgreSQLConnector.NAME)})
 public class CloudSQLPostgreSQLSource
   extends AbstractDBSource<CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig> {
 
@@ -52,8 +61,8 @@ public class CloudSQLPostgreSQLSource
     
     CloudSQLPostgreSQLUtil.checkConnectionName(
         failureCollector,
-        cloudsqlPostgresqlSourceConfig.instanceType,
-        cloudsqlPostgresqlSourceConfig.connectionName);
+        cloudsqlPostgresqlSourceConfig.connection.getInstanceType(),
+        cloudsqlPostgresqlSourceConfig.connection.getConnectionName());
     
     super.configurePipeline(pipelineConfigurer);
   }
@@ -71,55 +80,41 @@ public class CloudSQLPostgreSQLSource
   @Override
   protected String createConnectionString() {
     if (CloudSQLPostgreSQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(
-        cloudsqlPostgresqlSourceConfig.instanceType)) {
+        cloudsqlPostgresqlSourceConfig.connection.getInstanceType())) {
       return String.format(
           CloudSQLPostgreSQLConstants.PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
-          cloudsqlPostgresqlSourceConfig.connectionName,
-          cloudsqlPostgresqlSourceConfig.database);
+          cloudsqlPostgresqlSourceConfig.connection.getConnectionName(),
+          cloudsqlPostgresqlSourceConfig.connection.getDatabase());
     }
 
     return String.format(
         CloudSQLPostgreSQLConstants.PUBLIC_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
-        cloudsqlPostgresqlSourceConfig.database,
-        cloudsqlPostgresqlSourceConfig.connectionName);
+        cloudsqlPostgresqlSourceConfig.connection.getDatabase(),
+        cloudsqlPostgresqlSourceConfig.connection.getConnectionName());
   }
 
   /** CloudSQL PostgreSQL source config. */
-  public static class CloudSQLPostgreSQLSourceConfig extends AbstractDBSource.DBSourceConfig {
-    
-    public CloudSQLPostgreSQLSourceConfig() {
-      this.instanceType = CloudSQLPostgreSQLConstants.PUBLIC_INSTANCE;
-    }
-  
-    @Name(CloudSQLPostgreSQLConstants.CONNECTION_NAME)
-    @Description(
-        "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
-            + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
-            + "instance, enter the internal IP address of the Compute Engine VM cloudsql proxy is running on.")
-    public String connectionName;
+  public static class CloudSQLPostgreSQLSourceConfig extends AbstractDBSpecificSourceConfig {
 
-    @Name(DATABASE)
-    @Description("Database name to connect to")
-    public String database;
-  
-    @Name(CloudSQLPostgreSQLConstants.INSTANCE_TYPE)
-    @Description("Whether the CloudSQL instance to connect to is private or public.")
+    @Name(ConfigUtil.NAME_USE_CONNECTION)
     @Nullable
-    public String instanceType;
-  
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(ConfigUtil.NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private CloudSQLPostgreSQLConnectorConfig connection;
+
     @Override
-    public String getConnectionString() {
-      if (CloudSQLPostgreSQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
-        return String.format(
-            CloudSQLPostgreSQLConstants.PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
-            connectionName,
-            database);
-      }
-      
-      return String.format(
-          CloudSQLPostgreSQLConstants.PUBLIC_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
-          database,
-          connectionName);
+    protected Map<String, String> getDBSpecificArguments() {
+      return Collections.emptyMap();
+    }
+
+    @Override
+    protected CloudSQLPostgreSQLConnectorConfig getConnection() {
+      return connection;
     }
   }
 }

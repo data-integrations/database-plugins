@@ -18,13 +18,19 @@ package io.cdap.plugin.cloudsql.mysql;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 
 import java.util.Map;
@@ -35,6 +41,7 @@ import javax.annotation.Nullable;
 @Name(CloudSQLMySQLConstants.PLUGIN_NAME)
 @Description(
     "Writes records to a CloudSQL MySQL table. Each record will be written in a row in the table.")
+@Metadata(properties = {@MetadataProperty(key = Connector.PLUGIN_TYPE, value = CloudSQLMySQLConnector.NAME)})
 public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQLMySQLSinkConfig> {
 
   private final CloudSQLMySQLSinkConfig cloudsqlMysqlSinkConfig;
@@ -50,8 +57,8 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
     
     CloudSQLMySQLUtil.checkConnectionName(
         failureCollector,
-        cloudsqlMysqlSinkConfig.instanceType,
-        cloudsqlMysqlSinkConfig.connectionName);
+        cloudsqlMysqlSinkConfig.connection.getInstanceType(),
+        cloudsqlMysqlSinkConfig.connection.getConnectionName());
     
     super.configurePipeline(pipelineConfigurer);
   }
@@ -62,22 +69,18 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
   }
   
   /** CloudSQL MySQL sink configuration. */
-  public static class CloudSQLMySQLSinkConfig extends AbstractDBSink.DBSinkConfig {
-    
-    public CloudSQLMySQLSinkConfig() {
-      this.instanceType = CloudSQLMySQLConstants.PUBLIC_INSTANCE;
-    }
-  
-    @Name(CloudSQLMySQLConstants.CONNECTION_NAME)
-    @Description(
-        "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
-            + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
-            + "instance, enter the internal IP address of the Compute Engine VM cloudsql proxy is running on.")
-    public String connectionName;
+  public static class CloudSQLMySQLSinkConfig extends AbstractDBSpecificSinkConfig {
 
-    @Name(DATABASE)
-    @Description("Database name to connect to")
-    public String database;
+    @Name(ConfigUtil.NAME_USE_CONNECTION)
+    @Nullable
+    @Description("Whether to use an existing connection.")
+    private Boolean useConnection;
+
+    @Name(ConfigUtil.NAME_CONNECTION)
+    @Macro
+    @Nullable
+    @Description("The existing connection to use.")
+    private CloudSQLMySQLConnectorConfig connection;
 
     @Name(CloudSQLMySQLConstants.CONNECTION_TIMEOUT)
     @Description(
@@ -91,26 +94,6 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
     @Description("Transaction isolation level for queries run by this sink.")
     @Nullable
     public String transactionIsolationLevel;
-  
-    @Name(CloudSQLMySQLConstants.INSTANCE_TYPE)
-    @Description("Whether the CloudSQL instance to connect to is private or public.")
-    @Nullable
-    public String instanceType;
-
-    @Override
-    public String getConnectionString() {
-      if (CloudSQLMySQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
-        return String.format(
-            CloudSQLMySQLConstants.PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
-            connectionName,
-            database);
-      }
-      
-      return String.format(
-          CloudSQLMySQLConstants.PUBLIC_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
-          database,
-          connectionName);
-    }
 
     @Override
     public String getTransactionIsolationLevel() {
@@ -121,6 +104,12 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
     public Map<String, String> getDBSpecificArguments() {
       return ImmutableMap.of(
           CloudSQLMySQLConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
+    }
+
+    @Override
+    @Nullable
+    protected CloudSQLMySQLConnectorConfig getConnection() {
+      return connection;
     }
   }
 }
