@@ -46,6 +46,7 @@ import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
 import org.slf4j.Logger;
@@ -155,8 +156,17 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
       configAccessor.setTransactionIsolationLevel(dbSinkConfig.getTransactionIsolationLevel());
     }
 
+    // Get Hadoop configuration object
+    Configuration configuration = configAccessor.getConfiguration();
+
+    // Configure batch size if specified in pipeline arguments.
+    if (context.getArguments().has(ETLDBOutputFormat.COMMIT_BATCH_SIZE)) {
+      configuration.set(ETLDBOutputFormat.COMMIT_BATCH_SIZE,
+                        context.getArguments().get(ETLDBOutputFormat.COMMIT_BATCH_SIZE));
+    }
+
     context.addOutput(Output.of(dbSinkConfig.referenceName, new SinkOutputFormatProvider(ETLDBOutputFormat.class,
-      configAccessor.getConfiguration())));
+      configuration)));
   }
 
   /**
