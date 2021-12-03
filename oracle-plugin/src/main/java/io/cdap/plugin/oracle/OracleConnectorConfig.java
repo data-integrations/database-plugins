@@ -111,7 +111,9 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   @Override
   public Map<String, String> getAdditionalArguments() {
     Map<String, String> additonalArguments = new HashMap<>();
-    additonalArguments.put(TransactionIsolationLevel.CONF_KEY, getTransactionIsolationLevel());
+    if (getTransactionIsolationLevel() != null) {
+      additonalArguments.put(TransactionIsolationLevel.CONF_KEY, getTransactionIsolationLevel());
+    }
     return additonalArguments;
   }
 
