@@ -74,20 +74,21 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
       return;
     }
 
-    properties.put(MysqlSource.MysqlSourceConfig.IMPORT_QUERY, getTableQuery(path));
+    properties.put(MysqlSource.MysqlSourceConfig.IMPORT_QUERY, getTableQuery(path.getDatabase(), path.getSchema(),
+                                                                             path.getTable()));
     properties.put(MysqlSource.MysqlSourceConfig.NUM_SPLITS, "1");
     properties.put(MysqlSource.MysqlSourceConfig.DATABASE, path.getDatabase());
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
   }
 
   @Override
-  protected String getTableQuery(DBConnectorPath path) {
-    return String.format("SELECT * FROM `%s`.`%s`", path.getDatabase(), path.getTable());
+  protected String getTableQuery(String database, String schema, String table) {
+    return String.format("SELECT * FROM `%s`.`%s`", database, table);
   }
 
   @Override
-  protected String getTableQuery(DBConnectorPath path, int limit) {
-    return String.format("SELECT * FROM `%s`.`%s` LIMIT %d", path.getDatabase(), path.getTable(), limit);
+  protected String getTableQuery(String database, String schema, String table, int limit) {
+    return String.format("SELECT * FROM `%s`.`%s` LIMIT %d", database, table, limit);
   }
 
   @Override
