@@ -20,7 +20,7 @@
 
   <groupId>io.cdap.plugin</groupId>
   <artifactId>database-plugins-parent</artifactId>
-  <version>1.6.2-SNAPSHOT</version>
+  <version>1.7.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Database Plugins</name>
   <description>Collection of database plugins</description>
@@ -61,7 +61,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- version properties -->
     <cdap.version>6.5.0</cdap.version>
-    <cdap.plugin.version>2.7.2-SNAPSHOT</cdap.plugin.version>
+    <cdap.plugin.version>2.8.0-SNAPSHOT</cdap.plugin.version>
     <guava.version>13.0.1</guava.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
