@@ -88,7 +88,7 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
       DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(),
                      getConnectionString(path.getDatabase()), config.getUser(), config.getPassword());
     }
-    String tableQuery = getTableQuery(path, request.getLimit());
+    String tableQuery = getTableQuery(path.getDatabase(), path.getSchema(), path.getTable(), request.getLimit());
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
                                         tableQuery, null, false);
     connectionConfigAccessor.setConnectionArguments(Maps.fromProperties(config.getConnectionArgumentsProperties()));
@@ -116,16 +116,16 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     return config.getConnectionString();
   }
 
-  protected String getTableQuery(DBConnectorPath path) {
-    return path.getSchema() == null ? String.format("SELECT * FROM \"%s\".\"%s\"", path.getDatabase(), path.getTable())
-      : String.format("SELECT * FROM \"%s\".\"%s\".\"%s\"", path.getDatabase(), path.getSchema(), path.getTable());
+  protected String getTableQuery(String database, String schema, String table) {
+    return schema == null ? String.format("SELECT * FROM \"%s\".\"%s\"", database, table)
+      : String.format("SELECT * FROM \"%s\".\"%s\".\"%s\"", database, schema, table);
   }
 
-  protected String getTableQuery(DBConnectorPath path, int limit) {
-    return path.getSchema() == null ?
-      String.format("SELECT * FROM \"%s\".\"%s\" LIMIT %d", path.getDatabase(), path.getTable(), limit) :
+  protected String getTableQuery(String database, String schema, String table, int limit) {
+    return schema == null ?
+      String.format("SELECT * FROM \"%s\".\"%s\" LIMIT %d", database, table, limit) :
       String.format(
-        "SELECT * FROM \"%s\".\"%s\".\"%s\" LIMIT %d", path.getDatabase(), path.getSchema(), path.getTable(), limit);
+        "SELECT * FROM \"%s\".\"%s\".\"%s\" LIMIT %d", database, schema, table, limit);
   }
 
   protected Schema loadTableSchema(Connection connection, String query) throws SQLException {
@@ -143,5 +143,12 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     properties.put(ConnectionConfig.USER, rawProperties.get(ConnectionConfig.USER));
     properties.put(ConnectionConfig.PASSWORD, rawProperties.get(ConnectionConfig.PASSWORD));
     properties.put(ConnectionConfig.CONNECTION_ARGUMENTS, rawProperties.get(ConnectionConfig.CONNECTION_ARGUMENTS));
+  }
+
+  @Override
+  protected Schema getTableSchema(Connection connection, String database,
+                                  String schema, String table) throws SQLException {
+
+    return loadTableSchema(getConnection(),  getTableQuery(database, schema, table));
   }
 }
