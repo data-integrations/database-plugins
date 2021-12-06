@@ -46,7 +46,8 @@ public final class MysqlUtil {
                                                                   String clientCertificateKeyStoreUrl,
                                                                   String clientCertificateKeyStorePassword,
                                                                   String trustCertificateKeyStoreUrl,
-                                                                  String trustCertificateKeyStorePassword) {
+                                                                  String trustCertificateKeyStorePassword,
+                                                                  boolean useCursorFetch) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
 
     if (autoReconnect != null) {
@@ -71,6 +72,9 @@ public final class MysqlUtil {
     }
     if (trustCertificateKeyStorePassword != null) {
       builder.put(MysqlConstants.TRUST_CERT_KEYSTORE_PASSWORD, String.valueOf(trustCertificateKeyStorePassword));
+    }
+    if (useCursorFetch) {
+      builder.put(MysqlConstants.USE_CURSOR_FETCH, "true");
     }
 
     return builder.build();

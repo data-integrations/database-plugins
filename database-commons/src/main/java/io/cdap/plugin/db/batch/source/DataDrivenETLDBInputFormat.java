@@ -101,6 +101,11 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
         } else {
           this.connection.setAutoCommit(false);
         }
+
+        if (connectionConfigAccessor.getFetchSize() > 0) {
+          this.connection = new ConnectionWithFetchSize(connection, connectionConfigAccessor.getFetchSize());
+        }
+
         String level = connectionConfigAccessor.getConfiguration().get(TransactionIsolationLevel.CONF_KEY);
         LOG.debug("Transaction isolation level: {}", level);
         connection.setTransactionIsolation(TransactionIsolationLevel.getLevel(level));

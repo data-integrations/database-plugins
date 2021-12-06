@@ -33,6 +33,7 @@ import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -101,7 +102,14 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
 
     @Override
     protected Map<String, String> getDBSpecificArguments() {
-      return Collections.emptyMap();
+      if (getFetchSize() == null || getFetchSize() <= 0) {
+        return Collections.emptyMap();
+      }
+      Map<String, String> arguments = new HashMap<>();
+      // If connected to MySQL > 5.0.2, and setFetchSize() > 0 on a statement,
+      // statement will use cursor-based fetching to retrieve rows
+      arguments.put("useCursorFetch", "true");
+      return arguments;
     }
 
     @Override
