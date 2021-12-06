@@ -265,9 +265,7 @@ public abstract class DBSpecificConnectorBaseTest {
     Map<String, String> properties = pluginSpec.getProperties();
     Assert.assertNull(properties.get(NAME_USE_CONNECTION));
     Assert.assertNull(properties.get(NAME_CONNECTION));
-    Assert.assertEquals(connector.getTableQuery(connector.getDBConnectorPath(schema == null ? database + "/" + table :
-                                                                               database + "/" + schema + "/" + table)),
-                        properties.get(IMPORT_QUERY));
+    Assert.assertEquals(connector.getTableQuery(database, schema, table), properties.get(IMPORT_QUERY));
     properties.put("1", properties.get(NUM_SPLITS));
   }
 
