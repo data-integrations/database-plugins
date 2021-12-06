@@ -78,7 +78,9 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
       return;
     }
 
-    properties.put(SqlServerSource.SqlServerSourceConfig.IMPORT_QUERY, getTableQuery(path));
+    properties.put(SqlServerSource.SqlServerSourceConfig.IMPORT_QUERY, getTableQuery(path.getDatabase(),
+                                                                                     path.getSchema(),
+                                                                                     path.getTable()));
     properties.put(SqlServerSource.SqlServerSourceConfig.NUM_SPLITS, "1");
     properties.put(SqlServerSource.SqlServerSourceConfig.DATABASE, path.getDatabase());
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
@@ -96,9 +98,9 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   }
 
   @Override
-  protected String getTableQuery(DBConnectorPath path, int limit) {
+  protected String getTableQuery(String database, String schema, String table, int limit) {
     return String.format(
-      "SELECT TOP(%d) * FROM \"%s\".\"%s\".\"%s\"", limit, path.getDatabase(), path.getSchema(), path.getTable());
+      "SELECT TOP(%d) * FROM \"%s\".\"%s\".\"%s\"", limit, database, schema, table);
   }
 
   @Override

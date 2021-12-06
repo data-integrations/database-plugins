@@ -78,13 +78,13 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
   }
 
   @Override
-  protected String getTableQuery(DBConnectorPath path) {
-    return String.format("SELECT * FROM \"%s\".\"%s\"", path.getSchema(), path.getTable());
+  protected String getTableQuery(String database, String schema, String table) {
+    return String.format("SELECT * FROM \"%s\".\"%s\"", schema, table);
   }
 
   @Override
-  protected String getTableQuery(DBConnectorPath path, int limit) {
-    return String.format("SELECT * FROM \"%s\".\"%s\" LIMIT %d", path.getSchema(), path.getTable(), limit);
+  protected String getTableQuery(String database, String schema, String table, int limit) {
+    return String.format("SELECT * FROM \"%s\".\"%s\" LIMIT %d", schema, table, limit);
   }
 
   @Override
@@ -101,7 +101,8 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
       return;
     }
 
-    properties.put(CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig.IMPORT_QUERY, getTableQuery(path));
+    properties.put(CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig.IMPORT_QUERY,
+                   getTableQuery(path.getDatabase(), path.getSchema(), path.getTable()));
     properties.put(CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig.NUM_SPLITS, "1");
     properties.put(ConnectionConfig.DATABASE, path.getDatabase());
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
