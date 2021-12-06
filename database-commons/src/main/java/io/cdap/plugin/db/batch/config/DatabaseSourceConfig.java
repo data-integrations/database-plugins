@@ -80,4 +80,9 @@ public interface DatabaseSourceConfig extends DatabaseConnectionConfig {
    * @return the initial query to be run upon connecting to database
    */
   List<String> getInitQueries();
+
+  /**
+   * @return the number of rows to fetch at a time per split
+   */
+  Integer getFetchSize();
 }

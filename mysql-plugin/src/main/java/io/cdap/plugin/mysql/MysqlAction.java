@@ -105,7 +105,7 @@ public class MysqlAction extends AbstractDBAction {
                                                      clientCertificateKeyStoreUrl,
                                                      clientCertificateKeyStorePassword,
                                                      trustCertificateKeyStoreUrl,
-                                                     trustCertificateKeyStorePassword);
+                                                     trustCertificateKeyStorePassword, false);
     }
 
     @Override

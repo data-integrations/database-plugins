@@ -46,6 +46,7 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
   public static final String NUM_SPLITS = "numSplits";
   public static final String SCHEMA = "schema";
   public static final String DATABASE = "database";
+  public static final String FETCH_SIZE = "fetchSize";
 
   @Name(Constants.Reference.REFERENCE_NAME)
   @Description(Constants.Reference.REFERENCE_NAME_DESCRIPTION)
@@ -88,6 +89,13 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
     "back from the query. This should only be used if there is a bug in your jdbc driver. For example, if a column " +
     "is not correctly getting marked as nullable.")
   private String schema;
+
+  @Nullable
+  @Name(FETCH_SIZE)
+  @Macro
+  @Description("The number of rows to fetch at a time per split. Larger fetch size can result in faster import, " +
+    "with the tradeoff of higher memory usage.")
+  private Integer fetchSize;
 
   public String getImportQuery() {
     return cleanQuery(importQuery);
@@ -137,6 +145,11 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
       collector.addFailure("Bounding Query must be specified if Number of Splits is not set to 1.",
                            "Specify the Bounding Query.")
         .withConfigProperty(BOUNDING_QUERY).withConfigProperty(NUM_SPLITS);
+    }
+
+    if (!containsMacro(FETCH_SIZE) && fetchSize != null && fetchSize <= 0) {
+      collector.addFailure("Invalid fetch size.", "Fetch size must be a positive integer.")
+        .withConfigProperty(FETCH_SIZE);
     }
   }
 
@@ -242,5 +255,10 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
   protected abstract Map<String, String> getDBSpecificArguments();
 
   protected abstract AbstractDBSpecificConnectorConfig getConnection();
+
+  @Override
+  public Integer getFetchSize() {
+    return fetchSize;
+  }
 
 }

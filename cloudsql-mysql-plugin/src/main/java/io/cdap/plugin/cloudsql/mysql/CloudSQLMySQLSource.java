@@ -25,6 +25,9 @@ import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Batch source to read from CloudSQL MySQL. */
@@ -111,6 +114,18 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
           CloudSQLMySQLConstants.PUBLIC_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
           database,
           connectionName);
+    }
+
+    @Override
+    protected Map<String, String> getDBSpecificArguments() {
+      if (getFetchSize() == null || getFetchSize() <= 0) {
+        return Collections.emptyMap();
+      }
+      Map<String, String> arguments = new HashMap<>();
+      // If connected to MySQL > 5.0.2, and setFetchSize() > 0 on a statement,
+      // statement will use cursor-based fetching to retrieve rows
+      arguments.put("useCursorFetch", "true");
+      return arguments;
     }
   }
 }

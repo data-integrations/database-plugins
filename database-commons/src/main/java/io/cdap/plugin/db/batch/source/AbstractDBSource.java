@@ -246,6 +246,10 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
                                   sourceConfig.getUser(), sourceConfig.getPassword());
     }
 
+    if (sourceConfig.getFetchSize() != null) {
+      connectionConfigAccessor.setFetchSize(sourceConfig.getFetchSize());
+    }
+
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
                                         sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery(),
                                         false);
@@ -325,6 +329,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     public static final String NUM_SPLITS = "numSplits";
     public static final String SCHEMA = "schema";
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
+    public static final String FETCH_SIZE = "fetchSize";
 
     @Name(IMPORT_QUERY)
     @Description("The SELECT query to use to import data from the specified table. " +
@@ -363,6 +368,13 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
       "back from the query. This should only be used if there is a bug in your jdbc driver. For example, if a column " +
       "is not correctly getting marked as nullable.")
     public String schema;
+
+    @Nullable
+    @Name(FETCH_SIZE)
+    @Macro
+    @Description("The number of rows to fetch at a time per split. Larger fetch size can result in faster import, " +
+      "with the tradeoff of higher memory usage.")
+    private Integer fetchSize;
 
     public String getImportQuery() {
       return cleanQuery(importQuery);
@@ -468,6 +480,11 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
         throw new IllegalArgumentException(String.format("Unable to parse schema '%s'. Reason: %s",
                                                          schema, e.getMessage()), e);
       }
+    }
+
+    @Override
+    public Integer getFetchSize() {
+      return fetchSize;
     }
   }
 
