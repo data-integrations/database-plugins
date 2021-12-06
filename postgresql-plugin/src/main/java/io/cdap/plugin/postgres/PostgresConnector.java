@@ -81,7 +81,8 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
       return;
     }
 
-    properties.put(PostgresSource.PostgresSourceConfig.IMPORT_QUERY, getTableQuery(path));
+    properties.put(PostgresSource.PostgresSourceConfig.IMPORT_QUERY, getTableQuery(path.getDatabase(),
+                                                                                   path.getSchema(), path.getTable()));
     properties.put(PostgresSource.PostgresSourceConfig.NUM_SPLITS, "1");
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
 
@@ -104,8 +105,9 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     return record.getRecord();
   }
 
-  protected String getTableQuery(DBConnectorPath path) {
-    return String.format("SELECT * FROM \"%s\".\"%s\"", path.getSchema(), path.getTable());
+  @Override
+  protected String getTableQuery(String database, String schema, String table) {
+    return String.format("SELECT * FROM \"%s\".\"%s\"", schema, table);
   }
 
   @Override
