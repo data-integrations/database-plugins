@@ -21,12 +21,12 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.6.2</version>
+    <version>1.6.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>teradata-plugin</artifactId>
   <name>Teradata plugin</name>
-  <version>1.6.2</version>
+  <version>1.6.3-SNAPSHOT</version>
   <modelVersion>4.0.0</modelVersion>
 
   <dependencies>
