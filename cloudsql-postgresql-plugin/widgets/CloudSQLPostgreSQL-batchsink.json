@@ -128,8 +128,7 @@
               "TRANSACTION_READ_COMMITTED",
               "TRANSACTION_READ_UNCOMMITTED",
               "TRANSACTION_REPEATABLE_READ",
-              "TRANSACTION_SERIALIZABLE",
-              "TRANSACTION_NONE"
+              "TRANSACTION_SERIALIZABLE"
             ]
           }
         },
