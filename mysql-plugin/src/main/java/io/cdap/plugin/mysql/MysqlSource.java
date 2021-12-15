@@ -30,6 +30,7 @@ import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -132,11 +133,14 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
 
     @Override
     public Map<String, String> getDBSpecificArguments() {
+      // If connected to MySQL > 5.0.2, and setFetchSize() > 0 on a statement,
+      // statement will use cursor-based fetching to retrieve rows
+      boolean useCursorFetch = getFetchSize() != null && getFetchSize() > 0;
       return MysqlUtil.composeDbSpecificArgumentsMap(autoReconnect, useCompression, useSSL,
                                                      clientCertificateKeyStoreUrl,
                                                      clientCertificateKeyStorePassword,
                                                      trustCertificateKeyStoreUrl,
-                                                     trustCertificateKeyStorePassword);
+                                                     trustCertificateKeyStorePassword, useCursorFetch);
     }
 
     @Override

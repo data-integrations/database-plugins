@@ -145,6 +145,15 @@
           "widget-attributes": {
             "default": "1"
           }
+        },
+        {
+          "widget-type": "number",
+          "label": "Fetch Size",
+          "name": "fetchSize",
+          "widget-attributes": {
+            "default": "1000",
+            "minimum": "0"
+          }
         }
       ]
     },

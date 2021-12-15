@@ -85,4 +85,9 @@ public interface DatabaseSourceConfig extends DatabaseConnectionConfig {
    * @return true if none of the connection parameters is macro, otherwise false
    */
   boolean canConnect();
+
+  /**
+   * @return the number of rows to fetch at a time per split
+   */
+  Integer getFetchSize();
 }
