@@ -73,6 +73,8 @@ connections.
 
 **SQL_MODE:** Override the default SQL_MODE session variable used by the server.
 
+**Fetch Size:** The number of rows to fetch at a time per split. Larger fetch size can result in faster import,
+with the tradeoff of higher memory usage.
 
 Data Types Mapping
 ----------

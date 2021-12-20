@@ -54,6 +54,8 @@ will be passed to the JDBC driver as connection arguments for JDBC drivers that 
 
 **Default Row Prefetch:** The default number of rows to prefetch from the server.
 
+**Fetch Size:** The number of rows to fetch at a time per split. Larger fetch size can result in faster import,
+with the tradeoff of higher memory usage.
 
 Data Types Mapping
 ----------
