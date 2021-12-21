@@ -100,7 +100,7 @@ public class MysqlSink extends AbstractDBSink {
                                                      clientCertificateKeyStoreUrl,
                                                      clientCertificateKeyStorePassword,
                                                      trustCertificateKeyStoreUrl,
-                                                     trustCertificateKeyStorePassword);
+                                                     trustCertificateKeyStorePassword, false);
     }
 
     @Override

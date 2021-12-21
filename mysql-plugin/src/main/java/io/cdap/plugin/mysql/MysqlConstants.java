@@ -38,6 +38,7 @@ public final class MysqlConstants {
   public static final String TRUST_CERT_KEYSTORE_URL = "trustCertificateKeyStoreUrl";
   public static final String TRUST_CERT_KEYSTORE_PASSWORD = "trustCertificateKeyStorePassword";
   public static final String MYSQL_CONNECTION_STRING_FORMAT = "jdbc:mysql://%s:%s/%s";
+  public static final String USE_CURSOR_FETCH = "useCursorFetch";
 
   /**
    * Query to set SQL_MODE system variable.

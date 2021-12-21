@@ -105,7 +105,7 @@ public class MysqlPostAction extends AbstractQueryAction {
                                                      clientCertificateKeyStoreUrl,
                                                      clientCertificateKeyStorePassword,
                                                      trustCertificateKeyStoreUrl,
-                                                     trustCertificateKeyStorePassword);
+                                                     trustCertificateKeyStorePassword, false);
     }
 
     @Override
