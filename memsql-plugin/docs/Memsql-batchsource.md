@@ -71,8 +71,8 @@ connections.
 
 **Use ANSI Quotes:** Treats " as an identifier quote character and not as a string quote character.
 
-**Fetch Size:** The number of rows to fetch at a time per split. Larger fetch size can result in faster import, " +
-"with the tradeoff of higher memory usage.
+**Fetch Size:** The number of rows to fetch at a time per split. Larger fetch size can result in faster import,
+with the tradeoff of higher memory usage.
 
 Data Types Mapping
 ----------

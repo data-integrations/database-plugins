@@ -48,8 +48,8 @@ except it can mark fields as nullable and can contain a subset of the fields.
 
 **Transaction Isolation Level:** The transaction isolation level for queries run by this sink.
 
-**Fetch Size:** The number of rows to fetch at a time per split. Larger fetch size can result in faster import, " +
-"with the tradeoff of higher memory usage.
+**Fetch Size:** The number of rows to fetch at a time per split. Larger fetch size can result in faster import,
+with the tradeoff of higher memory usage.
 
 Example
 -------   
