@@ -51,6 +51,8 @@ will be passed to the JDBC driver as connection arguments for JDBC drivers that 
 back from the query. However, it must match the schema that comes back from the query,
 except it can mark fields as nullable and can contain a subset of the fields.
 
+**Fetch Size:** The number of rows to fetch at a time per split. Larger fetch size can result in faster import,
+with the tradeoff of higher memory usage.
 
 Examples
 --------
