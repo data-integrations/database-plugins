@@ -14,8 +14,6 @@
  * the License.
  */
 /**
- * Package contains the runner for the CloudSqlMySQL features.
+ * Package contains step actions for the CloudSqlMySQL features.
  */
 package io.cdap.plugin.cloudsqlmysql.actions;
-
-

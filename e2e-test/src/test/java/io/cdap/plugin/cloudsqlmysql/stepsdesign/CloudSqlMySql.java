@@ -54,8 +54,6 @@ public class CloudSqlMySql implements CdfHelper {
     public static String folderName;
     List<String> propertiesSchemaColumnList = new ArrayList<>();
     Map<String, String> sourcePropertiesOutputSchema = new HashMap<>();
-    static int i = 0;
-    GcpClient gcpClient = new GcpClient();
     int cloudSqlMySqlPreRecordsCount;
     int cloudSqlMySqlPostRecordsCount;
 
@@ -497,7 +495,7 @@ public class CloudSqlMySql implements CdfHelper {
     @Then("Get Count of no of records transferred to BigQuery in {string}")
     public void getCountOfNoOfRecordsTransferredToBigQueryIn(String table) throws IOException, InterruptedException {
         int countRecords;
-        countRecords = gcpClient.countBqQuery(E2ETestUtils.pluginProp(table));
+        countRecords = GcpClient.countBqQuery(E2ETestUtils.pluginProp(table));
         BeforeActions.scenario.write("**********No of Records Transferred******************:" + countRecords);
         Assert.assertEquals(countRecords, recordOut());
     }
@@ -515,7 +513,7 @@ public class CloudSqlMySql implements CdfHelper {
 
     @Then("Delete the table {string}")
     public void deleteTheTable(String table) throws IOException, InterruptedException {
-        gcpClient.dropBqQuery(E2ETestUtils.pluginProp(table));
+        GcpClient.dropBqQuery(E2ETestUtils.pluginProp(table));
         BeforeActions.scenario.write("Table Deleted Successfully");
     }
 
@@ -794,7 +792,6 @@ public class CloudSqlMySql implements CdfHelper {
         folderName = E2ETestUtils.listObjects(E2ETestUtils.pluginProp(projectID),
                 E2ETestUtils.pluginProp(bucketName));
         Assert.assertTrue(folderName != null);
-
     }
 
     @Then("Validate the count of records transferred from BigQuery {string} to CloudSqlMySql {string}")
