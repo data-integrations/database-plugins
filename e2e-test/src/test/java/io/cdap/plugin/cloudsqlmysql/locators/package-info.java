@@ -14,8 +14,6 @@
  * the License.
  */
 /**
- * Package contains the runner for the cloudSqlMySql features.
+ * Package contains the locators for the cloudSqlMySql features.
  */
 package io.cdap.plugin.cloudsqlmysql.locators;
-
-
