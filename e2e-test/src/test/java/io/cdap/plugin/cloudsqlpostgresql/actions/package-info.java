@@ -13,15 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.cdap.plugin.utils;
-
 /**
- * E2E test constants.
+ * Package contains actions for the cloudSqlPostgreSql actions.
  */
-public class E2ETestConstants {
-  public static final String ERROR_MSG_COLOR = "errorMessageColor";
-  public static final String ERROR_MSG_MANDATORY = "errorMessageMandatory";
-  public static final String ERROR_MSG_VALIDATION = "errorMessageValidation";
-  public static final String ERROR_MSG_ERROR_FOUND_VALIDATION = "errorMessageErrorFoundValidation";
-  public static final String ERROR_MSG_INVALID_DRIVER_NAME = "errorMessageDriverName";
-}
+package io.cdap.plugin.cloudsqlpostgresql.actions;
