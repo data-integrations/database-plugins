@@ -97,7 +97,6 @@ public class CloudSqlPostgreSqlActions {
 
     public static void enterImportQuery(String query) throws IOException, InterruptedException {
         CloudSqlPostgreSqlLocators.importQuery.sendKeys(query);
-        SeleniumHelper.waitElementIsVisible(CloudSqlPostgreSqlLocators.getSchemaButton, 30);
     }
 
     public static void enterBoundingQuery(String query) throws IOException, InterruptedException {
