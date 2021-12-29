@@ -24,6 +24,7 @@ import org.openqa.selenium.WebElement;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import static io.cdap.plugin.utils.E2ETestConstants.ERROR_MSG_COLOR;
 import static io.cdap.plugin.utils.E2ETestConstants.ERROR_MSG_MANDATORY;

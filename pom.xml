@@ -476,6 +476,7 @@
                 <exclude>e2e-test/**/failsafe-reports/**</exclude>
                 <exclude>e2e-test/**/e2e-debug/**</exclude>
                 <exclude>e2e-test/**/*-result.xml</exclude>
+                <exclude>e2e-test/e2e-test.iml</exclude>
               </excludes>
             </configuration>
           </execution>
