@@ -39,9 +39,14 @@ public class OracleFieldsValidator extends CommonFieldsValidator {
     int scale = metadata.getScale(index);
 
     // Handle logical types first
+    if (fieldLogicalType == Schema.LogicalType.DATE) {
+      // oracle date also contains time part so the oracle driver treats date as timestamp
+      // https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT413
+      return sqlType == Types.TIMESTAMP || super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+    }
     if (fieldLogicalType == Schema.LogicalType.TIMESTAMP_MICROS) {
       return sqlType == OracleSinkSchemaReader.TIMESTAMP_LTZ ||
-      super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+        super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
     } else if (fieldLogicalType != null) {
       return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
     }
