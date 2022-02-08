@@ -69,7 +69,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
-    setConnectionProperties(properties);
+    setConnectionProperties(properties, request);
     builder
       .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
       .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));

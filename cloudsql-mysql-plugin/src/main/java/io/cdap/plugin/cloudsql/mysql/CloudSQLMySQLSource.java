@@ -113,6 +113,12 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
     }
 
     @Override
+    public void validate(FailureCollector collector) {
+      ConfigUtil.validateConnection(this, useConnection, connection, collector);
+      super.validate(collector);
+    }
+
+    @Override
     protected CloudSQLMySQLConnectorConfig getConnection() {
       return connection;
     }

@@ -107,6 +107,12 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
     }
 
     @Override
+    public void validate(FailureCollector collector) {
+      ConfigUtil.validateConnection(this, useConnection, connection, collector);
+      super.validate(collector);
+    }
+
+    @Override
     @Nullable
     protected CloudSQLMySQLConnectorConfig getConnection() {
       return connection;

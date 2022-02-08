@@ -24,6 +24,7 @@ import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.ConfigUtil;
@@ -89,6 +90,12 @@ public class OracleSink extends AbstractDBSink<OracleSink.OracleSinkConfig> {
     @Description("The default batch value that triggers an execution request.")
     @Nullable
     public Integer defaultBatchValue;
+
+    @Override
+    public void validate(FailureCollector collector) {
+      super.validate(collector);
+      ConfigUtil.validateConnection(this, useConnection, connection, collector);
+    }
 
     @Override
     protected Map<String, String> getDBSpecificArguments() {

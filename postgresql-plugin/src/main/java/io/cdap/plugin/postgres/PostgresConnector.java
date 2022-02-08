@@ -74,7 +74,7 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
-    setConnectionProperties(properties);
+    setConnectionProperties(properties, request);
     builder
       .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
       .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));
@@ -90,13 +90,6 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
     properties.put(PostgresSink.PostgresSinkConfig.TABLE_NAME, table);
 
-  }
-
-  @Override
-  protected void setConnectionProperties(Map<String, String> properties) {
-    super.setConnectionProperties(properties);
-    properties.put(PostgresConnectorConfig.NAME_DATABASE, config.getRawProperties().getProperties()
-                                                            .get(PostgresConnectorConfig.NAME_DATABASE));
   }
 
   @Override

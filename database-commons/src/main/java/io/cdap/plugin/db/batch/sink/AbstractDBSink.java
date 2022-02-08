@@ -97,15 +97,18 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     StageConfigurer configurer = pipelineConfigurer.getStageConfigurer();
+    FailureCollector collector = configurer.getFailureCollector();
+    dbSinkConfig.validate(collector);
     DBUtils.validateJDBCPluginPipeline(pipelineConfigurer, dbSinkConfig, getJDBCPluginId());
     Schema inputSchema = configurer.getInputSchema();
-    if (Objects.nonNull(inputSchema)) {
-      Class<? extends Driver> driverClass = DBUtils.getDriverClass(
-        pipelineConfigurer, dbSinkConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
-      if (driverClass != null && dbSinkConfig.canConnect()) {
-        FailureCollector collector = configurer.getFailureCollector();
-        validateSchema(collector, driverClass, dbSinkConfig.getTableName(), inputSchema);
-      }
+    if (inputSchema == null || dbSinkConfig.containsMacro(ConnectionConfig.JDBC_PLUGIN_NAME)) {
+      return;
+    }
+
+    Class<? extends Driver> driverClass = DBUtils.getDriverClass(
+      pipelineConfigurer, dbSinkConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
+    if (driverClass != null && dbSinkConfig.canConnect()) {
+      validateSchema(collector, driverClass, dbSinkConfig.getTableName(), inputSchema);
     }
   }
 

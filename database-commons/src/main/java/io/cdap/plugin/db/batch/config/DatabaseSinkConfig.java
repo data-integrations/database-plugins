@@ -16,6 +16,8 @@
 
 package io.cdap.plugin.db.batch.config;
 
+import io.cdap.cdap.etl.api.FailureCollector;
+
 import java.util.List;
 
 /**
@@ -57,4 +59,12 @@ public interface DatabaseSinkConfig extends DatabaseConnectionConfig {
    */
   String getEscapedTableName();
 
+  /**
+   * Validate the sink config
+   *
+   * @param collector the failure collector
+   */
+  default void validate(FailureCollector collector) {
+    // no-op
+  }
 }

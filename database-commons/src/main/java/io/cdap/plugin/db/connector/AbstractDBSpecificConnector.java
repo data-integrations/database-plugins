@@ -21,7 +21,9 @@ import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchConnector;
 import io.cdap.cdap.etl.api.connector.ConnectorContext;
+import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
+import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.SourceInputFormatProvider;
 import io.cdap.plugin.common.db.AbstractDBConnector;
 import io.cdap.plugin.common.db.DBConnectorPath;
@@ -134,14 +136,9 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
   }
 
-  protected void setConnectionProperties(Map<String, String> properties) {
-    Map<String, String> rawProperties = config.getRawProperties().getProperties();
-    properties.put(ConnectionConfig.HOST, rawProperties.get(ConnectionConfig.HOST));
-    properties.put(ConnectionConfig.PORT, rawProperties.get(ConnectionConfig.PORT));
-    properties.put(ConnectionConfig.JDBC_PLUGIN_NAME, rawProperties.get(ConnectionConfig.JDBC_PLUGIN_NAME));
-    properties.put(ConnectionConfig.USER, rawProperties.get(ConnectionConfig.USER));
-    properties.put(ConnectionConfig.PASSWORD, rawProperties.get(ConnectionConfig.PASSWORD));
-    properties.put(ConnectionConfig.CONNECTION_ARGUMENTS, rawProperties.get(ConnectionConfig.CONNECTION_ARGUMENTS));
+  protected void setConnectionProperties(Map<String, String> properties, ConnectorSpecRequest request) {
+    properties.put(ConfigUtil.NAME_USE_CONNECTION, "true");
+    properties.put(ConfigUtil.NAME_CONNECTION, request.getConnectionWithMacro());
   }
 
   @Override

@@ -73,7 +73,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
-    setConnectionProperties(properties);
+    setConnectionProperties(properties, request);
     builder
       .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
       .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));
@@ -93,15 +93,6 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   @Override
   protected DBConnectorPath getDBConnectorPath(String path) throws IOException {
     return new DBPath(path, true);
-  }
-
-  @Override
-  protected void setConnectionProperties(Map<String, String> properties) {
-    super.setConnectionProperties(properties);
-    properties.put(OracleConstants.NAME_DATABASE, config.getRawProperties().getProperties()
-                                                    .get(OracleConstants.NAME_DATABASE));
-    properties.put(OracleConstants.CONNECTION_TYPE, config.getConnectionType());
-    properties.put(OracleConstants.ROLE, config.getRole());
   }
 
   @Override

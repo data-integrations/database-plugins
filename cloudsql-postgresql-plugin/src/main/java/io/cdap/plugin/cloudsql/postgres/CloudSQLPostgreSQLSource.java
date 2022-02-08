@@ -116,5 +116,11 @@ public class CloudSQLPostgreSQLSource
     protected CloudSQLPostgreSQLConnectorConfig getConnection() {
       return connection;
     }
+
+    @Override
+    public void validate(FailureCollector collector) {
+      ConfigUtil.validateConnection(this, useConnection, connection, collector);
+      super.validate(collector);
+    }
   }
 }

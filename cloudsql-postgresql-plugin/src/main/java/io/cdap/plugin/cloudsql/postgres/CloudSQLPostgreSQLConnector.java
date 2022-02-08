@@ -91,7 +91,7 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
     Map<String, String> properties = new HashMap<>();
-    setConnectionProperties(properties);
+    setConnectionProperties(properties, request);
     builder
       .addRelatedPlugin(new PluginSpec(CloudSQLPostgreSQLConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
       .addRelatedPlugin(new PluginSpec(CloudSQLPostgreSQLConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));
@@ -107,17 +107,5 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
     properties.put(ConnectionConfig.DATABASE, path.getDatabase());
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
     properties.put(CloudSQLPostgreSQLSink.CloudSQLPostgreSQLSinkConfig.TABLE_NAME, table);
-  }
-
-  @Override
-  protected void setConnectionProperties(Map<String, String> properties) {
-    Map<String, String> rawProperties = config.getRawProperties().getProperties();
-    properties.put(ConnectionConfig.JDBC_PLUGIN_NAME, rawProperties.get(ConnectionConfig.JDBC_PLUGIN_NAME));
-    properties.put(ConnectionConfig.USER, rawProperties.get(ConnectionConfig.USER));
-    properties.put(ConnectionConfig.PASSWORD, rawProperties.get(ConnectionConfig.PASSWORD));
-    properties.put(CloudSQLPostgreSQLConstants.CONNECTION_NAME,
-                   rawProperties.get(CloudSQLPostgreSQLConstants.CONNECTION_NAME));
-    properties.put(CloudSQLPostgreSQLConstants.INSTANCE_TYPE,
-                   rawProperties.get(CloudSQLPostgreSQLConstants.INSTANCE_TYPE));
   }
 }
