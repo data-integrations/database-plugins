@@ -25,6 +25,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
@@ -120,14 +121,7 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
 
     @Override
     public void validate(FailureCollector collector) {
-      if (Boolean.TRUE.equals(useConnection)) {
-        collector.addFailure("Oracle batch source plugin doesn't support using existing connection.",
-                             "Don't set useConnection property to true.");
-      }
-      if (containsMacro(NAME_CONNECTION)) {
-        collector.addFailure("Oracle batch source plugin doesn't support using existing connection.",
-                             "Remove macro in connection property.");
-      }
+      ConfigUtil.validateConnection(this, useConnection, connection, collector);
       super.validate(collector);
     }
 

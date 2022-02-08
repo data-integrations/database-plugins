@@ -118,6 +118,12 @@ public class PostgresSink extends AbstractDBSink<PostgresSink.PostgresSinkConfig
     public Integer connectionTimeout;
 
     @Override
+    public void validate(FailureCollector collector) {
+      super.validate(collector);
+      ConfigUtil.validateConnection(this, useConnection, connection, collector);
+    }
+
+    @Override
     public String getEscapedTableName() {
       return ESCAPE_CHAR + getTableName() + ESCAPE_CHAR;
     }

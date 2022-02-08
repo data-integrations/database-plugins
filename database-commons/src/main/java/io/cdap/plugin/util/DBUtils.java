@@ -171,17 +171,22 @@ public final class DBUtils {
         .withConfigProperty(ConnectionConfig.USER);
     }
 
-    if (!config.containsMacro(ConnectionConfig.JDBC_PLUGIN_NAME)) {
-      Class<? extends Driver> jdbcDriverClass = getDriverClass(pipelineConfigurer, config, jdbcPluginId);
-      if (jdbcDriverClass == null) {
-        collector.addFailure(
-          String.format("Unable to load JDBC Driver class for plugin name '%s'.", config.getJdbcPluginName()),
-          String.format("Ensure that the plugin '%s' of type '%s' containing the driver has been installed correctly.",
-                        config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE))
-          .withConfigProperty(ConnectionConfig.JDBC_PLUGIN_NAME)
-          .withPluginNotFound(jdbcPluginId, config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE);
-      }
+    // if contains macro for jdbc plugin, just return
+    if (config.containsMacro(ConnectionConfig.JDBC_PLUGIN_NAME)) {
+      collector.getOrThrowException();
+      return;
     }
+
+    Class<? extends Driver> jdbcDriverClass = getDriverClass(pipelineConfigurer, config, jdbcPluginId);
+    if (jdbcDriverClass == null) {
+      collector.addFailure(
+        String.format("Unable to load JDBC Driver class for plugin name '%s'.", config.getJdbcPluginName()),
+        String.format("Ensure that the plugin '%s' of type '%s' containing the driver has been installed correctly.",
+                      config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE))
+        .withConfigProperty(ConnectionConfig.JDBC_PLUGIN_NAME)
+        .withPluginNotFound(jdbcPluginId, config.getJdbcPluginName(), ConnectionConfig.JDBC_PLUGIN_TYPE);
+    }
+
     collector.getOrThrowException();
   }
 

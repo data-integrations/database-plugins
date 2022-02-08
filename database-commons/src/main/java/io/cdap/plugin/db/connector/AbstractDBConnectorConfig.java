@@ -41,6 +41,7 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
   @Description("Name of the JDBC driver to use. This is the value of the 'jdbcPluginName' key defined in the JSON " +
     "file for the JDBC plugin.")
   @Nullable
+  @Macro
   protected String jdbcPluginName;
 
   @Name(ConnectionConfig.USER)
@@ -117,6 +118,7 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
   }
 
   public boolean canConnect() {
-    return !containsMacro(ConnectionConfig.USER) && !containsMacro(ConnectionConfig.PASSWORD);
+    return !containsMacro(ConnectionConfig.JDBC_PLUGIN_NAME) && !containsMacro(ConnectionConfig.USER)
+             && !containsMacro(ConnectionConfig.PASSWORD);
   }
 }

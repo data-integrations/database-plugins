@@ -96,9 +96,6 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     super.configurePipeline(pipelineConfigurer);
     DBUtils.validateJDBCPluginPipeline(pipelineConfigurer, sourceConfig, getJDBCPluginId());
 
-    Class<? extends Driver> driverClass = DBUtils.getDriverClass(
-      pipelineConfigurer, sourceConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
-
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector collector = stageConfigurer.getFailureCollector();
     sourceConfig.validate(collector);
@@ -106,6 +103,15 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
       stageConfigurer.setOutputSchema(sourceConfig.getSchema());
       return;
     }
+
+    // if source config contains macro for jdbc plugin, we will not be able to access the db, just return here
+    if (sourceConfig.containsMacro(ConnectionConfig.JDBC_PLUGIN_NAME)) {
+      return;
+    }
+
+    Class<? extends Driver> driverClass = DBUtils.getDriverClass(
+      pipelineConfigurer, sourceConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
+
     if (sourceConfig.canConnect()) {
       try {
         stageConfigurer.setOutputSchema(getSchema(driverClass));

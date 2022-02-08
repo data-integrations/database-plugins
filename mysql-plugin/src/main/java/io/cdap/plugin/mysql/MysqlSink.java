@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.ConfigUtil;
@@ -129,6 +130,12 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
     @Override
     public MysqlConnectorConfig getConnection() {
       return connection;
+    }
+
+    @Override
+    public void validate(FailureCollector collector) {
+      super.validate(collector);
+      ConfigUtil.validateConnection(this, useConnection, connection, collector);
     }
 
     @Override
