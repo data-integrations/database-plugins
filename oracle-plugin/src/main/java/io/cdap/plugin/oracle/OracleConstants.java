@@ -27,10 +27,12 @@ public final class OracleConstants {
   public static final String PLUGIN_NAME = "Oracle";
   public static final String ORACLE_CONNECTION_STRING_SID_FORMAT = "jdbc:oracle:thin:@%s:%s:%s";
   public static final String ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT = "jdbc:oracle:thin:@//%s:%s/%s";
+  public static final String ORACLE_CONNECTION_STRING_TNS_FORMAT = "jdbc:oracle:thin:@%s";
   public static final String DEFAULT_BATCH_VALUE = "defaultBatchValue";
   public static final String DEFAULT_ROW_PREFETCH = "defaultRowPrefetch";
   public static final String SERVICE_CONNECTION_TYPE = "service";
   public static final String CONNECTION_TYPE = "connectionType";
   public static final String ROLE = "role";
   public static final String NAME_DATABASE = "database";
+  public static final String TNS_CONNECTION_TYPE= "TNS";
 }

@@ -103,14 +103,18 @@
               {
                 "id": "service",
                 "label": "Service Name"
+              },
+              {
+                "id": "TNS",
+                "label": "TNS Connect Descriptor"
               }
             ]
           }
         },
         {
           "widget-type": "textbox",
-          "label": "SID/Service Name",
-          "description": "Oracle connection point (Database name or Service name)",
+          "label": "SID/Service Name/TNS Connect Descriptor",
+          "description": "Oracle connection point (Database name, Service name, or TNS Connect Descriptor)",
           "name": "database"
         },
         {
@@ -234,7 +238,7 @@
   ],
   "filters": [
     {
-      "name": "showConnectionProperties ",
+      "name": "showConnectionProperties",
       "condition": {
         "expression": "useConnection == false"
       },
@@ -261,15 +265,19 @@
         },
         {
           "type": "property",
-          "name": "role"
-        },
-        {
-          "type": "property",
-          "name": "connectionType"
-        },
-        {
-          "type": "property",
           "name": "connectionArguments"
+        },
+        {
+          "type": "property",
+          "name": "connectionString"
+        },
+        {
+          "type": "property",
+          "name": "database"
+        },
+        {
+          "type": "property",
+          "name": "role"
         }
       ]
     },

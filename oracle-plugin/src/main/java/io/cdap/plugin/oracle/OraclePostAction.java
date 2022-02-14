@@ -18,6 +18,7 @@ package io.cdap.plugin.oracle;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.PostAction;
@@ -57,11 +58,14 @@ public class OraclePostAction extends AbstractQueryAction {
 
     @Override
     public String getConnectionString() {
-      if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(this.connectionType)) {
-        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT,
-                             host, port, database);
+      if (OracleConstants.TNS_CONNECTION_TYPE.equals(this.connectionType)) {
+        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_TNS_FORMAT, database);
+
+      } else if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(this.connectionType)) {
+        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT, host, port, database);
+      } else {
+        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, port, database);
       }
-      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, port, database);
     }
 
     @Override
