@@ -18,7 +18,7 @@ Properties
 ----------
 **Reference Name:** Name used to uniquely identify this source for lineage, annotating metadata, etc.
 
-**Use Connection** Whether to use a connection. If a connection is used, you do not need to provide the credentials.
+**Use Connection:** Whether to use a connection. If a connection is used, you do not need to provide the credentials.
 
 **Connection** Name of the connection to use. Project and service account information will be provided by the connection.
 You also can use the macro function ${conn(connection-name)}.
@@ -29,11 +29,14 @@ You also can use the macro function ${conn(connection-name)}.
 
 **Port:** Port that Oracle is running on.
 
-**SID/Service Name:** Oracle connection point (Database name or Service name).
+**SID/Service Name/TNS Connect Descriptor:** Oracle connection point (Database name, Service name, or a TNS Connect Descriptor). When using TNS, place 
+the full TNS Connect Descriptor in the text field. For example: 
+(DESCRIPTION =(ADDRESS = (PROTOCOL = TCP)(HOST = 123.123.123.123)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)
+(SERVICE_NAME = XE)))
 
 **Role** Login role of the user when connecting to the database.
 
-**Connection Type** Whether to use an SID or Service Name when connecting to the database.
+**Connection Type** Whether to use an SID, Service Name, or TNS Connect Descriptor when connecting to the database.
 
 **Import Query:** The SELECT query to use to import data from the specified table.
 You can specify an arbitrary number of columns to import, or import all columns using \*. The Query should
