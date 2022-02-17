@@ -53,10 +53,13 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   @Override
   public String getConnectionString() {
-    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(connectionType)) {
+    if (OracleConstants.TNS_CONNECTION_TYPE.equals(getConnectionType())) {
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_TNS_FORMAT, database);
+    } else if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(getConnectionType())) {
       return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT, host, getPort(), database);
+    } else {
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, getPort(),database);
     }
-    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, getPort(), database);
   }
 
   @Name(OracleConstants.CONNECTION_TYPE)
@@ -105,5 +108,4 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
     return ROLE_NORMAL.equals(getRole()) ? null :
       TransactionIsolationLevel.Level.TRANSACTION_READ_COMMITTED.name();
   }
-
 }
