@@ -88,9 +88,9 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.oracle.database.jdbc</groupId>
-      <artifactId>ojdbc8</artifactId>
-      <version>21.1.0.0</version>
+      <groupId>org.glassfish</groupId>
+      <artifactId>jakarta.json</artifactId>
+      <version>1.1.6</version>
       <scope>test</scope>
     </dependency>
     <dependency>
