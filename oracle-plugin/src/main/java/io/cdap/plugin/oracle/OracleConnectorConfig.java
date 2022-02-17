@@ -56,14 +56,17 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   @Override
   public String getConnectionString() {
-    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(connectionType)) {
+    if (OracleConstants.TNS_CONNECTION_TYPE.equals(getConnectionType())) {
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_TNS_FORMAT, database);
+    } else if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(getConnectionType())) {
       return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT, host, getPort(), database);
+    } else {
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, getPort(),database);
     }
-    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, getPort(), database);
   }
 
   @Name(OracleConstants.CONNECTION_TYPE)
-  @Description("Whether to use an SID or Service Name when connecting to the database.")
+  @Description("Whether to use an SID, Service Name, or TNS Connect Descriptor when connecting to the database.")
   private String connectionType;
 
   @Name(OracleConstants.ROLE)
@@ -72,7 +75,7 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   private String role;
 
   @Name(OracleConstants.NAME_DATABASE)
-  @Description("SID or Service Name to connect to")
+  @Description("SID, Service Name, or TNS Connect Descriptor to connect to.")
   @Macro
   private String database;
 
@@ -81,9 +84,7 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
     return 1521;
   }
 
-  public String getConnectionType() {
-    return connectionType;
-  }
+  public String getConnectionType() {return connectionType;}
 
   public String getRole() {
     return role == null ? "normal" : role;

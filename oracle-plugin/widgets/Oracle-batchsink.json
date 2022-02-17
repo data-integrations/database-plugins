@@ -103,6 +103,10 @@
               {
                 "id": "service",
                 "label": "Service Name"
+              },
+              {
+                "id": "TNS",
+                "label": "TNS Connect Descriptor"
               }
             ]
           }
@@ -134,8 +138,8 @@
         },
         {
           "widget-type": "textbox",
-          "label": "SID/Service Name",
-          "description": "Oracle connection point (Database name or Service name)",
+          "label": "SID/Service Name/TNS Connect Descriptor",
+          "description": "Oracle connection point (Database name, Service name, or TNS Connect Descriptor)",
           "name": "database"
         },
         {
@@ -207,6 +211,10 @@
         {
           "type": "property",
           "name": "connectionArguments"
+        },
+        {
+          "type": "property",
+          "name": "enableConnectionString"
         }
       ]
     },
