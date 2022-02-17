@@ -30,6 +30,8 @@ You also can use the macro function ${conn(connection-name)}.
 
 **SID/Service Name:** Oracle connection point (Database name or Service name).
 
+**Role** Login role of the user when connecting to the database. For eg, NORMAL, SYSDBA, SYSOPER, etc.
+
 **Connection Type** Whether to use an SID or Service Name when connecting to the database.
 
 **Table Name:** Name of the table to export to.
