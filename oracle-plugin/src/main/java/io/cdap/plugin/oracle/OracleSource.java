@@ -100,7 +100,6 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
 
       if (OracleConstants.TNS_CONNECTION_TYPE.equals(connection.getConnectionType())) {
         return String.format(OracleConstants.ORACLE_CONNECTION_STRING_TNS_FORMAT, connection.getDatabase());
-
       } else if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(connection.getConnectionType())) {
         return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT, connection.getHost(),
                 connection.getPort(), connection.getDatabase());
