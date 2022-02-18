@@ -54,6 +54,10 @@
               {
                 "id": "service",
                 "label": "Service Name"
+              },
+              {
+                "id": "TNS",
+                "label": "TNS Connect Descriptor"
               }
             ]
           }
@@ -105,6 +109,30 @@
             "delimiter": ";"
           }
         },
+        {
+          "widget-type": "textbox",
+          "label": "SID/Service Name/TNS Connect Descriptor",
+          "description": "Oracle connection point (Database name, Service name, or TNS Connect Descriptor)",
+          "name": "database"
+        },
+        {
+          "widget-type": "connection-browser",
+          "widget-category": "plugin",
+          "widget-attributes": {
+            "connectionType": "Oracle",
+            "label": "Browse Database"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Table Name",
+          "name": "tableName"
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
         {
           "widget-type": "number",
           "label": "Default Batch Value",
