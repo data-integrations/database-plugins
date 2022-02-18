@@ -110,12 +110,15 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     if (database == null) {
       return config.getConnectionString();
     }
-    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(config)) {
+    if (OracleConstants.TNS_CONNECTION_TYPE.equals(config.getConnectionType())) {
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_TNS_FORMAT, database);
+    } else if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(config.getConnectionType())) {
       return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT, config.getHost(),
-                           config.getPort(), database);
+              config.getPort(), database);
+    } else {
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT,
+              config.getHost(), config.getPort(), database);
     }
-    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT,
-                         config.getHost(), config.getPort(), database);
   }
 
   @Override
