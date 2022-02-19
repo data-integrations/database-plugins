@@ -25,7 +25,6 @@
 
   <name>Oracle plugin</name>
   <artifactId>oracle-plugin</artifactId>
-  <version>1.8.0-SNAPSHOT</version>
   <modelVersion>4.0.0</modelVersion>
 
   <dependencies>

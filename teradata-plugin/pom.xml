@@ -26,7 +26,6 @@
 
   <artifactId>teradata-plugin</artifactId>
   <name>Teradata plugin</name>
-  <version>1.8.0-SNAPSHOT</version>
   <modelVersion>4.0.0</modelVersion>
 
   <dependencies>
