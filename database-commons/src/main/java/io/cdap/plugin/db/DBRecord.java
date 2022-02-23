@@ -147,7 +147,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     } else if (o instanceof Time) {
       recordBuilder.setTime(field.getName(), ((Time) o).toLocalTime());
     } else if (o instanceof Timestamp) {
-      Instant instant = ((Timestamp) o).toInstant();
+      Instant instant = ((Timestamp) o).toLocalDateTime().toInstant(ZoneOffset.UTC);
       recordBuilder.setTimestamp(field.getName(), instant.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
     } else if (o instanceof BigDecimal) {
       recordBuilder.setDecimal(field.getName(), (BigDecimal) o);
