@@ -28,7 +28,7 @@
           "label": "Connection",
           "name": "connection",
           "widget-attributes": {
-            "connectionType": "SqlServer"
+            "connectionType": "SQL Server"
           }
         },
         {
