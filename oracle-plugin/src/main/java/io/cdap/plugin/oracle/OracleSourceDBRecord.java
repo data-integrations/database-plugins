@@ -24,10 +24,14 @@ import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.util.DBUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.sql.Connection;
@@ -35,6 +39,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -47,6 +52,8 @@ import javax.annotation.Nullable;
  * {@link org.apache.hadoop.io.Writable}.
  */
 public class OracleSourceDBRecord extends DBRecord {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OracleSourceDBRecord.class);
 
   public OracleSourceDBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
     this.record = record;
@@ -180,12 +187,17 @@ public class OracleSourceDBRecord extends DBRecord {
   private void handleOracleSpecificType(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                                         int columnIndex, int sqlType, int precision, int scale)
     throws SQLException {
+    String columnName = resultSet.getMetaData().getColumnName(columnIndex);
     switch (sqlType) {
       case OracleSourceSchemaReader.INTERVAL_YM:
       case OracleSourceSchemaReader.INTERVAL_DS:
       case OracleSourceSchemaReader.LONG:
       case Types.NCLOB:
         recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
+        break;
+      case OracleSourceSchemaReader.TIMESTAMP:
+        Instant instant1 = getTimeStamp(resultSet, columnName).toInstant();
+        recordBuilder.setTimestamp(field.getName(), instant1.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
         break;
       case OracleSourceSchemaReader.TIMESTAMP_TZ:
         recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
@@ -201,7 +213,6 @@ public class OracleSourceDBRecord extends DBRecord {
         recordBuilder.set(field.getName(), resultSet.getDouble(columnIndex));
         break;
       case OracleSourceSchemaReader.BFILE:
-        String columnName = resultSet.getMetaData().getColumnName(columnIndex);
         recordBuilder.set(field.getName(), getBfileBytes(resultSet, columnName));
         break;
       case OracleSourceSchemaReader.LONG_RAW:
@@ -227,6 +238,16 @@ public class OracleSourceDBRecord extends DBRecord {
     }
   }
 
+  private Timestamp getTimeStamp(ResultSet resultSet, String columnName) {
+    try {
+      Object tsValue = resultSet.getObject(columnName);
+      Method timestampValueMethod = tsValue.getClass().getMethod("timestampValue");
+      return (Timestamp) timestampValueMethod.invoke(tsValue);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private boolean isLongOrLongRaw(int columnType) {
     return columnType == OracleSourceSchemaReader.LONG || columnType == OracleSourceSchemaReader.LONG_RAW;
   }
@@ -239,6 +260,7 @@ public class OracleSourceDBRecord extends DBRecord {
     int sqlPrecision = metadata.getPrecision(columnIndex);
     int sqlScale = metadata.getScale(columnIndex);
 
+    LOG.info("Got sql type {}, sql precision {}, sql scale {}", sqlType, sqlPrecision, sqlScale);
     handleField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
   }
 

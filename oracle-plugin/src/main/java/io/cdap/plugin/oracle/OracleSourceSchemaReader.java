@@ -41,6 +41,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   public static final int BFILE = -13;
   public static final int LONG = -1;
   public static final int LONG_RAW = -4;
+  public static final int TIMESTAMP = 93;
 
   public static final Set<Integer> ORACLE_TYPES = ImmutableSet.of(
     INTERVAL_DS,
@@ -53,7 +54,8 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     LONG,
     LONG_RAW,
     Types.NUMERIC,
-    Types.DECIMAL
+    Types.DECIMAL,
+    TIMESTAMP
   );
 
   @Override

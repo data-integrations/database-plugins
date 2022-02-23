@@ -99,6 +99,12 @@
       <version>RELEASE</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>com.oracle.database.jdbc</groupId>
+      <artifactId>ojdbc8</artifactId>
+      <version>21.1.0.0</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
