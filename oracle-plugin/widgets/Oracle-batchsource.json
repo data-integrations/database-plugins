@@ -270,6 +270,10 @@
         {
           "type": "property",
           "name": "connectionArguments"
+        },
+        {
+          "type": "property",
+          "name": "database"
         }
       ]
     },
