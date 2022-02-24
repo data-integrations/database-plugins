@@ -20,12 +20,12 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.6.3-SNAPSHOT</version>
+    <version>1.6.3</version>
   </parent>
 
   <name>Netezza plugin</name>
   <artifactId>netezza-plugin</artifactId>
-  <version>1.6.3-SNAPSHOT</version>
+  <version>1.6.3</version>
   <modelVersion>4.0.0</modelVersion>
 
   <dependencies>
