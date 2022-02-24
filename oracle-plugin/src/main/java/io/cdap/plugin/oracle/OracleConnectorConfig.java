@@ -58,7 +58,7 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
     } else if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(getConnectionType())) {
       return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT, host, getPort(), database);
     } else {
-      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, getPort(),database);
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, getPort(), database);
     }
   }
 
