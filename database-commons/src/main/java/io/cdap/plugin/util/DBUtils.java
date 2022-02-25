@@ -66,7 +66,7 @@ public final class DBUtils {
   // This causes old dates from database such as 0001-01-01 01:00:00 mapped to 0000-12-30
   // Get the pure gregorian calendar so that all dates are treated as gregorian format.
   private static Calendar createPureGregorianCalender() {
-    GregorianCalendar gc = new GregorianCalendar();
+    GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
     gc.setGregorianChange(new Date(Long.MIN_VALUE));
     return gc;
   }
