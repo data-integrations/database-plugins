@@ -16,9 +16,14 @@
 
 package io.cdap.plugin.mysql;
 
+import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
-
 import java.util.Properties;
+import javax.annotation.Nullable;
+
 
 /**
  * Configuration for Mysql Connector
@@ -36,9 +41,14 @@ public class MysqlConnectorConfig extends AbstractDBSpecificConnectorConfig {
     this.port = port;
     this.user = user;
     this.password = password;
-    this.jdbcPluginName = jdbcPluginName;
     this.connectionArguments = connectionArguments;
   }
+
+  @Name(ConnectionConfig.JDBC_PLUGIN_NAME)
+  @Description("Name of the JDBC driver to use. This is the value of the 'jdbcPluginName' key defined in the JSON " +
+          "file for the JDBC plugin.")
+  @Macro
+  private String jdbcPluginName;
 
   @Override
   public String getConnectionString() {
@@ -48,6 +58,11 @@ public class MysqlConnectorConfig extends AbstractDBSpecificConnectorConfig {
   @Override
   public int getDefaultPort() {
     return 3306;
+  }
+
+  @Override
+  public String getJdbcPluginName() {
+    return jdbcPluginName;
   }
 
   @Override
