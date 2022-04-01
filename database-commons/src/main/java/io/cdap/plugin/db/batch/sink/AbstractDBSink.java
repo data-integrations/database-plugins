@@ -95,16 +95,18 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     StageConfigurer configurer = pipelineConfigurer.getStageConfigurer();
+    FailureCollector collector = configurer.getFailureCollector();
+    dbSinkConfig.validate(collector);
     DBUtils.validateJDBCPluginPipeline(pipelineConfigurer, dbSinkConfig, getJDBCPluginId());
     Schema inputSchema = configurer.getInputSchema();
-    if (Objects.nonNull(inputSchema)) {
-      Class<? extends Driver> driverClass = DBUtils.getDriverClass(
-        pipelineConfigurer, dbSinkConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
-      if (driverClass != null && !dbSinkConfig.connectionParamsContainsMacro()) {
-        FailureCollector collector = configurer.getFailureCollector();
-        validateSchema(collector, driverClass, dbSinkConfig.getTableName(), inputSchema,
-                dbSinkConfig.getDBSchemaName());
-      }
+    if (inputSchema == null || dbSinkConfig.containsMacro(ConnectionConfig.JDBC_PLUGIN_NAME)) {
+      return;
+    }
+
+    Class<? extends Driver> driverClass = DBUtils.getDriverClass(
+      pipelineConfigurer, dbSinkConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
+    if (driverClass != null && dbSinkConfig.canConnect()) {
+      validateSchema(collector, driverClass, dbSinkConfig.getTableName(), inputSchema, dbSinkConfig.getDBSchemaName());
     }
   }
 
@@ -146,8 +148,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     configAccessor.setInitQueries(dbSinkConfig.getInitQueries());
     configAccessor.getConfiguration().set(DBConfiguration.DRIVER_CLASS_PROPERTY, driverClass.getName());
     configAccessor.getConfiguration().set(DBConfiguration.URL_PROPERTY, connectionString);
-    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getTableName()
-            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getTableName();
+    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getEscapedTableName()
+            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getEscapedTableName();
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_TABLE_NAME_PROPERTY, fullyQualifiedTableName);
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_FIELD_NAMES_PROPERTY, dbColumns);
     if (dbSinkConfig.getUser() != null) {
@@ -199,8 +201,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
 
   private Schema inferSchema(Class<? extends Driver> driverClass) {
     List<Schema.Field> inferredFields = new ArrayList<>();
-    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getTableName()
-            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getTableName();
+    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getEscapedTableName()
+            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getEscapedTableName();
     try {
       DBUtils.ensureJDBCDriverIsAvailable(driverClass, dbSinkConfig.getConnectionString(),
                                           dbSinkConfig.getJdbcPluginName());
@@ -249,8 +251,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   private void setResultSetMetadata() throws Exception {
     List<ColumnType> columnTypes = new ArrayList<>(columns.size());
     String connectionString = dbSinkConfig.getConnectionString();
-    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getTableName()
-            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getTableName();
+    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getEscapedTableName()
+            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getEscapedTableName();
 
     driverCleanup = DBUtils
       .ensureJDBCDriverIsAvailable(driverClass, connectionString, dbSinkConfig.getJdbcPluginName());
@@ -263,8 +265,7 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
            // Run a query against the DB table that returns 0 records, but returns valid ResultSetMetadata
            // that can be used to construct DBRecord objects to sink to the database table.
            ResultSet rs = statement.executeQuery(String.format("SELECT %s FROM %s WHERE 1 = 0",
-                                                               dbColumns,
-                                                               fullyQualifiedTableName))
+                                                               dbColumns, fullyQualifiedTableName))
       ) {
         ResultSetMetaData resultSetMetadata = rs.getMetaData();
         columnTypes.addAll(getMatchedColumnTypeList(resultSetMetadata, columns));
@@ -300,9 +301,8 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
   private void validateSchema(FailureCollector collector, Class<? extends Driver> jdbcDriverClass, String tableName,
                               Schema inputSchema, String dbSchemaName) {
     String connectionString = dbSinkConfig.getConnectionString();
-    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getTableName()
-            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getTableName();
-
+    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getEscapedTableName()
+            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getEscapedTableName();
     try {
       DBUtils.ensureJDBCDriverIsAvailable(jdbcDriverClass, connectionString, dbSinkConfig.getJdbcPluginName());
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
@@ -321,24 +321,26 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
         if (!tables.next()) {
           collector.addFailure(
             String.format("Table '%s' does not exist.", tableName),
-            String.format("Ensure table '%s' is set correctly and that the connection string '%s' " +
-                            "points to a valid database.", fullyQualifiedTableName, connectionString))
+                          String.format("Ensure table '%s' is set correctly and that the connection string '%s' " +
+                                  "points to a valid database.", fullyQualifiedTableName, connectionString))
             .withConfigProperty(DBSinkConfig.TABLE_NAME);
           return;
         }
       }
-
-      try (PreparedStatement pStmt = connection.prepareStatement("SELECT * FROM " + fullyQualifiedTableName
-                                                                   + " WHERE 1 = 0");
+      setColumnsInfo(inputSchema.getFields());
+      try (PreparedStatement pStmt = connection.prepareStatement(String.format("SELECT %s FROM %s WHERE 1 = 0",
+                                                                               dbColumns,
+                                                                               fullyQualifiedTableName));
            ResultSet rs = pStmt.executeQuery()) {
         getFieldsValidator().validateFields(inputSchema, rs, collector);
       }
     } catch (SQLException e) {
       LOG.error("Exception while trying to validate schema of database table {} for connection {}.",
-                fullyQualifiedTableName, connectionString, e);
+              fullyQualifiedTableName, connectionString, e);
       collector.addFailure(
-        String.format("Exception while trying to validate schema of database table '%s' for connection '%s'.",
-                      fullyQualifiedTableName, connectionString), null).withStacktrace(e.getStackTrace());
+        String.format("Exception while trying to validate schema of database table '%s' for connection '%s' with %s",
+                fullyQualifiedTableName, connectionString, e.getMessage()),
+        null).withStacktrace(e.getStackTrace());
     }
   }
 
@@ -382,6 +384,14 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
     @Nullable
     public String dbSchemaName;
 
+    public String getTableName() {
+      return tableName;
+    }
+
+    public String getDBSchemaName() {
+      return dbSchemaName;
+    }
+
     /**
      * Adds escape characters (back quotes, double quotes, etc.) to the table name for
      * databases with case-sensitive identifiers.
@@ -390,17 +400,6 @@ public abstract class AbstractDBSink extends ReferenceBatchSink<StructuredRecord
      * Default implementation returns unchanged table name string.
      */
     protected String getEscapedTableName() {
-      return tableName;
-    }
-
-    /**
-     * @return dbSchemaName to fully qualify a table being accessed
-     */
-    protected String getDBSchemaName() {
-      return dbSchemaName;
-    }
-
-    protected String getTableName() {
       return tableName;
     }
 

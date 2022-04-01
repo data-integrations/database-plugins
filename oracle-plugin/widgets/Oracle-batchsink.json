@@ -127,6 +127,11 @@
           "widget-type": "textbox",
           "label": "Table Name",
           "name": "tableName"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Schema Name",
+          "name": "dbSchemaName"
         }
       ]
     },
