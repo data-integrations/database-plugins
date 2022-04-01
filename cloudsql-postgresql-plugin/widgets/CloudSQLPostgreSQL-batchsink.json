@@ -121,6 +121,11 @@
           "widget-attributes": {
             "placeholder": "The table to write to"
           }
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Schema Name",
+          "name": "dbSchemaName"
         }
       ]
     },
