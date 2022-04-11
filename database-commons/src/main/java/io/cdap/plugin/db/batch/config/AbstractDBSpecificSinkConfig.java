@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implements DatabaseSinkConfig {
   public static final String TABLE_NAME = "tableName";
+  public static final String DB_SCHEMA_NAME = "dbSchemaName";
   public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
 
   @Name(Constants.Reference.REFERENCE_NAME)
@@ -46,9 +47,20 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   @Macro
   private String tableName;
 
+  @Name(DB_SCHEMA_NAME)
+  @Description("Name of the database schema of table.")
+  @Macro
+  @Nullable
+  public String dbSchemaName;
+
   @Override
   public String getTableName() {
     return tableName;
+  }
+
+  @Override
+  public String getDBSchemaName() {
+    return dbSchemaName;
   }
 
   /**
