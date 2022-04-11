@@ -29,6 +29,11 @@
           "widget-type": "textbox",
           "label": "Table Name",
           "name": "tableName"
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Schema Name",
+          "name": "dbSchemaName"
         }
       ]
     },
