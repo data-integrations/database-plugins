@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.DBPath;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
@@ -38,6 +39,7 @@ import io.cdap.plugin.postgres.PostgresSchemaReader;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,6 +57,11 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
   public CloudSQLPostgreSQLConnector(CloudSQLPostgreSQLConnectorConfig config) {
     super(config);
     this.config = config;
+  }
+
+  @Override
+  protected DBConnectorPath getDBConnectorPath(String path) throws IOException {
+    return new DBPath(path, true);
   }
 
   @Override
@@ -90,22 +97,30 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
   @Override
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
-    Map<String, String> properties = new HashMap<>();
-    setConnectionProperties(properties, request);
+    Map<String, String> sourceProperties = new HashMap<>();
+    Map<String, String> sinkProperties = new HashMap<>();
+    setConnectionProperties(sourceProperties, request);
+    setConnectionProperties(sinkProperties, request);
     builder
-      .addRelatedPlugin(new PluginSpec(CloudSQLPostgreSQLConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
-      .addRelatedPlugin(new PluginSpec(CloudSQLPostgreSQLConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));
+      .addRelatedPlugin(new PluginSpec(CloudSQLPostgreSQLConstants.PLUGIN_NAME,
+                                       BatchSource.PLUGIN_TYPE, sourceProperties))
+      .addRelatedPlugin(new PluginSpec(CloudSQLPostgreSQLConstants.PLUGIN_NAME,
+                                       BatchSink.PLUGIN_TYPE, sinkProperties));
 
+    sinkProperties.put(ConnectionConfig.DATABASE, config.getDatabase());
+    String schema = path.getSchema();
+    if (schema != null) {
+      sinkProperties.put(CloudSQLPostgreSQLSink.CloudSQLPostgreSQLSinkConfig.DB_SCHEMA_NAME, schema);
+    }
+    sourceProperties.put(CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig.NUM_SPLITS, "1");
     String table = path.getTable();
     if (table == null) {
       return;
     }
-
-    properties.put(CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig.IMPORT_QUERY,
-                   getTableQuery(path.getDatabase(), path.getSchema(), path.getTable()));
-    properties.put(CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig.NUM_SPLITS, "1");
-    properties.put(ConnectionConfig.DATABASE, path.getDatabase());
-    properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
-    properties.put(CloudSQLPostgreSQLSink.CloudSQLPostgreSQLSinkConfig.TABLE_NAME, table);
+    sourceProperties.put(CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig.IMPORT_QUERY,
+                         getTableQuery(path.getDatabase(), schema, table));
+    sinkProperties.put(CloudSQLPostgreSQLSink.CloudSQLPostgreSQLSinkConfig.TABLE_NAME, table);
+    sourceProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
+    sinkProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
   }
 }
