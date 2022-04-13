@@ -116,10 +116,12 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
   @Override
   public void prepareRun(BatchSinkContext context) {
     String connectionString = dbSinkConfig.getConnectionString();
+    String dbSchemaName = dbSinkConfig.getDBSchemaName();
+    String tableName = dbSinkConfig.getTableName();
 
     LOG.debug("tableName = {}; schemaName = {}, pluginType = {}; pluginName = {}; connectionString = {};",
-              dbSinkConfig.getTableName(),
-              dbSinkConfig.getDBSchemaName(),
+              tableName,
+              dbSchemaName,
               ConnectionConfig.JDBC_PLUGIN_TYPE,
               dbSinkConfig.getJdbcPluginName(),
               connectionString);
@@ -132,8 +134,8 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     try {
       if (Objects.nonNull(outputSchema)) {
         FailureCollector collector = context.getFailureCollector();
-        validateSchema(collector, driverClass, dbSinkConfig.getTableName(),
-                outputSchema, dbSinkConfig.getDBSchemaName());
+        validateSchema(collector, driverClass, tableName,
+                outputSchema, dbSchemaName);
         collector.getOrThrowException();
       } else {
         outputSchema = inferSchema(driverClass);
@@ -151,8 +153,8 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     configAccessor.setInitQueries(dbSinkConfig.getInitQueries());
     configAccessor.getConfiguration().set(DBConfiguration.DRIVER_CLASS_PROPERTY, driverClass.getName());
     configAccessor.getConfiguration().set(DBConfiguration.URL_PROPERTY, connectionString);
-    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getEscapedTableName()
-            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getEscapedTableName();
+    String fullyQualifiedTableName = dbSchemaName == null ? dbSinkConfig.getEscapedTableName()
+            : dbSchemaName + "." + dbSinkConfig.getEscapedTableName();
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_TABLE_NAME_PROPERTY, fullyQualifiedTableName);
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_FIELD_NAMES_PROPERTY, dbColumns);
     if (dbSinkConfig.getUser() != null) {
@@ -205,8 +207,9 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
 
   private Schema inferSchema(Class<? extends Driver> driverClass) {
     List<Schema.Field> inferredFields = new ArrayList<>();
-    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getEscapedTableName()
-            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getEscapedTableName();
+    String dbSchemaName = dbSinkConfig.getDBSchemaName();
+    String fullyQualifiedTableName = dbSchemaName == null ? dbSinkConfig.getEscapedTableName()
+            : dbSchemaName + "." + dbSinkConfig.getEscapedTableName();
     try {
       DBUtils.ensureJDBCDriverIsAvailable(driverClass, dbSinkConfig.getConnectionString(),
                                           dbSinkConfig.getJdbcPluginName());
@@ -255,8 +258,9 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
   private void setResultSetMetadata() throws Exception {
     List<ColumnType> columnTypes = new ArrayList<>(columns.size());
     String connectionString = dbSinkConfig.getConnectionString();
-    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getEscapedTableName()
-            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getEscapedTableName();
+    String dbSchemaName = dbSinkConfig.getDBSchemaName();
+    String fullyQualifiedTableName = dbSchemaName == null ? dbSinkConfig.getEscapedTableName()
+            : dbSchemaName + "." + dbSinkConfig.getEscapedTableName();
 
     driverCleanup = DBUtils
       .ensureJDBCDriverIsAvailable(driverClass, connectionString, dbSinkConfig.getJdbcPluginName());
@@ -305,8 +309,8 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
   private void validateSchema(FailureCollector collector, Class<? extends Driver> jdbcDriverClass, String tableName,
                               Schema inputSchema, String dbSchemaName) {
     String connectionString = dbSinkConfig.getConnectionString();
-    String fullyQualifiedTableName = dbSinkConfig.getDBSchemaName() == null ? dbSinkConfig.getEscapedTableName()
-            : dbSinkConfig.getDBSchemaName() + "." + dbSinkConfig.getEscapedTableName();
+    String fullyQualifiedTableName = dbSchemaName == null ? dbSinkConfig.getEscapedTableName()
+            : dbSchemaName + "." + dbSinkConfig.getEscapedTableName();
     try {
       DBUtils.ensureJDBCDriverIsAvailable(jdbcDriverClass, connectionString, dbSinkConfig.getJdbcPluginName());
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
@@ -386,7 +390,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     @Description("Name of the database schema of table.")
     @Macro
     @Nullable
-    public String dbSchemaName;
+    private String dbSchemaName;
 
     public String getTableName() {
       return tableName;

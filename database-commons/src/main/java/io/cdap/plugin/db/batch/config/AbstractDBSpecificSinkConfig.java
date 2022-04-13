@@ -51,7 +51,7 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   @Description("Name of the database schema of table.")
   @Macro
   @Nullable
-  public String dbSchemaName;
+  private String dbSchemaName;
 
   @Override
   public String getTableName() {

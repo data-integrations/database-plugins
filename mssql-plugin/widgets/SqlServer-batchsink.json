@@ -128,7 +128,7 @@
           "name": "tableName"
         },
         {
-          "widget-type": "hidden",
+          "widget-type": "textbox",
           "label": "Schema Name",
           "name": "dbSchemaName"
         }
