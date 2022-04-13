@@ -81,7 +81,6 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
       .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
       .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties));
 
-    sinkProperties.put(PostgresConnectorConfig.NAME_DATABASE, config.getDatabase());
     String schema = path.getSchema();
     if (schema != null) {
       sinkProperties.put(PostgresSink.PostgresSinkConfig.DB_SCHEMA_NAME, schema);
