@@ -72,22 +72,29 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
 
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
-    Map<String, String> properties = new HashMap<>();
-    setConnectionProperties(properties, request);
+    Map<String, String> sourceProperties = new HashMap<>();
+    Map<String, String> sinkProperties = new HashMap<>();
+    setConnectionProperties(sourceProperties, request);
+    setConnectionProperties(sinkProperties, request);
     builder
-      .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
-      .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));
+      .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
+      .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties));
 
+    sinkProperties.put(OracleConstants.NAME_DATABASE, config.getDatabase());
+    String schema = path.getSchema();
+    if (schema != null) {
+      sinkProperties.put(OracleSink.OracleSinkConfig.DB_SCHEMA_NAME, schema);
+    }
+    sourceProperties.put(OracleSource.OracleSourceConfig.NUM_SPLITS, "1");
     String table = path.getTable();
     if (table == null) {
       return;
     }
-
-    properties.put(OracleSource.OracleSourceConfig.IMPORT_QUERY, getTableQuery(path.getDatabase(), path.getSchema(),
-                                                                               path.getTable()));
-    properties.put(OracleSource.OracleSourceConfig.NUM_SPLITS, "1");
-    properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
-    properties.put(OracleSink.OracleSinkConfig.TABLE_NAME, table);
+    sourceProperties.put(OracleSource.OracleSourceConfig.IMPORT_QUERY,
+                         getTableQuery(path.getDatabase(), schema, table));
+    sinkProperties.put(OracleSink.OracleSinkConfig.TABLE_NAME, table);
+    sourceProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
+    sinkProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
   }
 
   @Override

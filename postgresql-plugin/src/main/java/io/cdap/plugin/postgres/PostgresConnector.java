@@ -73,23 +73,29 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
 
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
                                   ConnectorSpec.Builder builder) {
-    Map<String, String> properties = new HashMap<>();
-    setConnectionProperties(properties, request);
+    Map<String, String> sourceProperties = new HashMap<>();
+    Map<String, String> sinkProperties = new HashMap<>();
+    setConnectionProperties(sourceProperties, request);
+    setConnectionProperties(sinkProperties, request);
     builder
-      .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
-      .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties));
+      .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
+      .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties));
 
+    sinkProperties.put(PostgresConnectorConfig.NAME_DATABASE, config.getDatabase());
+    String schema = path.getSchema();
+    if (schema != null) {
+      sinkProperties.put(PostgresSink.PostgresSinkConfig.DB_SCHEMA_NAME, schema);
+    }
+    sourceProperties.put(PostgresSource.PostgresSourceConfig.NUM_SPLITS, "1");
     String table = path.getTable();
     if (table == null) {
       return;
     }
-
-    properties.put(PostgresSource.PostgresSourceConfig.IMPORT_QUERY, getTableQuery(path.getDatabase(),
-                                                                                   path.getSchema(), path.getTable()));
-    properties.put(PostgresSource.PostgresSourceConfig.NUM_SPLITS, "1");
-    properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
-    properties.put(PostgresSink.PostgresSinkConfig.TABLE_NAME, table);
-
+    sourceProperties.put(PostgresSource.PostgresSourceConfig.IMPORT_QUERY,
+                         getTableQuery(path.getDatabase(), schema, table));
+    sinkProperties.put(PostgresSink.PostgresSinkConfig.TABLE_NAME, table);
+    sourceProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
+    sinkProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
   }
 
   @Override
