@@ -159,6 +159,10 @@
         },
         {
           "type": "property",
+          "name": "database"
+        },
+        {
+          "type": "property",
           "name": "connectionArguments"
         }
       ]
