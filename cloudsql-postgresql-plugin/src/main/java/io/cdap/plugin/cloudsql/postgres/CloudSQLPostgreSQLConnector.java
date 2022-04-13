@@ -107,7 +107,6 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
       .addRelatedPlugin(new PluginSpec(CloudSQLPostgreSQLConstants.PLUGIN_NAME,
                                        BatchSink.PLUGIN_TYPE, sinkProperties));
 
-    sinkProperties.put(ConnectionConfig.DATABASE, config.getDatabase());
     String schema = path.getSchema();
     if (schema != null) {
       sinkProperties.put(CloudSQLPostgreSQLSink.CloudSQLPostgreSQLSinkConfig.DB_SCHEMA_NAME, schema);

@@ -80,7 +80,6 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
       .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
       .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties));
 
-    sinkProperties.put(OracleConstants.NAME_DATABASE, config.getDatabase());
     String schema = path.getSchema();
     if (schema != null) {
       sinkProperties.put(OracleSink.OracleSinkConfig.DB_SCHEMA_NAME, schema);
