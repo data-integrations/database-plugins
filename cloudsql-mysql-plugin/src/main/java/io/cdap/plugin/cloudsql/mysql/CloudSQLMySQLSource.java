@@ -31,6 +31,7 @@ import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.util.CloudSQLUtil;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,10 +58,13 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
 
-    CloudSQLMySQLUtil.checkConnectionName(
+    if (!cloudsqlMysqlSourceConfig.containsMacro(CloudSQLUtil.INSTANCE_TYPE) &&
+    !cloudsqlMysqlSourceConfig.containsMacro(CloudSQLUtil.CONNECTION_NAME)) {
+      CloudSQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlMysqlSourceConfig.connection.getInstanceType(),
         cloudsqlMysqlSourceConfig.connection.getConnectionName());
+    }
 
     super.configurePipeline(pipelineConfigurer);
   }
@@ -72,7 +76,7 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
 
   @Override
   protected String createConnectionString() {
-    if (CloudSQLMySQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(
+    if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(
         cloudsqlMysqlSourceConfig.connection.getInstanceType())) {
       return String.format(
           CloudSQLMySQLConstants.PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,

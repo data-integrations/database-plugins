@@ -23,13 +23,8 @@ public final class CloudSQLMySQLConstants {
   }
 
   public static final String PLUGIN_NAME = "CloudSQLMySQL";
-  public static final String CONNECTION_NAME = "connectionName";
-  public static final String CONNECTION_NAME_PATTERN = "[a-z0-9-]+:[a-z0-9-]+:[a-z0-9-]+";
   public static final String CONNECTION_TIMEOUT = "connectionTimeout";
-  public static final String PUBLIC_INSTANCE = "public";
   public static final String PUBLIC_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT =
       "jdbc:mysql:///%s?cloudSqlInstance=%s&socketFactory=com.google.cloud.sql.mysql.SocketFactory";
-  public static final String INSTANCE_TYPE = "instanceType";
-  public static final String PRIVATE_INSTANCE = "private";
   public static final String PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT = "jdbc:mysql://%s/%s";
 }

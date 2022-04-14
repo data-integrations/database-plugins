@@ -38,6 +38,7 @@ import io.cdap.plugin.db.batch.sink.FieldsValidator;
 import io.cdap.plugin.postgres.PostgresDBRecord;
 import io.cdap.plugin.postgres.PostgresFieldsValidator;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
+import io.cdap.plugin.util.CloudSQLUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,11 +67,14 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
-    
-    CloudSQLPostgreSQLUtil.checkConnectionName(
+
+    if (!cloudsqlPostgresqlSinkConfig.containsMacro(CloudSQLUtil.INSTANCE_TYPE) &&
+      !cloudsqlPostgresqlSinkConfig.containsMacro(CloudSQLUtil.CONNECTION_NAME)) {
+      CloudSQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlPostgresqlSinkConfig.connection.getInstanceType(),
         cloudsqlPostgresqlSinkConfig.connection.getConnectionName());
+    }
     
     super.configurePipeline(pipelineConfigurer);
   }
