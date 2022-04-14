@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.cloudsql.mysql;
 
+import com.google.common.base.Strings;
 import com.google.common.net.InetAddresses;
 import io.cdap.cdap.etl.api.FailureCollector;
 
@@ -34,6 +35,24 @@ public class CloudSQLMySQLUtil {
    */
   public static void checkConnectionName(
       FailureCollector failureCollector, String instanceType, String connectionName) {
+
+    if (Strings.isNullOrEmpty(instanceType)) {
+      failureCollector
+        .addFailure(
+          "Cloud SQL Instance Type cannot be null or empty", null)
+        .withConfigProperty(CloudSQLMySQLConstants.INSTANCE_TYPE);
+    }
+
+    if (Strings.isNullOrEmpty(connectionName)) {
+      failureCollector
+        .addFailure(
+          "Cloud SQL Connection Name cannot be null or empty", null)
+        .withConfigProperty(CloudSQLMySQLConstants.CONNECTION_NAME);
+    }
+
+    if (!failureCollector.getValidationFailures().isEmpty()) {
+      return;
+    }
 
     if (CloudSQLMySQLConstants.PUBLIC_INSTANCE.equalsIgnoreCase(instanceType)) {
       Pattern connectionNamePattern =

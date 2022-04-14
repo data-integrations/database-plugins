@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.cloudsql.postgres;
 
+import com.google.common.base.Strings;
 import com.google.common.net.InetAddresses;
 import io.cdap.cdap.etl.api.FailureCollector;
 
@@ -36,7 +37,25 @@ public class CloudSQLPostgreSQLUtil {
    */
   public static void checkConnectionName(
       FailureCollector failureCollector, String instanceType, String connectionName) {
-    
+
+    if (Strings.isNullOrEmpty(instanceType)) {
+      failureCollector
+        .addFailure(
+          "Cloud SQL Instance Type cannot be null or empty", null)
+      .withConfigProperty(CloudSQLPostgreSQLConstants.INSTANCE_TYPE);
+    }
+
+    if (Strings.isNullOrEmpty(connectionName)) {
+      failureCollector
+        .addFailure(
+          "Cloud SQL Connection Name cannot be null or empty", null)
+        .withConfigProperty(CloudSQLPostgreSQLConstants.CONNECTION_NAME);
+    }
+
+    if (!failureCollector.getValidationFailures().isEmpty()) {
+      return;
+    }
+
     if (CloudSQLPostgreSQLConstants.PUBLIC_INSTANCE.equalsIgnoreCase(instanceType)) {
       Pattern connectionNamePattern =
           Pattern.compile(CloudSQLPostgreSQLConstants.CONNECTION_NAME_PATTERN);
