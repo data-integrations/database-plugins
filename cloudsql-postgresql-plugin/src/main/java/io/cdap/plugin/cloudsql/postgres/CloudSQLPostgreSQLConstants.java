@@ -23,13 +23,8 @@ public final class CloudSQLPostgreSQLConstants {
   }
   
   public static final String PLUGIN_NAME = "CloudSQLPostgreSQL";
-  public static final String CONNECTION_NAME = "connectionName";
-  public static final String CONNECTION_NAME_PATTERN = "[a-z0-9-]+:[a-z0-9-]+:[a-z0-9-]+";
   public static final String CONNECTION_TIMEOUT = "connectionTimeout";
-  public static final String PUBLIC_INSTANCE = "public";
   public static final String PUBLIC_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT =
       "jdbc:postgresql:///%s?cloudSqlInstance=%s&socketFactory=com.google.cloud.sql.postgres.SocketFactory";
-  public static final String INSTANCE_TYPE = "instanceType";
-  public static final String PRIVATE_INSTANCE = "private";
   public static final String PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT = "jdbc:postgresql://%s/%s";
 }
