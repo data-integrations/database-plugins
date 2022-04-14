@@ -32,6 +32,7 @@ import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import io.cdap.plugin.postgres.PostgresDBRecord;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
+import io.cdap.plugin.util.CloudSQLUtil;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Collections;
@@ -58,11 +59,14 @@ public class CloudSQLPostgreSQLSource
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
-    
-    CloudSQLPostgreSQLUtil.checkConnectionName(
+
+    if (!cloudsqlPostgresqlSourceConfig.containsMacro(CloudSQLUtil.INSTANCE_TYPE) &&
+      !cloudsqlPostgresqlSourceConfig.containsMacro(CloudSQLUtil.CONNECTION_NAME)) {
+      CloudSQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlPostgresqlSourceConfig.connection.getInstanceType(),
         cloudsqlPostgresqlSourceConfig.connection.getConnectionName());
+    }
     
     super.configurePipeline(pipelineConfigurer);
   }
@@ -79,7 +83,7 @@ public class CloudSQLPostgreSQLSource
 
   @Override
   protected String createConnectionString() {
-    if (CloudSQLPostgreSQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(
+    if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(
         cloudsqlPostgresqlSourceConfig.connection.getInstanceType())) {
       return String.format(
           CloudSQLPostgreSQLConstants.PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,

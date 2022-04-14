@@ -32,6 +32,7 @@ import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import io.cdap.plugin.util.CloudSQLUtil;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -54,11 +55,14 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
-    
-    CloudSQLMySQLUtil.checkConnectionName(
+
+    if (!cloudsqlMysqlSinkConfig.containsMacro(CloudSQLUtil.INSTANCE_TYPE) &&
+      !cloudsqlMysqlSinkConfig.containsMacro(CloudSQLUtil.CONNECTION_NAME)) {
+      CloudSQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlMysqlSinkConfig.connection.getInstanceType(),
         cloudsqlMysqlSinkConfig.connection.getConnectionName());
+    }
     
     super.configurePipeline(pipelineConfigurer);
   }
