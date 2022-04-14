@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
+import io.cdap.plugin.util.CloudSQLUtil;
 
 import javax.annotation.Nullable;
 
@@ -28,7 +29,7 @@ import javax.annotation.Nullable;
  */
 public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig {
 
-  @Name(CloudSQLPostgreSQLConstants.CONNECTION_NAME)
+  @Name(CloudSQLUtil.CONNECTION_NAME)
   @Description(
     "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
       + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
@@ -39,9 +40,8 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
   @Description("Database name to connect to")
   private String database;
 
-  @Name(CloudSQLPostgreSQLConstants.INSTANCE_TYPE)
+  @Name(CloudSQLUtil.INSTANCE_TYPE)
   @Description("Whether the CloudSQL instance to connect to is private or public.")
-  @Nullable
   private String instanceType;
 
   public CloudSQLPostgreSQLConnectorConfig(String username, String password, String jdbcPluginName,
@@ -70,7 +70,7 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
 
   @Override
   public String getConnectionString() {
-    if (CloudSQLPostgreSQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
+    if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
       return String.format(
         CloudSQLPostgreSQLConstants.PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
         connectionName,

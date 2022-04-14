@@ -25,6 +25,7 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.plugin.db.batch.action.AbstractDBAction;
 import io.cdap.plugin.db.batch.action.QueryConfig;
+import io.cdap.plugin.util.CloudSQLUtil;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -48,7 +49,7 @@ public class CloudSQLMySQLAction extends AbstractDBAction {
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     
-    CloudSQLMySQLUtil.checkConnectionName(
+    CloudSQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlMysqlActionConfig.instanceType,
         cloudsqlMysqlActionConfig.connectionName);
@@ -60,10 +61,10 @@ public class CloudSQLMySQLAction extends AbstractDBAction {
   public static class CloudSQLMySQLActionConfig extends QueryConfig {
     
     public CloudSQLMySQLActionConfig() {
-      this.instanceType = CloudSQLMySQLConstants.PUBLIC_INSTANCE;
+      this.instanceType = CloudSQLUtil.PUBLIC_INSTANCE;
     }
   
-    @Name(CloudSQLMySQLConstants.CONNECTION_NAME)
+    @Name(CloudSQLUtil.CONNECTION_NAME)
     @Description(
         "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
             + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
@@ -82,14 +83,14 @@ public class CloudSQLMySQLAction extends AbstractDBAction {
     @Nullable
     public Integer connectionTimeout;
 
-    @Name(CloudSQLMySQLConstants.INSTANCE_TYPE)
+    @Name(CloudSQLUtil.INSTANCE_TYPE)
     @Description("Whether the CloudSQL instance to connect to is private or public.")
     @Nullable
     public String instanceType;
 
     @Override
     public String getConnectionString() {
-      if (CloudSQLMySQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
+      if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
         return String.format(
             CloudSQLMySQLConstants.PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
             connectionName,

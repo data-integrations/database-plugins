@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
+import io.cdap.plugin.util.CloudSQLUtil;
 
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -32,7 +33,7 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
   private static final String JDBC_PROPERTY_CONNECT_TIMEOUT_MILLIS = "connectTimeout";
   private static final String JDBC_PROPERTY_SOCKET_TIMEOUT_MILLIS = "socketTimeout";
 
-  @Name(CloudSQLMySQLConstants.CONNECTION_NAME)
+  @Name(CloudSQLUtil.CONNECTION_NAME)
   @Description(
     "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
       + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
@@ -43,9 +44,8 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
   @Description("Database name to connect to")
   private String database;
 
-  @Name(CloudSQLMySQLConstants.INSTANCE_TYPE)
+  @Name(CloudSQLUtil.INSTANCE_TYPE)
   @Description("Whether the CloudSQL instance to connect to is private or public.")
-  @Nullable
   private String instanceType;
 
   public CloudSQLMySQLConnectorConfig(String user, String password, String jdbcPluginName, String connectionArguments,
@@ -73,7 +73,7 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
 
   @Override
   public String getConnectionString() {
-    if (CloudSQLMySQLConstants.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
+    if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
       return String.format(
         CloudSQLMySQLConstants.PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
         connectionName,
