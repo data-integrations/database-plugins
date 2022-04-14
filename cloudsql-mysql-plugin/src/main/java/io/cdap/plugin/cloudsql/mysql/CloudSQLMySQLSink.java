@@ -54,11 +54,14 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
-    
-    CloudSQLMySQLUtil.checkConnectionName(
+
+    if (!cloudsqlMysqlSinkConfig.containsMacro(CloudSQLMySQLConstants.INSTANCE_TYPE) &
+      !cloudsqlMysqlSinkConfig.containsMacro(CloudSQLMySQLConstants.CONNECTION_NAME)) {
+      CloudSQLMySQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlMysqlSinkConfig.connection.getInstanceType(),
         cloudsqlMysqlSinkConfig.connection.getConnectionName());
+    }
     
     super.configurePipeline(pipelineConfigurer);
   }

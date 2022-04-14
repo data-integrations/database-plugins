@@ -58,11 +58,14 @@ public class CloudSQLPostgreSQLSource
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
-    
-    CloudSQLPostgreSQLUtil.checkConnectionName(
+
+    if (!cloudsqlPostgresqlSourceConfig.containsMacro(CloudSQLPostgreSQLConstants.INSTANCE_TYPE) &
+      !cloudsqlPostgresqlSourceConfig.containsMacro(CloudSQLPostgreSQLConstants.CONNECTION_NAME)) {
+      CloudSQLPostgreSQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlPostgresqlSourceConfig.connection.getInstanceType(),
         cloudsqlPostgresqlSourceConfig.connection.getConnectionName());
+    }
     
     super.configurePipeline(pipelineConfigurer);
   }

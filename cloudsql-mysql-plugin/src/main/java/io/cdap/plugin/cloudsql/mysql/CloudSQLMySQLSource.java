@@ -57,10 +57,13 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
 
-    CloudSQLMySQLUtil.checkConnectionName(
+    if (!cloudsqlMysqlSourceConfig.containsMacro(CloudSQLMySQLConstants.INSTANCE_TYPE) &
+    !cloudsqlMysqlSourceConfig.containsMacro(CloudSQLMySQLConstants.CONNECTION_NAME)) {
+      CloudSQLMySQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlMysqlSourceConfig.connection.getInstanceType(),
         cloudsqlMysqlSourceConfig.connection.getConnectionName());
+    }
 
     super.configurePipeline(pipelineConfigurer);
   }

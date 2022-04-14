@@ -66,11 +66,14 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
-    
-    CloudSQLPostgreSQLUtil.checkConnectionName(
+
+    if (!cloudsqlPostgresqlSinkConfig.containsMacro(CloudSQLPostgreSQLConstants.INSTANCE_TYPE) &
+      !cloudsqlPostgresqlSinkConfig.containsMacro(CloudSQLPostgreSQLConstants.CONNECTION_NAME)) {
+      CloudSQLPostgreSQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlPostgresqlSinkConfig.connection.getInstanceType(),
         cloudsqlPostgresqlSinkConfig.connection.getConnectionName());
+    }
     
     super.configurePipeline(pipelineConfigurer);
   }
