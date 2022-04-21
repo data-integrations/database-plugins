@@ -117,6 +117,12 @@ public class CloudSQLPostgreSQLSource
     }
 
     @Override
+    public Integer getFetchSize() {
+      Integer fetchSize = super.getFetchSize();
+      return fetchSize == null ? Integer.parseInt(DEFAULT_FETCH_SIZE) : fetchSize;
+    }
+
+    @Override
     protected CloudSQLPostgreSQLConnectorConfig getConnection() {
       return connection;
     }

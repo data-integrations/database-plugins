@@ -85,6 +85,8 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
       sinkProperties.put(OracleSink.OracleSinkConfig.DB_SCHEMA_NAME, schema);
     }
     sourceProperties.put(OracleSource.OracleSourceConfig.NUM_SPLITS, "1");
+    sourceProperties.put(OracleSource.OracleSourceConfig.FETCH_SIZE,
+                         OracleSource.OracleSourceConfig.DEFAULT_FETCH_SIZE);
     String table = path.getTable();
     if (table == null) {
       return;

@@ -75,6 +75,7 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
 
     public static final String NAME_USE_CONNECTION = "useConnection";
     public static final String NAME_CONNECTION = "connection";
+    public static final String DEFAULT_CONNECTION_TIMEOUT_SECONDS = "100";
 
     @Name(NAME_USE_CONNECTION)
     @Nullable
@@ -104,6 +105,12 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
     @Override
     public Map<String, String> getDBSpecificArguments() {
       return ImmutableMap.of(PostgresConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
+    }
+
+    @Override
+    public Integer getFetchSize() {
+      Integer fetchSize = super.getFetchSize();
+      return fetchSize == null ? Integer.parseInt(DEFAULT_FETCH_SIZE) : fetchSize;
     }
 
     @Override

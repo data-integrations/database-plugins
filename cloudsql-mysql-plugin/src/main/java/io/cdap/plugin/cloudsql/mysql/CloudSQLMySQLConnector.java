@@ -99,6 +99,8 @@ public class CloudSQLMySQLConnector extends AbstractDBSpecificConnector<DBRecord
                                                                                              path.getSchema(),
                                                                                              path.getTable()));
     properties.put(CloudSQLMySQLSource.CloudSQLMySQLSourceConfig.NUM_SPLITS, "1");
+    properties.put(CloudSQLMySQLSource.CloudSQLMySQLSourceConfig.FETCH_SIZE,
+                   CloudSQLMySQLSource.CloudSQLMySQLSourceConfig.DEFAULT_FETCH_SIZE);
     properties.put(ConnectionConfig.DATABASE, path.getDatabase());
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
     properties.put(CloudSQLMySQLSink.CloudSQLMySQLSinkConfig.TABLE_NAME, table);
