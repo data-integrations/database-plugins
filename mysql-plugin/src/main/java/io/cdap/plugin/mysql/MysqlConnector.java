@@ -80,6 +80,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
     properties.put(MysqlSource.MysqlSourceConfig.IMPORT_QUERY, getTableQuery(path.getDatabase(), path.getSchema(),
                                                                              path.getTable()));
     properties.put(MysqlSource.MysqlSourceConfig.NUM_SPLITS, "1");
+    properties.put(MysqlSource.MysqlSourceConfig.FETCH_SIZE, MysqlSource.MysqlSourceConfig.DEFAULT_FETCH_SIZE);
     properties.put(MysqlSource.MysqlSourceConfig.DATABASE, path.getDatabase());
     properties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
     properties.put(MysqlSink.MysqlSinkConfig.TABLE_NAME, table);
