@@ -86,6 +86,10 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
       sinkProperties.put(PostgresSink.PostgresSinkConfig.DB_SCHEMA_NAME, schema);
     }
     sourceProperties.put(PostgresSource.PostgresSourceConfig.NUM_SPLITS, "1");
+    sourceProperties.put(PostgresSource.PostgresSourceConfig.FETCH_SIZE,
+                         PostgresSource.PostgresSourceConfig.DEFAULT_FETCH_SIZE);
+    sourceProperties.put(PostgresConstants.CONNECTION_TIMEOUT,
+                         PostgresSource.PostgresSourceConfig.DEFAULT_CONNECTION_TIMEOUT_SECONDS);
     String table = path.getTable();
     if (table == null) {
       return;

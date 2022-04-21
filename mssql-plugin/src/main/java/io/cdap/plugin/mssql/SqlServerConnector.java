@@ -87,6 +87,8 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
       sinkProperties.put(SqlServerSink.SqlServerSinkConfig.DB_SCHEMA_NAME, schema);
     }
     sourceProperties.put(SqlServerSource.SqlServerSourceConfig.NUM_SPLITS, "1");
+    sourceProperties.put(SqlServerSource.SqlServerSourceConfig.FETCH_SIZE,
+                         SqlServerSource.SqlServerSourceConfig.DEFAULT_FETCH_SIZE);
     String table = path.getTable();
     if (table == null) {
       return;

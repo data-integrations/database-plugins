@@ -60,7 +60,7 @@ back from the query. However, it must match the schema that comes back from the 
 except it can mark fields as nullable and can contain a subset of the fields.
 
 **Fetch Size:** The number of rows to fetch at a time per split. Larger fetch size can result in faster import,
-with the tradeoff of higher memory usage.
+with the tradeoff of higher memory usage. If not specified, the default value is 1000.
 
 Example
 ------

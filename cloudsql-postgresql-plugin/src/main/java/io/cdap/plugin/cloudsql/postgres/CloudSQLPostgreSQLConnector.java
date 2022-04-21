@@ -31,7 +31,6 @@ import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.common.db.DBPath;
-import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import io.cdap.plugin.postgres.PostgresDBRecord;
@@ -112,6 +111,8 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
       sinkProperties.put(CloudSQLPostgreSQLSink.CloudSQLPostgreSQLSinkConfig.DB_SCHEMA_NAME, schema);
     }
     sourceProperties.put(CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig.NUM_SPLITS, "1");
+    sourceProperties.put(CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig.FETCH_SIZE,
+                         CloudSQLPostgreSQLSource.CloudSQLPostgreSQLSourceConfig.DEFAULT_FETCH_SIZE);
     String table = path.getTable();
     if (table == null) {
       return;
