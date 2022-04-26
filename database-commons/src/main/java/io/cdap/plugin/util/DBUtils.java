@@ -37,13 +37,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Objects;
-import java.util.TimeZone;
 import javax.annotation.Nullable;
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
@@ -58,18 +54,6 @@ import javax.management.ReflectionException;
  */
 public final class DBUtils {
   private static final Logger LOG = LoggerFactory.getLogger(DBUtils.class);
-
-  private static final Calendar PURE_GREGORIAN_CALENDAR = createPureGregorianCalender();
-
-  // Java by default uses October 15, 1582 as a Gregorian cut over date.
-  // Any timestamp created with time less than this cut over date is treated as Julian date.
-  // This causes old dates from database such as 0001-01-01 01:00:00 mapped to 0000-12-30
-  // Get the pure gregorian calendar so that all dates are treated as gregorian format.
-  private static Calendar createPureGregorianCalender() {
-    GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-    gc.setGregorianChange(new Date(Long.MIN_VALUE));
-    return gc;
-  }
 
   /**
    * Performs any Database related cleanup
@@ -132,7 +116,7 @@ public final class DBUtils {
         case Types.TIME:
           return resultSet.getTime(columnIndex);
         case Types.TIMESTAMP:
-          return resultSet.getTimestamp(columnIndex, PURE_GREGORIAN_CALENDAR);
+          return resultSet.getTimestamp(columnIndex);
         case Types.ROWID:
           return resultSet.getString(columnIndex);
         case Types.BLOB:
