@@ -25,6 +25,11 @@ Properties
 
 **Role** Login role of the user when connecting to the database. For eg, NORMAL, SYSDBA, SYSOPER, etc.
 
+**Transaction Isolation Level** The transaction isolation level of the databse connection
+- TRANSACTION_READ_COMMITTED: No dirty reads. Non-repeatable reads and phantom reads are possible.
+- TRANSACTION_SERIALIZABLE (default): No dirty reads. Non-repeatable and phantom reads are prevented.
+- Note: If the user role selected is SYSDBA or SYSOPER, the plugin will default to TRANSACTION_READ_COMMITTED to prevent ORA-08178 errors
+
 **Connection Type** Whether to use an SID or Service Name when connecting to the database.
 
 **SID/Service Name/TNS Connect Descriptor:** Oracle connection point (Database name, Service name, or a TNS Connect Descriptor). When using TNS, place

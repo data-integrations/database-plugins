@@ -77,6 +77,7 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     @Nullable
     @Description("Whether to use an existing connection.")
     private Boolean useConnection;
+
     @Name(NAME_CONNECTION)
     @Macro
     @Nullable
@@ -136,7 +137,7 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
 
     @Override
     public String getTransactionIsolationLevel() {
-      return getConnection().getTransactionIsolationLevel();
+      return connection.getTransactionIsolationLevel();
     }
   }
 

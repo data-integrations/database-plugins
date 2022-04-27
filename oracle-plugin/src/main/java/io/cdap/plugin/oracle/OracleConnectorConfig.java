@@ -76,6 +76,12 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   @Macro
   private String database;
 
+  @Name(OracleConstants.TRANSACTION_ISOLATION_LEVEL)
+  @Description("The transaction isolation level for the database session.")
+  @Macro
+  @Nullable
+  private String transactionIsolationLevel;
+
   @Override
   protected int getDefaultPort() {
     return 1521;
@@ -103,10 +109,16 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
     return prop;
   }
 
-  @Override
   public String getTransactionIsolationLevel() {
-    return ROLE_NORMAL.equals(getRole()) ? null :
-      TransactionIsolationLevel.Level.TRANSACTION_READ_COMMITTED.name();
+    //if null default to the highest isolation level possible
+    if (transactionIsolationLevel == null) {
+      transactionIsolationLevel = TransactionIsolationLevel.Level.TRANSACTION_SERIALIZABLE.name();
+    }
+    //To solve the problem of ORA-08178: illegal SERIALIZABLE clause specified for user INTERNAL
+    //This ensures that the role is mapped to the right serialization level, even w/ incorrect user input
+    //if role is SYSDBA or SYSOP it will map to read_committed. else serialized
+    return (!getRole().equals(ROLE_NORMAL)) ? TransactionIsolationLevel.Level.TRANSACTION_READ_COMMITTED.name() :
+            TransactionIsolationLevel.Level.valueOf(transactionIsolationLevel).name();
   }
 
 }
