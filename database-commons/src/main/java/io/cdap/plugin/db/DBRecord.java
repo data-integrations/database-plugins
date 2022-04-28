@@ -156,6 +156,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
       if (schema.getType() == Schema.Type.LONG) {
         recordBuilder.set(field.getName(), ((BigInteger) o).longValueExact());
       } else {
+        // BigInteger won't have any fraction part and scale is 0
         recordBuilder.setDecimal(field.getName(), new BigDecimal((BigInteger) o, 0));
       }
     } else {
