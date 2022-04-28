@@ -152,10 +152,9 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     } else if (o instanceof BigDecimal) {
       recordBuilder.setDecimal(field.getName(), (BigDecimal) o);
     } else if (o instanceof BigInteger) {
-      if (sqlType == Types.BIGINT && (resultSet.getMetaData().isSigned(columnIndex) ||
-          resultSet.getMetaData().getPrecision(columnIndex) < 19)) {
-        //SQL BIGINT type is 64-bit long thus signed should be able to convert to long without losing precisions
-        // or UNSIGNED type is within the scope of signed long
+      Schema schema = field.getSchema();
+      schema = schema.isNullable() ? schema.getNonNullable() : schema;
+      if (schema.getType() == Schema.Type.LONG) {
         recordBuilder.set(field.getName(), ((BigInteger) o).longValueExact());
       } else {
         // BigInteger won't have any fraction part and scale is 0
