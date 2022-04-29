@@ -153,6 +153,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
       recordBuilder.setDecimal(field.getName(), (BigDecimal) o);
     } else if (o instanceof BigInteger) {
       Schema schema = field.getSchema();
+      schema = schema.isNullable() ? schema.getNonNullable() : schema;
       if (schema.getType() == Schema.Type.LONG) {
         recordBuilder.set(field.getName(), ((BigInteger) o).longValueExact());
       } else {
