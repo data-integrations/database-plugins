@@ -2,7 +2,7 @@
   "metadata": {
     "spec-version": "1.0"
   },
-  "display-name": "CloudSQLPostgreSQL",
+  "display-name": "CloudSQL PostgreSQL",
   "configuration-groups": [
     {
       "label": "Basic",

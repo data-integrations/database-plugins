@@ -2,7 +2,7 @@
   "metadata": {
     "spec-version": "1.0"
   },
-  "display-name": "CloudSQLMySQL",
+  "display-name": "CloudSQL MySQL",
   "configuration-groups": [
     {
       "label": "Basic",
