@@ -35,4 +35,5 @@ public final class OracleConstants {
   public static final String ROLE = "role";
   public static final String NAME_DATABASE = "database";
   public static final String TNS_CONNECTION_TYPE = "TNS";
+  public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
 }

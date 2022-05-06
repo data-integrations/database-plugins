@@ -38,6 +38,11 @@ the full TNS Connect Descriptor in the text field. For example:
 
 **Role** Login role of the user when connecting to the database.
 
+**Transaction Isolation Level** The transaction isolation level of the databse connection
+- TRANSACTION_READ_COMMITTED: No dirty reads. Non-repeatable reads and phantom reads are possible.
+- TRANSACTION_SERIALIZABLE (default): No dirty reads. Non-repeatable and phantom reads are prevented.
+- Note: If the user role selected is SYSDBA or SYSOPER, the plugin will default to TRANSACTION_READ_COMMITTED to prevent ORA-08178 errors
+
 **Import Query:** The SELECT query to use to import data from the specified table.
 You can specify an arbitrary number of columns to import, or import all columns using \*. The Query should
 contain the '$CONDITIONS' string. For example, 'SELECT * FROM table WHERE $CONDITIONS'.
