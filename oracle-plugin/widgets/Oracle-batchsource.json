@@ -89,6 +89,18 @@
           }
         },
         {
+          "widget-type": "select",
+          "label": "Transaction Isolation Level",
+          "name": "transactionIsolationLevel",
+          "widget-attributes": {
+            "values": [
+              "TRANSACTION_READ_COMMITTED",
+              "TRANSACTION_SERIALIZABLE"
+            ],
+            "default": "TRANSACTION_SERIALIZABLE"
+          }
+        },
+        {
           "name": "connectionType",
           "label": "Connection Type",
           "widget-type": "radio-group",
@@ -238,6 +250,18 @@
   ],
   "filters": [
     {
+      "name": "showIsolationLevels",
+      "condition": {
+        "expression": "role == 'normal'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "transactionIsolationLevel"
+        }
+      ]
+    },
+    {
       "name": "showConnectionProperties ",
       "condition": {
         "expression": "useConnection == false"
@@ -278,6 +302,10 @@
         {
           "type": "property",
           "name": "database"
+        },
+        {
+          "type": "property",
+          "name": "transactionIsolationLevel"
         }
       ]
     },
