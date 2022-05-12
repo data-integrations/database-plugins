@@ -22,11 +22,19 @@ authentication. Optional for databases that do not require authentication.
 
 **Password:** Password to use to connect to the specified database.
 
-**Connection Type:** Whether to use an SID or Service Name when connecting to the database.
+**SID/Service Name/TNS Connect Descriptor:** Oracle connection point (Database name, Service name, or a TNS Connect Descriptor). When using TNS, place
+the full TNS Connect Descriptor in the text field. For example:
+(DESCRIPTION =(ADDRESS = (PROTOCOL = TCP)(HOST = 123.123.123.123)(PORT = 1521))(CONNECT_DATA =(SERVER = DEDICATED)
+(SERVICE_NAME = XE)))
 
-**SID/Service Name:** Oracle connection point (Database name or Service name).
+**Connection Type** Whether to use an SID, Service Name, or TNS Connect Descriptor when connecting to the database.
 
 **Role:** Login role of the user when connecting to the database.
+
+**Transaction Isolation Level** The transaction isolation level of the databse connection
+- TRANSACTION_READ_COMMITTED: No dirty reads. Non-repeatable reads and phantom reads are possible.
+- TRANSACTION_SERIALIZABLE (default): No dirty reads. Non-repeatable and phantom reads are prevented.
+- Note: If the user role selected is SYSDBA or SYSOPER, the plugin will default to TRANSACTION_READ_COMMITTED to prevent ORA-08178 errors
 
 **Connection Arguments:** A list of arbitrary string tag/value pairs as connection arguments. These arguments
 will be passed to the JDBC driver, as connection arguments, for JDBC drivers that may need additional configurations.
