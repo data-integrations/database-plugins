@@ -249,19 +249,13 @@ public abstract class DBSpecificConnectorBaseTest {
     }
     Set<PluginSpec> relatedPlugins = connectorSpec.getRelatedPlugins();
     Assert.assertEquals(2, relatedPlugins.size());
-    Iterator<PluginSpec> relatedPluginsIterator = relatedPlugins.iterator();
-    PluginSpec pluginSpec = relatedPluginsIterator.next();
+    Iterator<PluginSpec> iterator = relatedPlugins.iterator();
+    PluginSpec pluginSpec = iterator.next();
     Assert.assertEquals(pluginName, pluginSpec.getName());
-    Assert.assertTrue(pluginSpec.getType().equals(BatchSource.PLUGIN_TYPE) ||
-                        pluginSpec.getType().equals(BatchSink.PLUGIN_TYPE));
-    PluginSpec pluginSpec1 = relatedPluginsIterator.next();
-    Assert.assertEquals(pluginName, pluginSpec1.getName());
-    if (pluginSpec.getType().equals(BatchSink.PLUGIN_TYPE)) {
-      Assert.assertEquals(BatchSource.PLUGIN_TYPE, pluginSpec1.getType());
-    } else {
-      Assert.assertEquals(BatchSink.PLUGIN_TYPE, pluginSpec1.getType());
-    }
-
+    Assert.assertEquals(BatchSink.PLUGIN_TYPE, pluginSpec.getType());
+    pluginSpec = iterator.next();
+    Assert.assertEquals(pluginName, pluginSpec.getName());
+    Assert.assertEquals(BatchSource.PLUGIN_TYPE, pluginSpec.getType());
     Map<String, String> properties = pluginSpec.getProperties();
     Assert.assertNull(properties.get(NAME_USE_CONNECTION));
     Assert.assertNull(properties.get(NAME_CONNECTION));
