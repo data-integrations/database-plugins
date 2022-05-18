@@ -87,6 +87,10 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     sourceProperties.put(OracleSource.OracleSourceConfig.NUM_SPLITS, "1");
     sourceProperties.put(OracleSource.OracleSourceConfig.FETCH_SIZE,
                          OracleSource.OracleSourceConfig.DEFAULT_FETCH_SIZE);
+    sourceProperties.put(OracleConstants.DEFAULT_ROW_PREFETCH,
+                         OracleSource.OracleSourceConfig.DEFAULT_ROW_PREFETCH_VALUE);
+    sourceProperties.put(OracleConstants.DEFAULT_BATCH_VALUE,
+                         OracleSource.OracleSourceConfig.DEFAULT_BATCH_SIZE);
     String table = path.getTable();
     if (table == null) {
       return;
