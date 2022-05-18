@@ -73,6 +73,8 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
 
     public static final String NAME_USE_CONNECTION = "useConnection";
     public static final String NAME_CONNECTION = "connection";
+    public static final String DEFAULT_ROW_PREFETCH_VALUE = "40";
+    public static final String DEFAULT_BATCH_SIZE = "10";
 
     @Name(NAME_USE_CONNECTION)
     @Nullable
@@ -88,12 +90,12 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     @Name(OracleConstants.DEFAULT_BATCH_VALUE)
     @Description("The default batch value that triggers an execution request.")
     @Nullable
-    public Integer defaultBatchValue;
+    private Integer defaultBatchValue;
 
     @Name(OracleConstants.DEFAULT_ROW_PREFETCH)
     @Description("The default number of rows to prefetch from the server.")
     @Nullable
-    public Integer defaultRowPrefetch;
+    private Integer defaultRowPrefetch;
 
     @Override
     public String getConnectionString() {
@@ -111,9 +113,12 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     @Override
     protected Map<String, String> getDBSpecificArguments() {
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-
-      builder.put(OracleConstants.DEFAULT_BATCH_VALUE, String.valueOf(defaultBatchValue));
-      builder.put(OracleConstants.DEFAULT_ROW_PREFETCH, String.valueOf(defaultRowPrefetch));
+      if (defaultBatchValue != null) {
+        builder.put(OracleConstants.DEFAULT_BATCH_VALUE, String.valueOf(defaultBatchValue));
+      }
+      if (defaultRowPrefetch != null) {
+        builder.put(OracleConstants.DEFAULT_ROW_PREFETCH, String.valueOf(defaultRowPrefetch));
+      }
 
       return builder.build();
     }
