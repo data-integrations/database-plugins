@@ -48,7 +48,7 @@
       "properties": [
         {
           "label": "Authentication Type",
-          "name": "authentication",
+          "name": "authenticationType",
           "widget-type": "radio-group",
           "widget-attributes": {
             "layout": "inline",
