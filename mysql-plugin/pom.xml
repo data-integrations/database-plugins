@@ -26,12 +26,7 @@
   <name>Mysql plugin</name>
   <artifactId>mysql-plugin</artifactId>
   <modelVersion>4.0.0</modelVersion>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <testSourceLocation>${project.basedir}/src/test/java/</testSourceLocation>
-  </properties>
-
+  
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -94,6 +89,7 @@
     </dependency>
   </dependencies>
   <build>
+    <testSourceDirectory>${testSourceLocation}</testSourceDirectory>
     <plugins>
       <plugin>
         <groupId>io.cdap</groupId>
@@ -181,6 +177,11 @@
           <artifactId>logback-core</artifactId>
           <version>1.2.8</version>
           <scope>runtime</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+          <version>27.0.1-jre</version>
         </dependency>
       </dependencies>
     </profile>

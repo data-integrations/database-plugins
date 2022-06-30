@@ -25,7 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- *  MySQL client
+ *  MySQL client.
  */
 public class MysqlClient {
   private static final String host =  PluginPropertyUtils.pluginProp("host");
@@ -44,7 +44,7 @@ public class MysqlClient {
     try (Connection connect = getMysqlConnection(); Statement statement = connect.createStatement();
          ResultSet rs = statement.executeQuery(countQuery)) {
       int num = 0;
-      while(rs.next()){
+      while (rs.next()) {
         num = (rs.getInt(1));
       }
       return num;
