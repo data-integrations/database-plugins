@@ -31,7 +31,7 @@ import java.sql.SQLException;
 public class Mysql implements CdfHelper {
 
   @Then("Click on preview data for MySQL sink")
-  public void clickOnPreviewDataForBigQuerySink() {
+  public void clickOnPreviewDataForMysqlSink() {
     openSinkPluginPreviewData("Mysql");
   }
 

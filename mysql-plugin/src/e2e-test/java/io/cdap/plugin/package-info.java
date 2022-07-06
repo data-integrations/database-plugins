@@ -15,6 +15,6 @@
  */
 
 /**
- * Package contains the locators for the Joiner plugin.
+ * Package contains Mysql client.
  */
 package io.cdap.plugin;

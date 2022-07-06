@@ -15,6 +15,6 @@
  */
 
 /**
- * Package contains the locators for the Joiner plugin.
+ * Package contains the stepDesign for common features.
  */
 package io.cdap.plugin.common.stepsdesign;
