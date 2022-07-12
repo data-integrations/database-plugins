@@ -15,6 +15,6 @@
  */
 
 /**
- * Package contains the locators for the Joiner plugin.
+ * Package contains the runners for Mysql features.
  */
 package io.cdap.plugin.mysql.runners;
