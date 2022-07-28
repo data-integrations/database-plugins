@@ -117,16 +117,19 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     return config.getConnectionString();
   }
 
+  protected String getTableName(String database, String schema, String table) {
+    return schema == null ? String.format("\"%s\".\"%s\"", database, table)
+      : String.format("\"%s\".\"%s\".\"%s\"", database, schema, table);
+  }
+
   protected String getTableQuery(String database, String schema, String table) {
-    return schema == null ? String.format("SELECT * FROM \"%s\".\"%s\"", database, table)
-      : String.format("SELECT * FROM \"%s\".\"%s\".\"%s\"", database, schema, table);
+    String tableName = getTableName(database, schema, table);
+    return String.format("SELECT * FROM %s", tableName);
   }
 
   protected String getTableQuery(String database, String schema, String table, int limit) {
-    return schema == null ?
-      String.format("SELECT * FROM \"%s\".\"%s\" LIMIT %d", database, table, limit) :
-      String.format(
-        "SELECT * FROM \"%s\".\"%s\".\"%s\" LIMIT %d", database, schema, table, limit);
+    String tableName = getTableName(database, schema, table);
+    return String.format("SELECT * FROM %s LIMIT %d", tableName, limit);
   }
 
   protected Schema loadTableSchema(Connection connection, String query) throws SQLException {
