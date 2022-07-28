@@ -35,7 +35,7 @@ You also can use the macro function ${conn(connection-name)}.
 - TRANSACTION_SERIALIZABLE (default): No dirty reads. Non-repeatable and phantom reads are prevented.
 - Note: If the user role selected is SYSDBA or SYSOPER, the plugin will default to TRANSACTION_READ_COMMITTED to prevent ORA-08178 errors
 
-**Connection Type** Whether to use an SID or Service Name when connecting to the database.
+**Connection Type** Whether to use an SID, Service Name, or TNS Connect Descriptor when connecting to the database.
 
 **SID/Service Name/TNS Connect Descriptor:** Oracle connection point (Database name, Service name, or a TNS Connect Descriptor). When using TNS, place
 the full TNS Connect Descriptor in the text field. For example:
@@ -43,6 +43,8 @@ the full TNS Connect Descriptor in the text field. For example:
 (SERVICE_NAME = XE)))
 
 **Table Name:** Name of the table to export to.
+
+**Schema:** Name of the database schema to write to. If left blank it will default to the database login user
 
 **Username:** User identity for connecting to the specified database.
 
@@ -91,17 +93,19 @@ Data Types Mapping
 
 Example
 -------
-Suppose you want to write output records to "users" table of Oracle database named "XE" that is running on "localhost", 
+Suppose you want to write output records to "users" table of Oracle database named (service name) "XE" that is running on "localhost", 
 port 1251, as "system" user with "oracle" password (Ensure that the driver for Oracle is installed. You can also provide 
-driver name for some specific driver, otherwise "oracle" will be used), then configure the plugin with: 
+driver name for some specific driver, otherwise "oracle" will be used). 
 
 ```
 Reference Name: "snk1"
 Driver Name: "oracle"
 Host: "localhost"
 Port: 1251
-Database: "XE"
+Connection Type: "Service Name"
+SID/Service Name/TNS Connect Descriptor: "XE"
 Table Name: "users"
+Schema Name: "myschema"
 Username: "system"
 Password: "oracle"
 ```

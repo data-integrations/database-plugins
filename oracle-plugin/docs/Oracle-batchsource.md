@@ -116,7 +116,8 @@ Reference Name: "src1"
 Driver Name: "oracle"
 Host: "localhost"
 Port: 1251
-Database: "XE"
+Connection Type: "Service Name"
+SID/Service Name/TNS Connect Descriptor: "XE"
 Import Query: "select id, name, email, phone from users;"
 Number of Splits to Generate: 1
 Username: "system"
