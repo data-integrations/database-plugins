@@ -134,13 +134,14 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   }
 
   @Override
-  protected String getTableQuery(String database, String schema, String table) {
-    return String.format("SELECT * from \"%s\".\"%s\"", schema, table);
+  protected String getTableName(String database, String schema, String table) {
+    return String.format("\"%s\".\"%s\"", schema, table);
   }
 
   @Override
   protected String getTableQuery(String database, String schema, String table, int limit) {
-    return String.format("SELECT * FROM \"%s\".\"%s\" WHERE ROWNUM <= %d", schema, table, limit);
+    String tableName = getTableName(database, schema, table);
+    return String.format("SELECT * FROM %s WHERE ROWNUM <= %d", tableName, limit);
   }
 
   @Override

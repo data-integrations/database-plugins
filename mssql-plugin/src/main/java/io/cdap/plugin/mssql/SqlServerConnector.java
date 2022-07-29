@@ -112,8 +112,9 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
 
   @Override
   protected String getTableQuery(String database, String schema, String table, int limit) {
+    String tableName = getTableName(database, schema, table);
     return String.format(
-      "SELECT TOP(%d) * FROM \"%s\".\"%s\".\"%s\"", limit, database, schema, table);
+      "SELECT TOP(%d) * FROM %s", limit, tableName);
   }
 
   @Override
