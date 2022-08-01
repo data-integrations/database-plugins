@@ -129,4 +129,25 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
     }
     return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
   }
+
+  @Override
+  protected String getTableQuery(String database, String schema, String table, int limit, String sampleType,
+                                 String strata) {
+    if (sampleType == null) {
+      return super.getTableQuery(database, schema, table, limit);
+    }
+    String tableName = getTableName(database, schema, table);
+    switch (sampleType) {
+      case "random":
+        // This query doesn't guarantee exactly "limit" number of rows
+        return String.format("SELECT * FROM %s TABLESAMPLE(%d ROWS)", tableName, limit);
+      // case "stratified":
+      //  if (strata == null) {
+      //    throw new IllegalArgumentException("No strata column given.");
+      //  }
+      // TODO: add in stratified sampling here
+      default:
+        return super.getTableQuery(database, schema, table, limit);
+    }
+  }
 }

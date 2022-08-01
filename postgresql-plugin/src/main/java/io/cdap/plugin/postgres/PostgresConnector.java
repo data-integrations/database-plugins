@@ -136,6 +136,5 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
       default:
         return super.getTableQuery(database, schema, table, limit);
     }
-
   }
 }

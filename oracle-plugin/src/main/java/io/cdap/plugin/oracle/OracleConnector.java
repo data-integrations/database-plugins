@@ -155,4 +155,27 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     }
     return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
   }
+
+  @Override
+  protected String getTableQuery(String database, String schema, String table, int limit, String sampleType,
+                                 String strata) {
+    if (sampleType == null) {
+      return super.getTableQuery(database, schema, table, limit);
+    }
+    String tableName = getTableName(database, schema, table);
+    switch (sampleType) {
+      case "random":
+        // This query doesn't guarantee exactly "limit" number of rows
+        // It instead selects each row with probability limit/num_rows.
+        return String.format("SELECT * FROM %s " +
+                "SAMPLE(100.0 * %d / (SELECT COUNT(*) FROM %s))", tableName, limit, tableName);
+      // case "stratified":
+      //  if (strata == null) {
+      //    throw new IllegalArgumentException("No strata column given.");
+      //  }
+      // TODO: add in stratified sampling here
+      default:
+        return super.getTableQuery(database, schema, table, limit);
+    }
+  }
 }
