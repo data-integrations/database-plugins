@@ -135,48 +135,7 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
 
   protected String getTableQuery(String database, String schema, String table, int limit, String sampleType,
                                  String strata) {
-    String tableName = schema == null ?
-      String.format("\"%s\".\"%s\"", database, table) :
-      String.format("\"%s\".\"%s\".\"%s\"", database, schema, table);
-
-    String query;
-    switch (sampleType) {
-      case "random":
-        query = String.format("WITH table AS (\n" +
-                                "  SELECT *, RAND() AS r\n" +
-                                "  FROM %s\n" +
-                                "  WHERE RAND() < 2*%d/(SELECT COUNT(*) FROM %s)\n" +
-                                ")\n" +
-                                "SELECT * EXCEPT (r)\n" +
-                                "FROM table\n" +
-                                "ORDER BY r\n" +
-                                "LIMIT %d", tableName, limit, tableName, limit);
-        break;
-      case "stratified":
-        if (strata == null) {
-          throw new IllegalArgumentException("No strata column given.");
-        }
-        query = String.format("WITH table AS (\n" +
-                                "  SELECT *\n" +
-                                "  FROM %s\n" +
-                                "), table_stats AS (\n" +
-                                "  SELECT *, SUM(stratum_count) OVER() total \n" +
-                                "  FROM (\n" +
-                                "    SELECT %s, COUNT(*) stratum_count \n" +
-                                "    FROM table\n" +
-                                "    GROUP BY 1\n" +
-                                "  )\n" +
-                                ")\n" +
-                                "SELECT * EXCEPT (stratum_count, total)\n" +
-                                "FROM table\n" +
-                                "JOIN table_stats\n" +
-                                "USING(%s)\n" +
-                                "WHERE RAND()< %d/total\n", tableName, strata, strata, limit);
-        break;
-      default:
-        query = getTableQuery(database, schema, table, limit);
-    }
-    return query;
+    return getTableQuery(database, schema, table, limit);
   }
 
   protected Schema loadTableSchema(Connection connection, String query) throws SQLException {
