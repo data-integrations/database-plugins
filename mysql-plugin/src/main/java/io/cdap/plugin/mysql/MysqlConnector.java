@@ -95,4 +95,28 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
   public StructuredRecord transform(LongWritable longWritable, DBRecord record) {
     return record.getRecord();
   }
+
+  @Override
+  protected String getTableQuery(String database, String schema, String table, int limit, String sampleType,
+                                 String strata) {
+    if (sampleType == null) {
+      return super.getTableQuery(database, schema, table, limit);
+    }
+    String tableName = getTableName(database, schema, table);
+    switch (sampleType) {
+      case "random":
+        // This query doesn't guarantee exactly "limit" number of rows
+        // Note that we input "limit" with a trailing zero so that division gives an exact result
+        return String.format("SELECT * FROM %s " +
+                "WHERE rand() < %d.0 / (SELECT COUNT(*) FROM %s)", tableName, limit, tableName);
+      // case "stratified":
+      //  if (strata == null) {
+      //    throw new IllegalArgumentException("No strata column given.");
+      //  }
+      // TODO: add in stratified sampling here
+      default:
+        return super.getTableQuery(database, schema, table, limit);
+    }
+
+  }
 }
