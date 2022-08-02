@@ -160,15 +160,16 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   protected String getTableQuery(String database, String schema, String table, int limit, String sampleType,
                                  String strata) {
     if (sampleType == null) {
-      return super.getTableQuery(database, schema, table, limit);
+      return getTableQuery(database, schema, table, limit);
     }
     String tableName = getTableName(database, schema, table);
     switch (sampleType) {
       case "random":
-        // This query doesn't guarantee exactly "limit" number of rows
-        // It instead selects each row with probability limit/num_rows.
-        return String.format("SELECT * FROM %s " +
-                "SAMPLE(100.0 * %d / (SELECT COUNT(*) FROM %s))", tableName, limit, tableName);
+        // This query guarantees exactly "limit" rows.
+        // Note that it is very slow on large tables, since it assigns _every_ row a number and then sorts them
+        return String.format("SELECT * FROM (" +
+                "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM)" +
+                "WHERE rownum <= %d", tableName, limit);
       // case "stratified":
       //  if (strata == null) {
       //    throw new IllegalArgumentException("No strata column given.");

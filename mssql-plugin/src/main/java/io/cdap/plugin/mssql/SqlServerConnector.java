@@ -147,10 +147,14 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
         // Alternative method, which is quicker and almost guarantees the correct number of rows,
         // but isn't uniformly random (i.e. rows are usually clustered together)
         // return String.format("SELECT TOP %d * FROM %s TABLESAMPLE(%d ROWS)", limit, tableName, limit*2);
-      // case "stratified":
-      //  if (strata == null) {
-      //    throw new IllegalArgumentException("No strata column given.");
-      //  }
+       case "stratified":
+        if (strata == null) {
+          throw new IllegalArgumentException("No strata column given.");
+        }
+         return String.format("SELECT * FROM %s " +
+                 "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
+                 "< %d / (SELECT COUNT(*) FROM %s)" +
+                 "ORDER BY %s", tableName, limit * 100, tableName, strata);
       // TODO: add in stratified sampling here
       default:
         return super.getTableQuery(database, schema, table, limit);
