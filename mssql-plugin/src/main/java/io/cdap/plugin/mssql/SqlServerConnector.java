@@ -141,8 +141,9 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
       case "random":
         // This query doesn't guarantee exactly "limit" number of rows
         return String.format("SELECT * FROM %s " +
-                "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
-                "< %d / (SELECT COUNT(*) FROM %s)", tableName, limit * 100, tableName);
+                               "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
+                               "< %d / (SELECT COUNT(*) FROM %s)",
+                             tableName, limit * 100, tableName);
 
         // Alternative method, which is quicker and almost guarantees the correct number of rows,
         // but isn't uniformly random (i.e. rows are usually clustered together)
@@ -152,12 +153,12 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
           throw new IllegalArgumentException("No strata column given.");
         }
          return String.format("SELECT * FROM %s " +
-                 "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
-                 "< %d / (SELECT COUNT(*) FROM %s)" +
-                 "ORDER BY %s", tableName, limit * 100, tableName, strata);
-      // TODO: add in stratified sampling here
+                                "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
+                                "< %d / (SELECT COUNT(*) FROM %s)" +
+                                "ORDER BY %s",
+                              tableName, limit * 100, tableName, strata);
       default:
-        return super.getTableQuery(database, schema, table, limit);
+        return getTableQuery(database, schema, table, limit);
     }
   }
 }
