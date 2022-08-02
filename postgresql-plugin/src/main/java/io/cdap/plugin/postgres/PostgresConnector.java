@@ -120,21 +120,25 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
   protected String getTableQuery(String database, String schema, String table, int limit, String sampleType,
                                  String strata) {
     if (sampleType == null) {
-      return super.getTableQuery(database, schema, table, limit);
+      return getTableQuery(database, schema, table, limit);
     }
     String tableName = getTableName(database, schema, table);
     switch (sampleType) {
       case "random":
         // This query doesn't guarantee exactly "limit" number of rows
-        return String.format("SELECT * FROM %s " +
-                "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))", tableName, limit, tableName);
-        // case "stratified":
-        //  if (strata == null) {
-        //    throw new IllegalArgumentException("No strata column given.");
-        //  }
-        // TODO: add in stratified sampling here
+        return String.format("SELECT * FROM %s\n" +
+                               "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))",
+                             tableName, limit, tableName);
+      case "stratified":
+        if (strata == null) {
+          throw new IllegalArgumentException("No strata column given.");
+        }
+        return String.format("SELECT * FROM %s\n" +
+                               "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))\n" +
+                               "ORDER BY %s",
+                             tableName, limit, tableName, strata);
       default:
-        return super.getTableQuery(database, schema, table, limit);
+        return getTableQuery(database, schema, table, limit);
     }
   }
 }
