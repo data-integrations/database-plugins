@@ -120,7 +120,7 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
   protected String getTableQuery(String database, String schema, String table, int limit, String sampleType,
                                  String strata) {
     if (sampleType == null) {
-      return super.getTableQuery(database, schema, table, limit);
+      return getTableQuery(database, schema, table, limit);
     }
     String tableName = getTableName(database, schema, table);
     switch (sampleType) {
