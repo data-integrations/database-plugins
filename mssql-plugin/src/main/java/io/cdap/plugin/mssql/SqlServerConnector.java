@@ -114,7 +114,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   protected String getTableQuery(String database, String schema, String table, int limit) {
     String tableName = getTableName(database, schema, table);
     return String.format(
-      "SELECT TOP(%d) * FROM %s", limit, tableName);
+      "SELECT TOP %d * FROM %s", limit, tableName);
   }
 
   @Override
@@ -134,13 +134,19 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   protected String getTableQuery(String database, String schema, String table, int limit, String sampleType,
                                  String strata) {
     if (sampleType == null) {
-      return super.getTableQuery(database, schema, table, limit);
+      return getTableQuery(database, schema, table, limit);
     }
     String tableName = getTableName(database, schema, table);
     switch (sampleType) {
       case "random":
         // This query doesn't guarantee exactly "limit" number of rows
-        return String.format("SELECT * FROM %s TABLESAMPLE(%d ROWS)", tableName, limit);
+        return String.format("SELECT * FROM %s " +
+                "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
+                "< %d / (SELECT COUNT(*) FROM %s)", tableName, limit * 100, tableName);
+
+        // Alternative method, which is quicker and almost guarantees the correct number of rows,
+        // but isn't uniformly random (i.e. rows are usually clustered together)
+        // return String.format("SELECT TOP %d * FROM %s TABLESAMPLE(%d ROWS)", limit, tableName, limit*2);
       // case "stratified":
       //  if (strata == null) {
       //    throw new IllegalArgumentException("No strata column given.");
