@@ -147,18 +147,6 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   }
 
   @Override
-  protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
-                             boolean isSigned, boolean handleAsDecimal) throws SQLException {
-    // For a Number type without specified precision and scale, precision will be 0 and scale will be -127
-    if (precision == 0) {
-      // reference : https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT1832
-      precision = 38;
-      scale = 0;
-    }
-    return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
-  }
-
-  @Override
   protected String getTableQuery(String database, String schema, String table, int limit, String sampleType,
                                  String strata) {
     if (sampleType == null) {
@@ -175,17 +163,29 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
                                "WHERE rownum <= %d",
                              tableName, limit);
       case "stratified":
-       if (strata == null) {
-         throw new IllegalArgumentException("No strata column given.");
-       }
-       return String.format("SELECT * FROM (\n" +
-                              "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
-                              ")\n" +
-                              "WHERE rownum <= %d\n" +
-                              "ORDER BY %s",
-                            tableName, limit, strata);
+        if (strata == null) {
+          throw new IllegalArgumentException("No strata column given.");
+        }
+        return String.format("SELECT * FROM (\n" +
+                               "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
+                               ")\n" +
+                               "WHERE rownum <= %d\n" +
+                               "ORDER BY %s",
+                             tableName, limit, strata);
       default:
         return getTableQuery(database, schema, table, limit);
     }
+  }
+
+  @Override
+  protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
+                             boolean isSigned, boolean handleAsDecimal) throws SQLException {
+    // For a Number type without specified precision and scale, precision will be 0 and scale will be -127
+    if (precision == 0) {
+      // reference : https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT1832
+      precision = 38;
+      scale = 0;
+    }
+    return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
   }
 }
