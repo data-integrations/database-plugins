@@ -115,21 +115,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   @Override
   protected String getTableQuery(String database, String schema, String table, int limit) {
     String tableName = getTableName(database, schema, table);
-    return String.format(
-      "SELECT TOP %d * FROM %s", limit, tableName);
-  }
-
-  @Override
-  protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
-                             boolean isSigned, boolean handleAsDecimal) throws SQLException {
-    if (SqlServerSourceSchemaReader.shouldConvertToDatetime(typeName)) {
-      return Schema.of(Schema.LogicalType.DATETIME);
-    }
-
-    if (SqlServerSourceSchemaReader.GEOMETRY_TYPE == sqlType || SqlServerSourceSchemaReader.GEOGRAPHY_TYPE == sqlType) {
-      return Schema.of(Schema.Type.BYTES);
-    }
-    return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
+    return String.format("SELECT TOP %d * FROM %s", limit, tableName);
   }
 
   @Override
@@ -147,20 +133,33 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
                                "< %d / (SELECT COUNT(*) FROM %s)",
                              tableName, limit * 100, tableName);
 
-        // Alternative method, which is quicker and almost guarantees the correct number of rows,
-        // but isn't uniformly random (i.e. rows are usually clustered together)
-        // return String.format("SELECT TOP %d * FROM %s TABLESAMPLE(%d ROWS)", limit, tableName, limit*2);
-       case "stratified":
+      // Alternative method, which is quicker and almost guarantees the correct number of rows,
+      // but isn't uniformly random (i.e. rows are usually clustered together)
+      // return String.format("SELECT TOP %d * FROM %s TABLESAMPLE(%d ROWS)", limit, tableName, limit*2);
+      case "stratified":
         if (strata == null) {
           throw new IllegalArgumentException("No strata column given.");
         }
-         return String.format("SELECT * FROM %s " +
-                                "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
-                                "< %d / (SELECT COUNT(*) FROM %s)" +
-                                "ORDER BY %s",
-                              tableName, limit * 100, tableName, strata);
+        return String.format("SELECT * FROM %s " +
+                               "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
+                               "< %d / (SELECT COUNT(*) FROM %s)" +
+                               "ORDER BY %s",
+                             tableName, limit * 100, tableName, strata);
       default:
         return getTableQuery(database, schema, table, limit);
     }
+  }
+
+  @Override
+  protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
+                             boolean isSigned, boolean handleAsDecimal) throws SQLException {
+    if (SqlServerSourceSchemaReader.shouldConvertToDatetime(typeName)) {
+      return Schema.of(Schema.LogicalType.DATETIME);
+    }
+
+    if (SqlServerSourceSchemaReader.GEOMETRY_TYPE == sqlType || SqlServerSourceSchemaReader.GEOGRAPHY_TYPE == sqlType) {
+      return Schema.of(Schema.Type.BYTES);
+    }
+    return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
   }
 }
