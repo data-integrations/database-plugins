@@ -75,7 +75,7 @@ public class PostgresConnectorUnitTest {
    * @throws IllegalArgumentException
    */
   @Test
-  public void getTableQueryNullStrataTest() {
+  public void getTableQueryNullStrataTest() throws IllegalArgumentException {
     expectedEx.expect(IllegalArgumentException.class);
     PostgresConnector connector = new PostgresConnector(null);
     connector.getTableQuery("db", "schema", "table", 100, "stratified", null);
