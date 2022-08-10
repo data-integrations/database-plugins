@@ -28,14 +28,15 @@ public class MysqlConnectorUnitTest {
   @Rule
   public ExpectedException expectedEx = ExpectedException.none();
 
+  private static final MysqlConnector CONNECTOR = new MysqlConnector(null);
+
   /**
    * Unit test for getTableName()
    */
   @Test
   public void getTableNameTest() {
-    MysqlConnector connector = new MysqlConnector(null);
     Assert.assertEquals("`db`.`table`",
-                        connector.getTableName("db", "schema", "table"));
+                        CONNECTOR.getTableName("db", "schema", "table"));
   }
 
   /**
@@ -43,29 +44,28 @@ public class MysqlConnectorUnitTest {
    */
   @Test
   public void getTableQueryTest() {
-    MysqlConnector connector = new MysqlConnector(null);
-    String tableName = connector.getTableName("db", "schema", "table");
+    String tableName = CONNECTOR.getTableName("db", "schema", "table");
 
     // default query, sampleType "first"
     Assert.assertEquals(String.format("SELECT * FROM %s LIMIT 100", tableName),
-                        connector.getTableQuery("db", "schema", "table",
+                        CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "first", null));
     // default query, sampleType null
     Assert.assertEquals(String.format("SELECT * FROM %s LIMIT 100", tableName),
-                        connector.getTableQuery("db", "schema", "table",
+                        CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, null, null));
     // random query
     Assert.assertEquals(String.format("SELECT * FROM %s\n" +
                                         "WHERE rand() < %d.0 / (SELECT COUNT(*) FROM %s)",
                                       tableName, 100, tableName),
-                        connector.getTableQuery("db", "schema", "table",
+                        CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", null));
     // stratified query
     Assert.assertEquals(String.format("SELECT * FROM %s\n" +
                                         "WHERE rand() < %d.0 / (SELECT COUNT(*) FROM %s)\n" +
                                         "ORDER BY %s",
                                       tableName, 100, tableName, "strata"),
-                        connector.getTableQuery("db", "schema", "table",
+                        CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "stratified", "strata"));
   }
 
@@ -77,8 +77,7 @@ public class MysqlConnectorUnitTest {
   @Test
   public void getTableQueryNullStrataTest() throws IllegalArgumentException {
     expectedEx.expect(IllegalArgumentException.class);
-    MysqlConnector connector = new MysqlConnector(null);
-    connector.getTableQuery("db", "schema", "table", 100, "stratified", null);
+    CONNECTOR.getTableQuery("db", "schema", "table", 100, "stratified", null);
   }
 
 }

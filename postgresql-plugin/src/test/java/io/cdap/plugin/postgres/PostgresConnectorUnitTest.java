@@ -28,14 +28,15 @@ public class PostgresConnectorUnitTest {
   @Rule
   public ExpectedException expectedEx = ExpectedException.none();
 
+  private static final PostgresConnector CONNECTOR = new PostgresConnector(null);
+
   /**
    * Unit test for getTableName()
    */
   @Test
   public void getTableNameTest() {
-    PostgresConnector connector = new PostgresConnector(null);
     Assert.assertEquals("\"schema\".\"table\"",
-                        connector.getTableName("db", "schema", "table"));
+                        CONNECTOR.getTableName("db", "schema", "table"));
   }
 
   /**
@@ -43,29 +44,28 @@ public class PostgresConnectorUnitTest {
    */
   @Test
   public void getTableQueryTest() {
-    PostgresConnector connector = new PostgresConnector(null);
-    String tableName = connector.getTableName("db", "schema", "table");
+    String tableName = CONNECTOR.getTableName("db", "schema", "table");
 
     // default query, sampleType "first"
     Assert.assertEquals(String.format("SELECT * FROM %s LIMIT 100", tableName),
-                        connector.getTableQuery("db", "schema", "table",
+                        CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "first", null));
     // default query, sampleType null
     Assert.assertEquals(String.format("SELECT * FROM %s LIMIT 100", tableName),
-                        connector.getTableQuery("db", "schema", "table",
+                        CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, null, null));
     // random query
     Assert.assertEquals(String.format("SELECT * FROM %s\n" +
                                         "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))",
                                       tableName, 100, tableName),
-                        connector.getTableQuery("db", "schema", "table",
+                        CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", null));
     // stratified query
     Assert.assertEquals(String.format("SELECT * FROM %s\n" +
                                         "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))\n" +
                                         "ORDER BY %s",
                                       tableName, 100, tableName, "strata"),
-                        connector.getTableQuery("db", "schema", "table",
+                        CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "stratified", "strata"));
   }
 
@@ -77,7 +77,6 @@ public class PostgresConnectorUnitTest {
   @Test
   public void getTableQueryNullStrataTest() throws IllegalArgumentException {
     expectedEx.expect(IllegalArgumentException.class);
-    PostgresConnector connector = new PostgresConnector(null);
-    connector.getTableQuery("db", "schema", "table", 100, "stratified", null);
+    CONNECTOR.getTableQuery("db", "schema", "table", 100, "stratified", null);
   }
 }
