@@ -78,7 +78,9 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     setConnectionProperties(sinkProperties, request);
     builder
       .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
-      .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties));
+      .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties))
+      .addSupportedSampleType("random")
+      .addSupportedSampleType("stratified");
 
     String schema = path.getSchema();
     if (schema != null) {

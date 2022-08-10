@@ -79,7 +79,9 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     setConnectionProperties(sinkProperties, request);
     builder
       .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
-      .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties));
+      .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties))
+      .addSupportedSampleType("random")
+      .addSupportedSampleType("stratified");
 
     String schema = path.getSchema();
     if (schema != null) {
