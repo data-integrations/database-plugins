@@ -45,7 +45,7 @@ import java.util.Map;
 @Name(MysqlConnector.NAME)
 @Description("Connection to access data in Mysql databases using JDBC.")
 @Category("Database")
-public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
+public class MysqlConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
   public static final String NAME = "MySQL";
   private final MysqlConnectorConfig config;
 
@@ -61,7 +61,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
 
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
-    return DBRecord.class;
+    return MysqlDBRecord.class;
   }
 
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
@@ -97,7 +97,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
   }
 
   @Override
-  public StructuredRecord transform(LongWritable longWritable, DBRecord record) {
-    return record.getRecord();
+  public StructuredRecord transform(LongWritable longWritable, MysqlDBRecord mysqlDBRecord) {
+    return mysqlDBRecord.getRecord();
   }
 }

@@ -23,11 +23,13 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.db.ConnectionConfig;
+import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 
@@ -50,6 +52,11 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
   public MysqlSink(MysqlSinkConfig mysqlSinkConfig) {
     super(mysqlSinkConfig);
     this.mysqlSinkConfig = mysqlSinkConfig;
+  }
+
+  @Override
+  protected DBRecord getDBRecord(StructuredRecord output) {
+    return new MysqlDBRecord(output, columnTypes);
   }
 
   /**
