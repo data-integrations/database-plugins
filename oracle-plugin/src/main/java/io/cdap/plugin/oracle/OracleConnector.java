@@ -80,7 +80,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
       .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
       .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties))
       .addSupportedSampleType("random")
-      .addSupportedSampleType("stratified");
+      .addSupportedSampleType("randomSorted");
 
     String schema = path.getSchema();
     if (schema != null) {

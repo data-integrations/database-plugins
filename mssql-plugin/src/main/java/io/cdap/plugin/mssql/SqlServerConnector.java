@@ -77,7 +77,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
       .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
       .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties))
       .addSupportedSampleType("random")
-      .addSupportedSampleType("stratified");
+      .addSupportedSampleType("randomSorted");
 
     String database = path.getDatabase();
     if (database != null) {

@@ -72,7 +72,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
       .addRelatedPlugin(new PluginSpec(MysqlConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, properties))
       .addRelatedPlugin(new PluginSpec(MysqlConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties))
       .addSupportedSampleType("random")
-      .addSupportedSampleType("stratified");
+      .addSupportedSampleType("randomSorted");
 
     String table = path.getTable();
     if (table == null) {
