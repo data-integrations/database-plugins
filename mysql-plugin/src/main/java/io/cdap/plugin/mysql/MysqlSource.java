@@ -29,6 +29,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +56,11 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
   @Override
   protected String createConnectionString() {
     return mysqlSourceConfig.getConnectionString();
+  }
+
+  @Override
+  protected Class<? extends DBWritable> getDBRecordType() {
+    return MysqlDBRecord.class;
   }
 
   /**

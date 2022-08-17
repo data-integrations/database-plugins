@@ -90,6 +90,35 @@
         <groupId>io.cdap</groupId>
         <artifactId>cdap-maven-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>5.1.2</version>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <_exportcontents>
+              io.cdap.plugin.db2.*
+              io.cdap.plugin.db.batch.source.*;
+              io.cdap.plugin.db.batch.sink.*;
+              org.apache.commons.lang;
+              org.apache.commons.logging.*;
+              org.codehaus.jackson.*
+            </_exportcontents>
+            <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
+            <Embed-Transitive>true</Embed-Transitive>
+            <Embed-Directory>lib</Embed-Directory>
+          </instructions>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>
