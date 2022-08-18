@@ -59,7 +59,7 @@ public class OracleConnectorUnitTest {
                                       tableName, 100),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", null));
-    // stratified query
+    // sorted random query
     Assert.assertEquals(String.format("SELECT * FROM (\n" +
                                         "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
                                         ")\n" +
@@ -67,17 +67,6 @@ public class OracleConnectorUnitTest {
                                         "ORDER BY %s",
                                       tableName, 100, "strata"),
                         CONNECTOR.getTableQuery("db", "schema", "table",
-                                                100, "stratified", "strata"));
-  }
-
-  /**
-   * Test for null strata exception
-   *
-   * @throws IllegalArgumentException
-   */
-  @Test
-  public void getTableQueryNullStrataTest() throws IllegalArgumentException {
-    expectedEx.expect(IllegalArgumentException.class);
-    CONNECTOR.getTableQuery("db", "schema", "table", 100, "stratified", null);
+                                                100, "random", "strata"));
   }
 }

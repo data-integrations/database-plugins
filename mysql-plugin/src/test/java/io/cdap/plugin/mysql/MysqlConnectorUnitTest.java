@@ -60,24 +60,13 @@ public class MysqlConnectorUnitTest {
                                       tableName, 100, tableName),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", null));
-    // stratified query
+    // sorted random query
     Assert.assertEquals(String.format("SELECT * FROM %s\n" +
                                         "WHERE rand() < %d.0 / (SELECT COUNT(*) FROM %s)\n" +
                                         "ORDER BY %s",
                                       tableName, 100, tableName, "strata"),
                         CONNECTOR.getTableQuery("db", "schema", "table",
-                                                100, "stratified", "strata"));
-  }
-
-  /**
-   * Test for getTableQuery() null strata exception
-   *
-   * @throws IllegalArgumentException
-   */
-  @Test
-  public void getTableQueryNullStrataTest() throws IllegalArgumentException {
-    expectedEx.expect(IllegalArgumentException.class);
-    CONNECTOR.getTableQuery("db", "schema", "table", 100, "stratified", null);
+                                                100, "random", "strata"));
   }
 
 }

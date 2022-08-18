@@ -60,23 +60,12 @@ public class PostgresConnectorUnitTest {
                                       tableName, 100, tableName),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", null));
-    // stratified query
+    // sorted random query
     Assert.assertEquals(String.format("SELECT * FROM %s\n" +
                                         "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))\n" +
                                         "ORDER BY %s",
                                       tableName, 100, tableName, "strata"),
                         CONNECTOR.getTableQuery("db", "schema", "table",
-                                                100, "stratified", "strata"));
-  }
-
-  /**
-   * Test for null strata exception
-   *
-   * @throws IllegalArgumentException
-   */
-  @Test
-  public void getTableQueryNullStrataTest() throws IllegalArgumentException {
-    expectedEx.expect(IllegalArgumentException.class);
-    CONNECTOR.getTableQuery("db", "schema", "table", 100, "stratified", null);
+                                                100, "random", "strata"));
   }
 }

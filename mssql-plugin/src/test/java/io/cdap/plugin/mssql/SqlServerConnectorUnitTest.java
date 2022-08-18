@@ -52,24 +52,13 @@ public class SqlServerConnectorUnitTest {
                                       tableName, 10000, tableName),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", null));
-    // stratified query
+    // sorted random query
     Assert.assertEquals(String.format("SELECT * FROM %s " +
                                         "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
                                         "< %d / (SELECT COUNT(*) FROM %s)" +
                                         "ORDER BY %s",
                                       tableName, 10000, tableName, "strata"),
                         CONNECTOR.getTableQuery("db", "schema", "table",
-                                                100, "stratified", "strata"));
-  }
-
-  /**
-   * Test for null strata exception
-   *
-   * @throws IllegalArgumentException
-   */
-  @Test
-  public void getTableQueryNullStrataTest() throws IllegalArgumentException {
-    expectedEx.expect(IllegalArgumentException.class);
-    CONNECTOR.getTableQuery("db", "schema", "table", 100, "stratified", null);
+                                                100, "random", "strata"));
   }
 }
