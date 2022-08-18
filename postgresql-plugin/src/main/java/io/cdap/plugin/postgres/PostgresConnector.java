@@ -126,17 +126,10 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     String tableName = getTableName(database, schema, table);
     switch (sampleType) {
       case "random":
-        if (strata == null) {
-          // This query doesn't guarantee exactly "limit" number of rows
-          return String.format("SELECT * FROM %s\n" +
-                                 "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))",
-                               tableName, limit, tableName);
-        } else {
-          return String.format("SELECT * FROM %s\n" +
-                                 "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))\n" +
-                                 "ORDER BY %s",
-                               tableName, limit, tableName, strata);
-        }
+        // This query doesn't guarantee exactly "limit" number of rows
+        return String.format("SELECT * FROM %s\n" +
+                               "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))",
+                             tableName, limit, tableName);
       default:
         return getTableQuery(database, schema, table, limit);
     }

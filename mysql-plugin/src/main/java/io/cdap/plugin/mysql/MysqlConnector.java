@@ -106,18 +106,11 @@ public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
     String tableName = getTableName(database, schema, table);
     switch (sampleType) {
       case "random":
-        if (strata == null) {
-          // This query doesn't guarantee exactly "limit" number of rows
-          // Note that we input "limit" with a trailing zero so that division gives an exact result
-          return String.format("SELECT * FROM %s\n" +
-                                 "WHERE rand() < %d.0 / (SELECT COUNT(*) FROM %s)",
-                               tableName, limit, tableName);
-        } else {
-          return String.format("SELECT * FROM %s\n" +
-                                 "WHERE rand() < %d.0 / (SELECT COUNT(*) FROM %s)\n" +
-                                 "ORDER BY %s",
-                               tableName, limit, tableName, strata);
-        }
+        // This query doesn't guarantee exactly "limit" number of rows
+        // Note that we input "limit" with a trailing zero so that division gives an exact result
+        return String.format("SELECT * FROM %s\n" +
+                               "WHERE rand() < %d.0 / (SELECT COUNT(*) FROM %s)",
+                             tableName, limit, tableName);
       default:
         return getTableQuery(database, schema, table, limit);
     }

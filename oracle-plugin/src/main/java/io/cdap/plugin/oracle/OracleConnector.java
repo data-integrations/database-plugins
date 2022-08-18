@@ -154,22 +154,13 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     String tableName = getTableName(database, schema, table);
     switch (sampleType) {
       case "random":
-        if (strata == null) {
-          // This query guarantees exactly "limit" rows.
-          // Note that it is very slow on large tables, since it assigns _every_ row a number and then sorts them
-          return String.format("SELECT * FROM (\n" +
-                                 "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
-                                 ")\n" +
-                                 "WHERE rownum <= %d",
-                               tableName, limit);
-        } else {
-          return String.format("SELECT * FROM (\n" +
-                                 "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
-                                 ")\n" +
-                                 "WHERE rownum <= %d\n" +
-                                 "ORDER BY %s",
-                               tableName, limit, strata);
-        }
+        // This query guarantees exactly "limit" rows.
+        // Note that it is very slow on large tables, since it assigns _every_ row a number and then sorts them
+        return String.format("SELECT * FROM (\n" +
+                               "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
+                               ")\n" +
+                               "WHERE rownum <= %d",
+                             tableName, limit);
       default:
         return getTableQuery(database, schema, table, limit);
     }
