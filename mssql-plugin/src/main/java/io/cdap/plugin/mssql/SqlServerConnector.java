@@ -76,8 +76,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
     builder
       .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
       .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties))
-      .addSupportedSampleType("random")
-      .addSupportedSampleType("randomSorted");
+      .addSupportedSampleType("random");
 
     String database = path.getDatabase();
     if (database != null) {
@@ -127,24 +126,23 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
     String tableName = getTableName(database, schema, table);
     switch (sampleType) {
       case "random":
-        // This query doesn't guarantee exactly "limit" number of rows
-        return String.format("SELECT * FROM %s " +
-                               "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
-                               "< %d / (SELECT COUNT(*) FROM %s)",
-                             tableName, limit * 100, tableName);
-
-      // Alternative method, which is quicker and almost guarantees the correct number of rows,
-      // but isn't uniformly random (i.e. rows are usually clustered together)
-      // return String.format("SELECT TOP %d * FROM %s TABLESAMPLE(%d ROWS)", limit, tableName, limit*2);
-      case "stratified":
         if (strata == null) {
-          throw new IllegalArgumentException("No strata column given.");
+          // This query doesn't guarantee exactly "limit" number of rows
+          return String.format("SELECT * FROM %s " +
+                                 "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
+                                 "< %d / (SELECT COUNT(*) FROM %s)",
+                               tableName, limit * 100, tableName);
+
+          // Alternative method, which is quicker and almost guarantees the correct number of rows,
+          // but isn't uniformly random (i.e. rows are usually clustered together)
+          // return String.format("SELECT TOP %d * FROM %s TABLESAMPLE(%d ROWS)", limit, tableName, limit*2);
+        } else {
+          return String.format("SELECT * FROM %s " +
+                                 "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
+                                 "< %d / (SELECT COUNT(*) FROM %s)" +
+                                 "ORDER BY %s",
+                               tableName, limit * 100, tableName, strata);
         }
-        return String.format("SELECT * FROM %s " +
-                               "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
-                               "< %d / (SELECT COUNT(*) FROM %s)" +
-                               "ORDER BY %s",
-                             tableName, limit * 100, tableName, strata);
       default:
         return getTableQuery(database, schema, table, limit);
     }

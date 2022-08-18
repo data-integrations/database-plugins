@@ -80,8 +80,7 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     builder
       .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
       .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties))
-      .addSupportedSampleType("random")
-      .addSupportedSampleType("randomSorted");
+      .addSupportedSampleType("random");
 
     String schema = path.getSchema();
     if (schema != null) {
@@ -127,18 +126,17 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     String tableName = getTableName(database, schema, table);
     switch (sampleType) {
       case "random":
-        // This query doesn't guarantee exactly "limit" number of rows
-        return String.format("SELECT * FROM %s\n" +
-                               "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))",
-                             tableName, limit, tableName);
-      case "stratified":
         if (strata == null) {
-          throw new IllegalArgumentException("No strata column given.");
+          // This query doesn't guarantee exactly "limit" number of rows
+          return String.format("SELECT * FROM %s\n" +
+                                 "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))",
+                               tableName, limit, tableName);
+        } else {
+          return String.format("SELECT * FROM %s\n" +
+                                 "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))\n" +
+                                 "ORDER BY %s",
+                               tableName, limit, tableName, strata);
         }
-        return String.format("SELECT * FROM %s\n" +
-                               "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))\n" +
-                               "ORDER BY %s",
-                             tableName, limit, tableName, strata);
       default:
         return getTableQuery(database, schema, table, limit);
     }

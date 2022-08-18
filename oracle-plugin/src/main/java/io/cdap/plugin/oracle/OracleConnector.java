@@ -79,8 +79,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     builder
       .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
       .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties))
-      .addSupportedSampleType("random")
-      .addSupportedSampleType("randomSorted");
+      .addSupportedSampleType("random");
 
     String schema = path.getSchema();
     if (schema != null) {
@@ -155,23 +154,22 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     String tableName = getTableName(database, schema, table);
     switch (sampleType) {
       case "random":
-        // This query guarantees exactly "limit" rows.
-        // Note that it is very slow on large tables, since it assigns _every_ row a number and then sorts them
-        return String.format("SELECT * FROM (\n" +
-                               "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
-                               ")\n" +
-                               "WHERE rownum <= %d",
-                             tableName, limit);
-      case "stratified":
         if (strata == null) {
-          throw new IllegalArgumentException("No strata column given.");
+          // This query guarantees exactly "limit" rows.
+          // Note that it is very slow on large tables, since it assigns _every_ row a number and then sorts them
+          return String.format("SELECT * FROM (\n" +
+                                 "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
+                                 ")\n" +
+                                 "WHERE rownum <= %d",
+                               tableName, limit);
+        } else {
+          return String.format("SELECT * FROM (\n" +
+                                 "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
+                                 ")\n" +
+                                 "WHERE rownum <= %d\n" +
+                                 "ORDER BY %s",
+                               tableName, limit, strata);
         }
-        return String.format("SELECT * FROM (\n" +
-                               "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
-                               ")\n" +
-                               "WHERE rownum <= %d\n" +
-                               "ORDER BY %s",
-                             tableName, limit, strata);
       default:
         return getTableQuery(database, schema, table, limit);
     }
