@@ -60,11 +60,10 @@ public class PostgresConnectorUnitTest {
                                       tableName, 100, tableName),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", null));
-    // sorted random query
+    // random query, strata input
     Assert.assertEquals(String.format("SELECT * FROM %s\n" +
-                                        "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))\n" +
-                                        "ORDER BY %s",
-                                      tableName, 100, tableName, "strata"),
+                                        "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))",
+                                      tableName, 100, tableName),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", "strata"));
   }

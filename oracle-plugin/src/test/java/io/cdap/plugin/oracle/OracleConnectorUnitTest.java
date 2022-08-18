@@ -59,13 +59,12 @@ public class OracleConnectorUnitTest {
                                       tableName, 100),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", null));
-    // sorted random query
+    // random query, strata input
     Assert.assertEquals(String.format("SELECT * FROM (\n" +
                                         "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
                                         ")\n" +
-                                        "WHERE rownum <= %d\n" +
-                                        "ORDER BY %s",
-                                      tableName, 100, "strata"),
+                                        "WHERE rownum <= %d",
+                                      tableName, 100),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", "strata"));
   }

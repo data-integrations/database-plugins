@@ -52,12 +52,11 @@ public class SqlServerConnectorUnitTest {
                                       tableName, 10000, tableName),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", null));
-    // sorted random query
+    // random query, strata input
     Assert.assertEquals(String.format("SELECT * FROM %s " +
                                         "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
-                                        "< %d / (SELECT COUNT(*) FROM %s)" +
-                                        "ORDER BY %s",
-                                      tableName, 10000, tableName, "strata"),
+                                        "< %d / (SELECT COUNT(*) FROM %s)",
+                                      tableName, 10000, tableName),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", "strata"));
   }

@@ -60,11 +60,10 @@ public class MysqlConnectorUnitTest {
                                       tableName, 100, tableName),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", null));
-    // sorted random query
+    // random query, strata input
     Assert.assertEquals(String.format("SELECT * FROM %s\n" +
-                                        "WHERE rand() < %d.0 / (SELECT COUNT(*) FROM %s)\n" +
-                                        "ORDER BY %s",
-                                      tableName, 100, tableName, "strata"),
+                                        "WHERE rand() < %d.0 / (SELECT COUNT(*) FROM %s)",
+                                      tableName, 100, tableName),
                         CONNECTOR.getTableQuery("db", "schema", "table",
                                                 100, "random", "strata"));
   }
