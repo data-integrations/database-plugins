@@ -38,6 +38,17 @@ public class PostgresSchemaReader extends CommonSchemaReader {
     "bit", "timetz", "money"
   );
 
+  private final String sessionID;
+
+  public PostgresSchemaReader() {
+    this(null);
+  }
+
+  public PostgresSchemaReader(String sessionID) {
+    super();
+    this.sessionID = sessionID;
+  }
+
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     String typeName = metadata.getColumnTypeName(index);
@@ -48,5 +59,14 @@ public class PostgresSchemaReader extends CommonSchemaReader {
     }
 
     return super.getSchema(metadata, index);
+  }
+
+  @Override
+  public boolean shouldIgnoreColumn(ResultSetMetaData metadata, int index) throws SQLException {
+    if (sessionID == null) {
+      return false;
+    }
+    return metadata.getColumnName(index).equals("c_" + sessionID) ||
+      metadata.getColumnName(index).equals("sqn_" + sessionID);
   }
 }

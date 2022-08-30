@@ -27,6 +27,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.PluginSpec;
+import io.cdap.cdap.etl.api.connector.SampleType;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
@@ -79,7 +80,9 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     setConnectionProperties(sinkProperties, request);
     builder
       .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
-      .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties));
+      .addRelatedPlugin(new PluginSpec(PostgresConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties))
+      .addSupportedSampleType(SampleType.RANDOM)
+      .addSupportedSampleType(SampleType.STRATIFIED);
 
     String schema = path.getSchema();
     if (schema != null) {
@@ -102,8 +105,8 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
   }
 
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new PostgresSchemaReader();
+  protected SchemaReader getSchemaReader(String sessionID) {
+    return new PostgresSchemaReader(sessionID);
   }
 
   @Override
@@ -112,13 +115,31 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
   }
 
   @Override
-  protected String getTableQuery(String database, String schema, String table) {
-    return String.format("SELECT * FROM \"%s\".\"%s\"", schema, table);
+  protected String getTableName(String database, String schema, String table) {
+    return String.format("\"%s\".\"%s\"", schema, table);
   }
 
   @Override
-  protected String getTableQuery(String database, String schema, String table, int limit) {
-    return String.format("SELECT * FROM \"%s\".\"%s\" LIMIT %d", schema, table, limit);
+  protected String getRandomQuery(String tableName, int limit) {
+    return String.format("SELECT * FROM %s\n" +
+                           "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))",
+                         tableName, limit, tableName);
   }
 
+  @Override
+  protected String getStratifiedQuery(String tableName, int limit, String strata, String sessionID) {
+    // this query times out on larger datasets; would benefit from optimization
+    return String.format("WITH t_%s AS (\n" +
+                           "    SELECT *,\n" +
+                           "    row_number() OVER (ORDER BY %s, random()) AS sqn_%s,\n" +
+                           "    count(*) OVER () AS c_%s\n" +
+                           "    FROM %s\n" +
+                           "  )\n" +
+                           "SELECT * FROM t_%s\n" +
+                           "WHERE mod(sqn_%s, GREATEST(1, CAST(c_%s / %d AS bigint))) = 1\n" +
+                           "ORDER BY %s\n" +
+                           "LIMIT %d",
+                         sessionID, strata, sessionID, sessionID, tableName, sessionID, sessionID, sessionID,
+                         limit, strata, limit);
+  }
 }

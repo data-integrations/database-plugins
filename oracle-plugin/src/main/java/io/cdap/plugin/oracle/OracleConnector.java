@@ -28,6 +28,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.PluginSpec;
+import io.cdap.cdap.etl.api.connector.SampleType;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
@@ -37,10 +38,10 @@ import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
@@ -78,7 +79,9 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     setConnectionProperties(sinkProperties, request);
     builder
       .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
-      .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties));
+      .addRelatedPlugin(new PluginSpec(OracleConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties))
+      .addSupportedSampleType(SampleType.RANDOM)
+      .addSupportedSampleType(SampleType.STRATIFIED);
 
     String schema = path.getSchema();
     if (schema != null) {
@@ -103,13 +106,13 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   }
 
   @Override
-  protected DBConnectorPath getDBConnectorPath(String path) throws IOException {
+  protected DBConnectorPath getDBConnectorPath(String path) {
     return new DBPath(path, true);
   }
 
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new OracleSourceSchemaReader();
+  protected SchemaReader getSchemaReader(String sessionID) {
+    return new OracleSourceSchemaReader(sessionID);
   }
 
   @Override
@@ -134,13 +137,40 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   }
 
   @Override
-  protected String getTableQuery(String database, String schema, String table) {
-    return String.format("SELECT * from \"%s\".\"%s\"", schema, table);
+  protected String getTableName(String database, String schema, String table) {
+    return String.format("\"%s\".\"%s\"", schema, table);
   }
 
   @Override
   protected String getTableQuery(String database, String schema, String table, int limit) {
-    return String.format("SELECT * FROM \"%s\".\"%s\" WHERE ROWNUM <= %d", schema, table, limit);
+    String tableName = getTableName(database, schema, table);
+    return String.format("SELECT * FROM %s WHERE ROWNUM <= %d", tableName, limit);
+  }
+
+  @Override
+  protected String getRandomQuery(String tableName, int limit) {
+    // This query guarantees exactly "limit" rows.
+    // Note that it is very slow on large tables, since it assigns _every_ row a number and then sorts them
+    return String.format("SELECT * FROM (\n" +
+                           "SELECT * FROM %s ORDER BY DBMS_RANDOM.RANDOM\n" +
+                           ")\n" +
+                           "WHERE rownum <= %d",
+                         tableName, limit);
+  }
+
+  @Override
+  protected String getStratifiedQuery(String tableName, int limit, String strata, String sessionID) {
+    return String.format("WITH t_%s AS (\n" +
+        "    SELECT %s.*,\n" +
+        "    ROW_NUMBER() OVER (ORDER BY %s, dbms_random.random) AS s_%s,\n" +
+        "    (SELECT COUNT(*) FROM %s) AS c_%s\n" +
+        "    FROM %s\n" +
+        "    ORDER BY %s" +
+        "  )\n" +
+        "SELECT * FROM t_%s\n" +
+        "WHERE MOD(s_%s, GREATEST(1, CAST(c_%s / %d AS INTEGER))) = 1 AND ROWNUM <= %d",
+      sessionID, tableName, strata, sessionID, tableName, sessionID, tableName,
+      strata, sessionID, sessionID, sessionID, limit, limit);
   }
 
   @Override
@@ -153,5 +183,16 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
       scale = 0;
     }
     return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
+  }
+
+  @Override
+  protected String generateSessionID() {
+    // SessionID cannot be greater than 28 characters, as it is used as a suffix for variable names,
+    // and Oracle does not allow variable names over 30 characters.
+    // Thus sessionID is not a "true" UUID, but the chance of collision is still negligible.
+    return UUID.randomUUID()
+      .toString()
+      .replaceAll("-", "")
+      .substring(0, 28);
   }
 }
