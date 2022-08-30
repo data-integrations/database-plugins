@@ -56,6 +56,17 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     Types.DECIMAL
   );
 
+  private final String sessionID;
+
+  public OracleSourceSchemaReader() {
+    this(null);
+  }
+
+  public OracleSourceSchemaReader(String sessionID) {
+    super();
+    this.sessionID = sessionID;
+  }
+
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     int sqlType = metadata.getColumnType(index);
@@ -95,5 +106,14 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
       default:
         return super.getSchema(metadata, index);
     }
+  }
+
+  @Override
+  public boolean shouldIgnoreColumn(ResultSetMetaData metadata, int index) throws SQLException {
+    if (sessionID == null) {
+      return false;
+    }
+    return metadata.getColumnName(index).equals("c_" + sessionID) ||
+      metadata.getColumnName(index).equals("s_" + sessionID);
   }
 }

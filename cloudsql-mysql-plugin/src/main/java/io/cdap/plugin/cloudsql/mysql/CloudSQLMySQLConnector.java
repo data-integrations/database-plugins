@@ -72,13 +72,8 @@ public class CloudSQLMySQLConnector extends AbstractDBSpecificConnector<DBRecord
   }
 
   @Override
-  protected String getTableQuery(String database, String schema, String table) {
-    return String.format("SELECT * FROM `%s`.`%s`", database, table);
-  }
-
-  @Override
-  protected String getTableQuery(String database, String schema, String table, int limit) {
-    return String.format("SELECT * FROM `%s`.`%s` LIMIT %d", database, table, limit);
+  protected String getTableName(String database, String schema, String table) {
+    return String.format("`%s`.`%s`", database, table);
   }
 
   @Override

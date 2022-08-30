@@ -34,6 +34,17 @@ public class SqlServerSourceSchemaReader extends CommonSchemaReader {
   public static final int SQL_VARIANT = -156;
   public static final String DATETIME_TYPE_PREFIX = "datetime";
 
+  private final String sessionID;
+
+  public SqlServerSourceSchemaReader() {
+    this(null);
+  }
+
+  public SqlServerSourceSchemaReader(String sessionID) {
+    super();
+    this.sessionID = sessionID;
+  }
+
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     int columnSqlType = metadata.getColumnType(index);
@@ -71,5 +82,14 @@ public class SqlServerSourceSchemaReader extends CommonSchemaReader {
    */
   public static boolean shouldConvertToDatetime(String typeName) {
     return typeName.startsWith(DATETIME_TYPE_PREFIX);
+  }
+
+  @Override
+  public boolean shouldIgnoreColumn(ResultSetMetaData metadata, int index) throws SQLException {
+    if (sessionID == null) {
+      return false;
+    }
+    return metadata.getColumnName(index).equals("c_" + sessionID) ||
+      metadata.getColumnName(index).equals("sqn_" + sessionID);
   }
 }

@@ -111,5 +111,4 @@ public class ConnectionConfigAccessor {
   public Configuration getConfiguration() {
     return configuration;
   }
-
 }

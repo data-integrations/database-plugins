@@ -28,6 +28,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.PluginSpec;
+import io.cdap.cdap.etl.api.connector.SampleType;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
@@ -37,6 +38,7 @@ import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,7 +77,9 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
     setConnectionProperties(sinkProperties, request);
     builder
       .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSource.PLUGIN_TYPE, sourceProperties))
-      .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties));
+      .addRelatedPlugin(new PluginSpec(SqlServerConstants.PLUGIN_NAME, BatchSink.PLUGIN_TYPE, sinkProperties))
+      .addSupportedSampleType(SampleType.RANDOM)
+      .addSupportedSampleType(SampleType.STRATIFIED);
 
     String database = path.getDatabase();
     if (database != null) {
@@ -101,8 +105,8 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   }
 
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new SqlServerSourceSchemaReader();
+  protected SchemaReader getSchemaReader(String sessionID) {
+    return new SqlServerSourceSchemaReader(sessionID);
   }
 
   @Override
@@ -111,9 +115,38 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   }
 
   @Override
+  protected String getTableName(String database, String schema, String table) {
+    return String.format("\"%s\".\"%s\".\"%s\"", database, schema, table);
+  }
+
+  @Override
   protected String getTableQuery(String database, String schema, String table, int limit) {
-    return String.format(
-      "SELECT TOP(%d) * FROM \"%s\".\"%s\".\"%s\"", limit, database, schema, table);
+    String tableName = getTableName(database, schema, table);
+    return String.format("SELECT TOP %d * FROM %s", limit, tableName);
+  }
+
+  @Override
+  protected String getRandomQuery(String tableName, int limit) {
+    // This query doesn't guarantee exactly "limit" number of rows
+    return String.format("SELECT * FROM %s " +
+                           "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
+                           "< %d / (SELECT COUNT(*) FROM %s)",
+                         tableName, limit * 100, tableName);
+  }
+
+  @Override
+  protected String getStratifiedQuery(String tableName, int limit, String strata, String sessionID) {
+    return String.format("WITH t_%s AS (\n" +
+                           "    SELECT *,\n" +
+                           "    ROW_NUMBER() OVER (ORDER BY %s, RAND()) AS sqn_%s,\n" +
+                           "    COUNT(*) OVER () AS c_%s\n" +
+                           "    FROM %s\n" +
+                           "  )\n" +
+                           "SELECT TOP %d * FROM t_%s\n" +
+                           "WHERE sqn_%s %% CAST(0.5 * ((c_%s / %d + 1) + ABS(c_%s / %d - 1)) AS bigint) = 1\n" +
+                           "ORDER BY %s",
+                         sessionID, strata, sessionID, sessionID, tableName, limit, sessionID, sessionID, sessionID,
+                         limit, sessionID, limit, strata);
   }
 
   @Override

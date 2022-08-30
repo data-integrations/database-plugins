@@ -79,18 +79,13 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
   }
 
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new PostgresSchemaReader();
+  protected SchemaReader getSchemaReader(String sessionID) {
+    return new PostgresSchemaReader(sessionID);
   }
 
   @Override
-  protected String getTableQuery(String database, String schema, String table) {
-    return String.format("SELECT * FROM \"%s\".\"%s\"", schema, table);
-  }
-
-  @Override
-  protected String getTableQuery(String database, String schema, String table, int limit) {
-    return String.format("SELECT * FROM \"%s\".\"%s\" LIMIT %d", schema, table, limit);
+  protected String getTableName(String database, String schema, String table) {
+    return String.format("\"%s\".\"%s\"", schema, table);
   }
 
   @Override
