@@ -36,17 +36,18 @@ public class SqlServerConnectorUnitTest {
   @Test
   public void getTableQueryTest() {
     String tableName = "\"db\".\"schema\".\"table\"";
+    int limit = 100;
 
     // default query
-    Assert.assertEquals(String.format("SELECT TOP %d * FROM %s", 100, tableName),
+    Assert.assertEquals(String.format("SELECT TOP %d * FROM %s", limit, tableName),
                         CONNECTOR.getTableQuery("db", "schema", "table",
-                                                100));
+                                                limit));
 
     // random query
     Assert.assertEquals(String.format("SELECT * FROM %s " +
                                         "WHERE (ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) %% 100) " +
                                         "< %d / (SELECT COUNT(*) FROM %s)",
-                                      tableName, 100, tableName),
-                        CONNECTOR.getRandomQuery(tableName, 100));
+                                      tableName, limit * 100, tableName),
+                        CONNECTOR.getRandomQuery(tableName, limit));
   }
 }
