@@ -95,11 +95,6 @@ public class MysqlConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
   }
 
   @Override
-  public StructuredRecord transform(LongWritable longWritable, MysqlDBRecord record) {
-    return record.getRecord();
-  }
-
-  @Override
   protected String getTableName(String database, String schema, String table) {
     return String.format("`%s`.`%s`", database, table);
   }
