@@ -51,6 +51,7 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
 
   public MysqlSink(MysqlSinkConfig mysqlSinkConfig) {
     super(mysqlSinkConfig);
+    super.escapeChar = '`';
     this.mysqlSinkConfig = mysqlSinkConfig;
   }
 

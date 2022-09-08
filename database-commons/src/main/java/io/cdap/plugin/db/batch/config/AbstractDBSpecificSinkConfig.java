@@ -16,12 +16,15 @@
 
 package io.cdap.plugin.db.batch.config;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.Constants;
+import io.cdap.plugin.common.KeyValueListParser;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
 
 import java.util.Collections;
@@ -37,6 +40,7 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   public static final String TABLE_NAME = "tableName";
   public static final String DB_SCHEMA_NAME = "dbSchemaName";
   public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
+  public static final String FIELD_MAPPING = "fieldMappings";
 
   @Name(Constants.Reference.REFERENCE_NAME)
   @Description(Constants.Reference.REFERENCE_NAME_DESCRIPTION)
@@ -53,6 +57,10 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   @Nullable
   private String dbSchemaName;
 
+  @Name(FIELD_MAPPING)
+  @Description("Enable field mapping")
+  private String fieldMappings;
+
   @Override
   public String getTableName() {
     return tableName;
@@ -61,6 +69,19 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   @Override
   public String getDBSchemaName() {
     return dbSchemaName;
+  }
+
+  @Override
+  public Map<String, String> getFieldMappings() {
+    KeyValueListParser kvParser = new KeyValueListParser("\\s*;\\s*", "=");
+
+    Map<String, String> fieldMappingsMap = new HashMap<>();
+    if (!Strings.isNullOrEmpty(fieldMappings)) {
+      for (KeyValue<String, String> keyValue : kvParser.parse(fieldMappings)) {
+        fieldMappingsMap.put(keyValue.getKey(), keyValue.getValue());
+      }
+    }
+    return fieldMappingsMap;
   }
 
   /**

@@ -109,6 +109,18 @@
           "name": "tableName"
         },
         {
+          "widget-type": "keyvalue",
+          "label": "Field Mappings",
+          "name": "fieldMappings",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "key-placeholder": "Column name in input schema",
+            "value-placeholder": "Column name in DB Table",
+            "kv-delimiter" : "=",
+            "delimiter" : ";"
+          }
+        },
+        {
           "widget-type": "hidden",
           "label": "Schema Name",
           "name": "dbSchemaName"

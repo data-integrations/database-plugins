@@ -24,6 +24,7 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -67,6 +68,11 @@ public class DatabaseSink extends AbstractDBSink<DatabaseSink.DatabaseSinkConfig
     @Override
     public String getTransactionIsolationLevel() {
       return transactionIsolationLevel;
+    }
+
+    @Override
+    public Map<String, String> getFieldMappings() {
+      return null;
     }
   }
 }

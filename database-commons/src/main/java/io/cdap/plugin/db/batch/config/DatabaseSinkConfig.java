@@ -19,6 +19,7 @@ package io.cdap.plugin.db.batch.config;
 import io.cdap.cdap.etl.api.FailureCollector;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interface for DB Sink plugin config
@@ -63,6 +64,11 @@ public interface DatabaseSinkConfig extends DatabaseConnectionConfig {
    * Default implementation returns unchanged table name string.
    */
   String getEscapedTableName();
+
+  /**
+   * @return map of field mappings
+   */
+  Map<String, String> getFieldMappings();
 
   /**
    * Validate the sink config

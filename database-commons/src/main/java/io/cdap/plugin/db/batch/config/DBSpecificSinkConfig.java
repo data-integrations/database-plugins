@@ -16,10 +16,16 @@
 
 package io.cdap.plugin.db.batch.config;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.plugin.common.KeyValueListParser;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -40,4 +46,21 @@ public abstract class DBSpecificSinkConfig extends AbstractDBSink.DBSinkConfig {
   @Description("Database name to connect to")
   @Macro
   public String database;
+
+  @Name("fieldMappings")
+  @Description("Field mappings")
+  public String fieldMappings;
+
+  @Override
+  public Map<String, String> getFieldMappings() {
+    KeyValueListParser kvParser = new KeyValueListParser("\\s*;\\s*", "=");
+
+    Map<String, String> fieldMappingsMap = new HashMap<>();
+    if (!Strings.isNullOrEmpty(fieldMappings)) {
+      for (KeyValue<String, String> keyValue : kvParser.parse(fieldMappings)) {
+        fieldMappingsMap.put(keyValue.getKey(), keyValue.getValue());
+      }
+    }
+    return fieldMappingsMap;
+  }
 }

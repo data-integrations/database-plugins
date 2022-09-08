@@ -64,6 +64,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -77,6 +78,7 @@ import javax.annotation.Nullable;
 public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig>
   extends ReferenceBatchSink<StructuredRecord, DBRecord, NullWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDBSink.class);
+  protected static Character escapeChar = Character.MIN_VALUE;
 
   private final T dbSinkConfig;
   private Class<? extends Driver> driverClass;
@@ -111,6 +113,22 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     if (driverClass != null && dbSinkConfig.canConnect()) {
       validateSchema(collector, driverClass, dbSinkConfig.getTableName(), inputSchema, dbSinkConfig.getDBSchemaName());
     }
+  }
+
+  private Schema getMappedSchema(Schema inputSchema) {
+    List<Schema.Field> mappedFields = new ArrayList<>();
+    Map<String, String> fieldMappings = dbSinkConfig.getFieldMappings();
+    Schema.Field newField;
+    for (Schema.Field field : inputSchema.getFields()) {
+      if (fieldMappings.containsKey(field.getName())) {
+        String fieldName = fieldMappings.get(field.getName());
+        newField = Schema.Field.of(fieldName, Schema.of(field.getSchema().getType()));
+      } else {
+        newField = Schema.Field.of(field.getName(), Schema.of(field.getSchema().getType()));
+      }
+      mappedFields.add(newField);
+    }
+    return Schema.recordOf("mappedSchema", mappedFields);
   }
 
   @Override
@@ -188,11 +206,27 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
    * for databases with case-sensitive identifiers
    */
   protected void setColumnsInfo(List<Schema.Field> fields) {
+    // Add field without quotes to this, add quotes to dbColumns
     columns = fields.stream()
-      .map(Schema.Field::getName)
+      .map(field -> getFieldName(field, false))
       .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+    List<String> mappedColumns = fields.stream()
+      .map(field -> getFieldName(field, true))
+      .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+    dbColumns = String.join(",", mappedColumns);
+  }
 
-    dbColumns = String.join(",", columns);
+  private String getFieldName(Schema.Field field, Boolean addEscapeChar) {
+    Map<String, String> fieldMappings = dbSinkConfig.getFieldMappings();
+    String fieldName = field.getName();
+    if (fieldMappings.containsKey(field.getName())) {
+      if (addEscapeChar) {
+        fieldName = escapeChar + fieldMappings.get(field.getName()) + escapeChar;
+      } else {
+        fieldName = fieldMappings.get(field.getName());
+      }
+    }
+    return fieldName;
   }
 
   @Override
@@ -200,7 +234,6 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     super.initialize(context);
     driverClass = context.loadPluginClass(getJDBCPluginId());
     Schema outputSchema = Optional.ofNullable(context.getInputSchema()).orElse(inferSchema(driverClass));
-
     setColumnsInfo(outputSchema.getFields());
     setResultSetMetadata();
   }
@@ -340,7 +373,9 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
                                                                                dbColumns,
                                                                                fullyQualifiedTableName));
            ResultSet rs = pStmt.executeQuery()) {
-        getFieldsValidator().validateFields(inputSchema, rs, collector);
+        // Schema with fields mapped (not quoted with escape characters) for validation
+        Schema mappedSchema = getMappedSchema(inputSchema);
+        getFieldsValidator().validateFields(mappedSchema, rs, collector);
       }
     } catch (SQLException e) {
       LOG.error("Exception while trying to validate schema of database table {} for connection {}.",
