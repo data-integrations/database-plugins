@@ -40,7 +40,7 @@ will be passed to the JDBC driver as connection arguments for JDBC drivers that 
 
 Example
 -------
-Suppose you want to execute a query against Oracle database named "XE" that is running on "localhost" 
+Suppose you want to execute a query against Oracle database named (service name) "XE" that is running on "localhost" 
 port 1251 (Ensure that the driver for Oracle is installed. You can also provide driver name for some specific driver, 
 otherwise "oracle" will be used), then configure the plugin with:
 
@@ -49,7 +49,8 @@ Driver Name: "oracle"
 Database Command: "UPDATE table_name SET price = 20 WHERE ID = 6"
 Host: "localhost"
 Port: 1251
-Database: "XE"
+Connection Type: "Service Name"
+SID/Service Name/TNS Connect Descriptor: "XE"
 Username: "system"
 Password: "oracle"
 Default Batch Value: 10

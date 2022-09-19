@@ -54,7 +54,7 @@ set to false. For drivers like those, you will need to set this to 'true'.
 
 Example
 -------
-Suppose you want to delete all records from Oracle table "userEvents" of database "XE" running on localhost, port 3306,
+Suppose you want to delete all records from Oracle table "userEvents" of database (service name) "XE" running on localhost, port 3306,
 without authentication using driver "oracle" if the pipeline completes successfully (Ensure that the driver for Oracle is 
 installed. You can also driver name for some specific driver, otherwise "oracle" will be used ), 
 then configure the plugin with:
@@ -65,7 +65,8 @@ Driver Name: "oracle"
 Query: "delete * from userEvents"
 Host: "localhost"
 Port: 1251
-Database: "XE"
+Connection Type: "Service Name"
+SID/Service Name/TNS Connect Descriptor: "XE"
 Username: "system"
 Password: "oracle"
 Default Batch Value: 10
