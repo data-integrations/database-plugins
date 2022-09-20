@@ -18,6 +18,7 @@ package io.cdap.plugin.cloudsql.postgres;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -65,6 +66,7 @@ public class CloudSQLPostgreSQLAction extends AbstractDBAction {
     }
   
     @Name(CloudSQLUtil.CONNECTION_NAME)
+    @Macro
     @Description(
         "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
             + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
@@ -72,6 +74,7 @@ public class CloudSQLPostgreSQLAction extends AbstractDBAction {
     public String connectionName;
 
     @Name(DATABASE)
+    @Macro
     @Description("Database name to connect to")
     public String database;
 

@@ -17,6 +17,7 @@
 package io.cdap.plugin.cloudsql.mysql;
 
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
@@ -34,6 +35,7 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
   private static final String JDBC_PROPERTY_SOCKET_TIMEOUT_MILLIS = "socketTimeout";
 
   @Name(CloudSQLUtil.CONNECTION_NAME)
+  @Macro
   @Description(
     "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
       + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
@@ -41,6 +43,7 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
   private String connectionName;
 
   @Name(ConnectionConfig.DATABASE)
+  @Macro
   @Description("Database name to connect to")
   private String database;
 
