@@ -50,6 +50,11 @@ public class DatabaseSink extends AbstractDBSink<DatabaseSink.DatabaseSinkConfig
     @Macro
     public String connectionString;
 
+    @Name("Reference Name")
+    @Description("FQN for Database Sink")
+    @Macro
+    public String referenceName;
+
     @Nullable
     @Name(TRANSACTION_ISOLATION_LEVEL)
     @Description("The transaction isolation level for queries run by this sink. " +
@@ -67,6 +72,12 @@ public class DatabaseSink extends AbstractDBSink<DatabaseSink.DatabaseSinkConfig
     @Override
     public String getTransactionIsolationLevel() {
       return transactionIsolationLevel;
+    }
+
+    @Override
+    public String getReferenceName() {
+      referenceName = DatabaseURLParser.getFQN(connectionString);
+      return referenceName;
     }
   }
 }

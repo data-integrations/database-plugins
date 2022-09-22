@@ -60,6 +60,11 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
     @Macro
     public String connectionString;
 
+    @Name(REFERENCE_NAME)
+    @Description("FQN for Database Sink")
+    @Macro
+    public String referenceName;
+
     @Nullable
     @Name(TRANSACTION_ISOLATION_LEVEL)
     @Description("The transaction isolation level for queries run by this sink. " +
@@ -72,6 +77,12 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
     @Override
     public String getConnectionString() {
       return connectionString;
+    }
+
+    @Override
+    public String getReferenceName() {
+      referenceName = DatabaseURLParser.getFQN(connectionString);
+      return referenceName;
     }
   }
 }
