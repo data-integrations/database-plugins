@@ -60,8 +60,8 @@
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- version properties -->
-    <cdap.version>6.7.1</cdap.version>
-    <cdap.plugin.version>2.9.1</cdap.plugin.version>
+    <cdap.version>6.7.2-SNAPSHOT</cdap.version>
+    <cdap.plugin.version>2.9.2-SNAPSHOT</cdap.plugin.version>
     <guava.version>13.0.1</guava.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
