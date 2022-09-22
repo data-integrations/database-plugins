@@ -331,6 +331,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     public static final String SCHEMA = "schema";
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
     public static final String FETCH_SIZE = "fetchSize";
+    public static final String REFERENCE_NAME = "referenceName";
 
     @Name(IMPORT_QUERY)
     @Description("The SELECT query to use to import data from the specified table. " +
