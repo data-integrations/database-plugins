@@ -25,12 +25,16 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
+import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Map;
@@ -66,6 +70,17 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
     return PostgresDBRecord.class;
+  }
+
+  @Override
+  protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
+    String fqn = DBUtils.constructFQN("postgres",
+                                      postgresSourceConfig.getConnection().getHost(),
+                                      postgresSourceConfig.getConnection().getPort(),
+                                      postgresSourceConfig.getConnection().getDatabase(),
+                                      postgresSourceConfig.getReferenceName());
+    Asset asset = Asset.builder(postgresSourceConfig.getReferenceName()).setFqn(fqn).build();
+    return new LineageRecorder(context, asset);
   }
 
   /**
@@ -114,7 +129,7 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
     }
 
     @Override
-    protected AbstractDBSpecificConnectorConfig getConnection() {
+    protected PostgresConnectorConfig getConnection() {
       return connection;
     }
 

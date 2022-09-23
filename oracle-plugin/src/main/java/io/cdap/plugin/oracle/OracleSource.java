@@ -24,11 +24,15 @@ import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
+import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Map;
@@ -64,6 +68,17 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
     return OracleSourceDBRecord.class;
+  }
+
+  @Override
+  protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
+    String fqn = DBUtils.constructFQN("oracle",
+                                      oracleSourceConfig.getConnection().getHost(),
+                                      oracleSourceConfig.getConnection().getPort(),
+                                      oracleSourceConfig.getConnection().getDatabase(),
+                                      oracleSourceConfig.getReferenceName());
+    Asset asset = Asset.builder(oracleSourceConfig.getReferenceName()).setFqn(fqn).build();
+    return new LineageRecorder(context, asset);
   }
 
   /**

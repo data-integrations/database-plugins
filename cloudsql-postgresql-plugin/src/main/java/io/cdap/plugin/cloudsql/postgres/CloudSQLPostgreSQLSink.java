@@ -28,8 +28,11 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
@@ -39,6 +42,8 @@ import io.cdap.plugin.postgres.PostgresDBRecord;
 import io.cdap.plugin.postgres.PostgresFieldsValidator;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
 import io.cdap.plugin.util.CloudSQLUtil;
+import io.cdap.plugin.util.DBUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -105,6 +110,30 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
   @Override
   protected FieldsValidator getFieldsValidator() {
     return new PostgresFieldsValidator();
+  }
+
+  @Override
+  protected LineageRecorder getLineageRecorder(BatchSinkContext context) {
+    String host;
+    String location = "";
+    if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(
+      cloudsqlPostgresqlSinkConfig.getConnection().getInstanceType())) {
+      // connection is the private IP address
+      host = cloudsqlPostgresqlSinkConfig.getConnection().getConnectionName();
+    } else {
+      // connection is of the form <projectId>:<region>:<instanceName>
+      String[] connectionParams = cloudsqlPostgresqlSinkConfig.getConnection().getConnectionName().split(":");
+      host = connectionParams[2];
+      location = connectionParams[1];
+    }
+    String fqn = DBUtils.constructFQN("postgres", host, 5432,
+                                      cloudsqlPostgresqlSinkConfig.getConnection().getDatabase(),
+                                      cloudsqlPostgresqlSinkConfig.getReferenceName());
+    Asset.Builder assetBuilder = Asset.builder(cloudsqlPostgresqlSinkConfig.getReferenceName()).setFqn(fqn);
+    if (!StringUtils.isEmpty(location)) {
+      assetBuilder.setLocation(location);
+    }
+    return new LineageRecorder(context, assetBuilder.build());
   }
 
   /** CloudSQL PostgreSQL sink config. */

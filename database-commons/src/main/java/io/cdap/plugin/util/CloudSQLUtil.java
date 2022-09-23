@@ -16,13 +16,11 @@
 
 package io.cdap.plugin.util;
 
-import com.google.common.base.Strings;
 import com.google.common.net.InetAddresses;
 import io.cdap.cdap.etl.api.FailureCollector;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 
 /**
  * Utility class for CloudSQL .
