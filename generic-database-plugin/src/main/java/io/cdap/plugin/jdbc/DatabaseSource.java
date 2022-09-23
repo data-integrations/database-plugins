@@ -16,10 +16,15 @@
 
 package io.cdap.plugin.jdbc;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.plugin.common.Asset;
+import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 
@@ -44,6 +49,15 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
   @Override
   protected String createConnectionString() {
     return databaseSourceConfig.connectionString;
+  }
+
+  @Override
+  protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
+    // dbtype, host, port, db from the connection string
+    // table is the reference name
+    String fqn = "oracle://{host}:{port}/{database}.{table}";
+    Asset asset = Asset.builder(databaseSourceConfig.getReferenceName()).setFqn(fqn).build();
+    return new LineageRecorder(context, asset);
   }
 
   /**
