@@ -76,8 +76,9 @@ public class DatabaseSink extends AbstractDBSink<DatabaseSink.DatabaseSinkConfig
 
     @Override
     public String getReferenceName() {
-      referenceName = DatabaseURLParser.getFQN(connectionString);
-      return referenceName;
+//      referenceName = DatabaseURLParser.parseURL(connectionString);
+//      return referenceName;
+      return "";
     }
   }
 }

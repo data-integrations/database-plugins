@@ -60,11 +60,6 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
     @Macro
     public String connectionString;
 
-    @Name(REFERENCE_NAME)
-    @Description("FQN for Database Sink")
-    @Macro
-    public String referenceName;
-
     @Nullable
     @Name(TRANSACTION_ISOLATION_LEVEL)
     @Description("The transaction isolation level for queries run by this sink. " +
@@ -80,9 +75,12 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
     }
 
     @Override
-    public String getReferenceName() {
-      referenceName = DatabaseURLParser.getFQN(connectionString);
-      return referenceName;
+    protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
+      // dbtype, host, port, db from the connection string
+      // table is the reference name
+      String fqn = "oracle://{host}:{port}/{database}.{table}";
+      Asset asset = Asset.builder(databaseSourceConfig.getReferenceName()).setFqn(fqn).build();
+      return new LineageRecorder(context, asset);
     }
   }
 }
