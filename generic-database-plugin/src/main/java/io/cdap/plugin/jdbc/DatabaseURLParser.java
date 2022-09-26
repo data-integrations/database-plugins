@@ -18,7 +18,6 @@ package io.cdap.plugin.jdbc;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
-import java.util.LinkedHashMap;
 
 /**
  * URL Parser for DB
@@ -26,29 +25,16 @@ import java.util.LinkedHashMap;
 
 public class DatabaseURLParser {
   // TODO: Implement Parsing Logic
-//  private static final String MYSQL_JDBC_URL_PREFIX = "jdbc:mysql";
-//  private static final String ORACLE_JDBC_URL_PREFIX = "jdbc:oracle";
-//  private static final String H2_JDBC_URL_PREFIX = "jdbc:h2";
-//  private static final String POSTGRESQL_JDBC_URL_PREFIX = "jdbc:postgresql";
-//  private static final String MARIADB_JDBC_URL_PREFIX = "jdbc:mariadb";
-//  private static final String SQLSERVER_JDBC_URL_PREFIX = "jdbc:sqlserver";
-//  private static final String DB2_JDBC_URL_PREFIX = "jdbc:db2";
-//  private static final String AS400_JDBC_URL_PREFIX = "jdbc:as400";
-  private static String dbScheme;
-  private static String dbHost;
-  private static int dbPort;
-  private static String dbPath;
-  private static String dbName;
-  private static String tableName;
-
-  public static URI parseURL(@NotNull String url) {
-    String cleanURI = url.substring(5);
-
+  public static URI parseURL(@NotNull String connectionString) {
+    String cleanURI = connectionString.substring(5);
     URI uri = URI.create(cleanURI);
-    dbScheme = uri.getScheme();
-    dbHost = uri.getHost();
-    dbPort = uri.getPort();
-    dbPath = uri.getPath();
     return uri;
+  }
+
+  public static String constructFQN(URI uri, String tableName) {
+    if (uri.getScheme() == "postgres")
+      return "";
+    else
+      return String.format("%s://%s:%s/%s/%s", uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), tableName);
   }
 }
