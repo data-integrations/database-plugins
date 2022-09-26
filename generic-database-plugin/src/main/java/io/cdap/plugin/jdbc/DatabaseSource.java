@@ -28,6 +28,7 @@ import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 
+import java.net.URI;
 import javax.annotation.Nullable;
 
 /**
@@ -51,6 +52,16 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
     return databaseSourceConfig.connectionString;
   }
 
+  @Override
+  protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
+    // dbtype, host, port, db from the connection string
+    // table is the reference name
+    URI uri = DatabaseURLParser.parseURL(databaseSourceConfig.getConnectionString());
+    String fqn = DatabaseURLParser.constructFQN(uri, databaseSourceConfig.getReferenceName());
+    Asset asset = Asset.builder(databaseSourceConfig.getReferenceName()).setFqn(fqn).build();
+    return new LineageRecorder(context, asset);
+  }
+
   /**
    * Generic database source configuration.
    */
@@ -72,15 +83,6 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
     @Override
     public String getConnectionString() {
       return connectionString;
-    }
-
-    @Override
-    protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
-      // dbtype, host, port, db from the connection string
-      // table is the reference name
-      String fqn = "oracle://{host}:{port}/{database}.{table}";
-      Asset asset = Asset.builder(databaseSourceConfig.getReferenceName()).setFqn(fqn).build();
-      return new LineageRecorder(context, asset);
     }
   }
 }
