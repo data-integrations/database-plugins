@@ -51,15 +51,6 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
     return databaseSourceConfig.connectionString;
   }
 
-  @Override
-  protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
-    // dbtype, host, port, db from the connection string
-    // table is the reference name
-    String fqn = "oracle://{host}:{port}/{database}.{table}";
-    Asset asset = Asset.builder(databaseSourceConfig.getReferenceName()).setFqn(fqn).build();
-    return new LineageRecorder(context, asset);
-  }
-
   /**
    * Generic database source configuration.
    */
