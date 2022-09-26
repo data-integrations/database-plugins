@@ -154,7 +154,7 @@ public class CommonSchemaReaderTest {
     Assert.assertEquals(Schema.of(Schema.Type.BYTES), reader.getSchema(metadata, 4));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = SQLException.class)
   public void testGetSchemaThrowsExceptionOnNumericWithZeroPrecision() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.NUMERIC);
     when(metadata.getPrecision(eq(1))).thenReturn(0);
