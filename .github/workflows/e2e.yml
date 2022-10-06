@@ -30,6 +30,8 @@ jobs:
       fail-fast: false
     steps:
       # Pinned 1.0.0 version
+      - uses: haya14busa/action-workflow_run-status@967ed83efa565c257675ed70cfe5231f062ddd94
+
       - uses: actions/checkout@v2.3.4
         with:
           path: plugin
