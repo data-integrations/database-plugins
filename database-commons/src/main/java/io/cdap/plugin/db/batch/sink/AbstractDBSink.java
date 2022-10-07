@@ -32,6 +32,7 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
+import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSink;
@@ -357,12 +358,16 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
   }
 
   private void emitLineage(BatchSinkContext context, List<Schema.Field> fields) {
-    LineageRecorder lineageRecorder = new LineageRecorder(context, dbSinkConfig.getReferenceName());
+    LineageRecorder lineageRecorder = getLineageRecorder(context);
 
     if (!fields.isEmpty()) {
       lineageRecorder.recordWrite("Write", "Wrote to DB table.",
                                   fields.stream().map(Schema.Field::getName).collect(Collectors.toList()));
     }
+  }
+
+  protected LineageRecorder getLineageRecorder(BatchSinkContext context) {
+    return new LineageRecorder(context, dbSinkConfig.getReferenceName());
   }
 
   private void executeInitQueries(Connection connection, List<String> initQueries) throws SQLException {

@@ -134,9 +134,10 @@
           <instructions>
             <_exportcontents>
               io.cdap.plugin.cloudsql.postgres.*;
+              io.cdap.plugin.postgres.*;
               io.cdap.plugin.db.batch.source.*;
               io.cdap.plugin.db.batch.sink.*;
-              org.apache.commons.lang;
+              org.apache.commons.lang.*;
               org.apache.commons.logging.*;
               org.codehaus.jackson.*
             </_exportcontents>

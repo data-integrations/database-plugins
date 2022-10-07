@@ -26,12 +26,16 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import io.cdap.plugin.util.DBUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +61,16 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
   @Override
   protected DBRecord getDBRecord(StructuredRecord output) {
     return new MysqlDBRecord(output, columnTypes);
+  }
+
+  @Override
+  protected LineageRecorder getLineageRecorder(BatchSinkContext context) {
+    String fqn = DBUtils.constructFQN("mysql",
+                                      mysqlSinkConfig.getConnection().getHost(),
+                                      mysqlSinkConfig.getConnection().getPort(),
+                                      mysqlSinkConfig.database, mysqlSinkConfig.getReferenceName());
+    Asset asset = Asset.builder(mysqlSinkConfig.getReferenceName()).setFqn(fqn).build();
+    return new LineageRecorder(context, asset);
   }
 
   /**

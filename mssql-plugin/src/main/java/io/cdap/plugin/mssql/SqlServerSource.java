@@ -26,12 +26,16 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
+import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Collections;
@@ -69,6 +73,16 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
     return SqlServerSourceDBRecord.class;
+  }
+
+  @Override
+  protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
+    String fqn = DBUtils.constructFQN("mssql",
+                                      sqlServerSourceConfig.getConnection().getHost(),
+                                      sqlServerSourceConfig.getConnection().getPort(),
+                                      sqlServerSourceConfig.database, sqlServerSourceConfig.getReferenceName());
+    Asset asset = Asset.builder(sqlServerSourceConfig.getReferenceName()).setFqn(fqn).build();
+    return new LineageRecorder(context, asset);
   }
 
   /**

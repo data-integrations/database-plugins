@@ -126,7 +126,7 @@
               io.cdap.plugin.cloudsql.mysql.*;
               io.cdap.plugin.db.batch.source.*;
               io.cdap.plugin.db.batch.sink.*;
-              org.apache.commons.lang;
+              org.apache.commons.lang.*;
               org.apache.commons.logging.*;
               org.codehaus.jackson.*
             </_exportcontents>

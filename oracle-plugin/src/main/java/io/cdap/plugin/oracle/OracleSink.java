@@ -26,13 +26,17 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.db.batch.sink.FieldsValidator;
+import io.cdap.plugin.util.DBUtils;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -67,6 +71,17 @@ public class OracleSink extends AbstractDBSink<OracleSink.OracleSinkConfig> {
   protected SchemaReader getSchemaReader() {
     return new OracleSinkSchemaReader();
   }
+  @Override
+  protected LineageRecorder getLineageRecorder(BatchSinkContext context) {
+    String fqn = DBUtils.constructFQN("oracle",
+                                      oracleSinkConfig.getConnection().getHost(),
+                                      oracleSinkConfig.getConnection().getPort(),
+                                      oracleSinkConfig.getConnection().getDatabase(),
+                                      oracleSinkConfig.getReferenceName());
+    Asset asset = Asset.builder(oracleSinkConfig.getReferenceName()).setFqn(fqn).build();
+    return new LineageRecorder(context, asset);
+  }
+
 
   /**
    * Oracle action configuration.

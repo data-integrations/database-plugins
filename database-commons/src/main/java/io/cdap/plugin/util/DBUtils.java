@@ -280,6 +280,10 @@ public final class DBUtils {
     }
   }
 
+  public static String constructFQN(String dbType, String host, int port, String db, String tableName) {
+    return String.format("%s://%s:%s/%s.%s", dbType, host, port, db, tableName);
+  }
+
   private DBUtils() {
     throw new AssertionError("Should not instantiate static utility class.");
   }

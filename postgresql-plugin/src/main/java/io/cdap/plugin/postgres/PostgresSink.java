@@ -27,8 +27,12 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSinkContext;
+import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
@@ -37,6 +41,7 @@ import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.db.batch.sink.FieldsValidator;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
+import io.cdap.plugin.util.DBUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,6 +97,17 @@ public class PostgresSink extends AbstractDBSink<PostgresSink.PostgresSinkConfig
   @Override
   protected FieldsValidator getFieldsValidator() {
     return new PostgresFieldsValidator();
+  }
+
+  @Override
+  protected LineageRecorder getLineageRecorder(BatchSinkContext context) {
+    String fqn = DBUtils.constructFQN("postgres",
+                                      postgresSinkConfig.getConnection().getHost(),
+                                      postgresSinkConfig.getConnection().getPort(),
+                                      postgresSinkConfig.getConnection().getDatabase(),
+                                      postgresSinkConfig.getReferenceName());
+    Asset asset = Asset.builder(postgresSinkConfig.getReferenceName()).setFqn(fqn).build();
+    return new LineageRecorder(context, asset);
   }
 
   /**

@@ -283,7 +283,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
       connectionConfigAccessor.setSchema(schemaStr);
     }
 
-    LineageRecorder lineageRecorder = new LineageRecorder(context, sourceConfig.getReferenceName());
+    LineageRecorder lineageRecorder = getLineageRecorder(context);
     Schema schema = sourceConfig.getSchema() == null ? schemaFromDB : sourceConfig.getSchema();
     lineageRecorder.createExternalDataset(schema);
     if (schema != null && schema.getFields() != null) {
@@ -292,6 +292,10 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     }
     context.setInput(Input.of(sourceConfig.getReferenceName(), new SourceInputFormatProvider(
       DataDrivenETLDBInputFormat.class, connectionConfigAccessor.getConfiguration())));
+  }
+
+  protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
+    return new LineageRecorder(context, sourceConfig.getReferenceName());
   }
 
   protected Class<? extends DBWritable> getDBRecordType() {

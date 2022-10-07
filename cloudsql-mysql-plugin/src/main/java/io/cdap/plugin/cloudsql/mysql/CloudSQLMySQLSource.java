@@ -25,13 +25,18 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
+import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import io.cdap.plugin.util.CloudSQLUtil;
+import io.cdap.plugin.util.DBUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,6 +93,29 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
         CloudSQLMySQLConstants.PUBLIC_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
         cloudsqlMysqlSourceConfig.connection.getDatabase(),
         cloudsqlMysqlSourceConfig.connection.getConnectionName());
+  }
+
+  @Override
+  protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
+    String host;
+    String location = "";
+    if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(cloudsqlMysqlSourceConfig.getConnection().getInstanceType())) {
+      // connection is the private IP address
+      host = cloudsqlMysqlSourceConfig.getConnection().getConnectionName();
+    } else {
+      // connection is of the form <projectId>:<region>:<instanceName>
+      String[] connectionParams = cloudsqlMysqlSourceConfig.getConnection().getConnectionName().split(":");
+      host = connectionParams[2];
+      location = connectionParams[1];
+    }
+    String fqn = DBUtils.constructFQN("mysql", host, 3306,
+                                      cloudsqlMysqlSourceConfig.getConnection().getDatabase(),
+                                      cloudsqlMysqlSourceConfig.getReferenceName());
+    Asset.Builder assetBuilder = Asset.builder(cloudsqlMysqlSourceConfig.getReferenceName()).setFqn(fqn);
+    if (!StringUtils.isEmpty(location)) {
+      assetBuilder.setLocation(location);
+    }
+    return new LineageRecorder(context, assetBuilder.build());
   }
 
   /** CloudSQL MySQL source config. */
