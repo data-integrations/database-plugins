@@ -17,6 +17,7 @@ a TimePartitionedFileSet.
 Properties
 ----------
 **Reference Name:** Name used to uniquely identify this source for lineage, annotating metadata, etc.
+Typically, the name of the table/view.
 
 **Use Connection** Whether to use a connection. If a connection is used, you do not need to provide the credentials.
 
