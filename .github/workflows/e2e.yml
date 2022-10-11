@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  secretsmanager:
     runs-on: k8s-runner-e2e
     # We allow builds:
     # 1) When triggered manually
@@ -38,6 +38,35 @@ jobs:
       || (contains(github.event.pull_request.labels.*.name, 'build')
           && (github.event.action != 'labeled' || github.event.label.name == 'build')
           )
+    steps:
+      - name: Get Secrets from GCP Secret Manager
+        id: 'secrets'
+        uses: 'google-github-actions/get-secretmanager-secrets@v0'
+        with:
+          secrets: |-
+            MYSQL_USERNAME:cdapio-github-builds/MYSQL_USERNAME
+            MYSQL_PASSWORD:cdapio-github-builds/MYSQL_PASSWORD
+            SQLSERVER_USERNAME:cdapio-github-builds/SQLSERVER_USERNAME
+            SQLSERVER_PASSWORD:cdapio-github-builds/SQLSERVER_PASSWORD
+            ORACLE_USERNAME:cdapio-github-builds/ORACLE_USERNAME
+            ORACLE_PASSWORD:cdapio-github-builds/ORACLE_PASSWORD
+            POSTGRESQL_USERNAME:cdapio-github-builds/POSTGRESQL_USERNAME
+            POSTGRESQL_PASSWORD:cdapio-github-builds/POSTGRESQL_PASSWORD
+    outputs:
+      secrets: ${{ steps.secrets.outputs }}
+
+  build:
+    needs: secretsmanager
+    runs-on: k8s-runner-e2e
+    env:
+      MYSQL_USERNAME: ${{ needs.secretsmanager.outputs.MYSQL_USERNAME }}
+      MYSQL_PASSWORD: ${{ needs.secretsmanager.outputs.MYSQL_PASSWORD }}
+      SQLSERVER_USERNAME: ${{ needs.secretsmanager.outputs.SQLSERVER_USERNAME }}
+      SQLSERVER_PASSWORD: ${{ needs.secretsmanager.outputs.SQLSERVER_PASSWORD }}
+      ORACLE_USERNAME: ${{ needs.secretsmanager.outputs.ORACLE_USERNAME }}
+      ORACLE_PASSWORD: ${{ needs.secretsmanager.outputs.ORACLE_PASSWORD }}
+      POSTGRESQL_USERNAME: ${{ needs.secretsmanager.outputs.POSTGRESQL_USERNAME }}
+      POSTGRESQL_PASSWORD: ${{ needs.secretsmanager.outputs.POSTGRESQL_PASSWORD }}
     strategy:
       matrix:
         module: [mysql-plugin, postgresql-plugin]

@@ -30,11 +30,11 @@ public class TestSetupHooks {
 
   @Before(order = 1)
   public static void overrideUserAndPasswordIfProvided() {
-    String username = System.getenv("username");
+    String username = System.getenv("MYSQL_USERNAME");
     if (username != null && !username.isEmpty()) {
         PluginPropertyUtils.addPluginProp("username", username);
     }
-    String password = System.getenv("password");
+    String password = System.getenv("MYSQL_PASSWORD");
     if (password != null && !password.isEmpty()) {
       PluginPropertyUtils.addPluginProp("password", password);
     }
