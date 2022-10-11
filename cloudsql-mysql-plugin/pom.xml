@@ -20,7 +20,7 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.9.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
 
   <name>CloudSQL MySQL plugin</name>
