@@ -44,7 +44,7 @@ jobs:
       fail-fast: false
     steps:
       # Pinned 1.0.0 version
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v3
         with:
           path: plugin
           submodules: 'recursive'
@@ -60,13 +60,13 @@ jobs:
               - '${{ matrix.module }}/**/e2e-test/**'
 
       - name: Checkout e2e test repo
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
         with:
           repository: cdapio/cdap-e2e-tests
           path: e2e
 
       - name: Cache
-        uses: actions/cache@v2.1.3
+        uses: actions/cache@v3
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
@@ -82,14 +82,14 @@ jobs:
         run: python3 e2e/src/main/scripts/run_e2e_test.py --module ${{ matrix.module }}
 
       - name: Upload report
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: Cucumber report - ${{ matrix.module }}
           path: ./**/target/cucumber-reports
 
       - name: Upload debug files
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: Debug files - ${{ matrix.module }}
