@@ -218,16 +218,16 @@ public class OracleSourceDBRecord extends DBRecord {
           // scale set in the logical schema. For example for value '77.12' if the scale set in the logical schema is
           // set to 4 then the number will change to '77.1200'. Also if the value is '22.1274' and the logical schema
           // scale is set to 2 then the decimal value used will be '22.13' after rounding.
-          BigDecimal decimal = resultSet.getBigDecimal(columnIndex, getSchemaScale(field.getSchema()));
+          BigDecimal decimal = resultSet.getBigDecimal(columnIndex, getScale(field.getSchema()));
           recordBuilder.setDecimal(field.getName(), decimal);
         }
     }
   }
 
   /**
-   * Get the schema scale set in Non-nullable schema associated with the schema
+   * Get the scale set in Non-nullable schema associated with the schema
    * */
-  private int getSchemaScale(Schema schema) {
+  private int getScale(Schema schema) {
     return schema.isNullable() ? schema.getNonNullable().getScale() : schema.getScale();
   }
 
