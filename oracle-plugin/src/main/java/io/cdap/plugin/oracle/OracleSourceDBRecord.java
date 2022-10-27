@@ -214,17 +214,21 @@ public class OracleSourceDBRecord extends DBRecord {
         if (Double.class.getTypeName().equals(resultSet.getMetaData().getColumnClassName(columnIndex))) {
           recordBuilder.set(field.getName(), resultSet.getDouble(columnIndex));
         } else {
-          // For a Number type without specified precision and scale, precision will be 0 and scale will be -127
-          if (precision == 0) {
-            // reference : https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT1832
-            scale = 0;
-          }
           // It's required to pass 'scale' parameter since in the case of Oracle, scale of 'BigDecimal' depends on the
-          // scale of actual value. For example for value '77.12' scale will be '2' even if sql scale is '6'
-          BigDecimal decimal = resultSet.getBigDecimal(columnIndex, scale);
+          // scale set in the logical schema. For example for value '77.12' if the scale set in the logical schema is
+          // set to 4 then the number will change to '77.1200'. Also if the value is '22.1274' and the logical schema
+          // scale is set to 2 then the decimal value used will be '22.13' after rounding.
+          BigDecimal decimal = resultSet.getBigDecimal(columnIndex, getScale(field.getSchema()));
           recordBuilder.setDecimal(field.getName(), decimal);
         }
     }
+  }
+
+  /**
+   * Get the scale set in Non-nullable schema associated with the schema
+   * */
+  private int getScale(Schema schema) {
+    return schema.isNullable() ? schema.getNonNullable().getScale() : schema.getScale();
   }
 
   private boolean isLongOrLongRaw(int columnType) {

@@ -19,6 +19,8 @@ package io.cdap.plugin.oracle;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.CommonSchemaReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -41,6 +43,11 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   public static final int BFILE = -13;
   public static final int LONG = -1;
   public static final int LONG_RAW = -4;
+
+  /**
+   * Logger instance for Oracle Schema reader.
+   */
+  private static final Logger LOG = LoggerFactory.getLogger(OracleSourceSchemaReader.class);
 
   public static final Set<Integer> ORACLE_TYPES = ImmutableSet.of(
     INTERVAL_DS,
@@ -89,6 +96,11 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
             // reference : https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT1832
             precision = 38;
             scale = 0;
+            LOG.warn(String.format("%s type with undefined precision and scale is detected, "
+                    + "there may be a precision loss while running the pipeline. "
+                    + "Please define an output precision and scale for field '%s' to avoid precision loss.",
+                metadata.getColumnTypeName(index),
+                metadata.getColumnName(index)));
           }
           return Schema.decimalOf(precision, scale);
         }
