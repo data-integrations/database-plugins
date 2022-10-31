@@ -24,6 +24,8 @@ import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +49,8 @@ import javax.annotation.Nullable;
  * {@link org.apache.hadoop.io.Writable}.
  */
 public class OracleSourceDBRecord extends DBRecord {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OracleSourceDBRecord.class);
 
   public OracleSourceDBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
     this.record = record;
@@ -214,14 +218,29 @@ public class OracleSourceDBRecord extends DBRecord {
         if (Double.class.getTypeName().equals(resultSet.getMetaData().getColumnClassName(columnIndex))) {
           recordBuilder.set(field.getName(), resultSet.getDouble(columnIndex));
         } else {
+          int scaleInSchema = getScale(field.getSchema());
+          if (precision == 0 && scaleInSchema == 0) {
+            BigDecimal value = BigDecimal.valueOf(resultSet.getDouble(columnIndex));
+            if (value != null && !containsIntegerValue(value)) {
+              LOG.warn(String.format("Precision loss detected in the field '%s'. "
+                  + "Scale in the data='%s' scale present in the schema='%s'.",
+                  field.getName(),
+                  value.scale(),
+                  scaleInSchema));
+            }
+          }
           // It's required to pass 'scale' parameter since in the case of Oracle, scale of 'BigDecimal' depends on the
           // scale set in the logical schema. For example for value '77.12' if the scale set in the logical schema is
           // set to 4 then the number will change to '77.1200'. Also if the value is '22.1274' and the logical schema
           // scale is set to 2 then the decimal value used will be '22.13' after rounding.
-          BigDecimal decimal = resultSet.getBigDecimal(columnIndex, getScale(field.getSchema()));
+          BigDecimal decimal = resultSet.getBigDecimal(columnIndex, scaleInSchema);
           recordBuilder.setDecimal(field.getName(), decimal);
         }
     }
+  }
+
+  private boolean containsIntegerValue(BigDecimal value) {
+    return value.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0;
   }
 
   /**
