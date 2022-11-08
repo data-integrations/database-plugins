@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.cloudsql.mysql;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Metadata;
@@ -30,13 +31,12 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
-import io.cdap.plugin.db.CommonSchemaReader;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.mysql.MysqlDBRecord;
 import io.cdap.plugin.util.CloudSQLUtil;
 import io.cdap.plugin.util.DBUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,8 +75,8 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
   }
 
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new CommonSchemaReader();
+  protected Class<? extends DBWritable> getDBRecordType() {
+    return MysqlDBRecord.class;
   }
 
   @Override
@@ -112,7 +112,7 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
                                       cloudsqlMysqlSourceConfig.getConnection().getDatabase(),
                                       cloudsqlMysqlSourceConfig.getReferenceName());
     Asset.Builder assetBuilder = Asset.builder(cloudsqlMysqlSourceConfig.getReferenceName()).setFqn(fqn);
-    if (!StringUtils.isEmpty(location)) {
+    if (!Strings.isNullOrEmpty(location)) {
       assetBuilder.setLocation(location);
     }
     return new LineageRecorder(context, assetBuilder.build());

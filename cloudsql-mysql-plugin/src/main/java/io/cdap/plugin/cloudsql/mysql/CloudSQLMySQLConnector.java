@@ -31,8 +31,10 @@ import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.db.ConnectionConfig;
-import io.cdap.plugin.db.DBRecord;
+import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
+import io.cdap.plugin.mysql.MysqlDBRecord;
+import io.cdap.plugin.mysql.MysqlSchemaReader;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
@@ -46,7 +48,7 @@ import java.util.Map;
 @Name(CloudSQLMySQLConnector.NAME)
 @Description("Connection to access data in CloudSQL MySQL Server databases using JDBC.")
 @Category("Database")
-public class CloudSQLMySQLConnector extends AbstractDBSpecificConnector<DBRecord> {
+public class CloudSQLMySQLConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
   
   public static final String NAME = CloudSQLMySQLConstants.PLUGIN_NAME;
   private final CloudSQLMySQLConnectorConfig config;
@@ -63,12 +65,17 @@ public class CloudSQLMySQLConnector extends AbstractDBSpecificConnector<DBRecord
 
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
-    return DBRecord.class;
+    return MysqlDBRecord.class;
   }
 
   @Override
-  public StructuredRecord transform(LongWritable longWritable, DBRecord dbRecord) {
-    return dbRecord.getRecord();
+  public StructuredRecord transform(LongWritable longWritable, MysqlDBRecord mysqlDBRecord) {
+    return mysqlDBRecord.getRecord();
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader(String sessionID) {
+    return new MysqlSchemaReader(sessionID);
   }
 
   @Override
