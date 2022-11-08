@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.cloudsql.postgres;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Metadata;
@@ -37,7 +38,6 @@ import io.cdap.plugin.postgres.PostgresDBRecord;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
 import io.cdap.plugin.util.CloudSQLUtil;
 import io.cdap.plugin.util.DBUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Collections;
@@ -120,7 +120,7 @@ public class CloudSQLPostgreSQLSource
                                       cloudsqlPostgresqlSourceConfig.getConnection().getDatabase(),
                                       cloudsqlPostgresqlSourceConfig.getReferenceName());
     Asset.Builder assetBuilder = Asset.builder(cloudsqlPostgresqlSourceConfig.getReferenceName()).setFqn(fqn);
-    if (!StringUtils.isEmpty(location)) {
+    if (!Strings.isNullOrEmpty(location)) {
       assetBuilder.setLocation(location);
     }
     return new LineageRecorder(context, assetBuilder.build());

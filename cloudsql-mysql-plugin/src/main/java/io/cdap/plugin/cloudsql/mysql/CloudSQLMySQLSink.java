@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.cloudsql.mysql;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
@@ -23,6 +24,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSink;
@@ -31,13 +33,12 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
-import io.cdap.plugin.db.CommonSchemaReader;
-import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import io.cdap.plugin.mysql.MysqlDBRecord;
 import io.cdap.plugin.util.CloudSQLUtil;
 import io.cdap.plugin.util.DBUtils;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -71,10 +72,10 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
     
     super.configurePipeline(pipelineConfigurer);
   }
-  
+
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new CommonSchemaReader();
+  protected DBRecord getDBRecord(StructuredRecord output) {
+    return new MysqlDBRecord(output, columnTypes);
   }
 
   @Override
@@ -94,7 +95,7 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
                                       cloudsqlMysqlSinkConfig.getConnection().getDatabase(),
                                       cloudsqlMysqlSinkConfig.getReferenceName());
     Asset.Builder assetBuilder = Asset.builder(cloudsqlMysqlSinkConfig.getReferenceName()).setFqn(fqn);
-    if (!StringUtils.isEmpty(location)) {
+    if (!Strings.isNullOrEmpty(location)) {
       assetBuilder.setLocation(location);
     }
     return new LineageRecorder(context, assetBuilder.build());
