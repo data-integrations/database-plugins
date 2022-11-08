@@ -42,6 +42,11 @@
       <groupId>io.cdap.plugin</groupId>
       <artifactId>hydrator-common</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.plugin</groupId>
+      <artifactId>mysql-plugin</artifactId>
+      <version>1.9.0-SNAPSHOT</version>
+    </dependency>
 
     <!-- test dependencies -->
     <dependency>
@@ -126,6 +131,7 @@
               io.cdap.plugin.cloudsql.mysql.*;
               io.cdap.plugin.db.batch.source.*;
               io.cdap.plugin.db.batch.sink.*;
+              io.cdap.plugin.mysql.*;
               org.apache.commons.lang.*;
               org.apache.commons.logging.*;
               org.codehaus.jackson.*
