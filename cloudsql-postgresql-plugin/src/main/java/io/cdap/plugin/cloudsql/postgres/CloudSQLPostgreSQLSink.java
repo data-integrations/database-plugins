@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.cloudsql.postgres;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
@@ -43,7 +44,6 @@ import io.cdap.plugin.postgres.PostgresFieldsValidator;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
 import io.cdap.plugin.util.CloudSQLUtil;
 import io.cdap.plugin.util.DBUtils;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -130,7 +130,7 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
                                       cloudsqlPostgresqlSinkConfig.getConnection().getDatabase(),
                                       cloudsqlPostgresqlSinkConfig.getReferenceName());
     Asset.Builder assetBuilder = Asset.builder(cloudsqlPostgresqlSinkConfig.getReferenceName()).setFqn(fqn);
-    if (!StringUtils.isEmpty(location)) {
+    if (!Strings.isNullOrEmpty(location)) {
       assetBuilder.setLocation(location);
     }
     return new LineageRecorder(context, assetBuilder.build());
