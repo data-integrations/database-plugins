@@ -62,7 +62,8 @@ Data Types Mapping
     | VARCHAR2                       | string                |                                                        |
     | NVARCHAR2                      | string                |                                                        |
     | VARCHAR                        | string                |                                                        |
-    | NUMBER                         | decimal               |                                                        |
+    | NUMBER                         | string                | For NUMBER types defined without a precision and scale |
+    | NUMBER                         | decimal               | For NUMBER types with a defined precision and scale    |
     | FLOAT                          | double                |                                                        |
     | LONG                           | string                |                                                        |
     | DATE                           | timestamp             |                                                        |
