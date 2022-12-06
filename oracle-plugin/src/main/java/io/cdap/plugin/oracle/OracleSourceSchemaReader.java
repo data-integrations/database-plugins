@@ -105,13 +105,12 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
           // For a Number type without specified precision and scale, precision will be 0 and scale will be -127
           if (precision == 0) {
             // reference : https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT1832
-            precision = 38;
-            scale = 0;
-            LOG.warn(String.format("%s type with undefined precision and scale is detected, "
-                    + "there may be a precision loss while running the pipeline. "
-                    + "Please define an output precision and scale for field '%s' to avoid precision loss.",
+            LOG.warn(String.format("Field '%s' is a %s type without precision and scale, "
+                    + "converting into STRING type to avoid any precision loss.",
+                metadata.getColumnName(index),
                 metadata.getColumnTypeName(index),
                 metadata.getColumnName(index)));
+            return Schema.of(Schema.Type.STRING);
           }
           return Schema.decimalOf(precision, scale);
         }
