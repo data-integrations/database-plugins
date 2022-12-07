@@ -48,11 +48,11 @@ public class OracleSourceDBRecordUnitTest {
 
   /**
    * Validate the precision less Numbers handling against following use cases.
-   * 1. Ensure that for Number(0,-127) non nullable type a Number(38,0) is returned by default.
-   * 2. Ensure that for Number(0,-127) non nullable type a Number(38,4) is returned,
+   * 1. Ensure that for Number(0,-127) non nullable type a String is returned by default.
+   * 2. Ensure that for Number(0,-127) non nullable type a String is returned,
    *    if schema defined this as Number(38,4).
-   * 3. Ensure that for Number(0,-127) nullable type a Number(38,0) is returned by default.
-   * 4. Ensure that for Number(0,-127) nullable type a Number(38,4) is returned,
+   * 3. Ensure that for Number(0,-127) nullable type a String type is returned by default.
+   * 4. Ensure that for Number(0,-127) nullable type a String is returned,
    *    if schema defined this as Number(38,4).
    * @throws Exception
    */
@@ -72,10 +72,10 @@ public class OracleSourceDBRecordUnitTest {
     );
 
     when(resultSet.getMetaData()).thenReturn(resultSetMetaData);
-    when(resultSet.getBigDecimal(eq(1), eq(0))).thenReturn(new BigDecimal("123"));
-    when(resultSet.getBigDecimal(eq(2), eq(4))).thenReturn(new BigDecimal("123.4568"));
-    when(resultSet.getBigDecimal(eq(3), eq(0))).thenReturn(new BigDecimal("123"));
-    when(resultSet.getBigDecimal(eq(4), eq(4))).thenReturn(new BigDecimal("123.4568"));
+    when(resultSet.getString(eq(1))).thenReturn("123");
+    when(resultSet.getString(eq(2))).thenReturn("123.4568");
+    when(resultSet.getString(eq(3))).thenReturn("123");
+    when(resultSet.getString(eq(4))).thenReturn("123.4568");
 
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
@@ -85,9 +85,62 @@ public class OracleSourceDBRecordUnitTest {
     dbRecord.handleField(resultSet, builder, field4, 4, Types.NUMERIC, 0, -127);
 
     StructuredRecord record = builder.build();
+    Assert.assertTrue(record.get("ID1") instanceof String);
+    Assert.assertEquals(record.get("ID1"), "123");
+    Assert.assertTrue(record.get("ID2") instanceof String);
+    Assert.assertEquals(record.get("ID2"), "123.4568");
+    Assert.assertTrue(record.get("ID3") instanceof String);
+    Assert.assertEquals(record.get("ID3"), "123");
+    Assert.assertTrue(record.get("ID4") instanceof String);
+    Assert.assertEquals(record.get("ID4"), "123.4568");
+  }
+
+  /**
+   * Validate the default precision Numbers handling against following use cases.
+   * 1. Ensure that for Number(38, 0) non nullable type a Number(38,0) is returned.
+   * 2. Ensure that for Number(38, 4) non nullable type a Number(38,6) is returned,
+   *    if schema defined this as Number(38,6).
+   * 3. Ensure that for Number(38, 0) nullable type a Number(38,0) is returned by default.
+   * 4. Ensure that for Number(38, 4) nullable type a Number(38,6) is returned,
+   *    if schema defined this as Number(38,6).
+   * @throws Exception
+   */
+  @Test
+  public void validateDefaultDecimalParsing() throws Exception {
+    Schema.Field field1 = Schema.Field.of("ID1", Schema.decimalOf(DEFAULT_PRECISION));
+    Schema.Field field2 = Schema.Field.of("ID2", Schema.decimalOf(DEFAULT_PRECISION, 6));
+    Schema.Field field3 = Schema.Field.of("ID3", Schema.nullableOf(Schema.decimalOf(DEFAULT_PRECISION)));
+    Schema.Field field4 = Schema.Field.of("ID4", Schema.nullableOf(Schema.decimalOf(DEFAULT_PRECISION, 6)));
+
+    Schema schema = Schema.recordOf(
+        "dbRecord",
+        field1,
+        field2,
+        field3,
+        field4
+    );
+
+    when(resultSet.getMetaData()).thenReturn(resultSetMetaData);
+    when(resultSet.getBigDecimal(eq(1), eq(0))).thenReturn(new BigDecimal("123"));
+    when(resultSet.getBigDecimal(eq(2), eq(6))).thenReturn(new BigDecimal("123.456789"));
+    when(resultSet.getBigDecimal(eq(3), eq(0))).thenReturn(new BigDecimal("123"));
+    when(resultSet.getBigDecimal(eq(4), eq(6))).thenReturn(new BigDecimal("123.456789"));
+
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+    dbRecord.handleField(resultSet, builder, field1, 1, Types.NUMERIC, DEFAULT_PRECISION, 0);
+    dbRecord.handleField(resultSet, builder, field2, 2, Types.NUMERIC, DEFAULT_PRECISION, 4);
+    dbRecord.handleField(resultSet, builder, field3, 3, Types.NUMERIC, DEFAULT_PRECISION, 0);
+    dbRecord.handleField(resultSet, builder, field4, 4, Types.NUMERIC, DEFAULT_PRECISION, 4);
+
+    StructuredRecord record = builder.build();
+    Assert.assertTrue(record.getDecimal("ID1") instanceof BigDecimal);
     Assert.assertEquals(record.getDecimal("ID1").toPlainString(), "123");
-    Assert.assertEquals(record.getDecimal("ID2").toPlainString(), "123.4568");
+    Assert.assertTrue(record.getDecimal("ID2") instanceof BigDecimal);
+    Assert.assertEquals(record.getDecimal("ID2").toPlainString(), "123.456789");
+    Assert.assertTrue(record.getDecimal("ID3") instanceof BigDecimal);
     Assert.assertEquals(record.getDecimal("ID3").toPlainString(), "123");
-    Assert.assertEquals(record.getDecimal("ID4").toPlainString(), "123.4568");
+    Assert.assertTrue(record.getDecimal("ID4") instanceof BigDecimal);
+    Assert.assertEquals(record.getDecimal("ID4").toPlainString(), "123.456789");
   }
 }

@@ -214,12 +214,17 @@ public class OracleSourceDBRecord extends DBRecord {
         if (Double.class.getTypeName().equals(resultSet.getMetaData().getColumnClassName(columnIndex))) {
           recordBuilder.set(field.getName(), resultSet.getDouble(columnIndex));
         } else {
-          // It's required to pass 'scale' parameter since in the case of Oracle, scale of 'BigDecimal' depends on the
-          // scale set in the logical schema. For example for value '77.12' if the scale set in the logical schema is
-          // set to 4 then the number will change to '77.1200'. Also if the value is '22.1274' and the logical schema
-          // scale is set to 2 then the decimal value used will be '22.13' after rounding.
-          BigDecimal decimal = resultSet.getBigDecimal(columnIndex, getScale(field.getSchema()));
-          recordBuilder.setDecimal(field.getName(), decimal);
+          if (precision == 0) {
+            // In case of precision less decimal convert the field to String type
+            recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
+          } else {
+            // It's required to pass 'scale' parameter since in the case of Oracle, scale of 'BigDecimal' depends on the
+            // scale set in the logical schema. For example for value '77.12' if the scale set in the logical schema is
+            // set to 4 then the number will change to '77.1200'. Also if the value is '22.1274' and the logical schema
+            // scale is set to 2 then the decimal value used will be '22.13' after rounding.
+            BigDecimal decimal = resultSet.getBigDecimal(columnIndex, getScale(field.getSchema()));
+            recordBuilder.setDecimal(field.getName(), decimal);
+          }
         }
     }
   }
