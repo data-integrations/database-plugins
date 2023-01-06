@@ -24,7 +24,6 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.datapipeline.DataPipelineApp;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.batch.DatabasePluginTestBase;
@@ -36,7 +35,6 @@ import io.cdap.plugin.memsql.sink.MemsqlSink;
 import io.cdap.plugin.memsql.source.MemsqlSource;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,9 +73,6 @@ public abstract class MemsqlPluginTestBase extends DatabasePluginTestBase {
   protected static final int SCALE = 6;
   protected static final ZoneId UTC_ZONE = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
   private static int startCount;
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   static {
     Calendar calendar = Calendar.getInstance();
