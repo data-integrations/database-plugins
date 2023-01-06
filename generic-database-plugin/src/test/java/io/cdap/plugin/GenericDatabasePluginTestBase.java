@@ -25,7 +25,6 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.datapipeline.DataPipelineApp;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.batch.DatabasePluginTestBase;
@@ -78,9 +77,6 @@ public abstract class GenericDatabasePluginTestBase extends DatabasePluginTestBa
 
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   @BeforeClass
   public static void setupTest() throws Exception {
