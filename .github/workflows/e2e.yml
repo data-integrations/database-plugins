@@ -40,8 +40,9 @@ jobs:
           )
     strategy:
       matrix:
-        module: [mysql-plugin, postgresql-plugin]
+        module: [mysql-plugin, postgresql-plugin, oracle-plugin]
       fail-fast: false
+
     steps:
       # Pinned 1.0.0 version
       - uses: actions/checkout@v3
@@ -73,13 +74,33 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-${{ github.workflow }}
 
+      - name: Get Secrets from GCP Secret Manager
+        id: secrets
+        uses: 'google-github-actions/get-secretmanager-secrets@v0'
+        with:
+          secrets: |-
+            ORACLE_HOST:cdapio-github-builds/ORACLE_HOST
+            ORACLE_USERNAME:cdapio-github-builds/ORACLE_USERNAME
+            ORACLE_PASSWORD:cdapio-github-builds/ORACLE_PASSWORD
+            ORACLE_PORT:cdapio-github-builds/ORACLE_PORT
+
       - name: Run required e2e tests
         if: github.event_name != 'workflow_dispatch' && github.event_name != 'push' && steps.filter.outputs.e2e-test == 'false'
         run: python3 e2e/src/main/scripts/run_e2e_test.py --module ${{ matrix.module }} --testRunner TestRunnerRequired.java
+        env:
+          ORACLE_HOST: ${{ steps.secrets.outputs.ORACLE_HOST }}
+          ORACLE_USERNAME: ${{ steps.secrets.outputs.ORACLE_USERNAME }}
+          ORACLE_PASSWORD: ${{ steps.secrets.outputs.ORACLE_PASSWORD }}
+          ORACLE_PORT: ${{ steps.secrets.outputs.ORACLE_PORT }}
 
       - name: Run all e2e tests
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || steps.filter.outputs.e2e-test == 'true'
         run: python3 e2e/src/main/scripts/run_e2e_test.py --module ${{ matrix.module }}
+        env:
+          ORACLE_HOST: ${{ steps.secrets.outputs.ORACLE_HOST }}
+          ORACLE_USERNAME: ${{ steps.secrets.outputs.ORACLE_USERNAME }}
+          ORACLE_PASSWORD: ${{ steps.secrets.outputs.ORACLE_PASSWORD }}
+          ORACLE_PORT: ${{ steps.secrets.outputs.ORACLE_PORT }}
 
       - name: Upload report
         uses: actions/upload-artifact@v3
