@@ -57,4 +57,14 @@ public class Oracle implements CdfHelper {
     Assert.assertEquals(countRecordsSource, countRecordsTarget);
   }
 
+  @Then("Validate the values of records transferred to target table is equal to the values from source table")
+  public void validateTheValuesOfRecordsTransferredToTargetTableIsEqualToTheValuesFromSourceTable() throws
+    SQLException, ClassNotFoundException {
+    int validateValues = OracleClient.validateRecordValues(PluginPropertyUtils.pluginProp("schema"),
+                                                           PluginPropertyUtils.pluginProp("sourceTable"),
+                                                           PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Number of records with different data: " + validateValues);
+    Assert.assertEquals("Value of records transferred to the target table should be equal to the value " +
+                          "of the records in the source table", validateValues, 0);
+  }
 }

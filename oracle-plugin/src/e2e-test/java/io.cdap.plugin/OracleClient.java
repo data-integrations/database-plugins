@@ -52,6 +52,20 @@ public class OracleClient {
     }
   }
 
+  public static int validateRecordValues(String schema, String sourceTable, String targetTable)
+    throws SQLException, ClassNotFoundException {
+    String validateQuery = "SELECT COUNT(*) as total FROM " + schema + "." + sourceTable + " MINUS SELECT COUNT(*)" +
+      " as total FROM " + schema + "." + targetTable;
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement();
+         ResultSet rs = statement.executeQuery(validateQuery)) {
+      int num = 0;
+      while (rs.next()) {
+        num = (rs.getInt(1));
+      }
+      return num;
+    }
+  }
+
   public static void createSourceTable(String sourceTable, String schema) throws SQLException, ClassNotFoundException {
     try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
       String createSourceTableQuery = "CREATE TABLE " + schema + "." + sourceTable +
@@ -71,6 +85,102 @@ public class OracleClient {
       String createTargetTableQuery = "CREATE TABLE " + schema + "." + targetTable +
         "(ID number(38), LASTNAME varchar2(100))";
       statement.executeUpdate(createTargetTableQuery);
+    }
+  }
+
+  public static void createSourceDatatypesTable(String sourceTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String datatypeColumns = PluginPropertyUtils.pluginProp("datatypeColumns");
+      String createSourceTableQuery2 = "CREATE TABLE " + schema + "." + sourceTable + " " + datatypeColumns;
+      statement.executeUpdate(createSourceTableQuery2);
+
+      // Insert dummy data.
+      String datatypeValues = PluginPropertyUtils.pluginProp("datatypeValues");
+      String datatypeColumnsList = PluginPropertyUtils.pluginProp("datatypeColumnsList");
+      statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + datatypeColumnsList + " " +
+                                datatypeValues);
+    }
+  }
+
+  public static void createTargetDatatypesTable(String targetTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String datatypeColumns = PluginPropertyUtils.pluginProp("datatypeColumns");
+      String createTargetTableQuery2 = "CREATE TABLE " + schema + "." + targetTable + " " + datatypeColumns;
+      statement.executeUpdate(createTargetTableQuery2);
+    }
+  }
+
+  public static void createSourceLongTable(String sourceTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String longColumns = PluginPropertyUtils.pluginProp("longColumns");
+      String createSourceTableQuery3 = "CREATE TABLE " + schema + "." + sourceTable + " " + longColumns;
+      statement.executeUpdate(createSourceTableQuery3);
+
+      // Insert dummy data.
+      String longValues = PluginPropertyUtils.pluginProp("longValues");
+      String longColumnsList = PluginPropertyUtils.pluginProp("longColumnsList");
+      statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + longColumnsList + " " +
+                                longValues);
+    }
+  }
+
+  public static void createTargetLongTable(String targetTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String longColumns = PluginPropertyUtils.pluginProp("longColumns");
+      String createTargetTableQuery3 = "CREATE TABLE " + schema + "." + targetTable + " " + longColumns;
+      statement.executeUpdate(createTargetTableQuery3);
+    }
+  }
+
+  public static void createSourceLongRawTable(String sourceTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String longRawColumns = PluginPropertyUtils.pluginProp("longRawColumns");
+      String createSourceTableQuery4 = "CREATE TABLE " + schema + "." + sourceTable + " " + longRawColumns;
+      statement.executeUpdate(createSourceTableQuery4);
+
+      // Insert dummy data.
+      String longRawValues = PluginPropertyUtils.pluginProp("longRawValues");
+      String longRawColumnsList = PluginPropertyUtils.pluginProp("longRawColumnsList");
+      statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + longRawColumnsList + " " +
+                                longRawValues);
+    }
+  }
+
+  public static void createTargetLongRawTable(String targetTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String longRawColumns = PluginPropertyUtils.pluginProp("longRawColumns");
+      String createTargetTableQuery4 = "CREATE TABLE " + schema + "." + targetTable + " " + longRawColumns;
+      statement.executeUpdate(createTargetTableQuery4);
+    }
+  }
+
+  public static void createSourceLongVarcharTable(String sourceTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String longVarcharColumns = PluginPropertyUtils.pluginProp("longVarcharColumns");
+      String createSourceTableQuery5 = "CREATE TABLE " + schema + "." + sourceTable + " " + longVarcharColumns;
+      statement.executeUpdate(createSourceTableQuery5);
+
+      // Insert dummy data.
+      String longVarcharValues = PluginPropertyUtils.pluginProp("longVarcharValues");
+      String longVarcharColumnsList = PluginPropertyUtils.pluginProp("longVarcharColumnsList");
+      statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + longVarcharColumnsList + " " +
+                                longVarcharValues);
+    }
+  }
+
+  public static void createTargetLongVarCharTable(String targetTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String longVarcharColumns = PluginPropertyUtils.pluginProp("longVarcharColumns");
+      String createSourceTableQuery5 = "CREATE TABLE " + schema + "." + targetTable + " " + longVarcharColumns;
+      statement.executeUpdate(createSourceTableQuery5);
     }
   }
 

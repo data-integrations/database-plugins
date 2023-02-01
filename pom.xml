@@ -701,7 +701,7 @@
           <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>27.0.1-jre</version>
+            <version>31.1-jre</version>
           </dependency>
         </dependencies>
       </dependencyManagement>
@@ -718,6 +718,12 @@
           <artifactId>logback-classic</artifactId>
           <version>1.2.8</version>
           <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+          <version>1.7.15</version>
         </dependency>
       </dependencies>
 
