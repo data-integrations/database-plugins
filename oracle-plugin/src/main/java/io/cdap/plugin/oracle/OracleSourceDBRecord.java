@@ -35,6 +35,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -191,8 +192,9 @@ public class OracleSourceDBRecord extends DBRecord {
         recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
         break;
       case OracleSourceSchemaReader.TIMESTAMP_LTZ:
-        Instant instant = resultSet.getTimestamp(columnIndex).toInstant();
-        recordBuilder.setTimestamp(field.getName(), instant.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
+        Timestamp timestamp = resultSet.getTimestamp(columnIndex);
+        recordBuilder.setTimestamp(field.getName(), (timestamp != null) ?
+                timestamp.toInstant().atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)) : null);
         break;
       case OracleSourceSchemaReader.BINARY_FLOAT:
         recordBuilder.set(field.getName(), resultSet.getFloat(columnIndex));

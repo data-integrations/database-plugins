@@ -143,4 +143,27 @@ public class OracleSourceDBRecordUnitTest {
     Assert.assertTrue(record.getDecimal("ID4") instanceof BigDecimal);
     Assert.assertEquals(record.getDecimal("ID4").toPlainString(), "123.456789");
   }
+
+  /**
+   * Validate the Null value for TimestampLTZ datatype.
+   * @throws Exception
+   */
+  @Test
+  public void validateTimestampLTZTypeNullHandling() throws Exception {
+    Schema.Field field1 = Schema.Field.of("field1", Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)));
+
+    Schema schema = Schema.recordOf(
+            "dbRecord",
+            field1
+    );
+
+    when(resultSet.getTimestamp(eq(1))).thenReturn(null);
+
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+    dbRecord.handleField(resultSet, builder, field1, 1, OracleSourceSchemaReader.TIMESTAMP_LTZ, DEFAULT_PRECISION, 0);
+
+    StructuredRecord record = builder.build();
+    Assert.assertNull(record.getTimestamp("field1"));
+  }
 }
