@@ -83,6 +83,10 @@ jobs:
             ORACLE_USERNAME:cdapio-github-builds/ORACLE_USERNAME
             ORACLE_PASSWORD:cdapio-github-builds/ORACLE_PASSWORD
             ORACLE_PORT:cdapio-github-builds/ORACLE_PORT
+            MYSQL_HOST:cdapio-github-builds/MYSQL_HOST
+            MYSQL_USERNAME:cdapio-github-builds/MYSQL_USERNAME
+            MYSQL_PASSWORD:cdapio-github-builds/MYSQL_PASSWORD
+            MYSQL_PORT:cdapio-github-builds/MYSQL_PORT
 
       - name: Run required e2e tests
         if: github.event_name != 'workflow_dispatch' && github.event_name != 'push' && steps.filter.outputs.e2e-test == 'false'
@@ -92,6 +96,10 @@ jobs:
           ORACLE_USERNAME: ${{ steps.secrets.outputs.ORACLE_USERNAME }}
           ORACLE_PASSWORD: ${{ steps.secrets.outputs.ORACLE_PASSWORD }}
           ORACLE_PORT: ${{ steps.secrets.outputs.ORACLE_PORT }}
+          MYSQL_HOST: ${{ steps.secrets.outputs.MYSQL_HOST }}
+          MYSQL_USERNAME: ${{ steps.secrets.outputs.MYSQL_USERNAME }}
+          MYSQL_PASSWORD: ${{ steps.secrets.outputs.MYSQL_PASSWORD }}
+          MYSQL_PORT: ${{ steps.secrets.outputs.MYSQL_PORT }}
 
       - name: Run all e2e tests
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || steps.filter.outputs.e2e-test == 'true'
@@ -101,6 +109,10 @@ jobs:
           ORACLE_USERNAME: ${{ steps.secrets.outputs.ORACLE_USERNAME }}
           ORACLE_PASSWORD: ${{ steps.secrets.outputs.ORACLE_PASSWORD }}
           ORACLE_PORT: ${{ steps.secrets.outputs.ORACLE_PORT }}
+          MYSQL_HOST: ${{ steps.secrets.outputs.MYSQL_HOST }}
+          MYSQL_USERNAME: ${{ steps.secrets.outputs.MYSQL_USERNAME }}
+          MYSQL_PASSWORD: ${{ steps.secrets.outputs.MYSQL_PASSWORD }}
+          MYSQL_PORT: ${{ steps.secrets.outputs.MYSQL_PORT }}
 
       - name: Upload report
         uses: actions/upload-artifact@v3

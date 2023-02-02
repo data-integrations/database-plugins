@@ -25,26 +25,26 @@ Feature: Mysql - Verify Mysql source data transfer
     When Select plugin: "MySQL" from the plugins list as: "Sink"
     Then Connect plugins: "MySQL" and "MySQL2" to establish connection
     Then Navigate to the properties page of plugin: "MySQL"
-    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driver"
-    Then Replace input plugin property: "host" with value: "host"
-    Then Replace input plugin property: "port" with value: "port"
-    Then Replace input plugin property: "user" with value: "username"
-    Then Replace input plugin property: "password" with value: "password"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
-    Then Replace input plugin property: "database" with value: "database"
+    Then Replace input plugin property: "database" with value: "databaseName"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
     Then Click on the Get Schema button
     Then Verify the Output Schema matches the Expected Schema: "outputSchema"
     Then Validate "MySQL" plugin properties
     Then Close the Plugin Properties page
     Then Navigate to the properties page of plugin: "MySQL2"
-    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driver"
-    Then Replace input plugin property: "host" with value: "host"
-    Then Replace input plugin property: "port" with value: "port"
-    Then Replace input plugin property: "database" with value: "database"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "database" with value: "databaseName"
     Then Replace input plugin property: "tableName" with value: "targetTable"
-    Then Replace input plugin property: "user" with value: "username"
-    Then Replace input plugin property: "password" with value: "password"
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Validate "MySQL2" plugin properties
     Then Close the Plugin Properties page
