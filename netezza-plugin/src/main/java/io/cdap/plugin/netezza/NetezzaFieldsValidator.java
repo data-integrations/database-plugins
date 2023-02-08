@@ -25,11 +25,12 @@ import io.cdap.plugin.db.sink.CommonFieldsValidator;
 public class NetezzaFieldsValidator extends CommonFieldsValidator {
 
   @Override
-  public boolean isFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType) {
+  public boolean isFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType,
+                                   int precision, boolean isSigned) {
     if (fieldLogicalType == null && sqlType == NetezzaDBRecord.INTERVAL && fieldType == Schema.Type.STRING) {
       return true;
     } else {
-      return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+      return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
     }
   }
 }

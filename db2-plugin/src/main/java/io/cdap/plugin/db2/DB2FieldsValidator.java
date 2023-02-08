@@ -36,10 +36,12 @@ public class DB2FieldsValidator extends CommonFieldsValidator {
 
     int sqlType = metadata.getColumnType(index);
     String colTypeName = metadata.getColumnTypeName(index);
+    boolean isSigned = metadata.isSigned(index);
+    int precision = metadata.getPrecision(index);
 
     // Handle logical types first
     if (fieldLogicalType != null) {
-      return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+      return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
     }
 
     switch (fieldType) {
@@ -49,7 +51,7 @@ public class DB2FieldsValidator extends CommonFieldsValidator {
           || DB2SchemaReader.DB2_DECFLOAT.equals(colTypeName)
           || super.isFieldCompatible(field, metadata, index);
       default:
-        return super.isFieldCompatible(fieldType, null, sqlType);
+        return super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);
     }
   }
 }

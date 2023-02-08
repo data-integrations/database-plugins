@@ -37,6 +37,8 @@ public class TeradataFieldsValidator extends CommonFieldsValidator {
 
     int sqlType = metadata.getColumnType(index);
     String sqlTypeName = metadata.getColumnTypeName(index);
+    boolean isSigned = metadata.isSigned(index);
+    int precision = metadata.getPrecision(index);
 
     // In Teradata FLOAT and DOUBLE are same types
     if (fieldType == Schema.Type.DOUBLE && sqlType == Types.FLOAT) {
@@ -48,6 +50,6 @@ public class TeradataFieldsValidator extends CommonFieldsValidator {
       return true;
     }
 
-    return isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+    return isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
   }
 }
