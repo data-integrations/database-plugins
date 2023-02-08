@@ -54,6 +54,20 @@ public class TestSetupHooks {
     MysqlClient.createTargetTable(PluginPropertyUtils.pluginProp("targetTable"));
   }
 
+  @Before(order = 1, value = "@MYSQL_SOURCE_DATATYPES_TEST")
+  public static void setSelectQueryForDatatypes() {
+    String sourceTable =  PluginPropertyUtils.pluginProp("sourceTable");
+    PluginPropertyUtils.addPluginProp("selectQuery",
+                                      PluginPropertyUtils.pluginProp("selectQuery").
+                                        replace("${table}", sourceTable));
+  }
+
+  @Before(order = 2, value = "@MYSQL_SOURCE_DATATYPES_TEST")
+  public static void createDatatypesTable() throws SQLException, ClassNotFoundException {
+    MysqlClient.createSourceDatatypesTable(PluginPropertyUtils.pluginProp("sourceTable"));
+    MysqlClient.createTargetDatatypesTable(PluginPropertyUtils.pluginProp("targetTable"));
+  }
+
   @After(order = 2, value = "@MYSQL_SINK_TEST")
   public static void dropTables() throws SQLException, ClassNotFoundException {
     MysqlClient.dropTables(new String[]{PluginPropertyUtils.pluginProp("sourceTable"),

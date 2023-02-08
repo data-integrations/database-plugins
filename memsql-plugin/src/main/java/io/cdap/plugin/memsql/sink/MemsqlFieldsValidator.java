@@ -27,12 +27,13 @@ import java.sql.Types;
 public class MemsqlFieldsValidator extends CommonFieldsValidator {
 
   @Override
-  public boolean isFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType) {
+  public boolean isFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType,
+                                   int precision, boolean isSigned) {
     // In MemqSQL bool stores as tinyint
     if (fieldType == Schema.Type.BOOLEAN && sqlType == Types.TINYINT) {
       return true;
     }
 
-    return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+    return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
   }
 }
