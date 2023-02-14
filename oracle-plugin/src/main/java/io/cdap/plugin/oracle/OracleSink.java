@@ -24,6 +24,8 @@ import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
@@ -31,13 +33,16 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
-import io.cdap.plugin.db.DBRecord;
-import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.common.db.DBRecord;
+import io.cdap.plugin.common.db.schemareader.OracleSinkSchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.db.batch.sink.FieldsValidator;
 import io.cdap.plugin.util.DBUtils;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -58,8 +63,8 @@ public class OracleSink extends AbstractDBSink<OracleSink.OracleSinkConfig> {
   }
 
   @Override
-  protected DBRecord getDBRecord(StructuredRecord output) {
-    return new OracleSinkDBRecord(output, columnTypes);
+  protected KeyValue transformDBRecord(StructuredRecord output) {
+    return new KeyValue(new DBRecord(output, columnTypes), null);
   }
 
   @Override
@@ -68,9 +73,10 @@ public class OracleSink extends AbstractDBSink<OracleSink.OracleSinkConfig> {
   }
 
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new OracleSinkSchemaReader();
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
+    return new OracleSinkSchemaReader().getSchemaFields(resultSet, null, null);
   }
+
   @Override
   protected LineageRecorder getLineageRecorder(BatchSinkContext context) {
     String fqn = DBUtils.constructFQN("oracle",

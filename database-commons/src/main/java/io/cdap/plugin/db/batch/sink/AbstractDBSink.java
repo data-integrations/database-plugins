@@ -32,19 +32,17 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
-import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSink;
 import io.cdap.plugin.common.ReferencePluginConfig;
 import io.cdap.plugin.common.batch.sink.SinkOutputFormatProvider;
-import io.cdap.plugin.db.ColumnType;
-import io.cdap.plugin.db.CommonSchemaReader;
+import io.cdap.plugin.common.db.DBRecord;
+import io.cdap.plugin.common.db.dbrecordwriter.ColumnType;
+import io.cdap.plugin.common.db.schemareader.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.DBConfig;
-import io.cdap.plugin.db.DBRecord;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DatabaseSinkConfig;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
@@ -223,7 +221,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
         try (Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery("SELECT * FROM " + fullyQualifiedTableName
                                                      + " WHERE 1 = 0")) {
-          inferredFields.addAll(getSchemaReader().getSchemaFields(rs));
+          inferredFields.addAll(getSchemaFields(rs));
         }
       } catch (SQLException e) {
         throw new InvalidStageException("Error while reading table metadata", e);
@@ -237,15 +235,15 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) {
-    emitter.emit(new KeyValue<>(getDBRecord(input), null));
+    emitter.emit(transformDBRecord(input));
   }
 
-  protected DBRecord getDBRecord(StructuredRecord output) {
-    return new DBRecord(output, columnTypes);
+  protected KeyValue transformDBRecord(StructuredRecord output) {
+    return new KeyValue<>(new DBRecord(output, columnTypes), null);
   }
 
-  protected SchemaReader getSchemaReader() {
-    return new CommonSchemaReader();
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
+    return new CommonSchemaReader().getSchemaFields(resultSet, null, null);
   }
 
   @Override

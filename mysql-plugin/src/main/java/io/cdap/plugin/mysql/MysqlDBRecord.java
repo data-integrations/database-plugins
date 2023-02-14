@@ -17,7 +17,7 @@
 package io.cdap.plugin.mysql;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.plugin.db.ColumnType;
+import io.cdap.plugin.common.db.dbrecordwriter.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 
 import java.util.List;

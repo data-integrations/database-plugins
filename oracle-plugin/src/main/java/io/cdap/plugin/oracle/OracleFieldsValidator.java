@@ -17,6 +17,7 @@
 package io.cdap.plugin.oracle;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.plugin.common.db.schemareader.OracleSinkSchemaReader;
 import io.cdap.plugin.db.batch.sink.CommonFieldsValidator;
 
 import java.sql.ResultSetMetaData;

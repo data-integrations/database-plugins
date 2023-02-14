@@ -18,7 +18,7 @@ package io.cdap.plugin.postgres;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.plugin.db.ColumnType;
+import io.cdap.plugin.common.db.dbrecordwriter.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 
@@ -94,10 +94,5 @@ public class PostgresDBRecord extends DBRecord {
     } else {
       super.writeToDB(stmt, field, fieldIndex);
     }
-  }
-
-  @Override
-  protected SchemaReader getSchemaReader() {
-    return new PostgresSchemaReader();
   }
 }

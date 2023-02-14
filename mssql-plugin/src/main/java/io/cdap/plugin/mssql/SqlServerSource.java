@@ -31,13 +31,16 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
-import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.common.db.DBRecord;
+import io.cdap.plugin.common.db.schemareader.SqlServerSourceSchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -66,13 +69,13 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
   }
 
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new SqlServerSourceSchemaReader();
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
+    return new SqlServerSourceSchemaReader().getSchemaFields(resultSet, null, null);
   }
 
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
-    return SqlServerSourceDBRecord.class;
+    return DBRecord.class;
   }
 
   @Override

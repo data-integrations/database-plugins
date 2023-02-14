@@ -20,14 +20,18 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.batch.BatchSink;
-import io.cdap.plugin.db.DBRecord;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.db.batch.sink.FieldsValidator;
 import io.cdap.plugin.teradata.TeradataConstants;
 import io.cdap.plugin.teradata.TeradataDBRecord;
 import io.cdap.plugin.teradata.TeradataSchemaReader;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
 /**
  * Sink support for a Teradata database.
@@ -44,8 +48,8 @@ public class TeradataSink  extends AbstractDBSink<TeradataSinkConfig> {
   }
 
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new TeradataSchemaReader();
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
+    return new TeradataSchemaReader().getSchemaFields(resultSet);
   }
 
   @Override
@@ -54,7 +58,7 @@ public class TeradataSink  extends AbstractDBSink<TeradataSinkConfig> {
   }
 
   @Override
-  protected DBRecord getDBRecord(StructuredRecord output) {
-    return new TeradataDBRecord(output, columnTypes);
+  protected KeyValue transformDBRecord(StructuredRecord output) {
+    return new KeyValue(new TeradataDBRecord(output, columnTypes), null);
   }
 }

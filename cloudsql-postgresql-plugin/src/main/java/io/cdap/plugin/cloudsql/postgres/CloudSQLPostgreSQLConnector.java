@@ -21,6 +21,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
@@ -31,7 +32,6 @@ import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.common.db.DBPath;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import io.cdap.plugin.postgres.PostgresDBRecord;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
@@ -39,7 +39,10 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -79,8 +82,8 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
   }
 
   @Override
-  protected SchemaReader getSchemaReader(String sessionID) {
-    return new PostgresSchemaReader(sessionID);
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet, String sessionID) throws SQLException {
+    return new PostgresSchemaReader(sessionID).getSchemaFields(resultSet);
   }
 
   @Override

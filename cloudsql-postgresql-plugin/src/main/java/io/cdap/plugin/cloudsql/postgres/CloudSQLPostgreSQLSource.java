@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSource;
@@ -31,7 +32,6 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import io.cdap.plugin.postgres.PostgresDBRecord;
@@ -40,7 +40,10 @@ import io.cdap.plugin.util.CloudSQLUtil;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -77,8 +80,8 @@ public class CloudSQLPostgreSQLSource
   }
   
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new PostgresSchemaReader();
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
+    return new PostgresSchemaReader().getSchemaFields(resultSet);
   }
 
   @Override

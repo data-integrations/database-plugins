@@ -32,15 +32,17 @@ import io.cdap.cdap.etl.api.connector.SampleType;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.DBRecord;
+import io.cdap.plugin.common.db.schemareader.SqlServerSourceSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
-import java.io.IOException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,7 +52,7 @@ import java.util.Map;
 @Name(SqlServerConnector.NAME)
 @Description("Connection to access data in SQL Server databases using JDBC.")
 @Category("Database")
-public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSourceDBRecord> {
+public class SqlServerConnector extends AbstractDBSpecificConnector<DBRecord> {
   public static final String NAME = "SQL Server";
   private final SqlServerConnectorConfig config;
 
@@ -66,7 +68,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
 
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
-    return SqlServerSourceDBRecord.class;
+    return DBRecord.class;
   }
 
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
@@ -105,12 +107,12 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
   }
 
   @Override
-  protected SchemaReader getSchemaReader(String sessionID) {
-    return new SqlServerSourceSchemaReader(sessionID);
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet, String sessionID) throws SQLException {
+    return new SqlServerSourceSchemaReader(sessionID).getSchemaFields(resultSet, null, null);
   }
 
   @Override
-  public StructuredRecord transform(LongWritable longWritable, SqlServerSourceDBRecord record) {
+  public StructuredRecord transform(LongWritable longWritable, DBRecord record) {
     return record.getRecord();
   }
 
@@ -147,18 +149,5 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
                            "ORDER BY %s",
                          sessionID, strata, sessionID, sessionID, tableName, limit, sessionID, sessionID, sessionID,
                          limit, sessionID, limit, strata);
-  }
-
-  @Override
-  protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
-                             boolean isSigned, boolean handleAsDecimal) throws SQLException {
-    if (SqlServerSourceSchemaReader.shouldConvertToDatetime(typeName)) {
-      return Schema.of(Schema.LogicalType.DATETIME);
-    }
-
-    if (SqlServerSourceSchemaReader.GEOMETRY_TYPE == sqlType || SqlServerSourceSchemaReader.GEOGRAPHY_TYPE == sqlType) {
-      return Schema.of(Schema.Type.BYTES);
-    }
-    return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
   }
 }

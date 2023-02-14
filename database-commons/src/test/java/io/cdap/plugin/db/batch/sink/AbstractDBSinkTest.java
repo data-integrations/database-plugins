@@ -18,7 +18,7 @@ package io.cdap.plugin.db.batch.sink;
 
 import com.google.common.collect.ImmutableList;
 import com.mockrunner.mock.jdbc.MockResultSetMetaData;
-import io.cdap.plugin.db.ColumnType;
+import io.cdap.plugin.common.db.dbrecordwriter.ColumnType;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -20,14 +20,18 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.batch.BatchSink;
-import io.cdap.plugin.db.DBRecord;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.db.batch.sink.FieldsValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
 
 /**
@@ -57,13 +61,13 @@ public class Db2Sink extends AbstractDBSink<Db2Sink.Db2SinkConfig> {
   }
 
   @Override
-  protected DBRecord getDBRecord(StructuredRecord output) {
-    return new DB2Record(output, columnTypes);
+  protected KeyValue transformDBRecord(StructuredRecord output) {
+    return new KeyValue(new DB2Record(output, columnTypes), null);
   }
 
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new DB2SchemaReader();
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
+    return new DB2SchemaReader().getSchemaFields(resultSet);
   }
 
   @Override

@@ -17,6 +17,7 @@
 package io.cdap.plugin.mssql;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.plugin.common.db.schemareader.SqlServerSinkSchemaReader;
 import io.cdap.plugin.db.batch.sink.CommonFieldsValidator;
 
 import java.sql.ResultSetMetaData;

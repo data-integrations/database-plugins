@@ -52,9 +52,7 @@ public class CommonSchemaReader implements SchemaReader {
 
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
-    return DBUtils.getSchema(metadata.getColumnTypeName(index), metadata.getColumnType(index),
-                             metadata.getPrecision(index), metadata.getScale(index), metadata.getColumnName(index),
-                             metadata.isSigned(index), true);
+    return DBUtils.getSchemaReader(null, null, null).getSchema(metadata, index);
   }
 
   @Override

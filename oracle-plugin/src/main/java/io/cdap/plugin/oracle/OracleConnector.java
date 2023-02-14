@@ -33,13 +33,16 @@ import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.common.db.DBPath;
-import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.common.db.DBRecord;
+import io.cdap.plugin.common.db.schemareader.OracleSourceSchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -51,7 +54,7 @@ import javax.annotation.Nullable;
 @Name(OracleConnector.NAME)
 @Description("Connection to access data in Oracle databases using JDBC.")
 @Category("Database")
-public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBRecord> {
+public class OracleConnector extends AbstractDBSpecificConnector<DBRecord> {
   public static final String NAME = "Oracle";
 
   private final OracleConnectorConfig config;
@@ -68,7 +71,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
 
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
-    return OracleSourceDBRecord.class;
+    return DBRecord.class;
   }
 
   protected void setConnectorSpec(ConnectorSpecRequest request, DBConnectorPath path,
@@ -111,12 +114,12 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   }
 
   @Override
-  protected SchemaReader getSchemaReader(String sessionID) {
-    return new OracleSourceSchemaReader(sessionID);
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet, String sessionID) throws SQLException {
+    return new OracleSourceSchemaReader(sessionID).getSchemaFields(resultSet, null, null);
   }
 
   @Override
-  public StructuredRecord transform(LongWritable longWritable, OracleSourceDBRecord record) {
+  public StructuredRecord transform(LongWritable longWritable, DBRecord record) {
     return record.getRecord();
   }
 
@@ -171,18 +174,6 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
         "WHERE MOD(s_%s, GREATEST(1, CAST(c_%s / %d AS INTEGER))) = 1 AND ROWNUM <= %d",
       sessionID, tableName, strata, sessionID, tableName, sessionID, tableName,
       strata, sessionID, sessionID, sessionID, limit, limit);
-  }
-
-  @Override
-  protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
-                             boolean isSigned, boolean handleAsDecimal) throws SQLException {
-    // For a Number type without specified precision and scale, precision will be 0 and scale will be -127
-    if (precision == 0) {
-      // reference : https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT1832
-      precision = 38;
-      scale = 0;
-    }
-    return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
   }
 
   @Override

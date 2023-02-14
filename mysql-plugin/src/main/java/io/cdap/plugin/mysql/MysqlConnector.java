@@ -21,6 +21,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
@@ -31,12 +32,16 @@ import io.cdap.cdap.etl.api.connector.SampleType;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
-import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.common.db.DBRecord;
+import io.cdap.plugin.common.db.schemareader.MysqlSchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,7 +51,7 @@ import java.util.Map;
 @Name(MysqlConnector.NAME)
 @Description("Connection to access data in Mysql databases using JDBC.")
 @Category("Database")
-public class MysqlConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
+public class MysqlConnector extends AbstractDBSpecificConnector<DBRecord> {
   public static final String NAME = "MySQL";
   private final MysqlConnectorConfig config;
 
@@ -61,8 +66,8 @@ public class MysqlConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
   }
 
   @Override
-  protected SchemaReader getSchemaReader(String sessionID) {
-    return new MysqlSchemaReader(sessionID);
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet, String sessionID) throws SQLException {
+    return new MysqlSchemaReader(sessionID).getSchemaFields(resultSet, null, null);
   }
 
   @Override
@@ -125,7 +130,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
   }
 
   @Override
-  public StructuredRecord transform(LongWritable longWritable, MysqlDBRecord mysqlDBRecord) {
-    return mysqlDBRecord.getRecord();
+  public StructuredRecord transform(LongWritable longWritable, DBRecord dbRecord) {
+    return dbRecord.getRecord();
   }
 }

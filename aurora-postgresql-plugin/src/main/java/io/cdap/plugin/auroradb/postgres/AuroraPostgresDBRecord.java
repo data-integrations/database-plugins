@@ -18,7 +18,7 @@ package io.cdap.plugin.auroradb.postgres;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.plugin.db.ColumnType;
+import io.cdap.plugin.common.db.dbrecordwriter.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 
@@ -54,10 +54,5 @@ public class AuroraPostgresDBRecord extends DBRecord {
   private void handleSpecificType(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                                   int columnIndex) throws SQLException {
     setFieldAccordingToSchema(resultSet, recordBuilder, field, columnIndex);
-  }
-
-  @Override
-  protected SchemaReader getSchemaReader() {
-    return new AuroraPostgresSchemaReader();
   }
 }

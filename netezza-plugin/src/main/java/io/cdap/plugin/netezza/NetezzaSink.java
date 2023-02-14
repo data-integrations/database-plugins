@@ -20,8 +20,8 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.batch.BatchSink;
-import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.db.batch.sink.FieldsValidator;
@@ -43,8 +43,8 @@ public class NetezzaSink extends AbstractDBSink<NetezzaSink.NetezzaSinkConfig> {
   }
 
   @Override
-  protected DBRecord getDBRecord(StructuredRecord output) {
-    return new NetezzaDBRecord(output, columnTypes);
+  protected KeyValue transformDBRecord(StructuredRecord output) {
+    return new KeyValue(new NetezzaDBRecord(output, columnTypes), null);
   }
 
   @Override

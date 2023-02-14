@@ -21,6 +21,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
@@ -31,14 +32,16 @@ import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.db.ConnectionConfig;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import io.cdap.plugin.mysql.MysqlDBRecord;
 import io.cdap.plugin.mysql.MysqlSchemaReader;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,8 +77,8 @@ public class CloudSQLMySQLConnector extends AbstractDBSpecificConnector<MysqlDBR
   }
 
   @Override
-  protected SchemaReader getSchemaReader(String sessionID) {
-    return new MysqlSchemaReader(sessionID);
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet, String sessionID) throws SQLException {
+    return new MysqlSchemaReader(sessionID).getSchemaFields(resultSet);
   }
 
   @Override

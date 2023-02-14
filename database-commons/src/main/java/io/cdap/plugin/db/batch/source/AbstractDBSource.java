@@ -37,12 +37,11 @@ import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSource;
 import io.cdap.plugin.common.ReferencePluginConfig;
 import io.cdap.plugin.common.SourceInputFormatProvider;
-import io.cdap.plugin.db.CommonSchemaReader;
+import io.cdap.plugin.common.db.DBRecord;
+import io.cdap.plugin.common.db.schemareader.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.DBConfig;
-import io.cdap.plugin.db.DBRecord;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import io.cdap.plugin.db.batch.config.DatabaseSourceConfig;
 import io.cdap.plugin.util.DBUtils;
@@ -153,7 +152,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
       query = removeConditionsClause(query);
     }
     ResultSet resultSet = statement.executeQuery(query);
-    return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
+    return Schema.recordOf("outputSchema", getSchemaFields(resultSet));
   }
 
   @VisibleForTesting
@@ -193,8 +192,8 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     }
   }
 
-  protected SchemaReader getSchemaReader() {
-    return new CommonSchemaReader();
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
+    return new CommonSchemaReader().getSchemaFields(resultSet, null, null);
   }
 
   private DriverCleanup loadPluginClassAndGetDriver(Class<? extends Driver> driverClass)

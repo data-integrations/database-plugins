@@ -19,11 +19,15 @@ package io.cdap.plugin.db2;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSource;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.batch.source.AbstractDBSource;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
 
 /**
@@ -43,8 +47,8 @@ public class Db2Source extends AbstractDBSource<Db2Source.Db2SourceConfig> {
   }
 
   @Override
-  protected SchemaReader getSchemaReader() {
-    return new DB2SchemaReader();
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
+    return new DB2SchemaReader().getSchemaFields(resultSet);
   }
 
   @Override

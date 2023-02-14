@@ -19,7 +19,7 @@ package io.cdap.plugin.teradata;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.plugin.db.ColumnType;
+import io.cdap.plugin.common.db.dbrecordwriter.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 
@@ -51,11 +51,6 @@ public class TeradataDBRecord extends DBRecord {
    */
   public TeradataDBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
     super(record, columnTypes);
-  }
-
-  @Override
-  protected SchemaReader getSchemaReader() {
-    return new TeradataSchemaReader();
   }
 
   @Override

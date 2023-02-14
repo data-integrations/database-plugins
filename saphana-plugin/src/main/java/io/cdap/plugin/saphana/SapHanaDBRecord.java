@@ -17,7 +17,7 @@
 package io.cdap.plugin.saphana;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.plugin.db.ColumnType;
+import io.cdap.plugin.common.db.dbrecordwriter.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 
@@ -35,10 +35,5 @@ public class SapHanaDBRecord extends DBRecord {
 
   @SuppressWarnings("unused")
   public SapHanaDBRecord() {
-  }
-
-  @Override
-  protected SchemaReader getSchemaReader() {
-    return new SapHanaSchemaReader();
   }
 }

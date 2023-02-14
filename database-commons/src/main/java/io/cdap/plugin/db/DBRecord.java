@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.plugin.common.db.dbrecordwriter.ColumnType;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.Lazy;
 import org.apache.hadoop.conf.Configurable;
@@ -128,10 +129,6 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     } catch (IOException e) {
       throw new IllegalStateException(String.format("Unable to parse schema string %s", schemaStr), e);
     }
-  }
-
-  protected SchemaReader getSchemaReader() {
-    return new CommonSchemaReader();
   }
 
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,

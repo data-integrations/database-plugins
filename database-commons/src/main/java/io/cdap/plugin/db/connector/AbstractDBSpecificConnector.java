@@ -28,10 +28,9 @@ import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.SourceInputFormatProvider;
 import io.cdap.plugin.common.db.AbstractDBConnector;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.schemareader.CommonSchemaReader;
 import io.cdap.plugin.common.util.ExceptionUtils;
-import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
-import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -43,6 +42,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -66,8 +66,8 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
 
   protected abstract Class<? extends DBWritable> getDBRecordType();
 
-  protected SchemaReader getSchemaReader(String sessionID) {
-    return new CommonSchemaReader();
+  protected List<Schema.Field> getSchemaFields(ResultSet resultSet, String sessionID) throws SQLException {
+    return new CommonSchemaReader().getSchemaFields(resultSet, null, null);
   }
 
   @Override
@@ -178,7 +178,7 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
       statement.setQueryTimeout(timeoutSec);
     }
     ResultSet resultSet = statement.executeQuery(query);
-    return Schema.recordOf("outputSchema", getSchemaReader(sessionID).getSchemaFields(resultSet));
+    return Schema.recordOf("outputSchema", getSchemaFields(resultSet, sessionID));
   }
 
   protected void setConnectionProperties(Map<String, String> properties, ConnectorSpecRequest request) {

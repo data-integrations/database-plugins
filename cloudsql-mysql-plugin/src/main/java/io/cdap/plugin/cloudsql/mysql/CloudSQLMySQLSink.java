@@ -25,6 +25,7 @@ import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSink;
@@ -33,7 +34,6 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
-import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.batch.sink.AbstractDBSink;
 import io.cdap.plugin.mysql.MysqlDBRecord;
@@ -74,8 +74,8 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
   }
 
   @Override
-  protected DBRecord getDBRecord(StructuredRecord output) {
-    return new MysqlDBRecord(output, columnTypes);
+  protected KeyValue transformDBRecord(StructuredRecord output) {
+    return new KeyValue(new MysqlDBRecord(output, columnTypes), null);
   }
 
   @Override
