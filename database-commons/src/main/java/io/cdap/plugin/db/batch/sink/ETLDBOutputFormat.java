@@ -115,7 +115,7 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
         }
 
         @Override
-        public void write(K key, V value) {
+        public void write(K key, V value) throws IOException {
           emptyData = false;
           //We need to make correct logging to avoid losing information about error
           try {
@@ -129,7 +129,7 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
               getStatement().executeBatch();
             }
           } catch (SQLException e) {
-            LOG.warn("Failed to write value to database", e);
+            throw new IOException(e);
           }
         }
       };
