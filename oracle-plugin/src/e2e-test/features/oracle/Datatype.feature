@@ -38,7 +38,7 @@ Feature: Oracle - Verify Oracle source data transfer for multiple datatypes
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
     Then Click on the Get Schema button
     Then Verify the Output Schema matches the Expected Schema: "outputDatatypesSchema"
-#    Then Capture the generated Output Schema
+    Then capture the generated Output Schema.
     Then Validate "Oracle" plugin properties
     Then Close the Plugin Properties page
     Then Navigate to the properties page of plugin: "Oracle2"
@@ -62,7 +62,7 @@ Feature: Oracle - Verify Oracle source data transfer for multiple datatypes
     Then Verify the preview run status of pipeline in the logs is "succeeded"
     Then Close the pipeline logs
     Then Click on preview data for Oracle sink
-    Then Verify preview output schema matches the outputSchema captured in properties
+    Then verify preview output schema matches the outputSchema captured in properties
     Then Close the preview data
     Then Deploy the pipeline
     Then Run the Pipeline in Runtime
