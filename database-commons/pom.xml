@@ -20,7 +20,7 @@
   <parent>
     <artifactId>database-plugins</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.5.6</version>
+    <version>1.5.7-SNAPSHOT</version>
   </parent>
 
   <name>Database Commons</name>
