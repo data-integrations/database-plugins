@@ -80,16 +80,22 @@ public class OracleSourceDBRecord extends DBRecord {
 
     // All LONG or LONG RAW columns have to be retrieved from the ResultSet prior to all the other columns.
     // Otherwise, we will face java.sql.SQLException: Stream has already been closed
-    for (int i = 0; i < schema.getFields().size(); i++) {
-      if (isLongOrLongRaw(metadata.getColumnType(i + 1))) {
-        readField(i, metadata, resultSet, schema, recordBuilder);
+    for (Schema.Field field : schema.getFields()) {
+      // Index of a field in the schema may not be same in the ResultSet,
+      // hence find the field by name in the given resultSet
+      int columnIndex = resultSet.findColumn(field.getName());
+      if (isLongOrLongRaw(metadata.getColumnType(columnIndex))) {
+        readField(columnIndex, metadata, resultSet, field, recordBuilder);
       }
     }
 
     // Read fields of other types
-    for (int i = 0; i < schema.getFields().size(); i++) {
-      if (!isLongOrLongRaw(metadata.getColumnType(i + 1))) {
-        readField(i, metadata, resultSet, schema, recordBuilder);
+    for (Schema.Field field : schema.getFields()) {
+      // Index of a field in the schema may not be same in the ResultSet,
+      // hence find the field by name in the given resultSet
+      int columnIndex = resultSet.findColumn(field.getName());
+      if (!isLongOrLongRaw(metadata.getColumnType(columnIndex))) {
+        readField(columnIndex, metadata, resultSet, field, recordBuilder);
       }
     }
 
@@ -242,10 +248,8 @@ public class OracleSourceDBRecord extends DBRecord {
     return columnType == OracleSourceSchemaReader.LONG || columnType == OracleSourceSchemaReader.LONG_RAW;
   }
 
-  private void readField(int index, ResultSetMetaData metadata, ResultSet resultSet, Schema schema,
+  private void readField(int columnIndex, ResultSetMetaData metadata, ResultSet resultSet, Schema.Field field,
                          StructuredRecord.Builder recordBuilder) throws SQLException {
-    Schema.Field field = schema.getFields().get(index);
-    int columnIndex = index + 1;
     int sqlType = metadata.getColumnType(columnIndex);
     int sqlPrecision = metadata.getPrecision(columnIndex);
     int sqlScale = metadata.getScale(columnIndex);
