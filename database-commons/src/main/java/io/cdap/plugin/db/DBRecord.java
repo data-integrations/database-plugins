@@ -104,7 +104,8 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(schema);
     for (int i = 0; i < schema.getFields().size(); i++) {
       Schema.Field field = schema.getFields().get(i);
-      int columnIndex = i + 1;
+      // Find the field index in the resultSet having the same name
+      int columnIndex = resultSet.findColumn(field.getName());
       int sqlType = metadata.getColumnType(columnIndex);
       int sqlPrecision = metadata.getPrecision(columnIndex);
       int sqlScale = metadata.getScale(columnIndex);

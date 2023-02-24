@@ -64,7 +64,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -276,8 +278,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
            ResultSet rs = statement.executeQuery(String.format("SELECT %s FROM %s WHERE 1 = 0",
                                                                dbColumns, fullyQualifiedTableName))
       ) {
-        ResultSetMetaData resultSetMetadata = rs.getMetaData();
-        columnTypes.addAll(getMatchedColumnTypeList(resultSetMetadata, columns));
+        columnTypes.addAll(getMatchedColumnTypeList(rs, columns));
       }
     }
 
@@ -287,22 +288,36 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
   /**
    * Compare columns from schema with columns in table and returns list of matched columns in {@link ColumnType} format.
    *
-   * @param resultSetMetadata result set metadata from table.
+   * @param resultSet result set from table.
    * @param columns           list of columns from schema.
    * @return list of matched columns.
    */
-  static List<ColumnType> getMatchedColumnTypeList(ResultSetMetaData resultSetMetadata, List<String> columns)
+  static List<ColumnType> getMatchedColumnTypeList(ResultSet resultSet, List<String> columns)
     throws SQLException {
     List<ColumnType> columnTypes = new ArrayList<>(columns.size());
-    // JDBC driver column indices start with 1
-    for (int i = 0; i < resultSetMetadata.getColumnCount(); i++) {
-      String name = resultSetMetadata.getColumnName(i + 1);
-      String columnTypeName = resultSetMetadata.getColumnTypeName(i + 1);
-      int type = resultSetMetadata.getColumnType(i + 1);
+    ResultSetMetaData resultSetMetadata = resultSet.getMetaData();
+    Map<String, String> resultSetColumnNames = new HashMap<>(resultSetMetadata.getColumnCount());
+
+    // Populate the ResultSet field names in lower case vs original names
+    // JDBC driver column indices start with index 1
+    for (int i = 1; i <= resultSetMetadata.getColumnCount(); i++) {
+      resultSetColumnNames.put(resultSetMetadata.getColumnName(i).toLowerCase(), resultSetMetadata.getColumnName(i));
+    }
+
+    // Iterate of all the columns present in the output schema and
+    // check if the resultSet contains a column with the same name.
+    for (int i = 0; i < columns.size(); i++) {
       String schemaColumnName = columns.get(i);
-      Preconditions.checkArgument(schemaColumnName.toLowerCase().equals(name.toLowerCase()),
-                                  "Missing column '%s' in SQL table", schemaColumnName);
-      columnTypes.add(new ColumnType(schemaColumnName, columnTypeName, type));
+      String schemaColName = schemaColumnName.toLowerCase();
+      Preconditions.checkArgument(resultSetColumnNames.keySet().contains(schemaColName),
+              "Missing column '%s' in SQL table", schemaColumnName);
+
+      // Find the column in the resultSet, as the index in the schema might not match with the resultSet.
+      int columnIndex = resultSet.findColumn(resultSetColumnNames.get(schemaColName));
+      String name = resultSetMetadata.getColumnName(columnIndex);
+      String columnTypeName = resultSetMetadata.getColumnTypeName(columnIndex);
+      int type = resultSetMetadata.getColumnType(columnIndex);
+      columnTypes.add(new ColumnType(name, columnTypeName, type));
     }
     return columnTypes;
   }
