@@ -21,8 +21,8 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.action.Action;
-import io.cdap.plugin.db.batch.action.AbstractDBAction;
-import io.cdap.plugin.db.batch.config.DBSpecificQueryConfig;
+import io.cdap.plugin.db.action.AbstractDBAction;
+import io.cdap.plugin.db.config.DBSpecificQueryConfig;
 
 import java.util.Collections;
 import java.util.List;

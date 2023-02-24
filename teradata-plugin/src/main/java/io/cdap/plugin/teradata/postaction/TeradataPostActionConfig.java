@@ -16,7 +16,7 @@
 
 package io.cdap.plugin.teradata.postaction;
 
-import io.cdap.plugin.db.batch.config.DBSpecificQueryActionConfig;
+import io.cdap.plugin.db.config.DBSpecificQueryActionConfig;
 import io.cdap.plugin.teradata.TeradataUtils;
 
 /**

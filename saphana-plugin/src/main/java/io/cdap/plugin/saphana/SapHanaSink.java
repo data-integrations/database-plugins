@@ -24,9 +24,9 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
-import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
-import io.cdap.plugin.db.batch.sink.AbstractDBSink;
-import io.cdap.plugin.db.batch.sink.FieldsValidator;
+import io.cdap.plugin.db.config.DBSpecificSinkConfig;
+import io.cdap.plugin.db.sink.AbstractDBSink;
+import io.cdap.plugin.db.sink.FieldsValidator;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -28,8 +28,8 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.plugin.db.ConnectionConfig;
-import io.cdap.plugin.db.batch.action.QueryActionConfig;
-import io.cdap.plugin.db.batch.action.QueryConfig;
+import io.cdap.plugin.db.action.QueryActionConfig;
+import io.cdap.plugin.db.action.QueryConfig;
 import org.junit.Assert;
 import org.junit.Test;
 

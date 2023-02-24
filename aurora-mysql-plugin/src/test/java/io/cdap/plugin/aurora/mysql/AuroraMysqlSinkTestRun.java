@@ -29,7 +29,7 @@ import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.auroradb.mysql.AuroraMysqlConstants;
 import io.cdap.plugin.common.Constants;
-import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import io.cdap.plugin.db.sink.AbstractDBSink;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

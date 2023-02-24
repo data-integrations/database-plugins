@@ -20,8 +20,8 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.action.Action;
-import io.cdap.plugin.db.batch.action.AbstractDBArgumentSetter;
-import io.cdap.plugin.db.batch.action.ArgumentSetterConfig;
+import io.cdap.plugin.db.action.AbstractDBArgumentSetter;
+import io.cdap.plugin.db.action.ArgumentSetterConfig;
 
 /**
  * Action that runs a db command

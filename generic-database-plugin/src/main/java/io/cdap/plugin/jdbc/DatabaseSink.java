@@ -22,7 +22,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.plugin.db.ConnectionConfig;
-import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import io.cdap.plugin.db.sink.AbstractDBSink;
 
 import javax.annotation.Nullable;
 

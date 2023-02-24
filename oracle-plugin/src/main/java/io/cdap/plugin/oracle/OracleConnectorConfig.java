@@ -19,10 +19,9 @@ package io.cdap.plugin.oracle;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
-import io.cdap.plugin.db.batch.TransactionIsolationLevel;
+import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;

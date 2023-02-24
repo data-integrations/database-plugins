@@ -22,9 +22,9 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.plugin.db.DBRecord;
-import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
-import io.cdap.plugin.db.batch.sink.AbstractDBSink;
-import io.cdap.plugin.db.batch.sink.FieldsValidator;
+import io.cdap.plugin.db.config.DBSpecificSinkConfig;
+import io.cdap.plugin.db.sink.AbstractDBSink;
+import io.cdap.plugin.db.sink.FieldsValidator;
 
 
 /**

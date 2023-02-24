@@ -16,8 +16,8 @@
 
 package io.cdap.plugin.db;
 
-import io.cdap.plugin.db.batch.sink.ETLDBOutputFormat;
-import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
+import io.cdap.plugin.db.sink.ETLDBOutputFormat;
+import io.cdap.plugin.db.source.DataDrivenETLDBInputFormat;
 
 import java.sql.Connection;
 import java.sql.Driver;

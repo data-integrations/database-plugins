@@ -20,8 +20,8 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSource;
-import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
-import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.db.config.DBSpecificSourceConfig;
+import io.cdap.plugin.db.source.AbstractDBSource;
 
 import java.util.List;
 import java.util.Map;

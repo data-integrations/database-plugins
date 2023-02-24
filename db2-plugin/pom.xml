@@ -98,12 +98,12 @@
         <configuration>
           <instructions>
             <_exportcontents>
-              io.cdap.plugin.db2.*
-              io.cdap.plugin.db.batch.source.*;
-              io.cdap.plugin.db.batch.sink.*;
-              org.apache.commons.lang;
-              org.apache.commons.logging.*;
-              org.codehaus.jackson.*
+                io.cdap.plugin.db2.*
+                io.cdap.plugin.db.source.*;
+                io.cdap.plugin.db.sink.*;
+                org.apache.commons.lang;
+                org.apache.commons.logging.*;
+                org.codehaus.jackson.*
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>

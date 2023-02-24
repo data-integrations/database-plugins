@@ -32,7 +32,7 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.ConnectionConfig;
-import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.db.source.AbstractDBSource;
 import org.junit.Assert;
 import org.junit.Test;
 

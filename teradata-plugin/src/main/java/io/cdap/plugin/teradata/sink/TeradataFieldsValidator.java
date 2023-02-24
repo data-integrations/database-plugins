@@ -17,7 +17,7 @@
 package io.cdap.plugin.teradata.sink;
 
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.plugin.db.batch.sink.CommonFieldsValidator;
+import io.cdap.plugin.db.sink.CommonFieldsValidator;
 import io.cdap.plugin.teradata.TeradataSchemaReader;
 
 import java.sql.ResultSetMetaData;

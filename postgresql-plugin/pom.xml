@@ -98,9 +98,9 @@
         <configuration>
           <instructions>
             <_exportcontents>
-              io.cdap.plugin.postgres.*;
-              io.cdap.plugin.db.batch.source.*;
-              io.cdap.plugin.db.batch.sink.*;
+                io.cdap.plugin.postgres.*;
+                io.cdap.plugin.db.source.*;
+                io.cdap.plugin.db.sink.*;
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>

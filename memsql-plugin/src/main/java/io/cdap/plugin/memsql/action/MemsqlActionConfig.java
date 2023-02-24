@@ -18,7 +18,7 @@ package io.cdap.plugin.memsql.action;
 
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
-import io.cdap.plugin.db.batch.config.DBSpecificQueryConfig;
+import io.cdap.plugin.db.config.DBSpecificQueryConfig;
 import io.cdap.plugin.memsql.MemsqlConstants;
 import io.cdap.plugin.memsql.MemsqlUtil;
 
