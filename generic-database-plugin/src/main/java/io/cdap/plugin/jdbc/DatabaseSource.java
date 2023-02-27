@@ -16,17 +16,12 @@
 
 package io.cdap.plugin.jdbc;
 
-import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
-import io.cdap.cdap.etl.api.batch.BatchSourceContext;
-import io.cdap.plugin.common.Asset;
-import io.cdap.plugin.common.LineageRecorder;
-import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.db.ConnectionConfig;
-import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.db.source.AbstractDBSource;
 
 import javax.annotation.Nullable;
 

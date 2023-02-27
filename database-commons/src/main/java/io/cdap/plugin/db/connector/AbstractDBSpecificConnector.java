@@ -32,7 +32,7 @@ import io.cdap.plugin.common.util.ExceptionUtils;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.SchemaReader;
-import io.cdap.plugin.db.batch.source.DataDrivenETLDBInputFormat;
+import io.cdap.plugin.db.source.DataDrivenETLDBInputFormat;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;

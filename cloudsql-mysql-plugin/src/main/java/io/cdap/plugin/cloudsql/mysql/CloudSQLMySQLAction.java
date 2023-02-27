@@ -23,8 +23,8 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.action.Action;
-import io.cdap.plugin.db.batch.action.AbstractDBAction;
-import io.cdap.plugin.db.batch.action.QueryConfig;
+import io.cdap.plugin.db.action.AbstractDBAction;
+import io.cdap.plugin.db.action.QueryConfig;
 import io.cdap.plugin.util.CloudSQLUtil;
 
 import java.util.Map;

@@ -19,7 +19,6 @@ package io.cdap.plugin.db;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import io.cdap.plugin.db.batch.TransactionIsolationLevel;
 import org.apache.hadoop.conf.Configuration;
 
 import java.lang.reflect.Type;

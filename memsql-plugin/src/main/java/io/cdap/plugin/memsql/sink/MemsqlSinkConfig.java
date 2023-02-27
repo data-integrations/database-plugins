@@ -18,7 +18,7 @@ package io.cdap.plugin.memsql.sink;
 
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
-import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
+import io.cdap.plugin.db.config.DBSpecificSinkConfig;
 import io.cdap.plugin.memsql.MemsqlConstants;
 import io.cdap.plugin.memsql.MemsqlUtil;
 

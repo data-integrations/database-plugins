@@ -23,7 +23,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.KeyValueListParser;
-import io.cdap.plugin.db.batch.config.DatabaseConnectionConfig;
+import io.cdap.plugin.db.config.DatabaseConnectionConfig;
 
 import java.util.Collections;
 import java.util.HashMap;

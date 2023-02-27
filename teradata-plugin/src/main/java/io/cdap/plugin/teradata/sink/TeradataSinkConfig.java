@@ -16,7 +16,7 @@
 
 package io.cdap.plugin.teradata.sink;
 
-import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
+import io.cdap.plugin.db.config.DBSpecificSinkConfig;
 import io.cdap.plugin.teradata.TeradataUtils;
 
 /**

@@ -20,8 +20,8 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSink;
-import io.cdap.plugin.db.batch.config.DBSpecificSinkConfig;
-import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import io.cdap.plugin.db.config.DBSpecificSinkConfig;
+import io.cdap.plugin.db.sink.AbstractDBSink;
 
 import java.util.Map;
 import javax.annotation.Nullable;

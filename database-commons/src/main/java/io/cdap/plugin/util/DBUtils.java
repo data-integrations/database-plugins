@@ -22,7 +22,7 @@ import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.JDBCDriverShim;
-import io.cdap.plugin.db.batch.config.DatabaseConnectionConfig;
+import io.cdap.plugin.db.config.DatabaseConnectionConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

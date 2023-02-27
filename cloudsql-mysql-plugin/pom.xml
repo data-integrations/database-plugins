@@ -128,13 +128,13 @@
         <configuration>
           <instructions>
             <_exportcontents>
-              io.cdap.plugin.cloudsql.mysql.*;
-              io.cdap.plugin.db.batch.source.*;
-              io.cdap.plugin.db.batch.sink.*;
-              io.cdap.plugin.mysql.*;
-              org.apache.commons.lang.*;
-              org.apache.commons.logging.*;
-              org.codehaus.jackson.*
+                io.cdap.plugin.cloudsql.mysql.*;
+                io.cdap.plugin.db.source.*;
+                io.cdap.plugin.db.sink.*;
+                io.cdap.plugin.mysql.*;
+                org.apache.commons.lang.*;
+                org.apache.commons.logging.*;
+                org.codehaus.jackson.*
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>

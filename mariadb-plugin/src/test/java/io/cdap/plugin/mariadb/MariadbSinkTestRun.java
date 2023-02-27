@@ -28,7 +28,7 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.CustomAssertions;
-import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import io.cdap.plugin.db.sink.AbstractDBSink;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -33,8 +33,8 @@ import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
-import io.cdap.plugin.db.batch.config.AbstractDBSpecificSinkConfig;
-import io.cdap.plugin.db.batch.sink.AbstractDBSink;
+import io.cdap.plugin.db.config.AbstractDBSpecificSinkConfig;
+import io.cdap.plugin.db.sink.AbstractDBSink;
 import io.cdap.plugin.util.DBUtils;
 
 import java.util.Collections;
