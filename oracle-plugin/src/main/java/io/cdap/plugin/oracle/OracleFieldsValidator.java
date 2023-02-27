@@ -65,6 +65,7 @@ public class OracleFieldsValidator extends CommonFieldsValidator {
           || sqlType == OracleSinkSchemaReader.INTERVAL_DS
           || sqlType == OracleSinkSchemaReader.INTERVAL_YM
           || sqlType == Types.ROWID
+          || sqlType == Types.NUMERIC
           || super.isFieldCompatible(fieldType, null, sqlType);
       case INT:
         // Since all Oracle numeric types are based on NUMBER(i.e. INTEGER type is actually NUMBER(38, 0)) we won't be
