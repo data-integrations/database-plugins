@@ -27,7 +27,7 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
-import io.cdap.plugin.db.batch.action.QueryConfig;
+import io.cdap.plugin.db.action.QueryConfig;
 import io.cdap.plugin.teradata.TeradataConstants;
 import io.cdap.plugin.teradata.TeradataPluginTestBase;
 import org.junit.Assert;

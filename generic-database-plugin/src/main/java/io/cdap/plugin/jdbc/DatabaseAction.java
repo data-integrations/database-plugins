@@ -22,8 +22,8 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.plugin.db.ConnectionConfig;
-import io.cdap.plugin.db.batch.action.AbstractDBAction;
-import io.cdap.plugin.db.batch.action.QueryConfig;
+import io.cdap.plugin.db.action.AbstractDBAction;
+import io.cdap.plugin.db.action.QueryConfig;
 
 import javax.annotation.Nullable;
 

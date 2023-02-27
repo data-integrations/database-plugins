@@ -33,7 +33,7 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBConfig;
-import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.teradata.TeradataConstants;
 import io.cdap.plugin.teradata.TeradataPluginTestBase;
 import org.junit.Assert;

@@ -32,9 +32,9 @@ import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.SchemaReader;
-import io.cdap.plugin.db.batch.config.AbstractDBSpecificSourceConfig;
-import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
+import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 

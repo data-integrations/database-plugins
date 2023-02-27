@@ -19,7 +19,7 @@ package io.cdap.plugin.memsql.source;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
-import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.memsql.MemsqlConstants;
 import io.cdap.plugin.memsql.MemsqlDBRecord;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;

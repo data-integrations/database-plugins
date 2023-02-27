@@ -20,7 +20,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
-import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
+import io.cdap.plugin.db.config.DBSpecificSourceConfig;
 import io.cdap.plugin.memsql.MemsqlConstants;
 import io.cdap.plugin.memsql.MemsqlUtil;
 

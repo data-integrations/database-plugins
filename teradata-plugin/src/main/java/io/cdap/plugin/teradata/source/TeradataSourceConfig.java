@@ -16,7 +16,7 @@
 
 package io.cdap.plugin.teradata.source;
 
-import io.cdap.plugin.db.batch.config.DBSpecificSourceConfig;
+import io.cdap.plugin.db.config.DBSpecificSourceConfig;
 import io.cdap.plugin.teradata.TeradataUtils;
 
 /**

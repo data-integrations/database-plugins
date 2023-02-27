@@ -21,7 +21,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.plugin.db.SchemaReader;
-import io.cdap.plugin.db.batch.source.AbstractDBSource;
+import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.teradata.TeradataConstants;
 import io.cdap.plugin.teradata.TeradataDBRecord;
 import io.cdap.plugin.teradata.TeradataSchemaReader;

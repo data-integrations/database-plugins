@@ -17,7 +17,7 @@
 package io.cdap.plugin.netezza;
 
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.plugin.db.batch.sink.CommonFieldsValidator;
+import io.cdap.plugin.db.sink.CommonFieldsValidator;
 
 /**
  * Netezza validator for DB fields.

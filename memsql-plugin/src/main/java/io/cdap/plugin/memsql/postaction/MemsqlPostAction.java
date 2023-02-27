@@ -20,7 +20,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.PostAction;
-import io.cdap.plugin.db.batch.action.AbstractQueryAction;
+import io.cdap.plugin.db.action.AbstractQueryAction;
 import io.cdap.plugin.memsql.MemsqlConstants;
 
 /**
