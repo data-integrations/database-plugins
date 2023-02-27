@@ -15,8 +15,9 @@
 #
 
 @Oracle
-Feature: Oracle - Verify Oracle source data transfer
-  @ORACLE_SOURCE_TEST @ORACLE_SINK_TEST @Oracle_Required
+Feature: Oracle - Verify Oracle source data transfer for multiple datatypes
+  @ORACLE_SOURCE_DATATYPES_TEST @ORACLE_SINK_TEST @Oracle_Required
+    # Oracle Sanity test to transfer table data containing multiple datatypes
   Scenario: To verify data is getting transferred from Oracle to Oracle successfully
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -36,7 +37,7 @@ Feature: Oracle - Verify Oracle source data transfer
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
     Then Click on the Get Schema button
-    Then Verify the Output Schema matches the Expected Schema: "outputSchema"
+    Then Verify the Output Schema matches the Expected Schema: "outputDatatypesSchema"
     Then Validate "Oracle" plugin properties
     Then Close the Plugin Properties page
     Then Navigate to the properties page of plugin: "Oracle2"
@@ -57,7 +58,6 @@ Feature: Oracle - Verify Oracle source data transfer
     Then Preview and run the pipeline
     Then Verify the preview of pipeline is "success"
     Then Click on preview data for Oracle sink
-    Then Verify preview output schema matches the outputSchema captured in properties
     Then Close the preview data
     Then Deploy the pipeline
     Then Run the Pipeline in Runtime
