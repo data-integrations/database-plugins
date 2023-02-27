@@ -37,24 +37,19 @@ public class Oracle implements CdfHelper {
     openSinkPluginPreviewData("Oracle");
   }
 
-  @Then("Get count of no of records transferred to target Oracle Table")
-  public void getCountOfNoOfRecordsTransferredToTargetOracleTable() throws SQLException, ClassNotFoundException {
+  @Then("Validate the values of records transferred to target table is equal to the values from source table")
+  public void validateTheValuesOfRecordsTransferredToTargetTableIsEqualToTheValuesFromSourceTable() throws
+    SQLException, ClassNotFoundException {
     int countRecords = OracleClient.countRecord(PluginPropertyUtils.pluginProp("targetTable"),
                                                 PluginPropertyUtils.pluginProp("schema"));
-    BeforeActions.scenario.write("**********No of Records Transferred******************: " + countRecords);
     Assert.assertEquals("Number of records transferred should be equal to records out ",
                         countRecords, recordOut());
-  }
-
-  @Then("Validate records transferred to target table is equal to number of records from source table")
-  public void validateRecordsTransferredToTargetTableIsEqualToNumberOfRecordsFromSourceTable()
-    throws SQLException, ClassNotFoundException {
-    int countRecordsTarget = OracleClient.countRecord(PluginPropertyUtils.pluginProp("targetTable"),
-                                                      PluginPropertyUtils.pluginProp("schema"));
-    int countRecordsSource = OracleClient.countRecord(PluginPropertyUtils.pluginProp("sourceTable"),
-                                                      PluginPropertyUtils.pluginProp("schema"));
-    BeforeActions.scenario.write("Number of records transferred:" + countRecordsSource);
-    Assert.assertEquals(countRecordsSource, countRecordsTarget);
+    BeforeActions.scenario.write("******** Number of records transferred ********* : " + countRecords);
+    boolean recordsMatched = OracleClient.validateRecordValues(PluginPropertyUtils.pluginProp("schema"),
+                                                           PluginPropertyUtils.pluginProp("sourceTable"),
+                                                           PluginPropertyUtils.pluginProp("targetTable"));
+    Assert.assertTrue("Value of records transferred to the target table should be equal to the value " +
+                         "of the records in the source table", recordsMatched);
   }
 
 }

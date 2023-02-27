@@ -45,6 +45,74 @@ public class TestSetupHooks {
                                    PluginPropertyUtils.pluginProp("schema"));
   }
 
+  @Before(order = 1, value = "@ORACLE_SOURCE_DATATYPES_TEST")
+  public static void setSelectQueryForAllDatatypes() {
+    String sourceTable =  PluginPropertyUtils.pluginProp("sourceTable");
+    String schema = PluginPropertyUtils.pluginProp("schema");
+    PluginPropertyUtils.addPluginProp("selectQuery",
+                                      PluginPropertyUtils.pluginProp("selectQuery").
+                                        replace("${table}", sourceTable).replace("${schema}", schema));
+  }
+
+  @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST")
+  public static void createAllDatatypesTables() throws SQLException, ClassNotFoundException {
+    OracleClient.createSourceDatatypesTable(PluginPropertyUtils.pluginProp("sourceTable"),
+                                   PluginPropertyUtils.pluginProp("schema"));
+    OracleClient.createTargetDatatypesTable(PluginPropertyUtils.pluginProp("targetTable"),
+                                   PluginPropertyUtils.pluginProp("schema"));
+  }
+
+  @Before(order = 1, value = "@ORACLE_SOURCE_DATATYPES_TEST2")
+  public static void setSelectQueryForLongDatatype() {
+    String sourceTable =  PluginPropertyUtils.pluginProp("sourceTable");
+    String schema = PluginPropertyUtils.pluginProp("schema");
+    PluginPropertyUtils.addPluginProp("selectQuery",
+                                      PluginPropertyUtils.pluginProp("selectQuery").
+                                        replace("${table}", sourceTable).replace("${schema}", schema));
+  }
+
+  @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST2")
+  public static void createDatatypesTablesLong() throws SQLException, ClassNotFoundException {
+    OracleClient.createSourceLongTable(PluginPropertyUtils.pluginProp("sourceTable"),
+                                            PluginPropertyUtils.pluginProp("schema"));
+    OracleClient.createTargetLongTable(PluginPropertyUtils.pluginProp("targetTable"),
+                                            PluginPropertyUtils.pluginProp("schema"));
+  }
+
+  @Before(order = 1, value = "@ORACLE_SOURCE_LONGRAW_TEST")
+  public static void setSelectQueryForDatatypesLongRaw() {
+    String sourceTable =  PluginPropertyUtils.pluginProp("sourceTable");
+    String schema = PluginPropertyUtils.pluginProp("schema");
+    PluginPropertyUtils.addPluginProp("selectQuery",
+                                      PluginPropertyUtils.pluginProp("selectQuery").
+                                        replace("${table}", sourceTable).replace("${schema}", schema));
+  }
+
+  @Before(order = 2, value = "@ORACLE_SOURCE_LONGRAW_TEST")
+  public static void createDatatypesTablesLongRaw() throws SQLException, ClassNotFoundException {
+    OracleClient.createSourceLongRawTable(PluginPropertyUtils.pluginProp("sourceTable"),
+                                            PluginPropertyUtils.pluginProp("schema"));
+    OracleClient.createTargetLongRawTable(PluginPropertyUtils.pluginProp("targetTable"),
+                                            PluginPropertyUtils.pluginProp("schema"));
+  }
+
+  @Before(order = 1, value = "@ORACLE_SOURCE_DATATYPES_TEST4")
+  public static void setSelectQueryForLongVarchar() {
+    String sourceTable =  PluginPropertyUtils.pluginProp("sourceTable");
+    String schema = PluginPropertyUtils.pluginProp("schema");
+    PluginPropertyUtils.addPluginProp("selectQuery",
+                                      PluginPropertyUtils.pluginProp("selectQuery").
+                                        replace("${table}", sourceTable).replace("${schema}", schema));
+  }
+
+  @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST4")
+  public static void createLongVarcharTables() throws SQLException, ClassNotFoundException {
+    OracleClient.createSourceLongVarcharTable(PluginPropertyUtils.pluginProp("sourceTable"),
+                                            PluginPropertyUtils.pluginProp("schema"));
+    OracleClient.createTargetLongVarCharTable(PluginPropertyUtils.pluginProp("targetTable"),
+                                            PluginPropertyUtils.pluginProp("schema"));
+  }
+
   @After(order = 1, value = "@ORACLE_SINK_TEST")
   public static void dropTables() throws SQLException, ClassNotFoundException {
     OracleClient.deleteTables(PluginPropertyUtils.pluginProp("schema"),
