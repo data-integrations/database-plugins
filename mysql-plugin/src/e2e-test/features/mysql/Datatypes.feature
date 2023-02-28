@@ -15,8 +15,8 @@
 #
 
 @Mysql
-Feature: Mysql - Verify Mysql source data transfer
-  @MYSQL_SOURCE_TEST @MYSQL_SINK_TEST @Mysql_Required
+Feature: Mysql - Verify Mysql source data transfer for different datatypes
+  @MYSQL_SOURCE_DATATYPES_TEST @MYSQL_SINK_TEST @Mysql_Required
   Scenario: To verify data is getting transferred from Mysql to Mysql successfully
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -34,7 +34,7 @@ Feature: Mysql - Verify Mysql source data transfer
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
     Then Click on the Get Schema button
-    Then Verify the Output Schema matches the Expected Schema: "outputSchema"
+    Then Verify the Output Schema matches the Expected Schema: "datatypesSchema"
     Then Validate "MySQL" plugin properties
     Then Close the Plugin Properties page
     Then Navigate to the properties page of plugin: "MySQL2"
@@ -52,7 +52,6 @@ Feature: Mysql - Verify Mysql source data transfer
     Then Preview and run the pipeline
     Then Verify the preview of pipeline is "success"
     Then Click on preview data for MySQL sink
-    Then Verify preview output schema matches the outputSchema captured in properties
     Then Close the preview data
     Then Deploy the pipeline
     Then Run the Pipeline in Runtime

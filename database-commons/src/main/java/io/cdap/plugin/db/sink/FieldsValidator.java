@@ -52,7 +52,9 @@ public interface FieldsValidator {
    * @param fieldType        field type.
    * @param fieldLogicalType filed logical type.
    * @param sqlType          code of sql type.
+   * @param precision
    * @return 'true' if field is compatible to be written, 'false' otherwise.
    */
-  boolean isFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType);
+  boolean isFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType, int precision,
+                            boolean isSigned);
 }

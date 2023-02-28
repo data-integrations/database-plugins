@@ -331,7 +331,8 @@ public class DBRecord implements Writable, DBWritable, Configurable {
         writeInt(stmt, fieldIndex, sqlIndex, fieldValue);
         break;
       case LONG:
-        stmt.setLong(sqlIndex, (Long) fieldValue);
+        long fieldValueLong = ((Number) fieldValue).longValue();
+        stmt.setLong(sqlIndex, fieldValueLong);
         break;
       case FLOAT:
         // both real and float are set with the same method on prepared statement

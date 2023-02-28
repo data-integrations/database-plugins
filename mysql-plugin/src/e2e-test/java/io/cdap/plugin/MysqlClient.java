@@ -17,12 +17,19 @@
 package io.cdap.plugin;
 
 import io.cdap.e2e.utils.PluginPropertyUtils;
+import org.junit.Assert;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 /**
  *  MySQL client.
@@ -39,7 +46,8 @@ public class MysqlClient {
 
   public static int countRecord(String table) throws SQLException, ClassNotFoundException {
     String countQuery = "SELECT COUNT(*) as total FROM " + table;
-    try (Connection connect = getMysqlConnection(); Statement statement = connect.createStatement();
+    try (Connection connect = getMysqlConnection();
+         Statement statement = connect.createStatement();
          ResultSet rs = statement.executeQuery(countQuery)) {
       int num = 0;
       while (rs.next()) {
@@ -49,8 +57,74 @@ public class MysqlClient {
     }
   }
 
+  /**
+   * Extracts entire data from source and target tables.
+   * @param sourceTable table at the source side
+   * @param targetTable table at the sink side
+   * @return true if the values in source and target side are equal
+   */
+  public static boolean validateRecordValues(String sourceTable, String targetTable)
+    throws SQLException, ClassNotFoundException {
+    String getSourceQuery = "SELECT * FROM " + sourceTable;
+    String getTargetQuery = "SELECT * FROM " + targetTable;
+    try (Connection connect = getMysqlConnection()) {
+      connect.setHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT);
+      Statement statement1 = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE,
+                                                     ResultSet.HOLD_CURSORS_OVER_COMMIT);
+      Statement statement2 = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE,
+                                                     ResultSet.HOLD_CURSORS_OVER_COMMIT);
+      ResultSet rsSource = statement1.executeQuery(getSourceQuery);
+      ResultSet rsTarget = statement2.executeQuery(getTargetQuery);
+      return compareResultSetData(rsSource, rsTarget);
+    }
+  }
+
+  /**
+   * Compares the result Set data in source table and sink table..
+   * @param rsSource result set of the source table data
+   * @param rsTarget result set of the target table data
+   * @return true if rsSource matches rsTarget
+   */
+  public static boolean compareResultSetData(ResultSet rsSource, ResultSet rsTarget) throws SQLException {
+    ResultSetMetaData mdSource = rsSource.getMetaData();
+    ResultSetMetaData mdTarget = rsTarget.getMetaData();
+    int columnCountSource = mdSource.getColumnCount();
+    int columnCountTarget = mdTarget.getColumnCount();
+    Assert.assertEquals("Number of columns in source and target are not equal",
+                        columnCountSource, columnCountTarget);
+    while (rsSource.next() && rsTarget.next()) {
+      int currentColumnCount = 1;
+      while (currentColumnCount <= columnCountSource) {
+        String columnTypeName = mdSource.getColumnTypeName(currentColumnCount);
+        int columnType = mdSource.getColumnType(currentColumnCount);
+        String columnName = mdSource.getColumnName(currentColumnCount);
+        if (columnType == Types.TIMESTAMP) {
+          GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+          gc.setGregorianChange(new Date(Long.MIN_VALUE));
+          Timestamp sourceTS = rsSource.getTimestamp(currentColumnCount, gc);
+          Timestamp targetTS = rsTarget.getTimestamp(currentColumnCount, gc);
+          Assert.assertTrue(String.format("Different values found for column : %s", columnName),
+                            sourceTS.equals(targetTS));
+        } else {
+          String sourceString = rsSource.getString(currentColumnCount);
+          String targetString = rsTarget.getString(currentColumnCount);
+          Assert.assertTrue(String.format("Different values found for column : %s", columnName),
+                            String.valueOf(sourceString).equals(String.valueOf(targetString)));
+        }
+        currentColumnCount++;
+      }
+    }
+    Assert.assertFalse("Number of rows in Source table is greater than the number of rows in Target table",
+                       rsSource.next());
+    Assert.assertFalse("Number of rows in Target table is greater than the number of rows in Source table",
+                       rsTarget.next());
+    return true;
+  }
+
+
   public static void createSourceTable(String sourceTable) throws SQLException, ClassNotFoundException {
-    try (Connection connect = getMysqlConnection(); Statement statement = connect.createStatement()) {
+    try (Connection connect = getMysqlConnection();
+         Statement statement = connect.createStatement()) {
       String createSourceTableQuery = "CREATE TABLE IF NOT EXISTS " + sourceTable +
         "(id int, lastName varchar(255), PRIMARY KEY (id))";
       statement.executeUpdate(createSourceTableQuery);
@@ -70,7 +144,8 @@ public class MysqlClient {
   }
 
   public static void createTargetTable(String targetTable) throws SQLException, ClassNotFoundException {
-    try (Connection connect = getMysqlConnection(); Statement statement = connect.createStatement()) {
+    try (Connection connect = getMysqlConnection();
+         Statement statement = connect.createStatement()) {
       String createTargetTableQuery = "CREATE TABLE IF NOT EXISTS " + targetTable +
         "(id int, lastName varchar(255), PRIMARY KEY (id))";
       statement.executeUpdate(createTargetTableQuery);
@@ -80,8 +155,32 @@ public class MysqlClient {
     }
   }
 
+  public static void createSourceDatatypesTable(String sourceTable) throws SQLException, ClassNotFoundException {
+    try (Connection connect = getMysqlConnection();
+         Statement statement = connect.createStatement()) {
+      String datatypesColumns = PluginPropertyUtils.pluginProp("datatypesColumns");
+      String createSourceTableQuery = "CREATE TABLE " + sourceTable + " " + datatypesColumns;
+      statement.executeUpdate(createSourceTableQuery);
+
+      // Insert dummy data.
+      String datatypesValues = PluginPropertyUtils.pluginProp("datatypesValues");
+      String datatypesColumnsList = PluginPropertyUtils.pluginProp("datatypesColumnsList");
+      statement.executeUpdate("INSERT INTO " + sourceTable + " " + datatypesColumnsList + " " + datatypesValues);
+    }
+  }
+
+  public static void createTargetDatatypesTable(String targetTable) throws SQLException, ClassNotFoundException {
+    try (Connection connect = getMysqlConnection();
+         Statement statement = connect.createStatement()) {
+      String datatypesColumns = PluginPropertyUtils.pluginProp("datatypesColumns");
+      String createTargetTableQuery = "CREATE TABLE " + targetTable + " " + datatypesColumns;
+      statement.executeUpdate(createTargetTableQuery);
+    }
+  }
+
   public static void dropTables(String[] tables) throws SQLException, ClassNotFoundException {
-    try (Connection connect = getMysqlConnection(); Statement statement = connect.createStatement()) {
+    try (Connection connect = getMysqlConnection();
+         Statement statement = connect.createStatement()) {
       for (String table : tables) {
         String dropTableQuery = "Drop Table " + table;
         statement.executeUpdate(dropTableQuery);
