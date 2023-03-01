@@ -14,7 +14,7 @@
 # the License.
 #
 
-@Oracle
+@Mssql
 Feature: Mssql - Verify Mssql source data transfer
   @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
   Scenario: To verify data is getting transferred from Mssql to Mssql successfully
@@ -31,7 +31,6 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
-    Then Select radio button plugin property: "trustServerCertificate" with value: "true"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
     Then Click on the Get Schema button
@@ -48,7 +47,6 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "targetRef"
-    Then Select radio button plugin property: "trustServerCertificate" with value: "true"
     Then Validate "SQL Server2" plugin properties
     Then Close the Plugin Properties page
     Then Save the pipeline
@@ -62,6 +60,6 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Wait till pipeline is in running state
     Then Open and capture logs
     Then Verify the pipeline status is "Succeeded"
-    Then Validate records which are transferred to the target table are equal to number of records from the source table
+    Then Validate records transferred to target table are equal to number of records from the source table
 
 

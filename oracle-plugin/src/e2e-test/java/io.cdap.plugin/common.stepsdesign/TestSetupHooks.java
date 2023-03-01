@@ -20,6 +20,7 @@ import io.cdap.e2e.utils.PluginPropertyUtils;
 import io.cdap.plugin.OracleClient;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import java.sql.SQLException;
 
@@ -28,13 +29,16 @@ import java.sql.SQLException;
  */
 public class TestSetupHooks {
 
-  @Before(order = 1, value = "@ORACLE_SOURCE_TEST")
-  public static void setSelectQuery() {
-    String sourceTable =  PluginPropertyUtils.pluginProp("sourceTable");
+  @Before(order = 1)
+  public static void setTableName() {
+    String randomString = RandomStringUtils.randomAlphabetic(10).toUpperCase();
+    String sourceTableName = String.format("SOURCETABLE_%s", randomString);
+    String targetTableName = String.format("TARGETTABLE_%s", randomString);
+    PluginPropertyUtils.addPluginProp("sourceTable", sourceTableName);
+    PluginPropertyUtils.addPluginProp("targetTable", targetTableName);
     String schema = PluginPropertyUtils.pluginProp("schema");
-    PluginPropertyUtils.addPluginProp("selectQuery",
-                                      PluginPropertyUtils.pluginProp("selectQuery").
-                                        replace("${table}", sourceTable).replace("${schema}", schema));
+    PluginPropertyUtils.addPluginProp("selectQuery", String.format("select * from %s.%s", schema,
+                                                                   sourceTableName));
   }
 
   @Before(order = 2, value = "@ORACLE_SOURCE_TEST")
@@ -45,30 +49,12 @@ public class TestSetupHooks {
                                    PluginPropertyUtils.pluginProp("schema"));
   }
 
-  @Before(order = 1, value = "@ORACLE_SOURCE_DATATYPES_TEST")
-  public static void setSelectQueryForAllDatatypes() {
-    String sourceTable =  PluginPropertyUtils.pluginProp("sourceTable");
-    String schema = PluginPropertyUtils.pluginProp("schema");
-    PluginPropertyUtils.addPluginProp("selectQuery",
-                                      PluginPropertyUtils.pluginProp("selectQuery").
-                                        replace("${table}", sourceTable).replace("${schema}", schema));
-  }
-
   @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST")
   public static void createAllDatatypesTables() throws SQLException, ClassNotFoundException {
     OracleClient.createSourceDatatypesTable(PluginPropertyUtils.pluginProp("sourceTable"),
                                    PluginPropertyUtils.pluginProp("schema"));
     OracleClient.createTargetDatatypesTable(PluginPropertyUtils.pluginProp("targetTable"),
                                    PluginPropertyUtils.pluginProp("schema"));
-  }
-
-  @Before(order = 1, value = "@ORACLE_SOURCE_DATATYPES_TEST2")
-  public static void setSelectQueryForLongDatatype() {
-    String sourceTable =  PluginPropertyUtils.pluginProp("sourceTable");
-    String schema = PluginPropertyUtils.pluginProp("schema");
-    PluginPropertyUtils.addPluginProp("selectQuery",
-                                      PluginPropertyUtils.pluginProp("selectQuery").
-                                        replace("${table}", sourceTable).replace("${schema}", schema));
   }
 
   @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST2")
@@ -79,30 +65,12 @@ public class TestSetupHooks {
                                             PluginPropertyUtils.pluginProp("schema"));
   }
 
-  @Before(order = 1, value = "@ORACLE_SOURCE_LONGRAW_TEST")
-  public static void setSelectQueryForDatatypesLongRaw() {
-    String sourceTable =  PluginPropertyUtils.pluginProp("sourceTable");
-    String schema = PluginPropertyUtils.pluginProp("schema");
-    PluginPropertyUtils.addPluginProp("selectQuery",
-                                      PluginPropertyUtils.pluginProp("selectQuery").
-                                        replace("${table}", sourceTable).replace("${schema}", schema));
-  }
-
   @Before(order = 2, value = "@ORACLE_SOURCE_LONGRAW_TEST")
   public static void createDatatypesTablesLongRaw() throws SQLException, ClassNotFoundException {
     OracleClient.createSourceLongRawTable(PluginPropertyUtils.pluginProp("sourceTable"),
                                             PluginPropertyUtils.pluginProp("schema"));
     OracleClient.createTargetLongRawTable(PluginPropertyUtils.pluginProp("targetTable"),
                                             PluginPropertyUtils.pluginProp("schema"));
-  }
-
-  @Before(order = 1, value = "@ORACLE_SOURCE_DATATYPES_TEST4")
-  public static void setSelectQueryForLongVarchar() {
-    String sourceTable =  PluginPropertyUtils.pluginProp("sourceTable");
-    String schema = PluginPropertyUtils.pluginProp("schema");
-    PluginPropertyUtils.addPluginProp("selectQuery",
-                                      PluginPropertyUtils.pluginProp("selectQuery").
-                                        replace("${table}", sourceTable).replace("${schema}", schema));
   }
 
   @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST4")
