@@ -21,6 +21,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.util.DBUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -28,6 +29,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
@@ -49,11 +55,40 @@ public class PostgresDBRecord extends DBRecord {
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                              int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+    String columnTypeName = resultSet.getMetaData().getColumnTypeName(columnIndex);
     if (isUseSchema(resultSet.getMetaData(), columnIndex)) {
       setFieldAccordingToSchema(resultSet, recordBuilder, field, columnIndex);
+    } else if (sqlType == Types.TIMESTAMP && columnTypeName.equalsIgnoreCase("timestamp")) {
+      Timestamp timestamp = resultSet.getTimestamp(columnIndex, DBUtils.PURE_GREGORIAN_CALENDAR);
+      if (timestamp != null) {
+        ZonedDateTime zonedDateTime = OffsetDateTime.of(timestamp.toLocalDateTime(), OffsetDateTime.now().getOffset())
+                .atZoneSameInstant(ZoneId.of("UTC"));
+        /*if (columnTypeName.equalsIgnoreCase("timestamptz")) {
+          recordBuilder.setTimestamp(field.getName(), zonedDateTime);
+        } else */
+        Schema nonNullableSchema = field.getSchema().isNullable() ?
+                field.getSchema().getNonNullable() : field.getSchema();
+        setZonedDateTimeBasedOnOuputSchema(recordBuilder, nonNullableSchema.getLogicalType(),
+                field.getName(), zonedDateTime);
+      } else {
+        recordBuilder.set(field.getName(), null);
+      }
     } else {
       setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     }
+  }
+
+  private void setZonedDateTimeBasedOnOuputSchema(StructuredRecord.Builder recordBuilder,
+                                                  Schema.LogicalType logicalType,
+                                                  String fieldName,
+                                                  ZonedDateTime zonedDateTime) {
+    if (Schema.LogicalType.DATETIME.equals(logicalType)) {
+      recordBuilder.setDateTime(fieldName, zonedDateTime.toLocalDateTime());
+    } else if (Schema.LogicalType.TIMESTAMP_MICROS.equals(logicalType)) {
+      recordBuilder.setTimestamp(fieldName, zonedDateTime);
+    }
+
+    return;
   }
 
   private static boolean isUseSchema(ResultSetMetaData metadata, int columnIndex) throws SQLException {

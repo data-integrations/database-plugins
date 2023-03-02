@@ -58,6 +58,10 @@ public class PostgresSchemaReader extends CommonSchemaReader {
       return Schema.of(Schema.Type.STRING);
     }
 
+    if (typeName.equalsIgnoreCase("timestamp")) {
+      return Schema.of(Schema.LogicalType.DATETIME);
+    }
+
     return super.getSchema(metadata, index);
   }
 
