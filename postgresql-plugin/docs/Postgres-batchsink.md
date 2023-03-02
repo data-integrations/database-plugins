@@ -67,42 +67,43 @@ Data Types Mapping
 All PostgreSQL specific data types mapped to string and can have multiple input formats and one 'canonical' output form.
 Please, refer to PostgreSQL data types documentation to figure out proper formats.
 
-| PostgreSQL Data Type                                | CDAP Schema Data Type | Comment                                      |
-|-----------------------------------------------------|-----------------------|----------------------------------------------|
-| bigint                                              | long                  |                                              |
-| bit(n)                                              | string                | string with '0' and '1' chars exact n length |
-| bit varying(n)                                      | string                | string with '0' and '1' chars max n length   |
-| boolean                                             | boolean               |                                              |
-| bytea                                               | bytes                 |                                              |
-| character                                           | string                |                                              |
-| character varying                                   | string                |                                              |
-| double precision                                    | double                |                                              |
-| integer                                             | int                   |                                              |
-| numeric(precision, scale)/decimal(precision, scale) | decimal               |                                              |
-| real                                                | float                 |                                              |
-| smallint                                            | int                   |                                              |
-| text                                                | string                |                                              |
-| date                                                | date                  |                                              |
-| time [ (p) ] [ without time zone ]                  | time                  |                                              |
-| time [ (p) ] with time zone                         | string                |                                              |
-| timestamp [ (p) ] [ without time zone ]             | timestamp             |                                              |
-| timestamp [ (p) ] with time zone                    | timestamp             | stored in UTC format in database             |
-| xml                                                 | string                |                                              |
-| tsquery                                             | string                |                                              |
-| tsvector                                            | string                |                                              |
-| uuid                                                | string                |                                              |
-| box                                                 | string                |                                              |
-| cidr                                                | string                |                                              |
-| circle                                              | string                |                                              |
-| inet                                                | string                |                                              |
-| interval                                            | string                |                                              |
-| json                                                | string                |                                              |
-| jsonb                                               | string                |                                              |
-| line                                                | string                |                                              |
-| lseg                                                | string                |                                              |
-| macaddr                                             | string                |                                              |
-| macaddr8                                            | string                |                                              |
-| money                                               | string                |                                              |
-| path                                                | string                |                                              |
-| point                                               | string                |                                              |
-| polygon                                             | string                |                                              |
+| PostgreSQL Data Type                                | CDAP Schema Data Type | Comment                                                                   |
+|-----------------------------------------------------|-----------------------|---------------------------------------------------------------------------|
+| bigint                                              | long                  |                                                                           |
+| bit(n)                                              | string                | String with '0' and '1' chars having exact n char length                  |
+| bit varying(n)                                      | string                | String with '0' and '1' chars having max n char length                    |
+| boolean                                             | boolean               |                                                                           |
+| bytea                                               | bytes                 |                                                                           |
+| character                                           | string                |                                                                           |
+| character varying                                   | string                |                                                                           |
+| double precision                                    | double                |                                                                           |
+| integer                                             | int                   |                                                                           |
+| numeric(precision, scale)/decimal(precision, scale) | decimal               |                                                                           |
+| numeric(precision, scale)/decimal(precision, scale) | string                | For Numeric/Decimal types defined<br/> without a precision and scale      |
+| real                                                | float                 |                                                                           |
+| smallint                                            | int                   |                                                                           |
+| text                                                | string                |                                                                           |
+| date                                                | date                  |                                                                           |
+| time [ (p) ] [ without time zone ]                  | time                  |                                                                           |
+| time [ (p) ] with time zone                         | string                | Time with the following format <br/>"02:00:00 +0530"                      |
+| timestamp [ (p) ] [ without time zone ]             | timestamp             |                                                                           |
+| timestamp [ (p) ] with time zone                    | string                | Timestamp with the following format <br/>"2023-01-01 15:30:00.000 +0530"  |
+| xml                                                 | string                |                                                                           |
+| tsquery                                             | string                |                                                                           |
+| tsvector                                            | string                |                                                                           |
+| uuid                                                | string                |                                                                           |
+| box                                                 | string                |                                                                           |
+| cidr                                                | string                |                                                                           |
+| circle                                              | string                |                                                                           |
+| inet                                                | string                |                                                                           |
+| interval                                            | string                |                                                                           |
+| json                                                | string                |                                                                           |
+| jsonb                                               | string                |                                                                           |
+| line                                                | string                |                                                                           |
+| lseg                                                | string                |                                                                           |
+| macaddr                                             | string                |                                                                           |
+| macaddr8                                            | string                |                                                                           |
+| money                                               | string                |                                                                           |
+| path                                                | string                |                                                                           |
+| point                                               | string                |                                                                           |
+| polygon                                             | string                |                                                                           |

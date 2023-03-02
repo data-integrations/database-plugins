@@ -74,36 +74,33 @@ with the tradeoff of higher memory usage.
 Data Types Mapping
 ----------
 
-    | Oracle Data Type               | CDAP Schema Data Type | Comment                                                |
-    | ------------------------------ | --------------------- | ------------------------------------------------------ |
-    | VARCHAR2                       | string                |                                                        |
-    | NVARCHAR2                      | string                |                                                        |
-    | VARCHAR                        | string                |                                                        |
-    | NUMBER                         | decimal               |                                                        |
-    | FLOAT                          | double                |                                                        |
-    | LONG                           | string                |                                                        |
-    | DATE                           | timestamp             |                                                        |
-    | BINARY_FLOAT                   | float                 |                                                        |
-    | BINARY_DOUBLE                  | double                |                                                        |
-    | TIMESTAMP                      | timestamp             |                                                        |
-    | TIMESTAMP WITH TIME ZONE       | string                |                                                        |
-    | TIMESTAMP WITH LOCAL TIME ZONE | timestamp             |                                                        |
-    | INTERVAL YEAR TO MONTH         | string                |                                                        |
-    | INTERVAL DAY TO SECOND         | string                |                                                        |
-    | RAW                            | bytes                 |                                                        |
-    | LONG RAW                       | bytes                 |                                                        |
-    | ROWID                          | string                |                                                        |
-    | UROWID                         | string                |                                                        |
-    | CHAR                           | string                |                                                        |
-    | NCHAR                          | string                |                                                        |
-    | CLOB                           | string                |                                                        |
-    | NCLOB                          | string                |                                                        |
-    | BLOB                           | bytes                 |                                                        |
-    | BFILE                          | bytes                 | BFILE is a data type used to store a locator (link)    |
-    |                                |                       | to an external file, which is stored outside of the    |
-    |                                |                       | database. Only the locator will be read from an        |
-    |                                |                       | Oracle table and not the content of the external file. |
-
+| **Oracle Data Type**           | **CDAP Schema Data Type** | **Comment**                                                                                                                                                        |
+|:-------------------------------|:-------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| VARCHAR2                       | string                   |                                                                                                                                                                    |
+| NVARCHAR2                      | string                   |                                                                                                                                                                    |
+| VARCHAR                        | string                   |                                                                                                                                                                    |
+| NUMBER                         | string                   | For NUMBER types defined without a precision and scale                                                                                                             |
+| NUMBER                         | decimal                  | For NUMBER types with a defined precision and scale                                                                                                                |
+| FLOAT                          | double                   |                                                                                                                                                                    |
+| LONG                           | string                   |                                                                                                                                                                    |
+| DATE                           | timestamp                |                                                                                                                                                                    |
+| BINARY_FLOAT                   | float                    |                                                                                                                                                                    |
+| BINARY_DOUBLE                  | double                   |                                                                                                                                                                    |
+| TIMESTAMP                      | timestamp                |                                                                                                                                                                    |
+| TIMESTAMP WITH TIME ZONE       | string                   | Timestamp string in the following format:<br/>"2019-07-15 15:57:46.65 GMT"                                                                                         |
+| TIMESTAMP WITH LOCAL TIME ZONE | timestamp                |                                                                                                                                                                    |
+| INTERVAL YEAR TO MONTH         | string                   | Oracle's 'INTERVAL YEAR TO MONTH' literal in the<br/>standard format: "year[-month]"                                                                               |
+| INTERVAL DAY TO SECOND         | string                   | Oracle's 'INTERVAL DAY TO SECOND' literal in the<br/>"[day] [hour][:minutes][:seconds[.milliseconds]"                                                              |
+| RAW                            | bytes                    |                                                                                                                                                                    |
+| LONG RAW                       | bytes                    |                                                                                                                                                                    |
+| ROWID                          | string                   |                                                                                                                                                                    |
+| UROWID                         | string                   |                                                                                                                                                                    |
+| CHAR                           | string                   |                                                                                                                                                                    |
+| NCHAR                          | string                   |                                                                                                                                                                    |
+| CLOB                           | string                   |                                                                                                                                                                    |
+| NCLOB                          | string                   |                                                                                                                                                                    |
+| BLOB                           | bytes                    |                                                                                                                                                                    |
+| BFILE                          | bytes                    | BFILE is a data type used to store a locator (link)<br/>database. Only the locator will be read from an<br/>Oracle table and not the content of the external file. |
 
 Example
 ------
