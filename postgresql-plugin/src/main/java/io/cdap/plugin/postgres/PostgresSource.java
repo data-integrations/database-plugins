@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
@@ -136,6 +137,21 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
     public void validate(FailureCollector collector) {
       ConfigUtil.validateConnection(this, useConnection, connection, collector);
       super.validate(collector);
+    }
+
+    @Override
+    protected void validateField(FailureCollector collector, Schema.Field field,
+                                 Schema actualFieldSchema, Schema expectedFieldSchema) {
+      // This change is needed to make sure that the pipeline upgrade continues to work post upgrade.
+      // Since the older handling of the Timestamp used to convert to CDAP TIMESTAMP type,
+      // but since PostgreSQL Timestamp does not have a timezone information, hence it should ideally map to
+      // CDAP DATETIME type. In that case the output schema would be set to TIMESTAMP,
+      // and the code internally would try to identify the schema of the field as DATETIME.
+      if (Schema.LogicalType.TIMESTAMP_MICROS.equals(expectedFieldSchema.getLogicalType())
+          && Schema.LogicalType.DATETIME.equals(actualFieldSchema.getLogicalType())) {
+        return;
+      }
+      super.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
     }
   }
 }
