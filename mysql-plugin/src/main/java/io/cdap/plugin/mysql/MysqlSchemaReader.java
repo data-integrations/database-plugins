@@ -16,15 +16,19 @@
 
 package io.cdap.plugin.mysql;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.CommonSchemaReader;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 
 /**
  * Schema reader for mapping Mysql DB type
  */
 public class MysqlSchemaReader extends CommonSchemaReader {
+
+  public static final String YEAR_TYPE_NAME = "YEAR";
 
   private final String sessionID;
 
@@ -37,5 +41,19 @@ public class MysqlSchemaReader extends CommonSchemaReader {
   public boolean shouldIgnoreColumn(ResultSetMetaData metadata, int index) throws SQLException {
     return metadata.getColumnName(index).equals("c_" + sessionID) ||
       metadata.getColumnName(index).equals("sqn_" + sessionID);
+  }
+
+  @Override
+  public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
+    int sqlType = metadata.getColumnType(index);
+    String sqlTypeName = metadata.getColumnTypeName(index);
+
+    // YEAR type in MySQL should get converted to integer to avoid truncation
+    // failures in the MySQL Sink plugin due to missing date and month details.
+    if (sqlType == Types.DATE && YEAR_TYPE_NAME.equalsIgnoreCase(sqlTypeName)) {
+      return Schema.of(Schema.Type.INT);
+    }
+
+    return super.getSchema(metadata, index);
   }
 }

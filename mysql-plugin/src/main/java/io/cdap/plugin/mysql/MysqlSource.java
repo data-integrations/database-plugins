@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
@@ -75,6 +76,11 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
                                       mysqlSourceConfig.database, mysqlSourceConfig.getReferenceName());
     Asset asset = Asset.builder(mysqlSourceConfig.getReferenceName()).setFqn(fqn).build();
     return new LineageRecorder(context, asset);
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new MysqlSchemaReader(null);
   }
 
   /**

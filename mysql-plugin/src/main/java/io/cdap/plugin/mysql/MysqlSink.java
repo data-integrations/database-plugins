@@ -33,8 +33,10 @@ import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
+import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.sink.AbstractDBSink;
+import io.cdap.plugin.db.sink.FieldsValidator;
 import io.cdap.plugin.util.DBUtils;
 
 import java.util.Collections;
@@ -71,6 +73,16 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
                                       mysqlSinkConfig.database, mysqlSinkConfig.getReferenceName());
     Asset asset = Asset.builder(mysqlSinkConfig.getReferenceName()).setFqn(fqn).build();
     return new LineageRecorder(context, asset);
+  }
+
+  @Override
+  protected FieldsValidator getFieldsValidator() {
+    return new MysqlFieldsValidator();
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new MysqlSchemaReader(null);
   }
 
   /**
