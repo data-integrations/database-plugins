@@ -35,7 +35,7 @@ public class PostgresSchemaReader extends CommonSchemaReader {
   );
 
   public static final Set<String> STRING_MAPPED_POSTGRES_TYPES_NAMES = ImmutableSet.of(
-    "bit", "timetz", "money"
+    "bit", "timetz", "money", "timestamptz"
   );
 
   private final String sessionID;
