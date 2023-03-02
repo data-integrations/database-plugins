@@ -16,6 +16,7 @@
 
 package io.cdap.plugin;
 
+import com.google.common.base.Strings;
 import io.cdap.e2e.utils.PluginPropertyUtils;
 import org.junit.Assert;
 
@@ -103,13 +104,23 @@ public class MysqlClient {
           gc.setGregorianChange(new Date(Long.MIN_VALUE));
           Timestamp sourceTS = rsSource.getTimestamp(currentColumnCount, gc);
           Timestamp targetTS = rsTarget.getTimestamp(currentColumnCount, gc);
-          Assert.assertTrue(String.format("Different values found for column : %s", columnName),
-                            sourceTS.equals(targetTS));
+          if (sourceTS == null) {
+            Assert.assertNull(String.format("Not null TIMESTAMP value found in target for column : %s", columnName),
+                    targetTS);
+          } else {
+            Assert.assertEquals(String.format("Different TIMESTAMP values found for column : %s", columnName),
+                    sourceTS, targetTS);
+          }
         } else {
           String sourceString = rsSource.getString(currentColumnCount);
           String targetString = rsTarget.getString(currentColumnCount);
-          Assert.assertTrue(String.format("Different values found for column : %s", columnName),
-                            String.valueOf(sourceString).equals(String.valueOf(targetString)));
+          if (Strings.isNullOrEmpty(sourceString)) {
+            Assert.assertTrue(String.format("Not null/empty value found in target for column : %s", columnName),
+                    Strings.isNullOrEmpty(targetString));
+          } else {
+            Assert.assertEquals(String.format("Different values found for column : %s", columnName),
+                    sourceString, targetString);
+          }
         }
         currentColumnCount++;
       }

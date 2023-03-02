@@ -62,7 +62,7 @@ port 3306 (Ensure that the driver for MySQL is installed. You can also provide d
 otherwise "mysql" will be used), then configure the plugin with:
 
 ```
-Driver Name: "mariadb"
+Driver Name: "mysql"
 Database Command: "UPDATE table_name SET price = 20 WHERE ID = 6"
 Host: "localhost"
 Port: 3306

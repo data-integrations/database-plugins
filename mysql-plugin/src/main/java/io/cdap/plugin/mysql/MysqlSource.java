@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
@@ -30,6 +31,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
@@ -75,6 +77,11 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
                                       mysqlSourceConfig.database, mysqlSourceConfig.getReferenceName());
     Asset asset = Asset.builder(mysqlSourceConfig.getReferenceName()).setFqn(fqn).build();
     return new LineageRecorder(context, asset);
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new MysqlSchemaReader(null);
   }
 
   /**
@@ -184,6 +191,20 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
     public void validate(FailureCollector collector) {
       ConfigUtil.validateConnection(this, useConnection, connection, collector);
       super.validate(collector);
+    }
+
+    @Override
+    protected void validateField(FailureCollector collector,
+                                 Schema.Field field,
+                                 Schema actualFieldSchema,
+                                 Schema expectedFieldSchema) {
+      // Backward compatibility changes to support MySQL YEAR to Date type conversion
+      if (Schema.LogicalType.DATE.equals(expectedFieldSchema.getLogicalType())
+            && Schema.Type.INT.equals(actualFieldSchema.getType())) {
+        return;
+      }
+
+      super.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
     }
 
     @Override

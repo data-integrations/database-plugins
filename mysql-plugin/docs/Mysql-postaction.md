@@ -77,7 +77,7 @@ then configure the plugin with:
 
 ```
 Run Condition: "success" 
-Driver Name: "maridb"
+Driver Name: "mysql"
 Query: "delete * from userEvents"
 Host: "localhost"
 Port: 3306
