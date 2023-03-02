@@ -30,8 +30,8 @@ public class PostgresFieldsValidator extends CommonFieldsValidator {
 
   @Override
   public boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
-    Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
-      : field.getSchema().getType();
+    Schema schema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+    Schema.Type fieldType = schema.getType();
 
     String colTypeName = metadata.getColumnTypeName(index);
     int columnType = metadata.getColumnType(index);
@@ -44,6 +44,11 @@ public class PostgresFieldsValidator extends CommonFieldsValidator {
                     "{} type.", field.getName(), fieldType, colTypeName);
         return false;
       }
+    }
+
+    if (colTypeName.equalsIgnoreCase("timestamp")
+        && schema.getLogicalType().equals(Schema.LogicalType.DATETIME)) {
+      return true;
     }
 
     return super.isFieldCompatible(field, metadata, index);
