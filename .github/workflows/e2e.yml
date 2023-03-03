@@ -40,7 +40,7 @@ jobs:
           )
     strategy:
       matrix:
-        module: [mysql-plugin, postgresql-plugin, oracle-plugin]
+        module: [mysql-plugin, postgresql-plugin, oracle-plugin, mssql-plugin]
       fail-fast: false
 
     steps:
@@ -83,6 +83,10 @@ jobs:
             ORACLE_USERNAME:cdapio-github-builds/ORACLE_USERNAME
             ORACLE_PASSWORD:cdapio-github-builds/ORACLE_PASSWORD
             ORACLE_PORT:cdapio-github-builds/ORACLE_PORT
+            MSSQL_HOST:cdapio-github-builds/MSSQL_HOST
+            MSSQL_USERNAME:cdapio-github-builds/MSSQL_USERNAME
+            MSSQL_PASSWORD:cdapio-github-builds/MSSQL_PASSWORD
+            MSSQL_PORT:cdapio-github-builds/MSSQL_PORT
             MYSQL_HOST:cdapio-github-builds/MYSQL_HOST
             MYSQL_USERNAME:cdapio-github-builds/MYSQL_USERNAME
             MYSQL_PASSWORD:cdapio-github-builds/MYSQL_PASSWORD
@@ -96,6 +100,10 @@ jobs:
           ORACLE_USERNAME: ${{ steps.secrets.outputs.ORACLE_USERNAME }}
           ORACLE_PASSWORD: ${{ steps.secrets.outputs.ORACLE_PASSWORD }}
           ORACLE_PORT: ${{ steps.secrets.outputs.ORACLE_PORT }}
+          MSSQL_HOST: ${{ steps.secrets.outputs.MSSQL_HOST }}
+          MSSQL_USERNAME: ${{ steps.secrets.outputs.MSSQL_USERNAME }}
+          MSSQL_PASSWORD: ${{ steps.secrets.outputs.MSSQL_PASSWORD }}
+          MSSQL_PORT: ${{ steps.secrets.outputs.MSSQL_PORT }}
           MYSQL_HOST: ${{ steps.secrets.outputs.MYSQL_HOST }}
           MYSQL_USERNAME: ${{ steps.secrets.outputs.MYSQL_USERNAME }}
           MYSQL_PASSWORD: ${{ steps.secrets.outputs.MYSQL_PASSWORD }}
@@ -109,6 +117,10 @@ jobs:
           ORACLE_USERNAME: ${{ steps.secrets.outputs.ORACLE_USERNAME }}
           ORACLE_PASSWORD: ${{ steps.secrets.outputs.ORACLE_PASSWORD }}
           ORACLE_PORT: ${{ steps.secrets.outputs.ORACLE_PORT }}
+          MSSQL_HOST: ${{ steps.secrets.outputs.MSSQL_HOST }}
+          MSSQL_USERNAME: ${{ steps.secrets.outputs.MSSQL_USERNAME }}
+          MSSQL_PASSWORD: ${{ steps.secrets.outputs.MSSQL_PASSWORD }}
+          MSSQL_PORT: ${{ steps.secrets.outputs.MSSQL_PORT }}
           MYSQL_HOST: ${{ steps.secrets.outputs.MYSQL_HOST }}
           MYSQL_USERNAME: ${{ steps.secrets.outputs.MYSQL_USERNAME }}
           MYSQL_PASSWORD: ${{ steps.secrets.outputs.MYSQL_PASSWORD }}
