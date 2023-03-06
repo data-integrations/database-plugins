@@ -121,7 +121,6 @@ public class MysqlClient {
     return true;
   }
 
-
   public static void createSourceTable(String sourceTable) throws SQLException, ClassNotFoundException {
     try (Connection connect = getMysqlConnection();
          Statement statement = connect.createStatement()) {
