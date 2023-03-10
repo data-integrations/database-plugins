@@ -37,28 +37,30 @@ public class OracleFieldsValidator extends CommonFieldsValidator {
     int sqlType = metadata.getColumnType(index);
     int precision = metadata.getPrecision(index);
     int scale = metadata.getScale(index);
+    boolean isSigned = metadata.isSigned(index);
 
     // Handle logical types first
     if (fieldLogicalType == Schema.LogicalType.DATE) {
       // oracle date also contains time part so the oracle driver treats date as timestamp
       // https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT413
-      return sqlType == Types.TIMESTAMP || super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+      return sqlType == Types.TIMESTAMP || super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision,
+                                                                   isSigned);
     }
     if (fieldLogicalType == Schema.LogicalType.TIMESTAMP_MICROS) {
       return sqlType == OracleSinkSchemaReader.TIMESTAMP_LTZ ||
-        super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+        super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
     } else if (fieldLogicalType != null) {
-      return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+      return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
     }
 
     switch (fieldType) {
       case FLOAT:
         return sqlType == OracleSinkSchemaReader.BINARY_FLOAT
-          || super.isFieldCompatible(fieldType, null, sqlType);
+          || super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);
       case BYTES:
         return sqlType == OracleSinkSchemaReader.BFILE
           || sqlType == OracleSinkSchemaReader.LONG_RAW
-          || super.isFieldCompatible(fieldType, null, sqlType);
+          || super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);
       case STRING:
         return sqlType == OracleSinkSchemaReader.LONG
           || sqlType == OracleSinkSchemaReader.TIMESTAMP_TZ
@@ -66,7 +68,7 @@ public class OracleFieldsValidator extends CommonFieldsValidator {
           || sqlType == OracleSinkSchemaReader.INTERVAL_YM
           || sqlType == Types.ROWID
           || sqlType == Types.NUMERIC
-          || super.isFieldCompatible(fieldType, null, sqlType);
+          || super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);
       case INT:
         // Since all Oracle numeric types are based on NUMBER(i.e. INTEGER type is actually NUMBER(38, 0)) we won't be
         // able to use Oracle Sink Plugin with other sources. It's safe to write primitives as values of decimal
@@ -78,7 +80,7 @@ public class OracleFieldsValidator extends CommonFieldsValidator {
           // It is equal to the value returned by (new BigDecimal(Integer.MAX_VALUE)).precision()
           return precision >= 10 && scale == 0;
         }
-        return super.isFieldCompatible(fieldType, null, sqlType);
+        return super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);
       case LONG:
         // Since all Oracle numeric types are based on NUMBER(i.e. INTEGER type is actually NUMBER(38, 0)) we won't be
         // able to use Oracle Sink Plugin with other sources. It's safe to write primitives as values of decimal
@@ -90,7 +92,7 @@ public class OracleFieldsValidator extends CommonFieldsValidator {
           // It is equal to the value returned by (new BigDecimal(Long.MAX_VALUE)).precision()
           return precision >= 19 && scale == 0;
         }
-        return super.isFieldCompatible(fieldType, null, sqlType);
+        return super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);
       case DOUBLE:
         if (sqlType == Types.DECIMAL || sqlType == Types.NUMERIC) {
           // This is the only way to differentiate FLOAT/REAL columns from other numeric columns, that based on NUMBER.
@@ -99,9 +101,9 @@ public class OracleFieldsValidator extends CommonFieldsValidator {
           return Double.class.getTypeName().equals(metadata.getColumnClassName(index));
         }
         return sqlType == OracleSinkSchemaReader.BINARY_DOUBLE
-          || super.isFieldCompatible(fieldType, null, sqlType);
+          || super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);
       default:
-        return super.isFieldCompatible(fieldType, null, sqlType);
+        return super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);
     }
   }
 }

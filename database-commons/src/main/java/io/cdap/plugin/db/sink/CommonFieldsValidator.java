@@ -73,8 +73,10 @@ public class CommonFieldsValidator implements FieldsValidator {
     Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
 
     int sqlType = metadata.getColumnType(index);
+    boolean isSigned = metadata.isSigned(index);
+    int precision = metadata.getPrecision(index);
 
-    return isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+    return isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
   }
 
 
@@ -84,9 +86,14 @@ public class CommonFieldsValidator implements FieldsValidator {
    * @param fieldType        field type.
    * @param fieldLogicalType filed logical type.
    * @param sqlType          code of sql type.
+   * @param precision
    * @return 'true' if field is compatible to be written, 'false' otherwise.
    */
-  public boolean isFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType) {
+  public boolean isFieldCompatible(Schema.Type fieldType,
+                                   Schema.LogicalType fieldLogicalType,
+                                   int sqlType,
+                                   int precision,
+                                   boolean isSigned) {
     // Handle logical types first
     if (fieldLogicalType != null) {
       switch (fieldLogicalType) {
@@ -100,7 +107,8 @@ public class CommonFieldsValidator implements FieldsValidator {
           return sqlType == Types.TIMESTAMP;
         case DECIMAL:
           return sqlType == Types.NUMERIC
-            || sqlType == Types.DECIMAL;
+            || sqlType == Types.DECIMAL
+            || (sqlType == Types.BIGINT && !isSigned && precision >= 19);
       }
     }
 
@@ -115,7 +123,8 @@ public class CommonFieldsValidator implements FieldsValidator {
           || sqlType == Types.SMALLINT
           || sqlType == Types.TINYINT;
       case LONG:
-        return sqlType == Types.BIGINT;
+        return sqlType == Types.BIGINT
+          || (!isSigned && sqlType == Types.INTEGER);
       case FLOAT:
         return sqlType == Types.REAL
           || sqlType == Types.FLOAT;

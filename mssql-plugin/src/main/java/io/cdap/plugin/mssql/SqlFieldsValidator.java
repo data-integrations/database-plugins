@@ -34,10 +34,12 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
     Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
 
     int sqlType = metadata.getColumnType(index);
+    boolean isSigned = metadata.isSigned(index);
+    int precision = metadata.getPrecision(index);
 
     // Handle logical types first
     if (fieldLogicalType != null) {
-      return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType);
+      return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
     }
 
     switch (fieldType) {
@@ -53,7 +55,7 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
           || sqlType == SqlServerSinkSchemaReader.SQL_VARIANT
           || super.isFieldCompatible(field, metadata, index);
       default:
-        return super.isFieldCompatible(fieldType, null, sqlType);
+        return super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);
     }
   }
 }

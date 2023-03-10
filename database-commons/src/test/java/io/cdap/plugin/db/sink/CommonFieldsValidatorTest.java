@@ -36,34 +36,62 @@ public class CommonFieldsValidatorTest {
 
   @Test
   public void testIsFieldCompatible() {
-    validateFieldCompatible(Schema.Type.INT, Schema.LogicalType.DATE, Types.DATE, true);
-    validateFieldCompatible(Schema.Type.INT, Schema.LogicalType.TIME_MILLIS, Types.TIME, true);
-    validateFieldCompatible(Schema.Type.LONG, Schema.LogicalType.TIME_MICROS, Types.TIME, true);
-    validateFieldCompatible(Schema.Type.LONG, Schema.LogicalType.TIMESTAMP_MILLIS, Types.TIMESTAMP, true);
-    validateFieldCompatible(Schema.Type.LONG, Schema.LogicalType.TIMESTAMP_MICROS, Types.TIMESTAMP, true);
-    validateFieldCompatible(Schema.Type.BYTES, Schema.LogicalType.DECIMAL, Types.NUMERIC, true);
-    validateFieldCompatible(Schema.Type.BYTES, Schema.LogicalType.DECIMAL, Types.DECIMAL, true);
-    validateFieldCompatible(Schema.Type.NULL, null, 0, true);
-    validateFieldCompatible(Schema.Type.BOOLEAN, null, Types.BOOLEAN, true);
-    validateFieldCompatible(Schema.Type.BOOLEAN, null, Types.BIT, true);
-    validateFieldCompatible(Schema.Type.INT, null, Types.INTEGER, true);
-    validateFieldCompatible(Schema.Type.INT, null, Types.SMALLINT, true);
-    validateFieldCompatible(Schema.Type.INT, null, Types.TINYINT, true);
-    validateFieldCompatible(Schema.Type.FLOAT, null, Types.REAL, true);
-    validateFieldCompatible(Schema.Type.FLOAT, null, Types.FLOAT, true);
-    validateFieldCompatible(Schema.Type.DOUBLE, null, Types.DOUBLE, true);
-    validateFieldCompatible(Schema.Type.BYTES, null, Types.BINARY, true);
-    validateFieldCompatible(Schema.Type.BYTES, null, Types.VARBINARY, true);
-    validateFieldCompatible(Schema.Type.BYTES, null, Types.LONGVARBINARY, true);
-    validateFieldCompatible(Schema.Type.BYTES, null, Types.BLOB, true);
-    validateFieldCompatible(Schema.Type.STRING, null, Types.VARCHAR, true);
-    validateFieldCompatible(Schema.Type.STRING, null, Types.CHAR, true);
-    validateFieldCompatible(Schema.Type.STRING, null, Types.CLOB, true);
-    validateFieldCompatible(Schema.Type.STRING, null, Types.LONGNVARCHAR, true);
-    validateFieldCompatible(Schema.Type.STRING, null, Types.LONGVARCHAR, true);
-    validateFieldCompatible(Schema.Type.STRING, null, Types.NCHAR, true);
-    validateFieldCompatible(Schema.Type.STRING, null, Types.NCLOB, true);
-    validateFieldCompatible(Schema.Type.LONG, null, Types.TIMESTAMP, false);
+    validateFieldCompatible(Schema.Type.INT, Schema.LogicalType.DATE, Types.DATE, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.INT, Schema.LogicalType.TIME_MILLIS, Types.TIME, true,
+                            0, true);
+    validateFieldCompatible(Schema.Type.LONG, Schema.LogicalType.TIME_MICROS, Types.TIME, true,
+                            0, true);
+    validateFieldCompatible(Schema.Type.LONG, Schema.LogicalType.TIMESTAMP_MILLIS, Types.TIMESTAMP, true,
+                            0, true);
+    validateFieldCompatible(Schema.Type.LONG, Schema.LogicalType.TIMESTAMP_MICROS, Types.TIMESTAMP, true,
+                            0, true);
+    validateFieldCompatible(Schema.Type.BYTES, Schema.LogicalType.DECIMAL, Types.NUMERIC, true,
+                            0, true);
+    validateFieldCompatible(Schema.Type.BYTES, Schema.LogicalType.DECIMAL, Types.DECIMAL, true,
+                            0, true);
+    validateFieldCompatible(Schema.Type.NULL, null, 0, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.BOOLEAN, null, Types.BOOLEAN, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.BOOLEAN, null, Types.BIT, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.INT, null, Types.INTEGER, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.INT, null, Types.SMALLINT, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.INT, null, Types.TINYINT, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.FLOAT, null, Types.REAL, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.FLOAT, null, Types.FLOAT, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.DOUBLE, null, Types.DOUBLE, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.BYTES, null, Types.BINARY, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.BYTES, null, Types.VARBINARY, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.BYTES, null, Types.LONGVARBINARY, true,
+                            0, true);
+    validateFieldCompatible(Schema.Type.BYTES, null, Types.BLOB, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.STRING, null, Types.VARCHAR, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.STRING, null, Types.CHAR, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.STRING, null, Types.CLOB, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.STRING, null, Types.LONGNVARCHAR, true,
+                            0, true);
+    validateFieldCompatible(Schema.Type.STRING, null, Types.LONGVARCHAR, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.STRING, null, Types.NCHAR, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.STRING, null, Types.NCLOB, true, 0,
+                            true);
+    validateFieldCompatible(Schema.Type.LONG, null, Types.TIMESTAMP, false, 0,
+                            true);
   }
 
   @Test
@@ -186,11 +214,12 @@ public class CommonFieldsValidatorTest {
   }
 
   public void validateFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType,
-                                      boolean isCompatible) {
+                                      boolean isCompatible, int precision, boolean isSigned) {
     String errorMessage = String.format("Expected type '%s' is %s with sql type '%d'",
                                         fieldType,
                                         isCompatible ? "compatible" : "not compatible",
                                         sqlType);
-    Assert.assertEquals(errorMessage, isCompatible, VALIDATOR.isFieldCompatible(fieldType, fieldLogicalType, sqlType));
+    Assert.assertEquals(errorMessage, isCompatible, VALIDATOR.isFieldCompatible(fieldType, fieldLogicalType, sqlType,
+                                                                                precision, isSigned));
   }
 }
