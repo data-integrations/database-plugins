@@ -17,13 +17,22 @@
 package io.cdap.plugin;
 
 import io.cdap.e2e.utils.PluginPropertyUtils;
+import org.junit.Assert;
 
-import java.sql.*;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
-import org.junit.Assert;
 
 /**
  *  Mssql client.
@@ -52,7 +61,8 @@ public class MssqlClient {
         }
     }
 
-    public static void createSourceTable(String sourceTable, String schema) throws SQLException, ClassNotFoundException {
+    public static void createSourceTable(String sourceTable, String schema) throws SQLException,
+            ClassNotFoundException {
         try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
             String createSourceTableQuery = "CREATE TABLE " + schema + "." + sourceTable +
                     "(ID varchar(100), LASTNAME varchar(100))";
@@ -66,7 +76,8 @@ public class MssqlClient {
         }
     }
 
-    public static void createTargetTable(String targetTable, String schema) throws SQLException, ClassNotFoundException {
+    public static void createTargetTable(String targetTable, String schema) throws SQLException,
+            ClassNotFoundException {
         try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
             String createTargetTableQuery = "CREATE TABLE " + schema + "." + targetTable +
                     "(ID varchar(100), LASTNAME varchar(100))";

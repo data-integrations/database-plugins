@@ -60,6 +60,6 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Wait till pipeline is in running state
     Then Open and capture logs
     Then Verify the pipeline status is "Succeeded"
-    Then Validate records which are transferred to the target table are equal to number of records from the source table
+    Then Validate records transferred to target table are equal to number of records from the source table
 
 

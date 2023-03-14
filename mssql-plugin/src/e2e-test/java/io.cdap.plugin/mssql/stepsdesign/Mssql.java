@@ -35,8 +35,8 @@ public class Mssql implements CdfHelper {
         openSinkPluginPreviewData("SqlServer");
     }
 
-    @Then("Validate records which are transferred to the target table are equal to number of records from the source table")
-    public void validateRecordsWhichAreTransferredToTargetTableAreEqualToTheNumberOfRecordsTheFromSourceTable() throws
+    @Then("Validate records transferred to target table are equal to number of records from the source table")
+    public void validateRecordsTransferredToTargetTableAreEqualToTheNumberOfRecordsTheFromSourceTable() throws
             SQLException, ClassNotFoundException {
         int countRecords = MssqlClient.countRecord(PluginPropertyUtils.pluginProp("targetTable"),
                 PluginPropertyUtils.pluginProp("schema"));
