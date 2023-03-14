@@ -14,7 +14,7 @@
 # the License.
 #
 
-@Oracle
+@Mssql
 Feature: Mssql - Verify Mssql source data transfer
   @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
   Scenario: To verify data is getting transferred from Mssql to Mssql successfully
