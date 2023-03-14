@@ -20,7 +20,7 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.9.2-SNAPSHOT</version>
+    <version>1.9.2</version>
   </parent>
 
   <name>CloudSQL MySQL plugin</name>
@@ -45,7 +45,7 @@
     <dependency>
       <groupId>io.cdap.plugin</groupId>
       <artifactId>mysql-plugin</artifactId>
-      <version>1.9.2-SNAPSHOT</version>
+      <version>1.9.2</version>
     </dependency>
 
     <!-- test dependencies -->
