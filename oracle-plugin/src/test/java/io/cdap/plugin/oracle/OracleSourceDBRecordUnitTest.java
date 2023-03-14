@@ -48,20 +48,18 @@ public class OracleSourceDBRecordUnitTest {
 
   /**
    * Validate the precision less Numbers handling against following use cases.
-   * 1. Ensure that for Number(0,-127) non nullable type a String is returned by default.
-   * 2. Ensure that for Number(0,-127) non nullable type a String is returned,
-   *    if schema defined this as Number(38,4).
-   * 3. Ensure that for Number(0,-127) nullable type a String type is returned by default.
-   * 4. Ensure that for Number(0,-127) nullable type a String is returned,
-   *    if schema defined this as Number(38,4).
+   * 1. Ensure that for Number(0,-127) non nullable type a String type is returned if output schema is String.
+   * 2. Ensure that for Number(0,-127) non nullable type a String type is returned if output schema is String.
+   * 3. Ensure that for Number(0,-127) nullable type a String type is returned if output schema is String.
+   * 4. Ensure that for Number(0,-127) nullable type a String type is returned if output schema is String.
    * @throws Exception
    */
   @Test
-  public void validatePrecisionLessDecimalParsing() throws Exception {
-    Schema.Field field1 = Schema.Field.of("ID1", Schema.decimalOf(DEFAULT_PRECISION));
-    Schema.Field field2 = Schema.Field.of("ID2", Schema.decimalOf(DEFAULT_PRECISION, 4));
-    Schema.Field field3 = Schema.Field.of("ID3", Schema.nullableOf(Schema.decimalOf(DEFAULT_PRECISION)));
-    Schema.Field field4 = Schema.Field.of("ID4", Schema.nullableOf(Schema.decimalOf(DEFAULT_PRECISION, 4)));
+  public void validatePrecisionLessNumberParsingForOutputSchemaAsString() throws Exception {
+    Schema.Field field1 = Schema.Field.of("ID1", Schema.of(Schema.Type.STRING));
+    Schema.Field field2 = Schema.Field.of("ID2", Schema.of(Schema.Type.STRING));
+    Schema.Field field3 = Schema.Field.of("ID3", Schema.nullableOf(Schema.of(Schema.Type.STRING)));
+    Schema.Field field4 = Schema.Field.of("ID4", Schema.nullableOf(Schema.of(Schema.Type.STRING)));
 
     Schema schema = Schema.recordOf(
         "dbRecord",
@@ -96,13 +94,58 @@ public class OracleSourceDBRecordUnitTest {
   }
 
   /**
+   * Validate the precision less Numbers handling against following use cases.
+   * 1. Ensure that for Number(0,-127) non nullable type a Decimal type is returned if output schema is Decimal.
+   * 2. Ensure that for Number(0,-127) non nullable type a String is returned if output schema is Decimal.
+   * 3. Ensure that for Number(0,-127) nullable type a String type is returned if output schema is Decimal.
+   * 4. Ensure that for Number(0,-127) nullable type a String is returned if output schema is Decimal.
+   * @throws Exception
+   */
+  @Test
+  public void validatePrecisionLessNumberParsingForOutputSchemaAsDecimal() throws Exception {
+    Schema.Field field1 = Schema.Field.of("ID1", Schema.decimalOf(DEFAULT_PRECISION));
+    Schema.Field field2 = Schema.Field.of("ID2", Schema.decimalOf(DEFAULT_PRECISION, 4));
+    Schema.Field field3 = Schema.Field.of("ID3", Schema.nullableOf(Schema.decimalOf(DEFAULT_PRECISION)));
+    Schema.Field field4 = Schema.Field.of("ID4", Schema.decimalOf(DEFAULT_PRECISION, 4));
+
+    Schema schema = Schema.recordOf(
+      "dbRecord",
+      field1,
+      field2,
+      field3,
+      field4
+    );
+
+    when(resultSet.getMetaData()).thenReturn(resultSetMetaData);
+    when(resultSet.getBigDecimal(eq(1), eq(0))).thenReturn(new BigDecimal("123"));
+    when(resultSet.getBigDecimal(eq(2), eq(4))).thenReturn(new BigDecimal("123.4568"));
+    when(resultSet.getBigDecimal(eq(3), eq(0))).thenReturn(new BigDecimal("123"));
+    when(resultSet.getBigDecimal(eq(4), eq(4))).thenReturn(new BigDecimal("123.4568"));
+
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+    dbRecord.handleField(resultSet, builder, field1, 1, Types.NUMERIC, 0, -127);
+    dbRecord.handleField(resultSet, builder, field2, 2, Types.NUMERIC, 0, -127);
+    dbRecord.handleField(resultSet, builder, field3, 3, Types.NUMERIC, 0, -127);
+    dbRecord.handleField(resultSet, builder, field4, 4, Types.NUMERIC, 0, -127);
+
+    StructuredRecord record = builder.build();
+    Assert.assertTrue(record.getDecimal("ID1") instanceof BigDecimal);
+    Assert.assertEquals(record.getDecimal("ID1").toPlainString(), "123");
+    Assert.assertTrue(record.getDecimal("ID2") instanceof BigDecimal);
+    Assert.assertEquals(record.getDecimal("ID2").toPlainString(), "123.4568");
+    Assert.assertTrue(record.getDecimal("ID3") instanceof BigDecimal);
+    Assert.assertEquals(record.getDecimal("ID3").toPlainString(), "123");
+    Assert.assertTrue(record.getDecimal("ID4") instanceof BigDecimal);
+    Assert.assertEquals(record.getDecimal("ID4").toPlainString(), "123.4568");
+  }
+
+  /**
    * Validate the default precision Numbers handling against following use cases.
-   * 1. Ensure that for Number(38, 0) non nullable type a Number(38,0) is returned.
-   * 2. Ensure that for Number(38, 4) non nullable type a Number(38,6) is returned,
-   *    if schema defined this as Number(38,6).
-   * 3. Ensure that for Number(38, 0) nullable type a Number(38,0) is returned by default.
-   * 4. Ensure that for Number(38, 4) nullable type a Number(38,6) is returned,
-   *    if schema defined this as Number(38,6).
+   * 1. Ensure that for Number(38, 0) non nullable type a Number(38,0) is returned if output schema is Decimal.
+   * 2. Ensure that for Number(38, 4) non nullable type a Number(38,6) is returned if output schema is Decimal.
+   * 3. Ensure that for Number(38, 0) nullable type a Number(38,0) is returned if output schema is Decimal.
+   * 4. Ensure that for Number(38, 4) nullable type a Number(38,6) is returned if output schema is Decimal.
    * @throws Exception
    */
   @Test
