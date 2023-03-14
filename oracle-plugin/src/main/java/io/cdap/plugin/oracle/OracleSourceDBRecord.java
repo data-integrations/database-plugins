@@ -223,8 +223,16 @@ public class OracleSourceDBRecord extends DBRecord {
           recordBuilder.set(field.getName(), resultSet.getDouble(columnIndex));
         } else {
           if (precision == 0) {
-            // In case of precision less decimal convert the field to String type
-            recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
+            Schema nonNullableSchema = field.getSchema().isNullable() ?
+                                        field.getSchema().getNonNullable() : field.getSchema();
+            if (Schema.LogicalType.DECIMAL.equals(nonNullableSchema.getLogicalType())) {
+              // Handle the field using the schema set in the output schema
+              BigDecimal decimal = resultSet.getBigDecimal(columnIndex, getScale(field.getSchema()));
+              recordBuilder.setDecimal(field.getName(), decimal);
+            } else {
+              // In case of Number defined without precision and scale convert to String type
+              recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
+            }
           } else {
             // It's required to pass 'scale' parameter since in the case of Oracle, scale of 'BigDecimal' depends on the
             // scale set in the logical schema. For example for value '77.12' if the scale set in the logical schema is
