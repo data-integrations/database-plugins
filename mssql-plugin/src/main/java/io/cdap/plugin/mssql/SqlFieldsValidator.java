@@ -40,10 +40,6 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
 
     // Handle logical types first
     if (fieldLogicalType != null) {
-      if ((sqlType == Types.TIMESTAMP || sqlType == SqlServerSourceSchemaReader.DATETIME_OFFSET_TYPE)
-              && fieldLogicalType.equals(Schema.LogicalType.DATETIME)) {
-        return true;
-      }
       return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
     }
 
