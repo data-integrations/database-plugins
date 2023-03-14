@@ -21,6 +21,7 @@ import io.cdap.plugin.db.sink.CommonFieldsValidator;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 
 /**
  * MSSQL validator for DB fields.
@@ -39,6 +40,10 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
 
     // Handle logical types first
     if (fieldLogicalType != null) {
+      if ((sqlType == Types.TIMESTAMP || sqlType == SqlServerSourceSchemaReader.DATETIME_OFFSET_TYPE)
+              && fieldLogicalType.equals(Schema.LogicalType.DATETIME)) {
+        return true;
+      }
       return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
     }
 
@@ -53,6 +58,8 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
           || sqlType == SqlServerSinkSchemaReader.GEOGRAPHY_TYPE
           || sqlType == SqlServerSinkSchemaReader.GEOMETRY_TYPE
           || sqlType == SqlServerSinkSchemaReader.SQL_VARIANT
+          || sqlType == Types.ROWID
+          || sqlType == Types.NUMERIC
           || super.isFieldCompatible(field, metadata, index);
       default:
         return super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);

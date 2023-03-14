@@ -85,6 +85,81 @@ public class MssqlClient {
         }
     }
 
+    public static void createSourceDatatypesTable(String sourceTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String datatypeColumns = PluginPropertyUtils.pluginProp("datatypeColumns");
+            String createSourceTableQuery2 = "CREATE TABLE " + schema + "." + sourceTable + " " + datatypeColumns;
+            statement.executeUpdate(createSourceTableQuery2);
+
+            // Insert dummy data.
+            String datatypeValues = PluginPropertyUtils.pluginProp("datatypeValues");
+            String datatypeColumnsList = PluginPropertyUtils.pluginProp("datatypeColumnsList");
+            statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + datatypeColumnsList + " " +
+                    datatypeValues);
+        }
+    }
+
+    public static void createTargetDatatypesTable(String targetTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String datatypeColumns = PluginPropertyUtils.pluginProp("datatypeColumns");
+            String createTargetTableQuery2 = "CREATE TABLE " + schema + "." + targetTable + " " + datatypeColumns;
+            statement.executeUpdate(createTargetTableQuery2);
+        }
+    }
+
+    public static void createSourceImageTable(String sourceTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String imageColumns = PluginPropertyUtils.pluginProp("imageColumns");
+            String createSourceTableQuery3 = "CREATE TABLE " + schema + "." + sourceTable + " " + imageColumns;
+            statement.executeUpdate(createSourceTableQuery3);
+
+            // Insert dummy data.
+            String imageValues = PluginPropertyUtils.pluginProp("imageValues");
+            String imageColumnsList = PluginPropertyUtils.pluginProp("imageColumnsList");
+            statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + imageColumnsList + " " +
+                    imageValues);
+        }
+    }
+
+    public static void createTargetImageTable(String targetTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String imageColumns = PluginPropertyUtils.pluginProp("imageColumns");
+            String createTargetTableQuery3 = "CREATE TABLE " + schema + "." + targetTable + " " + imageColumns;
+            statement.executeUpdate(createTargetTableQuery3);
+        }
+    }
+
+    public static void createSourceUniqueIdentifierTable(String sourceTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String uniqueIdentifierColumns = PluginPropertyUtils.pluginProp("uniqueIdentifierColumns");
+            String createSourceTableQuery3 = "CREATE TABLE " + schema + "."
+                    + sourceTable + " " + uniqueIdentifierColumns;
+            statement.executeUpdate(createSourceTableQuery3);
+
+            // Insert dummy data.
+            String uniqueIdentifierValues = PluginPropertyUtils.pluginProp("uniqueIdentifierValues");
+            String uniqueIdentifierColumnsList = PluginPropertyUtils.pluginProp("uniqueIdentifierColumnsList");
+            statement.executeUpdate("INSERT INTO " + schema + "."
+                    + sourceTable + " " + uniqueIdentifierColumnsList + " " +
+                    uniqueIdentifierValues);
+        }
+    }
+
+    public static void createTargetUniqueIdentifierTable(String targetTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String uniqueIdentifierColumns = PluginPropertyUtils.pluginProp("uniqueIdentifierColumns");
+            String createTargetTableQuery3 = "CREATE TABLE " + schema + "."
+                    + targetTable + " " + uniqueIdentifierColumns;
+            statement.executeUpdate(createTargetTableQuery3);
+        }
+    }
+
     public static void deleteTables(String schema, String[] tables)
             throws SQLException, ClassNotFoundException {
         try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
@@ -125,12 +200,21 @@ public class MssqlClient {
                 int columnType = mdSource.getColumnType(currentColumnCount);
                 String columnName = mdSource.getColumnName(currentColumnCount);
                 switch (columnType) {
+                    
+                    case Types.TIMESTAMP:
+                        GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+                        gc.setGregorianChange(new Date(Long.MIN_VALUE));
+                        Timestamp sourceTS = rsSource.getTimestamp(currentColumnCount, gc);
+                        Timestamp targetTS = rsTarget.getTimestamp(currentColumnCount, gc);
+                        Assert.assertTrue(String.format("Different values found for column : %s", columnName),
+                                sourceTS.equals(targetTS));
+                        break;
 
                     default:
                         String sourceString = rsSource.getString(currentColumnCount);
                         String targetString = rsTarget.getString(currentColumnCount);
                         Assert.assertTrue(String.format("Different values found for column : %s", columnName),
-                                String.valueOf(sourceString).equals(String.valueOf(targetString)));
+                                sourceString.equals(targetString));
                 }
                 currentColumnCount++;
             }
