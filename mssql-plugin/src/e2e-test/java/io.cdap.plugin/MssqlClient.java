@@ -130,7 +130,7 @@ public class MssqlClient {
                         String sourceString = rsSource.getString(currentColumnCount);
                         String targetString = rsTarget.getString(currentColumnCount);
                         Assert.assertTrue(String.format("Different values found for column : %s", columnName),
-                                String.valueOf(sourceString).equals(String.valueOf(targetString)));
+                                sourceString.equals(targetString));
                 }
                 currentColumnCount++;
             }
