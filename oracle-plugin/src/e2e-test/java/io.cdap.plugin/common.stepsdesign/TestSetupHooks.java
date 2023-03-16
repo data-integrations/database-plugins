@@ -81,6 +81,14 @@ public class TestSetupHooks {
                                             PluginPropertyUtils.pluginProp("schema"));
   }
 
+  @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPE_TIMESTAMP")
+  public static void createTimestampDatatypeTables() throws SQLException, ClassNotFoundException {
+    OracleClient.createTimestampSourceTable(PluginPropertyUtils.pluginProp("sourceTable"),
+            PluginPropertyUtils.pluginProp("schema"));
+    OracleClient.createTimestampTargetTable(PluginPropertyUtils.pluginProp("targetTable"),
+            PluginPropertyUtils.pluginProp("schema"));
+  }
+
   @After(order = 1, value = "@ORACLE_SINK_TEST")
   public static void dropTables() throws SQLException, ClassNotFoundException {
     OracleClient.deleteTables(PluginPropertyUtils.pluginProp("schema"),
