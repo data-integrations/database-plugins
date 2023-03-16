@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.oracle;
 
+import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -24,6 +25,7 @@ import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
+import io.cdap.plugin.util.DBUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,9 +39,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -116,38 +118,78 @@ public class OracleSourceDBRecord extends DBRecord {
   protected void writeToDB(PreparedStatement stmt, @Nullable Schema.Field field, int fieldIndex) throws SQLException {
     int sqlType = columnTypes.get(fieldIndex).getType();
     int sqlIndex = fieldIndex + 1;
-    switch (sqlType) {
-      case OracleSourceSchemaReader.TIMESTAMP_TZ:
-        if (field != null && record.get(field.getName()) != null) {
-          // Set value of Oracle 'TIMESTAMP WITH TIME ZONE' data type as instance of 'oracle.sql.TIMESTAMPTZ',
-          // created from timestamp string, such as "2019-07-15 15:57:46.65 GMT".
-          String timestampString = record.get(field.getName());
+
+    // Handle the case when TimestampTZ type is set to CDAP String type or Timestamp type
+    if (sqlType == OracleSourceSchemaReader.TIMESTAMP_TZ) {
+      Schema nonNullableSchema = field.getSchema().isNullable() ?
+                                 field.getSchema().getNonNullable() : field.getSchema();
+      if (Schema.Type.STRING.equals(nonNullableSchema.getType())) {
+        String timestampString = record.get(field.getName());
+        if (!Strings.isNullOrEmpty(timestampString)) {
+          Object timestampTZ = createOracleTimestampWithTimeZone(stmt.getConnection(), timestampString);
+          stmt.setObject(sqlIndex, timestampTZ);
+        } else {
+          stmt.setNull(sqlIndex, sqlType);
+        }
+      } else {
+        ZonedDateTime timestamp = record.getTimestamp(field.getName());
+        if (timestamp != null) {
+          String timestampString = Timestamp.valueOf(timestamp.toLocalDateTime()).toString();
           Object timestampWithTimeZone = createOracleTimestampWithTimeZone(stmt.getConnection(), timestampString);
           stmt.setObject(sqlIndex, timestampWithTimeZone);
         } else {
           stmt.setNull(sqlIndex, sqlType);
         }
-        break;
-      default:
-        super.writeToDB(stmt, field, fieldIndex);
+      }
+    } else if (sqlType == OracleSourceSchemaReader.TIMESTAMP_LTZ) {
+      // Handle the case when the TimestampLTZ is mapped to CDAP Timestamp type
+      ZonedDateTime timestamp = record.getTimestamp(field.getName());
+      if (timestamp != null && field != null) {
+        String timestampString = Timestamp.valueOf(timestamp.toLocalDateTime()).toString();
+        Object timestampWithTimeZone = createOracleTimestampWithLocalTimeZone(stmt.getConnection(), timestampString);
+        stmt.setObject(sqlIndex, timestampWithTimeZone);
+      } else {
+        stmt.setNull(sqlIndex, sqlType);
+      }
+    } else {
+      super.writeToDB(stmt, field, fieldIndex);
     }
   }
 
   /**
    * Creates an instance of 'oracle.sql.TIMESTAMPTZ' which corresponds to the specified timestamp with time zone string.
    * @param connection sql connection.
-   * @param timestampString timestamp with time zone string, such as "2019-07-15 15:57:46.65 GMT".
+   * @param timestamp timestamp with time zone string, such as "2019-07-15 15:57:46.65 GMT".
    * @return instance of 'oracle.sql.TIMESTAMPTZ' which corresponds to the specified timestamp with time zone string.
    */
-  private Object createOracleTimestampWithTimeZone(Connection connection, String timestampString) {
+  private Object createOracleTimestampWithTimeZone(Connection connection, String timestamp) {
     try {
       ClassLoader classLoader = connection.getClass().getClassLoader();
       Class<?> timestampTZClass = classLoader.loadClass("oracle.sql.TIMESTAMPTZ");
-      return timestampTZClass.getConstructor(Connection.class, String.class).newInstance(connection, timestampString);
+      return timestampTZClass.getConstructor(Connection.class, String.class).newInstance(connection, timestamp);
     } catch (ClassNotFoundException e) {
-      throw new InvalidStageException("Unable to load 'oracle.sql.TIMESTAMPTZ'.", e);
+      throw new InvalidStageException("Unable to load 'oracle.sql.TIMESTAMPTZ' class.", e);
     } catch (InstantiationException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
       throw new InvalidStageException("Unable to instantiate 'oracle.sql.TIMESTAMPTZ'.", e);
+    }
+  }
+
+  /**
+   * Creates an instance of 'oracle.sql.TIMESTAMPLTZ' which corresponds to the specified timestamp with local time zone.
+   * @param connection sql connection.
+   * @param timestamp timestamp with local time zone string, such as "2019-07-15 15:57:46.65 GMT".
+   * @return instance of 'oracle.sql.TIMESTAMPLTZ' which corresponds to the specified timestamp with local time zone
+   * string.
+   */
+  private Object createOracleTimestampWithLocalTimeZone(Connection connection, String timestamp) {
+    try {
+      ClassLoader classLoader = connection.getClass().getClassLoader();
+      Class<?> timestampLTZClass = classLoader.loadClass("oracle.sql.TIMESTAMPLTZ");
+      return timestampLTZClass.getConstructor(Connection.class, String.class).newInstance(connection, timestamp);
+    } catch (ClassNotFoundException e) {
+      throw new InvalidStageException("Unable to load 'oracle.sql.TIMESTAMPLTZ' class.", e);
+    } catch (InstantiationException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+      throw new InvalidStageException("Unable to instantiate 'oracle.sql.TIMESTAMPLTZ'.", e);
     }
   }
 
@@ -195,12 +237,44 @@ public class OracleSourceDBRecord extends DBRecord {
         recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
         break;
       case OracleSourceSchemaReader.TIMESTAMP_TZ:
-        recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
+        Schema nonNullSchema = field.getSchema().isNullable() ?
+                field.getSchema().getNonNullable() : field.getSchema();
+        if (Schema.Type.STRING.equals(nonNullSchema.getType())) {
+          recordBuilder.set(field.getName(), resultSet.getTimestamp(columnIndex).toString());
+        } else {
+          // In case of TimestampTZ and TimestampLTZ datatypes the getTimestamp(index, Calendar) method call does not
+          // return a correct value for any year which is less than the gregorian cutover date. Due to which
+          // 0001-01-01 01:00:00 changes to 0000-12-30. In this case classes oracle.sql.TIMESTAMPTZ type
+          // need to be used to identify the correct timestamp instances.
+          Object timeStampObj = resultSet.getObject(columnIndex);
+          if (timeStampObj != null) {
+            try {
+              ClassLoader classLoader = resultSet.getClass().getClassLoader();
+              String className = "oracle.sql.TIMESTAMPTZ";
+              Class<?> timestampTZClass = classLoader.loadClass(className);
+              OffsetDateTime offsetDateTime = (OffsetDateTime) timestampTZClass.getMethod("offsetDateTimeValue",
+                      Connection.class).invoke(timeStampObj, resultSet.getStatement().getConnection());
+              recordBuilder.setTimestamp(field.getName(), offsetDateTime.atZoneSameInstant(ZoneId.of("UTC")));
+            } catch (ClassNotFoundException | NoSuchMethodException
+                     | IllegalAccessException | InvocationTargetException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }
+
+        break;
+      case Types.TIMESTAMP:
+        Timestamp timestamp = resultSet.getTimestamp(columnIndex);
+        if (timestamp != null) {
+          recordBuilder.setDateTime(field.getName(), timestamp.toLocalDateTime());
+        }
         break;
       case OracleSourceSchemaReader.TIMESTAMP_LTZ:
-        Timestamp timestamp = resultSet.getTimestamp(columnIndex);
-        recordBuilder.setTimestamp(field.getName(), (timestamp != null) ?
-                timestamp.toInstant().atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)) : null);
+        Timestamp timestampLTZ = resultSet.getTimestamp(columnIndex);
+        if (timestampLTZ != null) {
+          recordBuilder.setDateTime(field.getName(),
+                  OffsetDateTime.of(timestampLTZ.toLocalDateTime(), ZonedDateTime.now().getOffset()).toLocalDateTime());
+        }
         break;
       case OracleSourceSchemaReader.BINARY_FLOAT:
         recordBuilder.set(field.getName(), resultSet.getFloat(columnIndex));

@@ -47,8 +47,9 @@ public class OracleFieldsValidator extends CommonFieldsValidator {
                                                                    isSigned);
     }
     if (fieldLogicalType == Schema.LogicalType.TIMESTAMP_MICROS) {
-      return sqlType == OracleSinkSchemaReader.TIMESTAMP_LTZ ||
-        super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
+      return sqlType == OracleSinkSchemaReader.TIMESTAMP_LTZ
+              || sqlType == OracleSinkSchemaReader.TIMESTAMP_TZ
+          || super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
     } else if (fieldLogicalType != null) {
       return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
     }

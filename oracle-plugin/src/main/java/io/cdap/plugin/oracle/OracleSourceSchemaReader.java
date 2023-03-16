@@ -52,6 +52,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   public static final Set<Integer> ORACLE_TYPES = ImmutableSet.of(
     INTERVAL_DS,
     INTERVAL_YM,
+    Types.TIMESTAMP,
     TIMESTAMP_TZ,
     TIMESTAMP_LTZ,
     BINARY_FLOAT,
@@ -80,9 +81,10 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
 
     switch (sqlType) {
       case TIMESTAMP_TZ:
-        return Schema.of(Schema.Type.STRING);
-      case TIMESTAMP_LTZ:
         return Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
+      case Types.TIMESTAMP:
+      case TIMESTAMP_LTZ:
+        return Schema.of(Schema.LogicalType.DATETIME);
       case BINARY_FLOAT:
         return Schema.of(Schema.Type.FLOAT);
       case BINARY_DOUBLE:

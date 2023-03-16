@@ -167,6 +167,14 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
           && actualFieldSchema.getType().equals(Schema.Type.STRING)) {
         return;
       }
+
+      // For handling TimestampTZ types allow if the expected schema is Timestamp and
+      // output schema is set to String type to ensure backward compatibility.
+      if (Schema.LogicalType.TIMESTAMP_MICROS.equals(actualFieldSchema.getLogicalType())
+          && Schema.Type.STRING.equals(expectedFieldSchema.getType())) {
+        return;
+      }
+
       super.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
     }
   }
