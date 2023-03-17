@@ -87,6 +87,10 @@ jobs:
             MYSQL_USERNAME:cdapio-github-builds/MYSQL_USERNAME
             MYSQL_PASSWORD:cdapio-github-builds/MYSQL_PASSWORD
             MYSQL_PORT:cdapio-github-builds/MYSQL_PORT
+            POSTGRESQL_HOST:cdapio-github-builds/POSTGRESQL_HOST
+            POSTGRESQL_USERNAME:cdapio-github-builds/POSTGRESQL_USERNAME
+            POSTGRESQL_PASSWORD:cdapio-github-builds/POSTGRESQL_PASSWORD
+            POSTGRESQL_PORT:cdapio-github-builds/POSTGRESQL_PORT
 
       - name: Run required e2e tests
         if: github.event_name != 'workflow_dispatch' && github.event_name != 'push' && steps.filter.outputs.e2e-test == 'false'
@@ -100,6 +104,10 @@ jobs:
           MYSQL_USERNAME: ${{ steps.secrets.outputs.MYSQL_USERNAME }}
           MYSQL_PASSWORD: ${{ steps.secrets.outputs.MYSQL_PASSWORD }}
           MYSQL_PORT: ${{ steps.secrets.outputs.MYSQL_PORT }}
+          POSTGRESQL_HOST: ${{ steps.secrets.outputs.POSTGRESQL_HOST }}
+          POSTGRESQL_USERNAME: ${{ steps.secrets.outputs.POSTGRESQL_USERNAME }}
+          POSTGRESQL_PASSWORD: ${{ steps.secrets.outputs.POSTGRESQL_PASSWORD }}
+          POSTGRESQL_PORT: ${{ steps.secrets.outputs.POSTGRESQL_PORT }}
 
       - name: Run all e2e tests
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || steps.filter.outputs.e2e-test == 'true'
@@ -113,6 +121,10 @@ jobs:
           MYSQL_USERNAME: ${{ steps.secrets.outputs.MYSQL_USERNAME }}
           MYSQL_PASSWORD: ${{ steps.secrets.outputs.MYSQL_PASSWORD }}
           MYSQL_PORT: ${{ steps.secrets.outputs.MYSQL_PORT }}
+          POSTGRESQL_HOST: ${{ steps.secrets.outputs.POSTGRESQL_HOST }}
+          POSTGRESQL_USERNAME: ${{ steps.secrets.outputs.POSTGRESQL_USERNAME }}
+          POSTGRESQL_PASSWORD: ${{ steps.secrets.outputs.POSTGRESQL_PASSWORD }}
+          POSTGRESQL_PORT: ${{ steps.secrets.outputs.POSTGRESQL_PORT }}
 
       - name: Upload report
         uses: actions/upload-artifact@v3
