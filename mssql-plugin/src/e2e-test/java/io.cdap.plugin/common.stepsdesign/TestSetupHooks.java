@@ -57,7 +57,7 @@ public class TestSetupHooks {
                 PluginPropertyUtils.pluginProp("schema"));
     }
 
-    @Before(order = 2, value = "@MSSQL_SOURCE_DATATYPES_TEST2")
+    @Before(order = 2, value = "@MSSQL_SOURCE_DATATYPES_IMAGE_TEST")
     public static void createDatatypesTablesImage() throws SQLException, ClassNotFoundException {
         MssqlClient.createSourceImageTable(PluginPropertyUtils.pluginProp("sourceTable"),
                 PluginPropertyUtils.pluginProp("schema"));
@@ -65,7 +65,7 @@ public class TestSetupHooks {
                 PluginPropertyUtils.pluginProp("schema"));
     }
 
-    @Before(order = 2, value = "@MSSQL_SOURCE_DATATYPES_TEST3")
+    @Before(order = 2, value = "@MSSQL_SOURCE_DATATYPES_UIDTYPE_TEST")
     public static void createDatatypesTablesUniqueIdentifier() throws SQLException, ClassNotFoundException {
         MssqlClient.createSourceUniqueIdentifierTable(PluginPropertyUtils.pluginProp("sourceTable"),
                 PluginPropertyUtils.pluginProp("schema"));

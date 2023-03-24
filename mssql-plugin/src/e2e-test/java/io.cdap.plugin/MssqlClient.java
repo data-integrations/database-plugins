@@ -141,7 +141,8 @@ public class MssqlClient {
             // Insert dummy data.
             String uniqueIdentifierValues = PluginPropertyUtils.pluginProp("uniqueIdentifierValues");
             String uniqueIdentifierColumnsList = PluginPropertyUtils.pluginProp("uniqueIdentifierColumnsList");
-            statement.executeUpdate(insertQuery(sourceTable, schema, uniqueIdentifierColumnsList, uniqueIdentifierValues));
+            statement.executeUpdate(insertQuery(sourceTable, schema, uniqueIdentifierColumnsList,
+                    uniqueIdentifierValues));
         }
     }
 

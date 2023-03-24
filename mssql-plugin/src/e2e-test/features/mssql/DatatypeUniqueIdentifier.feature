@@ -16,7 +16,7 @@
 
 @Mssql
 Feature: Mssql - Verify Mssql source data transfer
-  @MSSQL_SOURCE_DATATYPES_TEST3 @MSSQL_SINK_TEST @Mssql_Required
+  @MSSQL_SOURCE_DATATYPES_UIDTYPE_TEST @MSSQL_SINK_TEST @Mssql_Required
   Scenario: To verify data is getting transferred from Mssql to Mssql successfully
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
