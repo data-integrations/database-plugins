@@ -21,6 +21,7 @@ import io.cdap.plugin.db.sink.CommonFieldsValidator;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 
 /**
  * MSSQL validator for DB fields.
@@ -53,6 +54,8 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
           || sqlType == SqlServerSinkSchemaReader.GEOGRAPHY_TYPE
           || sqlType == SqlServerSinkSchemaReader.GEOMETRY_TYPE
           || sqlType == SqlServerSinkSchemaReader.SQL_VARIANT
+          || sqlType == Types.ROWID
+          || sqlType == Types.NUMERIC
           || super.isFieldCompatible(field, metadata, index);
       default:
         return super.isFieldCompatible(fieldType, null, sqlType, precision, isSigned);

@@ -49,6 +49,30 @@ public class TestSetupHooks {
                 PluginPropertyUtils.pluginProp("schema"));
     }
 
+    @Before(order = 2, value = "@MSSQL_SOURCE_DATATYPES_TEST")
+    public static void createAllDatatypesTables() throws SQLException, ClassNotFoundException {
+        MssqlClient.createSourceDatatypesTable(PluginPropertyUtils.pluginProp("sourceTable"),
+                PluginPropertyUtils.pluginProp("schema"));
+        MssqlClient.createTargetDatatypesTable(PluginPropertyUtils.pluginProp("targetTable"),
+                PluginPropertyUtils.pluginProp("schema"));
+    }
+
+    @Before(order = 2, value = "@MSSQL_SOURCE_DATATYPES_TEST2")
+    public static void createDatatypesTablesImage() throws SQLException, ClassNotFoundException {
+        MssqlClient.createSourceImageTable(PluginPropertyUtils.pluginProp("sourceTable"),
+                PluginPropertyUtils.pluginProp("schema"));
+        MssqlClient.createTargetImageTable(PluginPropertyUtils.pluginProp("targetTable"),
+                PluginPropertyUtils.pluginProp("schema"));
+    }
+
+    @Before(order = 2, value = "@MSSQL_SOURCE_DATATYPES_TEST3")
+    public static void createDatatypesTablesUniqueIdentifier() throws SQLException, ClassNotFoundException {
+        MssqlClient.createSourceUniqueIdentifierTable(PluginPropertyUtils.pluginProp("sourceTable"),
+                PluginPropertyUtils.pluginProp("schema"));
+        MssqlClient.createTargetUniqueIdentifierTable(PluginPropertyUtils.pluginProp("targetTable"),
+                PluginPropertyUtils.pluginProp("schema"));
+    }
+
     @After(order = 1, value = "@MSSQL_SINK_TEST")
     public static void dropTables() throws SQLException, ClassNotFoundException {
         MssqlClient.deleteTables(PluginPropertyUtils.pluginProp("schema"),
