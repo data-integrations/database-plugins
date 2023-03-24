@@ -64,8 +64,8 @@ public class MssqlClient {
     public static void createSourceTable(String sourceTable, String schema) throws SQLException,
             ClassNotFoundException {
         try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
-            String createSourceTableQuery = "CREATE TABLE " + schema + "." + sourceTable +
-                    "(ID varchar(100), LASTNAME varchar(100))";
+            String createSourceTableQuery = createTableQuery(sourceTable, schema,
+                    "(ID varchar(100), LASTNAME varchar(100))");
             statement.executeUpdate(createSourceTableQuery);
 
             // Insert dummy data.
@@ -79,9 +79,79 @@ public class MssqlClient {
     public static void createTargetTable(String targetTable, String schema) throws SQLException,
             ClassNotFoundException {
         try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
-            String createTargetTableQuery = "CREATE TABLE " + schema + "." + targetTable +
-                    "(ID varchar(100), LASTNAME varchar(100))";
+            String createTargetTableQuery = createTableQuery(targetTable, schema,
+                    "(ID varchar(100), LASTNAME varchar(100))");
             statement.executeUpdate(createTargetTableQuery);
+        }
+    }
+
+    public static void createSourceDatatypesTable(String sourceTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String datatypeColumns = PluginPropertyUtils.pluginProp("datatypeColumns");
+            String createSourceTableQuery2 = createTableQuery(sourceTable, schema, datatypeColumns);
+            statement.executeUpdate(createSourceTableQuery2);
+
+            // Insert dummy data.
+            String datatypeValues = PluginPropertyUtils.pluginProp("datatypeValues");
+            String datatypeColumnsList = PluginPropertyUtils.pluginProp("datatypeColumnsList");
+            statement.executeUpdate(insertQuery(sourceTable, schema, datatypeColumnsList, datatypeValues));
+        }
+    }
+
+    public static void createTargetDatatypesTable(String targetTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String datatypeColumns = PluginPropertyUtils.pluginProp("datatypeColumns");
+            String createTargetTableQuery2 = createTableQuery(targetTable, schema, datatypeColumns);
+            statement.executeUpdate(createTargetTableQuery2);
+        }
+    }
+
+    public static void createSourceImageTable(String sourceTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String imageColumns = PluginPropertyUtils.pluginProp("imageColumns");
+            String createSourceTableQuery3 = createTableQuery(sourceTable, schema, imageColumns);
+            statement.executeUpdate(createSourceTableQuery3);
+
+            // Insert dummy data.
+            String imageValues = PluginPropertyUtils.pluginProp("imageValues");
+            String imageColumnsList = PluginPropertyUtils.pluginProp("imageColumnsList");
+            statement.executeUpdate(insertQuery(sourceTable, schema, imageColumnsList, imageValues));
+        }
+    }
+
+    public static void createTargetImageTable(String targetTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String imageColumns = PluginPropertyUtils.pluginProp("imageColumns");
+            String createTargetTableQuery3 = createTableQuery(targetTable, schema, imageColumns);
+            statement.executeUpdate(createTargetTableQuery3);
+        }
+    }
+
+    public static void createSourceUniqueIdentifierTable(String sourceTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String uniqueIdentifierColumns = PluginPropertyUtils.pluginProp("uniqueIdentifierColumns");
+            String createSourceTableQuery3 = createTableQuery(sourceTable, schema, uniqueIdentifierColumns);
+            statement.executeUpdate(createSourceTableQuery3);
+
+            // Insert dummy data.
+            String uniqueIdentifierValues = PluginPropertyUtils.pluginProp("uniqueIdentifierValues");
+            String uniqueIdentifierColumnsList = PluginPropertyUtils.pluginProp("uniqueIdentifierColumnsList");
+            statement.executeUpdate(insertQuery(sourceTable, schema, uniqueIdentifierColumnsList,
+                    uniqueIdentifierValues));
+        }
+    }
+
+    public static void createTargetUniqueIdentifierTable(String targetTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String uniqueIdentifierColumns = PluginPropertyUtils.pluginProp("uniqueIdentifierColumns");
+            String createTargetTableQuery3 = createTableQuery(targetTable, schema, uniqueIdentifierColumns);
+            statement.executeUpdate(createTargetTableQuery3);
         }
     }
 
@@ -111,6 +181,15 @@ public class MssqlClient {
         }
     }
 
+    private static String createTableQuery(String table, String schema, String columns) {
+        return String.format("CREATE TABLE %s.%s %s", schema, table, columns);
+    }
+
+    private static String insertQuery(String table, String schema, String columnList, String columnValues) {
+        return String.format("INSERT INTO %s.%s %s %s", schema, table,
+                columnList, columnValues);
+    }
+
     private static boolean compareResultSetData(ResultSet rsSource, ResultSet rsTarget) throws SQLException {
         ResultSetMetaData mdSource = rsSource.getMetaData();
         ResultSetMetaData mdTarget = rsTarget.getMetaData();
@@ -124,13 +203,19 @@ public class MssqlClient {
                 String columnTypeName = mdSource.getColumnTypeName(currentColumnCount);
                 int columnType = mdSource.getColumnType(currentColumnCount);
                 String columnName = mdSource.getColumnName(currentColumnCount);
-                switch (columnType) {
+                if (columnType == Types.TIMESTAMP) {
+                    GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+                    gc.setGregorianChange(new Date(Long.MIN_VALUE));
+                    Timestamp sourceTS = rsSource.getTimestamp(currentColumnCount, gc);
+                    Timestamp targetTS = rsTarget.getTimestamp(currentColumnCount, gc);
+                    Assert.assertEquals(String.format("Different values found for column : %s", columnName),
+                            sourceTS, targetTS);
 
-                    default:
-                        String sourceString = rsSource.getString(currentColumnCount);
-                        String targetString = rsTarget.getString(currentColumnCount);
-                        Assert.assertTrue(String.format("Different values found for column : %s", columnName),
-                                sourceString.equals(targetString));
+                } else {
+                    String sourceString = rsSource.getString(currentColumnCount);
+                    String targetString = rsTarget.getString(currentColumnCount);
+                    Assert.assertEquals(String.format("Different values found for column : %s", columnName),
+                            sourceString, targetString);
                 }
                 currentColumnCount++;
             }
