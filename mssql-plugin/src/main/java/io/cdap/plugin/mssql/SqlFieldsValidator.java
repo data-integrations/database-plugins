@@ -38,6 +38,7 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
     boolean isSigned = metadata.isSigned(index);
     int precision = metadata.getPrecision(index);
 
+    // Handles datetime datatypes
     if ((sqlType == Types.TIMESTAMP || sqlType == SqlServerSourceSchemaReader.DATETIME_OFFSET_TYPE)
             && fieldLogicalType.equals(Schema.LogicalType.DATETIME)) {
       return true;
