@@ -38,6 +38,10 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
     boolean isSigned = metadata.isSigned(index);
     int precision = metadata.getPrecision(index);
 
+    if ((sqlType == Types.TIMESTAMP || sqlType == SqlServerSourceSchemaReader.DATETIME_OFFSET_TYPE)
+            && fieldLogicalType.equals(Schema.LogicalType.DATETIME)) {
+      return true;
+    }
     // Handle logical types first
     if (fieldLogicalType != null) {
       return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);

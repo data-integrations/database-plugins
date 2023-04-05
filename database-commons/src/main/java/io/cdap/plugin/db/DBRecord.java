@@ -311,6 +311,9 @@ public class DBRecord implements Writable, DBWritable, Configurable {
         case DECIMAL:
           stmt.setBigDecimal(sqlIndex, record.getDecimal(fieldName));
           break;
+        case DATETIME:
+          stmt.setTimestamp(sqlIndex, Timestamp.valueOf(record.getDateTime(fieldName)));
+          break;
       }
       return;
     }
