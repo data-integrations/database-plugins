@@ -16,16 +16,18 @@
 
 package io.cdap.plugin.oracle.stepsdesign;
 
+import io.cdap.e2e.pages.actions.CdfPipelineRunAction;
+import io.cdap.e2e.utils.BigQueryClient;
 import io.cdap.e2e.utils.CdfHelper;
 import io.cdap.e2e.utils.PluginPropertyUtils;
 import io.cdap.plugin.OracleClient;
+//import io.cdap.plugin.oracle.BQValidation;
 import io.cucumber.java.en.Then;
 import org.junit.Assert;
 import stepsdesign.BeforeActions;
 
-import java.sql.Connection;
+import java.io.IOException;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 /**
  *  Oracle Plugin related step design.
@@ -52,4 +54,41 @@ public class Oracle implements CdfHelper {
                          "of the records in the source table", recordsMatched);
   }
 
+  @Then("Validate OUT record count is equal to records transferred to target BigQuery table")
+  public void validateOUTRecordCountIsEqualToRecordsTransferredToTargetBigQueryTable()
+    throws IOException, InterruptedException, IOException {
+    int targetBQRecordsCount = BigQueryClient.countBqQuery(PluginPropertyUtils.pluginProp("bqTargetTable"));
+    BeforeActions.scenario.write("No of Records Transferred to BigQuery:" + targetBQRecordsCount);
+    Assert.assertEquals("Out records should match with target BigQuery table records count",
+                        CdfPipelineRunAction.getCountDisplayedOnSourcePluginAsRecordsOut(), targetBQRecordsCount);
+  }
+
+  @Then("Validate records transferred to target table with record counts of BigQuery table")
+  public void validateRecordsTransferredToTargetTableWithRecordCountsOfBigQueryTable()
+    throws IOException, InterruptedException, SQLException, ClassNotFoundException {
+    int bqSourceRecordCount = BigQueryClient.countBqQuery(PluginPropertyUtils.pluginProp("bqSourceTable"));
+    BeforeActions.scenario.write("No of Records from source BigQuery table:" + bqSourceRecordCount);
+    int countRecords = OracleClient.countRecord(PluginPropertyUtils.pluginProp("targetTable"),
+                                                PluginPropertyUtils.pluginProp("schema"));
+    Assert.assertEquals("Number of records transferred should be equal to records out ",
+                        countRecords, recordOut());
+    BeforeActions.scenario.write("No of Records transferred to Oracle table:" + countRecords);
+    Assert.assertEquals(bqSourceRecordCount, countRecords);
+  }
+
+//  @Then("Validate the values of records transferred to target Big Query table is equal to the values from source
+//  table")
+//  public void validateTheValuesOfRecordsTransferedToTargetBigQueryTableIsEqualToTheValuesFromSourceTable()
+//    throws IOException, InterruptedException, IOException, SQLException, ClassNotFoundException {
+//    int targetBQRecordsCount = BigQueryClient.countBqQuery(PluginPropertyUtils.pluginProp("bqTargetTable"));
+//    BeforeActions.scenario.write("No of Records Transferred to BigQuery:" + targetBQRecordsCount);
+//    Assert.assertEquals("Out records should match with target BigQuery table records count",
+//                        CdfPipelineRunAction.getCountDisplayedOnSourcePluginAsRecordsOut(), targetBQRecordsCount);
+//
+//    boolean recordsMatched = BQValidation.validateBQAndDBRecordValues(PluginPropertyUtils.pluginProp("schema"),
+//                                                                      PluginPropertyUtils.pluginProp("sourceTable"),
+//                                                                    PluginPropertyUtils.pluginProp("bqTargetTable"));
+//    Assert.assertTrue("Value of records transferred to the target table should be equal to the value " +
+//                        "of the records in the source table", recordsMatched);
+//  }
 }

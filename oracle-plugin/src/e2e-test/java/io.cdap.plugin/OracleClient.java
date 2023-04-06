@@ -40,7 +40,7 @@ import java.util.TimeZone;
  */
 public class OracleClient {
 
-  private static Connection getOracleConnection() throws SQLException, ClassNotFoundException {
+  public static Connection getOracleConnection() throws SQLException, ClassNotFoundException {
     TimeZone timezone = TimeZone.getTimeZone("UTC");
     TimeZone.setDefault(timezone);
     Class.forName("oracle.jdbc.driver.OracleDriver");
@@ -90,7 +90,7 @@ public class OracleClient {
    * @param rsTarget result set of the target table data
    * @return true if rsSource matches rsTarget
    */
-  private static boolean compareResultSetData(ResultSet rsSource, ResultSet rsTarget) throws SQLException {
+  public static boolean compareResultSetData(ResultSet rsSource, ResultSet rsTarget) throws SQLException {
     ResultSetMetaData mdSource = rsSource.getMetaData();
     ResultSetMetaData mdTarget = rsTarget.getMetaData();
     int columnCountSource = mdSource.getColumnCount();
@@ -262,6 +262,30 @@ public class OracleClient {
       String longVarcharColumns = PluginPropertyUtils.pluginProp("longVarcharColumns");
       String createSourceTableQuery5 = "CREATE TABLE " + schema + "." + targetTable + " " + longVarcharColumns;
       statement.executeUpdate(createSourceTableQuery5);
+    }
+  }
+
+  public static void createSourceOracleDatatypesTable(String sourceTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String datatypeColumns1 = PluginPropertyUtils.pluginProp("datatypeColumns1");
+      String createSourceTableQuery6 = "CREATE TABLE " + schema + "." + sourceTable + " " + datatypeColumns1;
+      statement.executeUpdate(createSourceTableQuery6);
+
+      // Insert dummy data.
+      String datatypeValues1 = PluginPropertyUtils.pluginProp("datatypeValues1");
+      String datatypeColumnsList1 = PluginPropertyUtils.pluginProp("datatypeColumnsList1");
+      statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + datatypeColumnsList1 + " " +
+                                datatypeValues1);
+    }
+  }
+
+  public static void createTargetOracleDatatypesTable(String targetTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String datatypeColumns1 = PluginPropertyUtils.pluginProp("datatypeColumns1");
+      String createTargetTableQuery6 = "CREATE TABLE " + schema + "." + targetTable + " " + datatypeColumns1;
+      statement.executeUpdate(createTargetTableQuery6);
     }
   }
 
