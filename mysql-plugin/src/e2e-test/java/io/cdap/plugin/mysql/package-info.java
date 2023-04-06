@@ -15,6 +15,6 @@
  */
 
 /**
- * Package contains Mysql client.
+ * Package contains the BQValidation for Mysql.
  */
-package io.cdap.plugin;
+package io.cdap.plugin.mysql;
