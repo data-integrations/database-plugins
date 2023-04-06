@@ -265,6 +265,30 @@ public class OracleClient {
     }
   }
 
+  public static void createSourceOracleDatatypesTable(String sourceTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String datatypeColumns1 = PluginPropertyUtils.pluginProp("datatypeColumns1");
+      String createSourceTableQuery6 = "CREATE TABLE " + schema + "." + sourceTable + " " + datatypeColumns1;
+      statement.executeUpdate(createSourceTableQuery6);
+
+      // Insert dummy data.
+      String datatypeValues1 = PluginPropertyUtils.pluginProp("datatypeValues1");
+      String datatypeColumnsList1 = PluginPropertyUtils.pluginProp("datatypeColumnsList1");
+      statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + datatypeColumnsList1 + " " +
+                                datatypeValues1);
+    }
+  }
+
+  public static void createTargetOracleDatatypesTable(String targetTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String datatypeColumns1 = PluginPropertyUtils.pluginProp("datatypeColumns1");
+      String createTargetTableQuery6 = "CREATE TABLE " + schema + "." + targetTable + " " + datatypeColumns1;
+      statement.executeUpdate(createTargetTableQuery6);
+    }
+  }
+
   public static void deleteTables(String schema, String[] tables)
     throws SQLException, ClassNotFoundException {
     try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
