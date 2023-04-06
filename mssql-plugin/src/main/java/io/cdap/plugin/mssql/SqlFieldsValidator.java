@@ -39,6 +39,9 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
     int precision = metadata.getPrecision(index);
 
     // Handles datetime datatypes
+    // Case when Timestamp maps to datetime
+    // Case when Datetime2 maps to datetime
+    // Case when DatetimeOffset maps to datetime
     if ((sqlType == Types.TIMESTAMP || sqlType == SqlServerSourceSchemaReader.DATETIME_OFFSET_TYPE)
             && fieldLogicalType.equals(Schema.LogicalType.DATETIME)) {
       return true;
