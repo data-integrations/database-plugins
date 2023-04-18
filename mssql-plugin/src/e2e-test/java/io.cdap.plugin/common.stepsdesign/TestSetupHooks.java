@@ -73,6 +73,14 @@ public class TestSetupHooks {
                 PluginPropertyUtils.pluginProp("schema"));
     }
 
+    @Before(order = 2, value = "@MSSQL_SOURCE_DATATYPES_DATETIME_TEST")
+    public static void createDatatypesTablesDateTime() throws SQLException, ClassNotFoundException {
+        MssqlClient.createSourceDateTimeTable(PluginPropertyUtils.pluginProp("sourceTable"),
+                PluginPropertyUtils.pluginProp("schema"));
+        MssqlClient.createTargetDateTimeTable(PluginPropertyUtils.pluginProp("targetTable"),
+                PluginPropertyUtils.pluginProp("schema"));
+    }
+
     @After(order = 1, value = "@MSSQL_SINK_TEST")
     public static void dropTables() throws SQLException, ClassNotFoundException {
         MssqlClient.deleteTables(PluginPropertyUtils.pluginProp("schema"),
