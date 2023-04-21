@@ -40,7 +40,7 @@ import java.util.TimeZone;
  */
 public class OracleClient {
 
-  private static Connection getOracleConnection() throws SQLException, ClassNotFoundException {
+  public static Connection getOracleConnection() throws SQLException, ClassNotFoundException {
     TimeZone timezone = TimeZone.getTimeZone("UTC");
     TimeZone.setDefault(timezone);
     Class.forName("oracle.jdbc.driver.OracleDriver");
@@ -90,7 +90,7 @@ public class OracleClient {
    * @param rsTarget result set of the target table data
    * @return true if rsSource matches rsTarget
    */
-  private static boolean compareResultSetData(ResultSet rsSource, ResultSet rsTarget) throws SQLException {
+  public static boolean compareResultSetData(ResultSet rsSource, ResultSet rsTarget) throws SQLException {
     ResultSetMetaData mdSource = rsSource.getMetaData();
     ResultSetMetaData mdTarget = rsTarget.getMetaData();
     int columnCountSource = mdSource.getColumnCount();
