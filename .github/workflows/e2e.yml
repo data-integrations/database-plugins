@@ -16,7 +16,7 @@ name: Build e2e tests
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ fix_BQValidation ]
   pull_request:
       branches: [ develop ]
       types: [ opened, synchronize, reopened, labeled ]
