@@ -26,10 +26,13 @@ import org.junit.runner.RunWith;
 @CucumberOptions(
         features = {"src/e2e-test/features"},
         glue = {"stepsdesign", "io.cdap.plugin.common.stepsdesign", "io.cdap.plugin.mssql.stepsdesign"},
-        tags = {"@Mssql"},
+        tags = {"@Mssql and not @Plugin-1526"},
+  /* TODO :Enable tests once issue fixed https://cdap.atlassian.net/browse/PLUGIN-1526
+   */
         plugin = {"pretty", "html:target/cucumber-html-report/mssql",
                 "json:target/cucumber-reports/cucumber-mssql.json",
                 "junit:target/cucumber-reports/cucumber-mssql.xml"}
 )
 public class TestRunner {
 }
+

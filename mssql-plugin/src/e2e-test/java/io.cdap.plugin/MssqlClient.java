@@ -16,12 +16,9 @@
 
 package io.cdap.plugin;
 
-import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.e2e.utils.PluginPropertyUtils;
 import org.junit.Assert;
 
-import java.sql.Blob;
-import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -30,8 +27,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.time.Instant;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
@@ -41,7 +36,7 @@ import java.util.TimeZone;
  */
 public class MssqlClient {
 
-    private static Connection getMssqlConnection() throws SQLException, ClassNotFoundException {
+    public static Connection getMssqlConnection() throws SQLException, ClassNotFoundException {
         TimeZone timezone = TimeZone.getTimeZone("UTC");
         TimeZone.setDefault(timezone);
         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
@@ -147,6 +142,15 @@ public class MssqlClient {
                     uniqueIdentifierValues));
         }
     }
+    public static void createTargetMssqlTable(String targetTable, String schema) throws SQLException,
+      ClassNotFoundException {
+        try (Connection connect = getMssqlConnection();
+             Statement statement = connect.createStatement()) {
+            String datatypesColumns = PluginPropertyUtils.pluginProp("SqlServerDatatypesColumns");
+            String createSourceTableQuery2 = createTableQuery(targetTable, schema, datatypesColumns);
+            statement.executeUpdate(createSourceTableQuery2);
+        }
+    }
 
     public static void createTargetUniqueIdentifierTable(String targetTable, String schema) throws SQLException,
             ClassNotFoundException {
@@ -181,13 +185,11 @@ public class MssqlClient {
         }
     }
 
-    public static void deleteTables(String schema, String[] tables)
-            throws SQLException, ClassNotFoundException {
+    public static void deleteTable(String schema, String table)
+      throws SQLException, ClassNotFoundException {
         try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
-            for (String table : tables) {
                 String dropTableQuery = "DROP TABLE " + schema + "." + table;
                 statement.execute(dropTableQuery);
-            }
         }
     }
 
@@ -253,3 +255,4 @@ public class MssqlClient {
         return true;
     }
 }
+
