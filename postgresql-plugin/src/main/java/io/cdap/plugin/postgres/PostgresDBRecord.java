@@ -73,6 +73,13 @@ public class PostgresDBRecord extends DBRecord {
       } else {
         recordBuilder.set(field.getName(), null);
       }
+    } else if (sqlType == Types.TIMESTAMP && columnTypeName.equalsIgnoreCase("timestamptz")) {
+      OffsetDateTime timestamp = resultSet.getObject(columnIndex, OffsetDateTime.class);
+      if (timestamp != null) {
+        recordBuilder.setTimestamp(field.getName(), timestamp.atZoneSameInstant(ZoneId.of("UTC")));
+      } else {
+        recordBuilder.set(field.getName(), null);
+      }
     } else {
       setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     }

@@ -122,7 +122,7 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
     }
 
     if (getTransactionIsolationLevel() != null) {
-      TransactionIsolationLevel.validate(getTransactionIsolationLevel(), collector);
+        TransactionIsolationLevel.validate(getTransactionIsolationLevel(), collector);
     }
 
     if (!containsMacro(IMPORT_QUERY) && Strings.isNullOrEmpty(importQuery)) {
