@@ -23,9 +23,7 @@ import io.cucumber.java.en.Then;
 import org.junit.Assert;
 import stepsdesign.BeforeActions;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 /**
  *  Oracle Plugin related step design.
