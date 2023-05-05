@@ -27,7 +27,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.ZonedDateTime;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -208,5 +210,28 @@ public class OracleSourceDBRecordUnitTest {
 
     StructuredRecord record = builder.build();
     Assert.assertNull(record.getTimestamp("field1"));
+  }
+
+  /***
+   * Validate the TimestampTZ type handling in the OracleSourceDBRecord code
+   * @throws Exception
+   */
+  @Test
+  public void validateTimestampTZTypeNullHandling() throws Exception {
+    Schema.Field field1 = Schema.Field.of("field1", Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)));
+
+    Schema schema = Schema.recordOf(
+            "dbRecord",
+            field1
+    );
+
+    when(resultSet.getObject(eq(1))).thenReturn(null);
+
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+    dbRecord.handleField(resultSet, builder, field1, 1, OracleSourceSchemaReader.TIMESTAMP_TZ, DEFAULT_PRECISION, 0);
+
+    StructuredRecord record = builder.build();
+    Assert.assertNull(record.get("field1"));
   }
 }

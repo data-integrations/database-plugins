@@ -155,6 +155,30 @@ public class MssqlClient {
         }
     }
 
+    public static void createSourceDateTimeTable(String sourceTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String dateTimeColumns = PluginPropertyUtils.pluginProp("dateTimeColumns");
+            String createSourceTableQuery3 = createTableQuery(sourceTable, schema, dateTimeColumns);
+            statement.executeUpdate(createSourceTableQuery3);
+
+            // Insert dummy data.
+            String dateTimeValues = PluginPropertyUtils.pluginProp("dateTimeValues");
+            String dateTimeColumnsList = PluginPropertyUtils.pluginProp("dateTimeColumnsList");
+            statement.executeUpdate(insertQuery(sourceTable, schema, dateTimeColumnsList,
+                    dateTimeValues));
+        }
+    }
+
+    public static void createTargetDateTimeTable(String targetTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {
+            String dateTimeColumns = PluginPropertyUtils.pluginProp("dateTimeColumns");
+            String createTargetTableQuery3 = createTableQuery(targetTable, schema, dateTimeColumns);
+            statement.executeUpdate(createTargetTableQuery3);
+        }
+    }
+
     public static void deleteTables(String schema, String[] tables)
             throws SQLException, ClassNotFoundException {
         try (Connection connect = getMssqlConnection(); Statement statement = connect.createStatement()) {

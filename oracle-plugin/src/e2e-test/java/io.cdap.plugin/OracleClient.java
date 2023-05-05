@@ -16,9 +16,12 @@
 
 package io.cdap.plugin;
 
+import com.google.common.base.Strings;
 import io.cdap.e2e.utils.PluginPropertyUtils;
 import io.cdap.plugin.oracle.OracleSourceSchemaReader;
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Blob;
 import java.sql.Clob;
@@ -30,6 +33,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -112,7 +116,7 @@ public class OracleClient {
             byte[] sourceArrayBlob = blobSource.getBytes(1, (int) blobSource.length());
             Blob blobTarget = rsTarget.getBlob(currentColumnCount);
             byte[] targetArrayBlob = blobTarget.getBytes(1, (int) blobTarget.length());
-            Assert.assertTrue(String.format("Different values found for column : %s", columnName),
+            Assert.assertTrue(String.format("Different BLOB values found for column : %s", columnName),
                               Arrays.equals(sourceArrayBlob, targetArrayBlob));
             break;
           case Types.CLOB:
@@ -120,22 +124,43 @@ public class OracleClient {
             String sourceClobString = clobSource.getSubString(1, (int) clobSource.length());
             Clob clobTarget = rsTarget.getClob(currentColumnCount);
             String targetClobString = clobTarget.getSubString(1, (int) clobTarget.length());
-            Assert.assertTrue(String.format("Different values found for column : %s", columnName),
-                                sourceClobString.equals(targetClobString));
+            Assert.assertEquals(String.format("Different CLOB values found for column : %s", columnName),
+                                sourceClobString, targetClobString);
             break;
           case Types.TIMESTAMP:
             GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
             gc.setGregorianChange(new Date(Long.MIN_VALUE));
             Timestamp sourceTS = rsSource.getTimestamp(currentColumnCount, gc);
             Timestamp targetTS = rsTarget.getTimestamp(currentColumnCount, gc);
-            Assert.assertTrue(String.format("Different values found for column : %s", columnName),
-                                sourceTS.equals(targetTS));
+            Assert.assertEquals(String.format("Different TIMESTAMP values found for column : %s", columnName),
+                                sourceTS, targetTS);
+            break;
+          case OracleSourceSchemaReader.TIMESTAMP_TZ:
+            // The timezone information in the field is lost during pipeline execution hence it is required to
+            // convert both values into the system timezone and then compare.
+            GregorianCalendar gregorianCalendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+            gregorianCalendar.setGregorianChange(new Date(Long.MIN_VALUE));
+            Timestamp tsSource = rsSource.getTimestamp(currentColumnCount, gregorianCalendar);
+            Timestamp tsTarget = rsTarget.getTimestamp(currentColumnCount, gregorianCalendar);
+            if (tsSource == null && tsTarget == null) {
+              break;
+            }
+            Assert.assertNotNull(
+                    String.format("Column : %s is null in source table and is not Null in target table.", columnName),
+                    tsSource);
+            Assert.assertNotNull(
+                    String.format("Column : %s is null in target table and is not Null in source table.", columnName),
+                    tsTarget);
+            Instant sourceInstant = tsSource.toInstant();
+            Instant targetInstant = tsTarget.toInstant();
+            Assert.assertEquals(String.format("Different TIMESTAMPTZ values found for column : %s", columnName),
+                    sourceInstant, targetInstant);
             break;
           default:
             String sourceString = rsSource.getString(currentColumnCount);
             String targetString = rsTarget.getString(currentColumnCount);
-            Assert.assertTrue(String.format("Different values found for column : %s", columnName),
-                                String.valueOf(sourceString).equals(String.valueOf(targetString)));
+            Assert.assertEquals(String.format("Different %s values found for column : %s", columnTypeName, columnName),
+                                String.valueOf(sourceString), String.valueOf(targetString));
         }
         currentColumnCount++;
       }
@@ -214,6 +239,34 @@ public class OracleClient {
       String longColumns = PluginPropertyUtils.pluginProp("longColumns");
       String createTargetTableQuery3 = "CREATE TABLE " + schema + "." + targetTable + " " + longColumns;
       statement.executeUpdate(createTargetTableQuery3);
+    }
+  }
+
+  public static void createTimestampSourceTable(String sourceTable, String schema) throws SQLException,
+          ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String timestampColumns = PluginPropertyUtils.pluginProp("timestampColumns");
+      String createSourceTableQuery = "CREATE TABLE " + schema + "." + sourceTable + " " + timestampColumns;
+      statement.executeUpdate(createSourceTableQuery);
+
+      int rowCount = 1;
+      while (!Strings.isNullOrEmpty(PluginPropertyUtils.pluginProp("timestampValue" + rowCount))) {
+        // Insert dummy data.
+        String timestampValue = PluginPropertyUtils.pluginProp("timestampValue" + rowCount);
+        String timestampColumnsList = PluginPropertyUtils.pluginProp("timestampColumnsList");
+        statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + timestampColumnsList + " " +
+                timestampValue);
+        rowCount++;
+      }
+    }
+  }
+
+  public static void createTimestampTargetTable(String targetTable, String schema) throws SQLException,
+          ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String timestampColumns = PluginPropertyUtils.pluginProp("timestampColumns");
+      String createTargetTableQuery = "CREATE TABLE " + schema + "." + targetTable + " " + timestampColumns;
+      statement.executeUpdate(createTargetTableQuery);
     }
   }
 
