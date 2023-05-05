@@ -100,7 +100,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch' && github.event_name != 'push' && steps.filter.outputs.e2e-test == 'false'
         run: python3 e2e/src/main/scripts/run_e2e_test.py --module ${{ matrix.module }} --testRunner TestRunnerRequired.java
         env:
-          CLASSPATH: ${{env.CLASSPATH}}:/github/workspace/database-commons/lib/*
+          CLASSPATH: ${{env.CLASSPATH}}:/github/workspace/database-commons/lib/GoogleBigQueryJDBC42.jar
           ORACLE_HOST: ${{ steps.secrets.outputs.ORACLE_HOST }}
           ORACLE_USERNAME: ${{ steps.secrets.outputs.ORACLE_USERNAME }}
           ORACLE_PASSWORD: ${{ steps.secrets.outputs.ORACLE_PASSWORD }}
@@ -122,7 +122,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || steps.filter.outputs.e2e-test == 'true'
         run: python3 e2e/src/main/scripts/run_e2e_test.py --module ${{ matrix.module }}
         env:
-          CLASSPATH: ${{env.CLASSPATH}}:/github/workspace/database-commons/lib/*
+          CLASSPATH: ${{env.CLASSPATH}}:/github/workspace/database-commons/lib/GoogleBigQueryJDBC42.jar
           ORACLE_HOST: ${{ steps.secrets.outputs.ORACLE_HOST }}
           ORACLE_USERNAME: ${{ steps.secrets.outputs.ORACLE_USERNAME }}
           ORACLE_PASSWORD: ${{ steps.secrets.outputs.ORACLE_PASSWORD }}

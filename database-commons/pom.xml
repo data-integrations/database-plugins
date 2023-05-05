@@ -69,13 +69,6 @@
       <artifactId>mockito-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.simba.googlebigquery.jdbc</groupId>
-      <artifactId>bigqueryjdbc42</artifactId>
-      <version>1.2.23.1027</version>
-      <scope>system</scope>
-      <systemPath>${project.root}/lib/GoogleBigQueryJDBC42.jar</systemPath>
-    </dependency>
-    <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-bigquery</artifactId>
       <version>2.24.4</version>
