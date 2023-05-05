@@ -26,6 +26,7 @@ import io.cucumber.java.en.Then;
 import org.junit.Assert;
 import stepsdesign.BeforeActions;
 
+import java.io.IOException;
 import java.sql.SQLException;
 
 /**
