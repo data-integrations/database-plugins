@@ -69,13 +69,6 @@
       <artifactId>mockito-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.simba.googlebigquery.jdbc</groupId>
-      <artifactId>bigqueryjdbc42</artifactId>
-      <version>1.2.23.1027</version>
-      <scope>system</scope>
-      <systemPath>${project.root}/lib/GoogleBigQueryJDBC42.jar</systemPath>
-    </dependency>
-    <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-bigquery</artifactId>
       <version>2.24.4</version>
@@ -89,6 +82,28 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>2.5.1</version>
+        <configuration>
+          <groupId>com.simba.googlebigquery.jdbc</groupId>
+          <artifactId>bigqueryjdbc42</artifactId>
+          <version>1.2.23.1027</version>
+          <packaging>jar</packaging>
+          <file>${project.root}/lib/GoogleBigQueryJDBC42.jar</file>
+          <generatePom>true</generatePom>
+        </configuration>
+        <executions>
+          <execution>
+            <id>install-jar-lib</id>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
