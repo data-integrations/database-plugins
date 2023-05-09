@@ -22,13 +22,16 @@ import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
+import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.sink.AbstractDBSink;
+import io.cdap.plugin.db.sink.ETLDBOutputFormat;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +40,10 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -95,6 +101,15 @@ public class PostgresSinkTestRun extends PostgresPluginTestBase {
     Schema.Field.of("TSVECTOR_COL", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("BOX_COL", Schema.of(Schema.Type.STRING))
   );
+  private static final String[] fieldNames = {"ID", "NAME", "SCORE", "GRADUATED", "NOT_IMPORTED", "SMALLINT_COL",
+                                              "BIG", "NUMERIC_COL", "DECIMAL_COL", "DOUBLE_PREC_COL", "DATE_COL",
+                                              "TIME_COL", "TIMESTAMP_COL", "TEXT_COL", "CHAR_COL", "BYTEA_COL",
+                                              "BIT_COL", "VAR_BIT_COL", "TIMETZ_COL", "TIMESTAMPTZ_COL", "XML_COL",
+                                              "UUID_COL", "CIDR_COL", "CIRCLE_COL", "INET_COL", "INTERVAL_COL",
+                                              "JSON_COL", "JSONB_COL", "LINE_COL", "LSEG_COL", "MACADDR_COL",
+                                              "MACADDR8_COL", "MONEY_COL", "PATH_COL", "POINT_COL", "POLYGON_COL",
+                                              "TSQUERY_COL", "TSVECTOR_COL", "BOX_COL"};
+  private static final String[] listKeys = {"ID", "NAME", "SCORE"};
 
   @Before
   public void setup() throws Exception {
@@ -263,5 +278,123 @@ public class PostgresSinkTestRun extends PostgresPluginTestBase {
         .put(Constants.Reference.REFERENCE_NAME, "DBTest")
         .build(),
       null);
+  }
+  @Test
+  public void testOperationNameValidationUpdate() {
+    FailureCollector collector = new MockFailureCollector();
+    PostgresSink.PostgresSinkConfig postgresSinkConfig = new PostgresSink.PostgresSinkConfig("UPDATE",
+      "ID");
+    PostgresSink postgresSink = new PostgresSink(postgresSinkConfig);
+    postgresSink.validateOperations(collector, postgresSinkConfig, SCHEMA);
+  }
+
+  @Test
+  public void testOperationNameValidationInsert() {
+    FailureCollector collector = new MockFailureCollector();
+    PostgresSink.PostgresSinkConfig postgresSinkConfig = new PostgresSink.PostgresSinkConfig("INSERT",
+      null);
+    PostgresSink postgresSink = new PostgresSink(postgresSinkConfig);
+    postgresSink.validateOperations(collector, postgresSinkConfig, SCHEMA);
+  }
+
+  @Test
+  public void testOperationNameValidationFail() {
+    FailureCollector collector = new MockFailureCollector();
+    PostgresSink.PostgresSinkConfig postgresSinkConfig = new PostgresSink.PostgresSinkConfig("UPSERT",
+      null);
+    PostgresSink postgresSink = new PostgresSink(postgresSinkConfig);
+    postgresSink.validateOperations(collector, postgresSinkConfig, SCHEMA);
+  }
+
+  @Test
+  public void testRelationKeyMismatch() {
+    FailureCollector collector = new MockFailureCollector();
+    PostgresSink.PostgresSinkConfig postgresSinkConfig = new PostgresSink.PostgresSinkConfig("UPSERT",
+      "NAME_ABSENT");
+    PostgresSink postgresSink = new PostgresSink(postgresSinkConfig);
+    postgresSink.validateOperations(collector, postgresSinkConfig, SCHEMA);
+  }
+
+  @Test
+  public void testUpdateQuery() throws SQLException {
+    ETLDBOutputFormat etldbOutputFormat = new PostgresETLDBOutputFormat();
+    Connection connection = createConnection();
+    PreparedStatement statement = connection.prepareStatement(etldbOutputFormat.constructQueryUpdateAndUpsert(
+      "UPDATE_TABLE", fieldNames, "UPDATE", listKeys));
+    StringBuilder updateQuery = new StringBuilder();
+    updateQuery.append("UPDATE UPDATE_TABLE SET ");
+    int i;
+    if (fieldNames.length > 0 && fieldNames[0] != null) {
+      for (i = 0; i < fieldNames.length; ++i) {
+        updateQuery.append(fieldNames[i]).append(" = ?");
+        if (i != fieldNames.length - 1) {
+          updateQuery.append(",");
+        }
+      }
+    }
+
+    updateQuery.append(" WHERE ");
+
+    for (i = 0; i < listKeys.length; ++i) {
+      updateQuery.append(listKeys[i]).append(" = ?");
+      if (i != listKeys.length - 1) {
+        updateQuery.append(" AND ");
+      }
+    }
+    updateQuery.append(";");
+    Assert.assertEquals(updateQuery.toString(), statement.toString());
+  }
+
+  @Test
+  public void testUpsertQuery() throws SQLException {
+    ETLDBOutputFormat etldbOutputFormat = new PostgresETLDBOutputFormat();
+    Connection connection = createConnection();
+    PreparedStatement statement = connection.prepareStatement(etldbOutputFormat.constructQueryUpdateAndUpsert(
+      "UPDATE_TABLE", fieldNames, "UPSERT", listKeys));
+    StringBuilder upsertQuery = new StringBuilder();
+    upsertQuery.append("INSERT INTO UPDATE_TABLE ");
+    int i;
+    if (fieldNames.length > 0 && fieldNames[0] != null) {
+      upsertQuery.append(" (");
+      for (i = 0; i < fieldNames.length; ++i) {
+        upsertQuery.append(fieldNames[i]);
+        if (i != fieldNames.length - 1) {
+          upsertQuery.append(",");
+        }
+      }
+
+      upsertQuery.append(") VALUES (");
+
+      for (i = 0; i < fieldNames.length; ++i) {
+        upsertQuery.append("?");
+        if (i != fieldNames.length - 1) {
+          upsertQuery.append(",");
+        }
+      }
+
+      upsertQuery.append(")").append(" ON CONFLICT ");
+    }
+
+    if (listKeys.length > 0 && listKeys[0] != null) {
+      upsertQuery.append("(");
+      for (i = 0; i < listKeys.length; ++i) {
+        upsertQuery.append(listKeys[i]);
+        if (i != listKeys.length - 1) {
+          upsertQuery.append(", ");
+        }
+      }
+
+      upsertQuery.append(")").append(" DO UPDATE SET ");
+
+      for (i = 0; i < listKeys.length; ++i) {
+        upsertQuery.append(listKeys[i]).append(" = EXCLUDED.").append(listKeys[i]);
+        if (i != listKeys.length - 1) {
+          upsertQuery.append(", ");
+        }
+      }
+    }
+
+    upsertQuery.append(";");
+    Assert.assertEquals(upsertQuery.toString(), statement.toString());
   }
 }

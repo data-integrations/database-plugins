@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.postgres;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
@@ -23,6 +24,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -32,10 +34,10 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.batch.sink.SinkOutputFormatProvider;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSinkConfig;
-import io.cdap.plugin.db.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.sink.AbstractDBSink;
 import io.cdap.plugin.db.sink.FieldsValidator;
 import io.cdap.plugin.util.DBUtils;
@@ -72,10 +74,17 @@ public class PostgresSink extends AbstractDBSink<PostgresSink.PostgresSinkConfig
   protected SchemaReader getSchemaReader() {
     return new PostgresSchemaReader();
   }
+  @Override
+  protected void addOutputContext(BatchSinkContext context) {
+    context.addOutput(Output.of(postgresSinkConfig.getReferenceName(),
+      new SinkOutputFormatProvider(PostgresETLDBOutputFormat.class,
+        getConfiguration())));
+  }
 
   @Override
   protected DBRecord getDBRecord(StructuredRecord output) {
-    return new PostgresDBRecord(output, columnTypes);
+    return new PostgresDBRecord(output, columnTypes, postgresSinkConfig.getOperationName(),
+      postgresSinkConfig.getRelationTableKey());
   }
 
   @Override
@@ -129,6 +138,11 @@ public class PostgresSink extends AbstractDBSink<PostgresSink.PostgresSinkConfig
       "The timeout is specified in seconds and a value of zero means that it is disabled")
     @Nullable
     public Integer connectionTimeout;
+    @VisibleForTesting
+    PostgresSinkConfig(@Nullable String operationName, @Nullable String relationTableKey) {
+      this.operationName = operationName;
+      this.relationTableKey = relationTableKey;
+    }
 
     @Override
     public void validate(FailureCollector collector) {

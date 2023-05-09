@@ -24,6 +24,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -34,12 +35,14 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.batch.sink.SinkOutputFormatProvider;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSinkConfig;
 import io.cdap.plugin.db.sink.AbstractDBSink;
 import io.cdap.plugin.db.sink.FieldsValidator;
 import io.cdap.plugin.postgres.PostgresDBRecord;
+import io.cdap.plugin.postgres.PostgresETLDBOutputFormat;
 import io.cdap.plugin.postgres.PostgresFieldsValidator;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
 import io.cdap.plugin.util.CloudSQLUtil;
@@ -88,10 +91,17 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
   protected SchemaReader getSchemaReader() {
     return new PostgresSchemaReader();
   }
+  @Override
+  protected void addOutputContext(BatchSinkContext context) {
+    context.addOutput(Output.of(cloudsqlPostgresqlSinkConfig.getReferenceName(),
+      new SinkOutputFormatProvider(PostgresETLDBOutputFormat.class,
+        getConfiguration())));
+  }
 
   @Override
   protected DBRecord getDBRecord(StructuredRecord output) {
-    return new PostgresDBRecord(output, columnTypes);
+    return new PostgresDBRecord(output, columnTypes, cloudsqlPostgresqlSinkConfig.getOperationName(),
+      cloudsqlPostgresqlSinkConfig.getRelationTableKey());
   }
 
   @Override

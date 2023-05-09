@@ -44,6 +44,8 @@ import java.sql.Types;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.sql.rowset.serial.SerialBlob;
@@ -66,6 +68,22 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   protected List<ColumnType> columnTypes;
 
   /**
+   * Need to cache column types to set fields of input record for where clause on {@link PreparedStatement}
+   * in the right order.
+   */
+  protected List<ColumnType> modifiableColumnTypes;
+
+  /**
+   * Operation for the query to perform. By default, the query performs INSERT operation
+   */
+  protected Operation operationName;
+
+  /**
+   * List of fields that determines relation between tables during Update and Upsert operations.
+   */
+  protected String relationTableKey;
+
+  /**
    * Used to construct a DBRecord from a StructuredRecord in the ETL Pipeline
    *
    * @param record the {@link StructuredRecord} to construct the {@link DBRecord} from
@@ -73,6 +91,20 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   public DBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
     this.record = record;
     this.columnTypes = columnTypes;
+  }
+
+  /**
+   * Used to construct a DBRecord from a StructuredRecord in the ETL Pipeline
+   * and consists of operation name(Update and Upsert) with the keys to be updated
+   *
+   * @param record the {@link StructuredRecord} to construct the {@link DBRecord} from
+   */
+  public DBRecord(StructuredRecord record, List<ColumnType> columnTypes, Operation operationName,
+                  String relationTableKey) {
+    this.record = record;
+    this.columnTypes = columnTypes;
+    this.operationName = operationName;
+    this.relationTableKey = relationTableKey;
   }
 
   /**
@@ -212,11 +244,65 @@ public class DBRecord implements Writable, DBWritable, Configurable {
    * @param stmt the {@link PreparedStatement} to write the {@link StructuredRecord} to
    */
   public void write(PreparedStatement stmt) throws SQLException {
+    modifiableColumnTypes = new ArrayList<>(columnTypes);
+    operationName = operationName == null ? Operation.INSERT :
+      Operation.valueOf(operationName.toString().toUpperCase());
+    switch (operationName) {
+      case INSERT:
+        insertOperation(stmt);
+        break;
+      case UPDATE:
+        updateOperation(stmt);
+        break;
+      case UPSERT:
+        upsertOperation(stmt);
+        break;
+    }
+  }
+
+  protected void insertOperation(PreparedStatement stmt) throws SQLException {
     for (int fieldIndex = 0; fieldIndex < columnTypes.size(); fieldIndex++) {
       ColumnType columnType = columnTypes.get(fieldIndex);
       Schema.Field field = record.getSchema().getField(columnType.getName());
       writeToDB(stmt, field, fieldIndex);
     }
+  }
+
+  protected void updateOperation(PreparedStatement stmt) throws SQLException {
+    List<String> updatedKeyList = Arrays.asList(relationTableKey.split(","));
+    for (int fieldIndex = 0; fieldIndex < columnTypes.size(); fieldIndex++) {
+      ColumnType columnType = columnTypes.get(fieldIndex);
+      Schema.Field field = record.getSchema().getField(columnType.getName());
+      writeToDB(stmt, field, fieldIndex);
+      if (fillUpdateParams(updatedKeyList, columnType)) {
+        modifiableColumnTypes.add(columnType);
+      }
+    }
+
+    // Used for filling the question marks for update
+    if (operationName != null && relationTableKey != null) {
+      for (int fieldIndex = columnTypes.size(); fieldIndex < modifiableColumnTypes.size(); fieldIndex++) {
+        ColumnType columnType = modifiableColumnTypes.get(fieldIndex);
+        Schema.Field field = record.getSchema().getField(columnType.getName());
+        writeToDB(stmt, field, fieldIndex);
+      }
+    }
+  }
+
+  /**
+   * Upsert is different for all plugins. So, will be overriding this method to write to query.
+   * @param stmt
+   * @throws SQLException
+   */
+  protected void upsertOperation(PreparedStatement stmt) throws SQLException {
+    return;
+  }
+
+  private boolean fillUpdateParams(List<String> updatedKeyList, ColumnType columnType) {
+    if (operationName.equals(Operation.UPDATE) && updatedKeyList.contains(columnType.getName())) {
+      return true;
+    }
+    return false;
   }
 
   private Schema getNonNullableSchema(Schema.Field field) {
@@ -274,7 +360,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     }
   }
 
-  private void writeToDB(PreparedStatement stmt, @Nullable Schema.Field field, int fieldIndex) throws SQLException {
+  protected void writeToDB(PreparedStatement stmt, @Nullable Schema.Field field, int fieldIndex) throws SQLException {
     if (shouldWriteNullField(field)) {
       writeNullToDB(stmt, fieldIndex);
     } else {
@@ -304,7 +390,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
    */
   protected void writeNullToDB(PreparedStatement stmt, int fieldIndex) throws SQLException {
     int sqlIndex = fieldIndex + 1;
-    int sqlType = columnTypes.get(fieldIndex).getType();
+    int sqlType = modifiableColumnTypes.get(fieldIndex).getType();
     stmt.setNull(sqlIndex, sqlType);
   }
 
@@ -350,7 +436,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     Object fieldValue = record.get(fieldName);
     switch (fieldType) {
       case NULL:
-        stmt.setNull(sqlIndex, columnTypes.get(fieldIndex).getType());
+        stmt.setNull(sqlIndex, modifiableColumnTypes.get(fieldIndex).getType());
         break;
       case STRING:
         // clob can also be written to as setString
@@ -384,7 +470,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   protected void writeBytes(PreparedStatement stmt, int fieldIndex, int sqlIndex, Object fieldValue)
     throws SQLException {
     byte[] byteValue = fieldValue instanceof ByteBuffer ? Bytes.toBytes((ByteBuffer) fieldValue) : (byte[]) fieldValue;
-    int parameterType = columnTypes.get(fieldIndex).getType();
+    int parameterType = modifiableColumnTypes.get(fieldIndex).getType();
     if (Types.BLOB == parameterType) {
       stmt.setBlob(sqlIndex, new SerialBlob(byteValue));
       return;

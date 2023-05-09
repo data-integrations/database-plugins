@@ -21,6 +21,7 @@ import com.google.common.base.Throwables;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.JDBCDriverShim;
 import io.cdap.plugin.db.NoOpCommitConnection;
+import io.cdap.plugin.db.Operation;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -42,6 +43,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
 import java.util.Properties;
+
+import static io.cdap.plugin.db.ConnectionConfigAccessor.OPERATION_NAME;
+import static io.cdap.plugin.db.ConnectionConfigAccessor.RELATION_TABLE_KEY;
 
 /**
  * Class that extends {@link DBOutputFormat} to load the database driver class correctly.
@@ -67,6 +71,13 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
     String tableName = dbConf.getOutputTableName();
     String[] fieldNames = dbConf.getOutputFieldNames();
     final int batchSize = conf.getInt(COMMIT_BATCH_SIZE, DEFAULT_COMMIT_BATCH_SIZE);
+    final String operationName = conf.get(OPERATION_NAME);
+    String relationTableKey = null;
+    String[] listKeys = null;
+    if (conf.get(RELATION_TABLE_KEY) != null) {
+      relationTableKey = conf.get(RELATION_TABLE_KEY);
+      listKeys = relationTableKey.split(",");
+    }
 
     if (fieldNames == null) {
       fieldNames = new String[dbConf.getOutputFieldCount()];
@@ -74,7 +85,13 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
 
     try {
       Connection connection = getConnection(conf);
-      PreparedStatement statement = connection.prepareStatement(constructQuery(tableName, fieldNames));
+      PreparedStatement statement;
+      if (operationName != null && listKeys != null) {
+        statement = connection.prepareStatement(constructQueryUpdateAndUpsert(tableName, fieldNames, operationName,
+          listKeys));
+      } else {
+        statement = connection.prepareStatement(constructQuery(tableName, fieldNames));
+      }
       return new DBRecordWriter(connection, statement) {
 
         private boolean emptyData = true;
@@ -191,6 +208,9 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
     }
     return connection;
   }
+  public String constructUpsertQuery(String table, String[] fieldNames, String[] listKeys) {
+    return null;
+  }
 
   @Override
   public String constructQuery(String table, String[] fieldNames) {
@@ -207,5 +227,56 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
       query = "UPSERT" + query.substring("INSERT".length());
     }
     return query;
+  }
+
+  /**
+   * This function is used to call either update or upsert query construction method.
+   * @param tableName - Name of the table.
+   * @param fieldNames - All the columns present in the table.
+   * @param operationName - The write operation to be performed.
+   * @param listKeys - The column on which the operation is to be performed.
+   * @return - Query in the form of String.
+   */
+  public String constructQueryUpdateAndUpsert(String tableName, String[] fieldNames, String operationName,
+                                              String[] listKeys) {
+    String query = null;
+    if (Operation.valueOf(operationName).equals(Operation.UPDATE)) {
+      query = constructUpdateQuery(tableName, fieldNames, listKeys);
+    } else if (Operation.valueOf(operationName).equals(Operation.UPSERT)) {
+      query = constructUpsertQuery(tableName, fieldNames, listKeys);
+    }
+    return query;
+  }
+
+  public String constructUpdateQuery(String table, String[] fieldNames, String[] listKeys) {
+    if (listKeys == null) {
+      throw new IllegalArgumentException("Column names to be updated may not be null");
+    } else if (fieldNames == null) {
+      throw new IllegalArgumentException("Field names may not be null");
+    } else {
+      StringBuilder query = new StringBuilder();
+      query.append("UPDATE ").append(table).append(" SET ");
+      int i;
+      if (fieldNames.length > 0 && fieldNames[0] != null) {
+        for (i = 0; i < fieldNames.length; ++i) {
+          query.append(fieldNames[i]).append(" = ?");
+          if (i != fieldNames.length - 1) {
+            query.append(",");
+          }
+        }
+      }
+
+      query.append(" WHERE ");
+
+      for (i = 0; i < listKeys.length; ++i) {
+        query.append(listKeys[i]).append(" = ?");
+        if (i != listKeys.length - 1) {
+          query.append(" AND ");
+        }
+      }
+
+      query.append(";");
+      return query.toString();
+    }
   }
 }
