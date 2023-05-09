@@ -17,6 +17,7 @@
 package io.cdap.plugin.db.config;
 
 import io.cdap.cdap.etl.api.FailureCollector;
+import io.cdap.plugin.db.Operation;
 
 import java.util.List;
 
@@ -72,4 +73,14 @@ public interface DatabaseSinkConfig extends DatabaseConnectionConfig {
   default void validate(FailureCollector collector) {
     // no-op
   }
+
+  /**
+   * @return the operation to be performed on the query
+   */
+  Operation getOperationName();
+
+  /**
+   * @return the column names on which update and upsert are to be performed.
+   */
+  String getRelationTableKey();
 }

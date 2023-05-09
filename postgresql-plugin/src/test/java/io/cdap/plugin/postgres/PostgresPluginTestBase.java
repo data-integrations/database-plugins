@@ -187,6 +187,7 @@ public abstract class PostgresPluginTestBase extends DatabasePluginTestBase {
       stmt.execute("CREATE TABLE \"MY_DEST_TABLE\"(" + columns + ")");
       stmt.execute("CREATE TABLE your_table AS " +
                      "SELECT * FROM my_table");
+      stmt.execute("CREATE TABLE \"UPDATE_TABLE\"(" + columns + ")");
     }
   }
 
@@ -205,12 +206,18 @@ public abstract class PostgresPluginTestBase extends DatabasePluginTestBase {
                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
                                 "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
                                 "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
-                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                                "       ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      PreparedStatement pStmt3 =
+        conn.prepareStatement("INSERT INTO UPDATE_TABLE " +
+                              "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                              "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                              "       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                              "       ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
 
       stmt.execute("insert into \"dbActionTest\" values (1, '1970-01-01')");
       stmt.execute("insert into \"postActionTest\" values (1, '1970-01-01')");
 
-      populateData(pStmt1, pStmt2);
+      populateData(pStmt1, pStmt2, pStmt3);
     }
   }
 

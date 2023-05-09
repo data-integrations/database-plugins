@@ -36,6 +36,8 @@ public class ConnectionConfigAccessor {
   private static final String INIT_QUERIES = "io.cdap.plugin.db.init.queries";
   public static final String AUTO_COMMIT_ENABLED = "io.cdap.plugin.db.output.autocommit.enabled";
   public static final String FETCH_SIZE = "io.cdap.plugin.db.fetch.size";
+  public static final String OPERATION_NAME = "io.cdap.plugin.db.operation.name";
+  public static final String RELATION_TABLE_KEY = "io.cdap.plugin.db.relation.table.key";
 
   private static final Gson GSON = new Gson();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
@@ -105,6 +107,13 @@ public class ConnectionConfigAccessor {
 
   public Integer getFetchSize() {
     return configuration.getInt(FETCH_SIZE, 0);
+  }
+  public void setOperationName(Operation operationName) {
+    configuration.set(OPERATION_NAME, operationName.toString());
+  }
+
+  public void setRelationTableKey(String relationTableKey) {
+    configuration.set(RELATION_TABLE_KEY, relationTableKey);
   }
 
   public Configuration getConfiguration() {

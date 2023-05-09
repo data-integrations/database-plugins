@@ -21,6 +21,7 @@ import com.google.common.base.Throwables;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.JDBCDriverShim;
 import io.cdap.plugin.db.NoOpCommitConnection;
+import io.cdap.plugin.db.Operation;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -43,6 +44,9 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.Properties;
 
+import static io.cdap.plugin.db.ConnectionConfigAccessor.OPERATION_NAME;
+import static io.cdap.plugin.db.ConnectionConfigAccessor.RELATION_TABLE_KEY;
+
 /**
  * Class that extends {@link DBOutputFormat} to load the database driver class correctly.
  *
@@ -53,6 +57,7 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
   // Batch size before submitting a batch to the SQL engine. If set to 0, no batches will be submitted until commit.
   public static final String COMMIT_BATCH_SIZE = "io.cdap.plugin.db.output.commit.batch.size";
   public static final int DEFAULT_COMMIT_BATCH_SIZE = 1000;
+  private static final Character ESCAPE_CHAR = '"';
 
   private static final Logger LOG = LoggerFactory.getLogger(ETLDBOutputFormat.class);
 
@@ -67,6 +72,8 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
     String tableName = dbConf.getOutputTableName();
     String[] fieldNames = dbConf.getOutputFieldNames();
     final int batchSize = conf.getInt(COMMIT_BATCH_SIZE, DEFAULT_COMMIT_BATCH_SIZE);
+    final String operationName = conf.get(OPERATION_NAME);
+    String[] listKeys = getTableKey();
 
     if (fieldNames == null) {
       fieldNames = new String[dbConf.getOutputFieldCount()];
@@ -74,7 +81,8 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
 
     try {
       Connection connection = getConnection(conf);
-      PreparedStatement statement = connection.prepareStatement(constructQuery(tableName, fieldNames));
+      PreparedStatement statement = connection.prepareStatement(constructQueryOnOperation(tableName, fieldNames,
+        operationName, listKeys));
       return new DBRecordWriter(connection, statement) {
 
         private boolean emptyData = true;
@@ -138,6 +146,22 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
     }
   }
 
+  /**
+   * This method encloses the column name values on which update/upsert needs to take place in "".
+   * @return - Column names for update/upsert.
+   */
+  private String[] getTableKey() {
+    String[] listKeys = null;
+    // Adding double quotes to list keys
+    if (conf.get(RELATION_TABLE_KEY) != null) {
+      listKeys = conf.get(RELATION_TABLE_KEY).split(",");
+      for (int key = 0; key < listKeys.length; ++key) {
+        listKeys[key] = ESCAPE_CHAR + listKeys[key] + ESCAPE_CHAR;
+      }
+    }
+    return listKeys;
+  }
+
   private Connection getConnection(Configuration conf) {
     Connection connection;
     try {
@@ -192,6 +216,17 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
     return connection;
   }
 
+  /**
+   * Method to create the upsert query
+   * @param table - Name of the table.
+   * @param fieldNames - All the columns present in the table.
+   * @param listKeys - The column on which the operation is to be performed.
+   * @return - Query in the form of String.
+   */
+  public String constructUpsertQuery(String table, String[] fieldNames, String[] listKeys) {
+    return null;
+  }
+
   @Override
   public String constructQuery(String table, String[] fieldNames) {
     String query = super.constructQuery(table, fieldNames);
@@ -207,5 +242,59 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
       query = "UPSERT" + query.substring("INSERT".length());
     }
     return query;
+  }
+
+  /**
+   * This function is used to call the method responsible for constructing the query.
+   * Based on the value of Operation name, the method will be called.
+   * @param tableName - Name of the table.
+   * @param fieldNames - All the columns present in the table.
+   * @param operationName - The write operation to be performed.
+   * @param listKeys - The column on which the operation is to be performed.
+   * @return - Query in the form of String.
+   */
+  public String constructQueryOnOperation(String tableName, String[] fieldNames, String operationName,
+                                          String[] listKeys) {
+    String query = null;
+    if (Operation.valueOf(operationName).equals(Operation.UPDATE)) {
+      query = constructUpdateQuery(tableName, fieldNames, listKeys);
+    } else if (Operation.valueOf(operationName).equals(Operation.UPSERT)) {
+      query = constructUpsertQuery(tableName, fieldNames, listKeys);
+    } else if (Operation.valueOf(operationName).equals(Operation.INSERT)) {
+      query = constructQuery(tableName, fieldNames);
+    }
+    return query;
+  }
+
+  public String constructUpdateQuery(String table, String[] fieldNames, String[] listKeys) {
+    if (listKeys == null) {
+      throw new IllegalArgumentException("Column names to be updated should not be null");
+    } else if (fieldNames == null) {
+      throw new IllegalArgumentException("Field names should not be null");
+    } else {
+      StringBuilder query = new StringBuilder();
+      query.append("UPDATE ").append(table).append(" SET ");
+      int i;
+      if (fieldNames.length > 0 && fieldNames[0] != null) {
+        for (i = 0; i < fieldNames.length; ++i) {
+          query.append(fieldNames[i]).append(" = ?");
+          if (i != fieldNames.length - 1) {
+            query.append(", ");
+          }
+        }
+      }
+
+      query.append(" WHERE ");
+
+      for (i = 0; i < listKeys.length; ++i) {
+        query.append(listKeys[i]).append(" = ?");
+        if (i != listKeys.length - 1) {
+          query.append(" AND ");
+        }
+      }
+
+      query.append(";");
+      return query.toString();
+    }
   }
 }

@@ -20,10 +20,17 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSinkContext;
+import io.cdap.plugin.common.batch.sink.SinkOutputFormatProvider;
+import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.sink.AbstractDBSink;
+import io.cdap.plugin.postgres.PostgresDBRecord;
+import io.cdap.plugin.postgres.PostgresETLDBOutputFormat;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,6 +54,18 @@ public class AuroraPostgresSink extends AbstractDBSink<AuroraPostgresSink.Aurora
   public AuroraPostgresSink(AuroraPostgresSinkConfig auroraPostgresSinkConfig) {
     super(auroraPostgresSinkConfig);
     this.auroraPostgresSinkConfig = auroraPostgresSinkConfig;
+  }
+  @Override
+  protected void addOutputContext(BatchSinkContext context) {
+    context.addOutput(Output.of(auroraPostgresSinkConfig.getReferenceName(),
+      new SinkOutputFormatProvider(PostgresETLDBOutputFormat.class,
+        getConfiguration())));
+  }
+
+  @Override
+  protected DBRecord getDBRecord(StructuredRecord output) {
+    return new PostgresDBRecord(output, columnTypes, auroraPostgresSinkConfig.getOperationName(),
+      auroraPostgresSinkConfig.getRelationTableKey());
   }
 
   @Override
