@@ -16,6 +16,8 @@
 
 package io.cdap.plugin.mssql.stepsdesign;
 
+import io.cdap.e2e.pages.actions.CdfPipelineRunAction;
+import io.cdap.e2e.utils.BigQueryClient;
 import io.cdap.e2e.utils.CdfHelper;
 import io.cdap.e2e.utils.PluginPropertyUtils;
 import io.cdap.plugin.MssqlClient;
@@ -23,6 +25,7 @@ import io.cucumber.java.en.Then;
 import org.junit.Assert;
 import stepsdesign.BeforeActions;
 
+import java.io.IOException;
 import java.sql.SQLException;
 
 /**
@@ -48,6 +51,15 @@ public class Mssql implements CdfHelper {
                 PluginPropertyUtils.pluginProp("targetTable"));
         Assert.assertTrue("Value of records transferred to the target table should be equal to the value " +
                 "of the records in the source table", recordsMatched);
+    }
+
+    @Then("Validate OUT record count is equal to records transferred to target BigQuery table")
+    public void validateOUTRecordCountIsEqualToRecordsTransferredToTargetBigQueryTable()
+            throws IOException, InterruptedException, IOException {
+        int targetBQRecordsCount = BigQueryClient.countBqQuery(PluginPropertyUtils.pluginProp("bqtarget.table"));
+        BeforeActions.scenario.write("No of Records Transferred to BigQuery:" + targetBQRecordsCount);
+        Assert.assertEquals("Out records should match with target BigQuery table records count",
+                CdfPipelineRunAction.getCountDisplayedOnSourcePluginAsRecordsOut(), targetBQRecordsCount);
     }
 
 }

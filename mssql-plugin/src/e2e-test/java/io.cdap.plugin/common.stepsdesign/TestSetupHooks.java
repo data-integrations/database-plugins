@@ -21,6 +21,8 @@ import io.cdap.plugin.MssqlClient;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
+import stepsdesign.BeforeActions;
 
 import java.sql.SQLException;
 
@@ -28,6 +30,7 @@ import java.sql.SQLException;
  * Mssql test hooks.
  */
 public class TestSetupHooks {
+    public static String bqTargetTable = StringUtils.EMPTY;
 
     @Before(order = 1)
     public static void setTableName() {
@@ -78,6 +81,13 @@ public class TestSetupHooks {
         MssqlClient.deleteTables(PluginPropertyUtils.pluginProp("schema"),
                 new String[]{PluginPropertyUtils.pluginProp("sourceTable"),
                         PluginPropertyUtils.pluginProp("targetTable")});
+    }
+
+    @Before(order = 1, value = "@BQ_SINK")
+    public static void setTempTargetBQTable() {
+        bqTargetTable = "TestSN_table" + RandomStringUtils.randomAlphanumeric(10);
+        PluginPropertyUtils.addPluginProp("bqtarget.table", bqTargetTable);
+        BeforeActions.scenario.write("BigQuery Target table name: " + bqTargetTable);
     }
 
 }
