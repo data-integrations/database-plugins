@@ -29,7 +29,7 @@ import java.sql.Types;
 public class MysqlSchemaReader extends CommonSchemaReader {
 
   public static final String YEAR_TYPE_NAME = "YEAR";
-
+  public static final String MEDIUMINT_UNSIGNED_TYPE_NAME = "MEDIUMINT UNSIGNED";
   private final String sessionID;
 
   public MysqlSchemaReader(String sessionID) {
@@ -48,12 +48,25 @@ public class MysqlSchemaReader extends CommonSchemaReader {
     int sqlType = metadata.getColumnType(index);
     String sqlTypeName = metadata.getColumnTypeName(index);
 
-    // YEAR type in MySQL should get converted to integer to avoid truncation
-    // failures in the MySQL Sink plugin due to missing date and month details.
-    if (sqlType == Types.DATE && YEAR_TYPE_NAME.equalsIgnoreCase(sqlTypeName)) {
-      return Schema.of(Schema.Type.INT);
+    switch(sqlType) {
+      case Types.DATE:
+        // YEAR type in MySQL should get converted to integer to avoid truncation
+        // failures in the MySQL Sink plugin due to missing date and month details.
+        if (YEAR_TYPE_NAME.equalsIgnoreCase(sqlTypeName)) {
+          return Schema.of(Schema.Type.INT);
+        }
+        break;
+      case Types.INTEGER:
+        // MEDIUMINT UNSIGNED should be mapped to int
+        if (MEDIUMINT_UNSIGNED_TYPE_NAME.equalsIgnoreCase(sqlTypeName)) {
+          // Need to handle specifically for MEDIUMINT UNSIGNED here as super.getSchema internally uses
+          // metadata.getColumnType and metadata.getSigned to evaluate the type.
+          // For MySQL INT UNSIGNED and MEDIUMINT UNSIGNED both getColumnType and getSigned matches, hence
+          // MEDIUMINT UNSIGNED gets mapped to CDAP long type.
+          return Schema.of(Schema.Type.INT);
+        }
+        break;
     }
-
     return super.getSchema(metadata, index);
   }
 }

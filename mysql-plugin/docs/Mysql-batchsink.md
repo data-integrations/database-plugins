@@ -66,37 +66,40 @@ connections.
 
 Data Types Mapping
 ----------
-| MySQL Data Type                | CDAP Schema Data Type | Comment                                                 |
-| ------------------------------ |-----------------------|---------------------------------------------------------|
-| BIT                            | boolean               |                                                         |
-| TINYINT                        | int                   |                                                         |
-| BOOL, BOOLEAN                  | boolean               |                                                         |
-| SMALLINT                       | int                   |                                                         |
-| MEDIUMINT                      | double                |                                                         |
-| INT,INTEGER                    | int                   |                                                         |
-| BIGINT                         | long                  |                                                         |
-| FLOAT                          | float                 |                                                         |
-| DOUBLE                         | double                |                                                         |
-| DECIMAL                        | decimal               |                                                         |
-| DATE                           | date                  |                                                         |
-| DATETIME                       | timestamp             |                                                         |
-| TIMESTAMP                      | timestamp             |                                                         |
-| TIME                           | time                  |                                                         |
-| YEAR                           | int                   | Users can manually set output schema to map it to Date. |
-| CHAR                           | string                |                                                         |
-| VARCHAR                        | string                |                                                         |
-| BINARY                         | bytes                 |                                                         |
-| VARBINARY                      | bytes                 |                                                         |
-| TINYBLOB                       | bytes                 |                                                         |
-| TINYTEXT                       | string                |                                                         |
-| BLOB                           | bytes                 |                                                         |
-| TEXT                           | string                |                                                         |
-| MEDIUMBLOB                     | bytes                 |                                                         |
-| MEDIUMTEXT                     | string                |                                                         |
-| LONGBLOB                       | bytes                 |                                                         |
-| LONGTEXT                       | string                |                                                         |
-| ENUM                           | string                |                                                         |
-| SET                            | string                |                                                         |
+| MySQL Data Type    | CDAP Schema Data Type | Comment                                                 |
+|--------------------|-----------------------|---------------------------------------------------------|
+| BIT                | boolean               |                                                         |
+| TINYINT            | int                   |                                                         |
+| BOOL, BOOLEAN      | boolean               |                                                         |
+| SMALLINT           | int                   |                                                         |
+| MEDIUMINT          | int                   |                                                         |
+| MEDIUMINT UNSIGNED | int                   | Users can manually set output schema to map it to Long. |
+| INT,INTEGER        | int                   |                                                         |
+| INT UNSIGNED       | long                  |                                                         |
+| BIGINT             | long                  |                                                         |
+| BIGINT UNSIGNED    | decimal               |                                                         |
+| FLOAT              | float                 |                                                         |
+| DOUBLE             | double                |                                                         |
+| DECIMAL            | decimal               |                                                         |
+| DATE               | date                  |                                                         |
+| DATETIME           | timestamp             |                                                         |
+| TIMESTAMP          | timestamp             |                                                         |
+| TIME               | time                  |                                                         |
+| YEAR               | int                   | Users can manually set output schema to map it to Date. |
+| CHAR               | string                |                                                         |
+| VARCHAR            | string                |                                                         |
+| BINARY             | bytes                 |                                                         |
+| VARBINARY          | bytes                 |                                                         |
+| TINYBLOB           | bytes                 |                                                         |
+| TINYTEXT           | string                |                                                         |
+| BLOB               | bytes                 |                                                         |
+| TEXT               | string                |                                                         |
+| MEDIUMBLOB         | bytes                 |                                                         |
+| MEDIUMTEXT         | string                |                                                         |
+| LONGBLOB           | bytes                 |                                                         |
+| LONGTEXT           | string                |                                                         |
+| ENUM               | string                |                                                         |
+| SET                | string                |                                                         |
 
 
 Example

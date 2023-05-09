@@ -33,7 +33,8 @@ public class MysqlFailedConnectionTest extends DBSpecificFailedConnectionTest {
     super.test(JDBC_DRIVER_CLASS_NAME, connector, "Failed to create connection to database via connection string: " +
                                                     "jdbc:mysql://localhost:3306 and arguments: {user=username, " +
                                                     "rewriteBatchedStatements=true, "  +
-                                                    "connectTimeout=20000, socketTimeout=20000}. Error: " +
+                                                    "connectTimeout=20000, tinyInt1isBit=false, " +
+                                                    "socketTimeout=20000}. Error: " +
                                                     "ConnectException: Connection refused (Connection refused).");
   }
 }

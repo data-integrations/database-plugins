@@ -204,6 +204,17 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
         return;
       }
 
+      // Backward compatibility change to support MySQL MEDIUMINT UNSIGNED to Long type conversion
+      if (Schema.Type.LONG.equals(expectedFieldSchema.getType())
+            && Schema.Type.INT.equals(actualFieldSchema.getType())) {
+        return;
+      }
+
+      // Backward compatibility change to support MySQL TINYINT(1) to Bool type conversion
+      if (Schema.Type.BOOLEAN.equals(expectedFieldSchema.getType())
+              && Schema.Type.INT.equals(actualFieldSchema.getType())) {
+        return;
+      }
       super.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
     }
 

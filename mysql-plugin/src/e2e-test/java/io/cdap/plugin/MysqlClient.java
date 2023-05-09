@@ -173,9 +173,13 @@ public class MysqlClient {
       statement.executeUpdate(createSourceTableQuery);
 
       // Insert dummy data.
-      String datatypesValues = PluginPropertyUtils.pluginProp("datatypesValues");
-      String datatypesColumnsList = PluginPropertyUtils.pluginProp("datatypesColumnsList");
-      statement.executeUpdate("INSERT INTO " + sourceTable + " " + datatypesColumnsList + " " + datatypesValues);
+      int rowCount = 1;
+      while (!Strings.isNullOrEmpty(PluginPropertyUtils.pluginProp("datatypesValue" + rowCount))) {
+        String datatypesValues = PluginPropertyUtils.pluginProp("datatypesValue" + rowCount);
+        String datatypesColumnsList = PluginPropertyUtils.pluginProp("datatypesColumnsList");
+        statement.executeUpdate("INSERT INTO " + sourceTable + " " + datatypesColumnsList + " " + datatypesValues);
+        rowCount++;
+      }
     }
   }
 
