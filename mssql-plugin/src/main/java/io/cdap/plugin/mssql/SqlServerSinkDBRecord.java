@@ -25,7 +25,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * SQL Server Sink implementation {@link org.apache.hadoop.mapreduce.lib.db.DBWritable} and
@@ -38,18 +37,29 @@ public class SqlServerSinkDBRecord extends SqlServerSourceDBRecord {
   }
 
   @Override
-  protected void writeToDB(PreparedStatement stmt, @Nullable Schema.Field field, int fieldIndex) throws SQLException {
-    Object fieldValue = (field != null) ? record.get(field.getName()) : null;
+  protected void writeNullToDB(PreparedStatement stmt, int fieldIndex) throws SQLException {
+    int sqlType = columnTypes.get(fieldIndex).getType();
+    int sqlIndex = fieldIndex + 1;
+    if (sqlType == SqlServerSourceSchemaReader.GEOGRAPHY_TYPE
+        || sqlType == SqlServerSourceSchemaReader.GEOMETRY_TYPE) {
+      // Handle setting GEOGRAPHY and GEOMETRY 'null' values. Using 'stmt.setNull(sqlIndex, GEOMETRY_TYPE)' leads
+      // to com.microsoft.sqlserver.jdbc.SQLServerException: The conversion from OBJECT to GEOMETRY is unsupported
+      stmt.setString(sqlIndex, "Null");
+      return;
+    }
+    super.writeNullToDB(stmt, fieldIndex);
+  }
+
+  @Override
+  protected void writeNonNullToDB(PreparedStatement stmt, Schema fieldSchema,
+                                  String fieldName, int fieldIndex) throws SQLException {
+    Object fieldValue = (fieldName != null) ? record.get(fieldName) : null;
     int sqlType = columnTypes.get(fieldIndex).getType();
     int sqlIndex = fieldIndex + 1;
     switch (sqlType) {
       case SqlServerSourceSchemaReader.GEOGRAPHY_TYPE:
       case SqlServerSourceSchemaReader.GEOMETRY_TYPE:
-        if (fieldValue == null) {
-          // Handle setting GEOGRAPHY and GEOMETRY 'null' values. Using 'stmt.setNull(sqlIndex, GEOMETRY_TYPE)' leads
-          // to com.microsoft.sqlserver.jdbc.SQLServerException: The conversion from OBJECT to GEOMETRY is unsupported
-          stmt.setString(sqlIndex, "Null");
-        } else if (fieldValue instanceof String) {
+        if (fieldValue instanceof String) {
           // Handle setting GEOGRAPHY and GEOMETRY values from Well Known Text.
           // For example, "POINT(3 40 5 6)"
           stmt.setString(sqlIndex, (String) fieldValue);
@@ -60,15 +70,10 @@ public class SqlServerSinkDBRecord extends SqlServerSourceDBRecord {
       case Types.TIME:
         // Handle setting SQL Server 'TIME' data type as string to avoid accuracy loss. 'TIME' data type has the
         // accuracy of 100 nanoseconds(1 millisecond in Informatica) but 'java.sql.Time' will round value to second.
-        if (fieldValue != null) {
-          String fieldName = field.getName();
-          stmt.setString(sqlIndex, record.getTime(fieldName).toString());
-        } else {
-          stmt.setNull(sqlIndex, sqlType);
-        }
+        stmt.setString(sqlIndex, record.getTime(fieldName).toString());
         break;
       default:
-        super.writeToDB(stmt, field, fieldIndex);
+        super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);
     }
   }
 

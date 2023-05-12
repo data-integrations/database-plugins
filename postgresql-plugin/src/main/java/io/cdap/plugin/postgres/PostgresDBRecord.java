@@ -83,16 +83,17 @@ public class PostgresDBRecord extends DBRecord {
   }
 
   @Override
-  protected void writeToDB(PreparedStatement stmt, Schema.Field field, int fieldIndex) throws SQLException {
+  protected void writeNonNullToDB(PreparedStatement stmt, Schema fieldSchema,
+                                  String fieldName, int fieldIndex) throws SQLException {
     int sqlIndex = fieldIndex + 1;
     ColumnType columnType = columnTypes.get(fieldIndex);
     if (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(columnType.getTypeName()) ||
       PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(columnType.getType())) {
       stmt.setObject(sqlIndex, createPGobject(columnType.getTypeName(),
-                                              record.get(field.getName()),
+                                              record.get(fieldName),
                                               stmt.getClass().getClassLoader()));
     } else {
-      super.writeToDB(stmt, field, fieldIndex);
+      super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);
     }
   }
 

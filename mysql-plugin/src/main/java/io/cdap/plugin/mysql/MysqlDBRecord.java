@@ -20,7 +20,6 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
-import org.jetbrains.annotations.Nullable;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -62,23 +61,36 @@ public class MysqlDBRecord extends DBRecord {
       }
     }
 
+    // Deprecated : Handle the Tinyint(1) to boolean conversion use case.
+    if (sqlType == Types.TINYINT && resultSet.getObject(columnIndex) != null) {
+      Schema nonNullableSchema = field.getSchema().isNullable() ?
+              field.getSchema().getNonNullable() : field.getSchema();
+      switch (nonNullableSchema.getType()) {
+        case BOOLEAN:
+          recordBuilder.set(field.getName(), resultSet.getBoolean(columnIndex));
+          return;
+      }
+    }
+
     super.handleField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
   }
 
   @Override
-  protected void writeToDB(PreparedStatement stmt, @Nullable Schema.Field field, int fieldIndex) throws SQLException {
+  protected void writeNonNullToDB(PreparedStatement stmt, Schema fieldSchema,
+                                  String fieldName, int fieldIndex) throws SQLException {
 
     int sqlType = columnTypes.get(fieldIndex).getType();
     int sqlIndex = fieldIndex + 1;
     switch (sqlType) {
       case Types.DATE:
-        Schema schema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-        if (schema.getType().equals(Schema.Type.INT) && !Schema.LogicalType.DATE.equals(schema.getLogicalType())) {
-          stmt.setInt(sqlIndex, record.get(field.getName()));
+        if (fieldSchema.getType().equals(Schema.Type.INT)
+                && !Schema.LogicalType.DATE.equals(fieldSchema.getLogicalType())) {
+          Object fieldValue = record.get(fieldName);
+          stmt.setInt(sqlIndex, (Integer) fieldValue);
           return;
         }
     }
 
-    super.writeToDB(stmt, field, fieldIndex);
+    super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);
   }
 }

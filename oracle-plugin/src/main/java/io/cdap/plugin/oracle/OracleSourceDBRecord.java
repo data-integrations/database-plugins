@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.oracle;
 
-import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -44,7 +43,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Oracle Source implementation {@link org.apache.hadoop.mapreduce.lib.db.DBWritable} and
@@ -116,18 +114,10 @@ public class OracleSourceDBRecord extends DBRecord {
   }
 
   @Override
-  protected void writeToDB(PreparedStatement stmt, @Nullable Schema.Field field, int fieldIndex) throws SQLException {
+  protected void writeNonNullToDB(PreparedStatement stmt, Schema fieldSchema,
+                                  String fieldName, int fieldIndex) throws SQLException {
     int sqlType = columnTypes.get(fieldIndex).getType();
     int sqlIndex = fieldIndex + 1;
-
-    if (field == null) {
-      // Some of the fields can be absent in the record
-      stmt.setNull(sqlIndex, sqlType);
-      return;
-    }
-
-    Schema nonNullableSchema = field.getSchema().isNullable() ?
-            field.getSchema().getNonNullable() : field.getSchema();
 
     // TIMESTAMP and TIMESTAMPTZ types needs to be handled using the specific oracle types to ensure that the data
     // inserted matches with the provided value. As Oracle driver internally alters the values provided
@@ -136,66 +126,46 @@ public class OracleSourceDBRecord extends DBRecord {
     // More details here : https://docs.oracle.com/cd/E13222_01/wls/docs91/jdbc_drivers/oracle.html
     // Handle the case when TimestampTZ type is set to CDAP String type or Timestamp type
     if (sqlType == OracleSourceSchemaReader.TIMESTAMP_TZ) {
-      if (Schema.Type.STRING.equals(nonNullableSchema.getType())) {
+      if (Schema.Type.STRING.equals(fieldSchema.getType())) {
         // Deprecated: Handle the case when the TimestampTZ is mapped to CDAP String type
-        String timestampString = record.get(field.getName());
-        if (!Strings.isNullOrEmpty(timestampString)) {
-          Object timestampTZ = createOracleTimestampWithTimeZone(stmt.getConnection(), timestampString);
-          stmt.setObject(sqlIndex, timestampTZ);
-        } else {
-          stmt.setNull(sqlIndex, sqlType);
-        }
+        String timestampString = record.get(fieldName);
+        Object timestampTZ = createOracleTimestampWithTimeZone(stmt.getConnection(), timestampString);
+        stmt.setObject(sqlIndex, timestampTZ);
       } else {
         // Handle the case when the TimestampTZ is mapped to CDAP Timestamp type
-        ZonedDateTime timestamp = record.getTimestamp(field.getName());
-        if (timestamp != null) {
-          String timestampString = Timestamp.valueOf(timestamp.toOffsetDateTime()
-                  .atZoneSameInstant(OffsetDateTime.now().getOffset()).toLocalDateTime()).toString();
-          Object timestampWithTimeZone = createOracleTimestampWithTimeZone(stmt.getConnection(), timestampString);
-          stmt.setObject(sqlIndex, timestampWithTimeZone);
-        } else {
-          stmt.setNull(sqlIndex, sqlType);
-        }
+        ZonedDateTime timestamp = record.getTimestamp(fieldName);
+        String timestampString = Timestamp.valueOf(timestamp.toOffsetDateTime()
+                .atZoneSameInstant(OffsetDateTime.now().getOffset()).toLocalDateTime()).toString();
+        Object timestampWithTimeZone = createOracleTimestampWithTimeZone(stmt.getConnection(), timestampString);
+        stmt.setObject(sqlIndex, timestampWithTimeZone);
       }
     } else if (sqlType == OracleSourceSchemaReader.TIMESTAMP_LTZ) {
-      if (Schema.LogicalType.TIMESTAMP_MICROS.equals(nonNullableSchema.getLogicalType())) {
+      if (Schema.LogicalType.TIMESTAMP_MICROS.equals(fieldSchema.getLogicalType())) {
         // Deprecated: Handle the case when the TimestampLTZ is mapped to CDAP Timestamp type
-        ZonedDateTime timestamp = record.getTimestamp(field.getName());
-        if (timestamp != null && field != null) {
-          String timestampString = Timestamp.valueOf(timestamp.toLocalDateTime()).toString();
-          Object timestampWithTimeZone = createOracleTimestampWithLocalTimeZone(stmt.getConnection(), timestampString);
-          stmt.setObject(sqlIndex, timestampWithTimeZone);
-        } else {
-          stmt.setNull(sqlIndex, sqlType);
-        }
-      } else if (Schema.LogicalType.DATETIME.equals(nonNullableSchema.getLogicalType())) {
+        ZonedDateTime timestamp = record.getTimestamp(fieldName);
+        String timestampString = Timestamp.valueOf(timestamp.toLocalDateTime()).toString();
+        Object timestampWithTimeZone = createOracleTimestampWithLocalTimeZone(stmt.getConnection(), timestampString);
+        stmt.setObject(sqlIndex, timestampWithTimeZone);
+      } else if (Schema.LogicalType.DATETIME.equals(fieldSchema.getLogicalType())) {
         // Handle the case when the TimestampLTZ is mapped to CDAP Datetime type
-        LocalDateTime localDateTime = record.getDateTime(field.getName());
-        if (localDateTime != null) {
-          String timestampString = Timestamp.valueOf(localDateTime).toString();
-          Object timestampWithTimeZone = createOracleTimestampWithLocalTimeZone(stmt.getConnection(), timestampString);
-          stmt.setObject(sqlIndex, timestampWithTimeZone);
-        } else {
-          stmt.setNull(sqlIndex, sqlType);
-        }
+        LocalDateTime localDateTime = record.getDateTime(fieldName);
+        String timestampString = Timestamp.valueOf(localDateTime).toString();
+        Object timestampWithTimeZone = createOracleTimestampWithLocalTimeZone(stmt.getConnection(), timestampString);
+        stmt.setObject(sqlIndex, timestampWithTimeZone);
       }
     } else if (sqlType == Types.TIMESTAMP) {
-      if (Schema.LogicalType.DATETIME.equals(nonNullableSchema.getLogicalType())) {
+      if (Schema.LogicalType.DATETIME.equals(fieldSchema.getLogicalType())) {
         // Handle the case when Timestamp is mapped to CDAP Datetime type.
-        LocalDateTime localDateTime = record.getDateTime(field.getName());
-        if (localDateTime != null) {
-          String timestampString = Timestamp.valueOf(localDateTime).toString();
-          Object timestampWithTimeZone = createOracleTimestamp(stmt.getConnection(), timestampString);
-          stmt.setObject(sqlIndex, timestampWithTimeZone);
-        } else {
-          stmt.setNull(sqlIndex, sqlType);
-        }
-      } else if (Schema.LogicalType.TIMESTAMP_MICROS.equals(nonNullableSchema.getLogicalType())) {
+        LocalDateTime localDateTime = record.getDateTime(fieldName);
+        String timestampString = Timestamp.valueOf(localDateTime).toString();
+        Object timestampWithTimeZone = createOracleTimestamp(stmt.getConnection(), timestampString);
+        stmt.setObject(sqlIndex, timestampWithTimeZone);
+      } else if (Schema.LogicalType.TIMESTAMP_MICROS.equals(fieldSchema.getLogicalType())) {
         // Deprecated: Handle the case when the Timestamp is mapped to CDAP Timestamp type
-        super.writeToDB(stmt, field, fieldIndex);
+        super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);
       }
     } else {
-      super.writeToDB(stmt, field, fieldIndex);
+      super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);
     }
   }
 

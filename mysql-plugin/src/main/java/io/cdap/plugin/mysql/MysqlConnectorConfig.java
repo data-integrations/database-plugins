@@ -30,6 +30,8 @@ public class MysqlConnectorConfig extends AbstractDBSpecificConnectorConfig {
   private static final String JDBC_PROPERTY_SOCKET_TIMEOUT = "socketTimeout";
   private static final String JDBC_REWRITE_BATCHED_STATEMENTS = "rewriteBatchedStatements";
 
+  private static final String MYSQL_TINYINT1_IS_BIT = "tinyInt1isBit";
+
   public MysqlConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                               String connectionArguments) {
 
@@ -58,6 +60,8 @@ public class MysqlConnectorConfig extends AbstractDBSpecificConnectorConfig {
     prop.put(JDBC_PROPERTY_CONNECT_TIMEOUT, "20000");
     prop.put(JDBC_PROPERTY_SOCKET_TIMEOUT, "20000");
     prop.put(JDBC_REWRITE_BATCHED_STATEMENTS, "true");
+    // MySQL property to ensure that TINYINT(1) type data is not converted to MySQL Bit/Boolean type in the ResultSet.
+    prop.put(MYSQL_TINYINT1_IS_BIT, "false");
     return prop;
   }
 }

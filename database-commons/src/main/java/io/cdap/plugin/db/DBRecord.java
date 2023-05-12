@@ -212,10 +212,10 @@ public class DBRecord implements Writable, DBWritable, Configurable {
    * @param stmt the {@link PreparedStatement} to write the {@link StructuredRecord} to
    */
   public void write(PreparedStatement stmt) throws SQLException {
-    for (int i = 0; i < columnTypes.size(); i++) {
-      ColumnType columnType = columnTypes.get(i);
+    for (int fieldIndex = 0; fieldIndex < columnTypes.size(); fieldIndex++) {
+      ColumnType columnType = columnTypes.get(fieldIndex);
       Schema.Field field = record.getSchema().getField(columnType.getName());
-      writeToDB(stmt, field, i);
+      writeToDB(stmt, field, fieldIndex);
     }
   }
 
@@ -274,26 +274,54 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     }
   }
 
-  protected void writeToDB(PreparedStatement stmt, @Nullable Schema.Field field, int fieldIndex) throws SQLException {
+  private void writeToDB(PreparedStatement stmt, @Nullable Schema.Field field, int fieldIndex) throws SQLException {
+    if (shouldWriteNullField(field)) {
+      writeNullToDB(stmt, fieldIndex);
+    } else {
+      Schema nonNullableSchema = getNonNullableSchema(field);
+      writeNonNullToDB(stmt, nonNullableSchema, field.getName(), fieldIndex);
+    }
+  }
 
+  /**
+   * This method returns true in case a field can support writeNullToDB for the current field.
+   * By default, this method returns true when field or field value is set to null.
+   *
+   * @param field Field
+   * @return true if null value of the field can be written to DB
+   */
+  protected boolean shouldWriteNullField(Schema.Field field) {
+    return (field == null || record.get(field.getName()) == null);
+  }
+
+  /**
+   * This method handle the null field and null field values, by internally using the PreparedStatement.setNull
+   * method. Any class requiring a custom handling to write null value for any type should override this method.
+   *
+   * @param stmt       PreparedStatement object for writing to db
+   * @param fieldIndex Field index in the columnTypes
+   * @throws SQLException Exception while calling PreparedStatement.setNull
+   */
+  protected void writeNullToDB(PreparedStatement stmt, int fieldIndex) throws SQLException {
     int sqlIndex = fieldIndex + 1;
     int sqlType = columnTypes.get(fieldIndex).getType();
-    if (field == null) {
-      // Some of the fields can be absent in the record
-      stmt.setNull(sqlIndex, sqlType);
-      return;
-    }
+    stmt.setNull(sqlIndex, sqlType);
+  }
 
-    String fieldName = field.getName();
-    Schema fieldSchema = getNonNullableSchema(field);
-    Schema.Type fieldType = fieldSchema.getType();
+  /**
+   * Write Non null values to DB.
+   *
+   * @param stmt          PreparedStatement object for writing to db
+   * @param fieldSchema   Non-Nullable schema of the field
+   * @param fieldName     Current Field from record's schema
+   * @param fieldIndex    Field index in the columnTypes
+   * @throws SQLException Exception while calling PreparedStatement.set... calls
+   */
+  protected void writeNonNullToDB(PreparedStatement stmt, Schema fieldSchema,
+                                  String fieldName, int fieldIndex) throws SQLException {
+
+    int sqlIndex = fieldIndex + 1;
     Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
-    Object fieldValue = record.get(fieldName);
-
-    if (fieldValue == null) {
-      stmt.setNull(sqlIndex, columnTypes.get(fieldIndex).getType());
-      return;
-    }
 
     if (fieldLogicalType != null) {
       switch (fieldLogicalType) {
@@ -318,6 +346,8 @@ public class DBRecord implements Writable, DBWritable, Configurable {
       return;
     }
 
+    Schema.Type fieldType = fieldSchema.getType();
+    Object fieldValue = record.get(fieldName);
     switch (fieldType) {
       case NULL:
         stmt.setNull(sqlIndex, columnTypes.get(fieldIndex).getType());
@@ -330,8 +360,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
         stmt.setBoolean(sqlIndex, (Boolean) fieldValue);
         break;
       case INT:
-        // write short or int appropriately
-        writeInt(stmt, fieldIndex, sqlIndex, fieldValue);
+        stmt.setInt(sqlIndex, (Integer) fieldValue);
         break;
       case LONG:
         long fieldValueLong = ((Number) fieldValue).longValue();
@@ -362,16 +391,6 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     }
     // handles BINARY, VARBINARY and LOGVARBINARY
     stmt.setBytes(sqlIndex, byteValue);
-  }
-
-  protected void writeInt(PreparedStatement stmt, int fieldIndex, int sqlIndex, Object fieldValue) throws SQLException {
-    Integer intValue = (Integer) fieldValue;
-    int parameterType = columnTypes.get(fieldIndex).getType();
-    if (Types.TINYINT == parameterType || Types.SMALLINT == parameterType) {
-      stmt.setShort(sqlIndex, intValue.shortValue());
-      return;
-    }
-    stmt.setInt(sqlIndex, intValue);
   }
 
   @Override
