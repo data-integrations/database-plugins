@@ -50,7 +50,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>23.0</version>
+      <version>31.0.1-jre</version>
     </dependency>
     <!-- test dependencies -->
     <dependency>
@@ -102,6 +102,7 @@
       <version>42.3.1</version>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
 
   <build>

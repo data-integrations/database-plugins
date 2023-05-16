@@ -1,0 +1,2 @@
+create table `DATASET.TABLE_NAME` (col1 BYTES, col2 STRING, col3 DATE, col4 FLOAT64, col5 NUMERIC, col6 TIMESTAMP,
+col7 BIGNUMERIC, col8 BOOL, col9 INT, col10 TIME)
