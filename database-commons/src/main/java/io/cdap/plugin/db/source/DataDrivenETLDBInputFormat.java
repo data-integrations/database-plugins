@@ -24,6 +24,7 @@ import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
@@ -39,6 +40,8 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -60,6 +63,47 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
     dbConf.setInputQuery(inputQuery);
     dbConf.setInputBoundingQuery(inputBoundingQuery);
     new ConnectionConfigAccessor(conf).setAutoCommitEnabled(enableAutoCommit);
+  }
+
+  @Override
+  public List<InputSplit> getSplits(JobContext job) throws IOException {
+    List<InputSplit> splits = super.getSplits(job);
+    LOG.error("ashau - num splits = {}", splits.size(), new Exception());
+    int i = 1;
+    List<InputSplit> outputs = new ArrayList<>(splits.size());
+    for (InputSplit split : splits) {
+      LOG.error("ashau - split #{} class = {}", i, split.getClass());
+      if (split instanceof DataDrivenDBInputFormat.DataDrivenDBInputSplit) {
+        DataDrivenDBInputFormat.DataDrivenDBInputSplit dbSplit = (DataDrivenDBInputSplit) split;
+        LOG.error("ashau - split #{}, length = {}, lower = {}, upper = {}", i,
+                dbSplit.getLength(), dbSplit.getLowerClause(), dbSplit.getUpperClause());
+        outputs.add(new TestSplit(dbSplit.getLowerClause(), dbSplit.getUpperClause(), 10));
+      }
+      i++;
+    }
+    return outputs;
+  }
+
+  /**
+   * Split to test non-zero length.
+   */
+  public static class TestSplit extends DataDrivenDBInputFormat.DataDrivenDBInputSplit {
+    private final long len;
+
+    public TestSplit() {
+      super();
+      this.len = 10;
+    }
+
+    TestSplit(String lower, String upper, long length) {
+      super(lower, upper);
+      this.len = length;
+    }
+
+    @Override
+    public long getLength() throws IOException {
+      return len;
+    }
   }
 
   @Override
