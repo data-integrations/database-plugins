@@ -1,1 +1,1 @@
-create table `DATASET.TABLE_NAME` (id INT64,lastName STRING)
+create table `DATASET.TABLE_NAME` (col3 DATE, col6 TIMESTAMP,col8 BOOL, col9 INT64, col10 TIME)

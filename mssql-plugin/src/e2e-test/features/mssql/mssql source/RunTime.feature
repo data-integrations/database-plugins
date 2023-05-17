@@ -33,7 +33,7 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
     Then Click on the Get Schema button
-    Then Verify the Output Schema matches the Expected Schema: "outputSchema"
+    Then Verify the Output Schema matches the Expected Schema: "outputDatatypesSchema"
     Then Validate "SQL Server" plugin properties
     Then Close the Plugin Properties page
     And Navigate to the properties page of plugin: "BigQuery"
@@ -57,15 +57,8 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Open and capture logs
     Then Verify the pipeline status is "Succeeded"
     Then Close the pipeline logs
-    And Close the preview
-    Then Deploy the pipeline
-    Then Run the Pipeline in Runtime
-    Then Wait till pipeline is in running state
-    Then Open and capture logs
-    Then Verify the pipeline status is "Succeeded"
-    Then Close the pipeline logs
 
-  @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
+  @MSSQL_SOURCE_TEST @BQ_SINK @Mssql_Required
   Scenario: To verify data is getting transferred from Mssql to BigQuery successfully
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -115,7 +108,7 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Verify the pipeline status is "Succeeded"
     Then Close the pipeline logs
 
-  @MSSQL_SOURCE_TEST @BQ_SINK @Mssql_Required
+  @MSSQL_SOURCE_TEST @BQ_SINK
   Scenario: Verify User is able to preview and deploy the pipeline when connection arguments are set
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -159,7 +152,7 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Verify the pipeline status is "Succeeded"
     Then Close the pipeline logs
 
-  @MSSQL_SOURCE_TEST @BQ_SINK @Mssql_Required
+  @MSSQL_SOURCE_TEST @BQ_SINK
   Scenario: To verify the pipeline fails while preview with invalid bounding query setting the required split-By field
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -175,9 +168,10 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
+    Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
+    Then Replace input plugin property: "splitBy" with value: "splitby"
     Then Enter textarea plugin property: "importQuery" with value: "mssqlimportQuery"
     Then Enter textarea plugin property: "boundingQuery" with value: "invalid.boundQuery"
-    Then Replace input plugin property: "splitBy" with value: "splitby"
     Then Replace input plugin property: "numSplits" with value: "numberOfSplits"
     Then Click on the Get Schema button
     Then Verify the Output Schema matches the Expected Schema: "outputSchema"
@@ -191,7 +185,8 @@ Feature: Mssql - Verify Mssql source data transfer
     And Enter input plugin property: "table" with value: "bqtarget.table"
     Then Validate "BigQuery" plugin properties
     And Close the Plugin Properties page
-    Then Save the pipeline
-    And Preview and run the pipeline
-    And Wait till pipeline preview is in running state
-    Then Verify the preview run status of pipeline in the logs is "failed"
+    Then Save and Deploy Pipeline
+    Then Run the Pipeline in Runtime
+    Then Wait till pipeline is in running state
+    Then Open and capture logs
+    And Verify the pipeline status is "Failed"

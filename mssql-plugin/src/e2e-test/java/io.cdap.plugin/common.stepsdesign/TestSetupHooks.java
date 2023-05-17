@@ -61,6 +61,12 @@ public class TestSetupHooks {
                 PluginPropertyUtils.pluginProp("schema"));
     }
 
+    @Before(order = 2, value = "@MSSQL_TEST_TABLE")
+    public static void createMssqlTestTable() throws SQLException, ClassNotFoundException {
+        MssqlClient.createTargetMssqlTable(PluginPropertyUtils.pluginProp("targetTable"),
+                PluginPropertyUtils.pluginProp("schema"));
+    }
+
     @Before(order = 2, value = "@MSSQL_SOURCE_DATATYPES_TEST")
     public static void createAllDatatypesTables() throws SQLException, ClassNotFoundException {
         MssqlClient.createSourceDatatypesTable(PluginPropertyUtils.pluginProp("sourceTable"),

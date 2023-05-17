@@ -15,7 +15,7 @@
 @Mssql
 Feature: MySQL Server Sink - Design time scenarios
 
-  @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
+  @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST
   Scenario: Verify user is able to validate the sink plugin with connection and basic details for connectivity
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Sink"
@@ -33,7 +33,7 @@ Feature: MySQL Server Sink - Design time scenarios
     Then Validate "SQL Server" plugin properties
     Then Close the Plugin Properties page
 
-  @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
+  @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST
   Scenario: To verify Mssql source plugin validation with connection arguments
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Sink"
@@ -52,7 +52,7 @@ Feature: MySQL Server Sink - Design time scenarios
     Then Validate "SQL Server" plugin properties
     Then Close the Plugin Properties page
 
-  @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
+  @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST
   Scenario: To verify Mssql source plugin validation with advanced details
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Sink"

@@ -1,4 +1,4 @@
-insert into `DATASET.TABLE_NAME` (id,lastName) values
-(92233720,'BHATNAGAR'),
-(92233721,'KUMAR');
+insert into `DATASET.TABLE_NAME` (col3, col6, col8, col9, col10) values
+('2021-01-28','2019-03-10 04:50:01 UTC',false,92233720,'21:26:00'),
+('2021-01-21','2018-03-10 04:50:01 UTC',true,92233729,'20:26:00');
 

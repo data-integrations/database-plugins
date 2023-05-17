@@ -15,7 +15,7 @@
 @Mssql
 Feature: Mssql - Verify Mssql sink data transfer
 
-  @BQ_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
+  @BQ_SOURCE_TEST @MSSQL_TEST_TABLE @Mssql_Required
   Scenario: Verify User is able to preview and deploy the pipeline when the data is transferred from BigQuery to Mssql
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -26,6 +26,8 @@ Feature: Mssql - Verify Mssql sink data transfer
     And Enter input plugin property: "datasetProject" with value: "datasetprojectId"
     And Enter input plugin property: "dataset" with value: "dataset"
     And Enter input plugin property: "table" with value: "bqSourceTable"
+    Then Click on the Get Schema button
+    Then Verify the Output Schema matches the Expected Schema: "bqOutputMultipleDatatypesSchema"
     Then Validate "BigQuery" plugin properties
     And Close the Plugin Properties page
     When Expand Plugin group in the LHS plugins list: "Sink"
@@ -39,9 +41,8 @@ Feature: Mssql - Verify Mssql sink data transfer
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
-    Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
-    Then Click on the Get Schema button
-    Then Verify the Output Schema matches the Expected Schema: "outputSchema"
+    Then Replace input plugin property: "tableName" with value: "targetTable"
+    Then Replace input plugin property: "dbSchemaName" with value: "schema"
     Then Validate "SQL Server" plugin properties
     Then Close the Plugin Properties page
     Then Save the pipeline

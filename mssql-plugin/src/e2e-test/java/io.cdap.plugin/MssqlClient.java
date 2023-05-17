@@ -165,6 +165,16 @@ public class MssqlClient {
         }
     }
 
+    public static void createTargetMssqlTable(String targetTable, String schema) throws SQLException,
+            ClassNotFoundException {
+        try (Connection connect = getMssqlConnection();
+             Statement statement = connect.createStatement()) {
+            String datatypesColumns = PluginPropertyUtils.pluginProp("bigQueryDatatypesColumns");
+            String createSourceTableQuery2 = createTableQuery(targetTable, schema, datatypesColumns);
+            statement.executeUpdate(createSourceTableQuery2);
+        }
+    }
+
     public static boolean validateRecordValues(String schema, String sourceTable, String targetTable)
             throws SQLException, ClassNotFoundException {
         String getSourceQuery = "SELECT * FROM " + schema + "." + sourceTable;
