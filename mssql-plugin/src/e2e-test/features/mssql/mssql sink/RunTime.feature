@@ -22,7 +22,7 @@ Feature: Mssql - Verify Mssql sink data transfer
     When Select plugin: "BigQuery" from the plugins list as: "Source"
     And Navigate to the properties page of plugin: "BigQuery"
     And Enter input plugin property: "referenceName" with value: "Reference"
-    And Replace input plugin property: "project" with value: "project.id"
+    And Replace input plugin property: "project" with value: "projectId"
     And Enter input plugin property: "datasetProject" with value: "datasetprojectId"
     And Enter input plugin property: "dataset" with value: "dataset"
     And Enter input plugin property: "table" with value: "bqSourceTable"

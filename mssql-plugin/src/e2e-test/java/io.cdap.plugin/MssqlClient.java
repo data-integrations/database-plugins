@@ -169,7 +169,7 @@ public class MssqlClient {
             ClassNotFoundException {
         try (Connection connect = getMssqlConnection();
              Statement statement = connect.createStatement()) {
-            String datatypesColumns = PluginPropertyUtils.pluginProp("bigQueryDatatypesColumns");
+            String datatypesColumns = PluginPropertyUtils.pluginProp("SqlServerDatatypesColumns");
             String createSourceTableQuery2 = createTableQuery(targetTable, schema, datatypesColumns);
             statement.executeUpdate(createSourceTableQuery2);
         }
