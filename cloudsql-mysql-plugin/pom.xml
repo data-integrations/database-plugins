@@ -45,7 +45,7 @@
     <dependency>
       <groupId>io.cdap.plugin</groupId>
       <artifactId>mysql-plugin</artifactId>
-      <version>1.9.3-SNAPSHOT</version>
+      <version>1.9.3</version>
     </dependency>
 
     <!-- test dependencies -->
