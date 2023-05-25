@@ -25,7 +25,7 @@
 
   <name>CloudSQL PostgreSQL plugin</name>
   <artifactId>cloudsql-postgresql-plugin</artifactId>
-  <version>1.9.3-SNAPSHOT</version>
+  <version>1.9.3</version>
   <modelVersion>4.0.0</modelVersion>
 
   <dependencies>
@@ -46,7 +46,7 @@
     <dependency>
       <groupId>io.cdap.plugin</groupId>
       <artifactId>postgresql-plugin</artifactId>
-      <version>1.9.3-SNAPSHOT</version>
+      <version>1.9.3</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
