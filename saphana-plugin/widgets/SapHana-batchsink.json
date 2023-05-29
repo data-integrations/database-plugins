@@ -48,6 +48,19 @@
           "widget-type": "textbox",
           "label": "Table Name",
           "name": "tableName"
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Operation Name",
+          "name": "operationName",
+          "widget-attributes" : {
+            "default": "insert"
+          }
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Table Key",
+          "name": "relationTableKey"
         }
       ]
     },

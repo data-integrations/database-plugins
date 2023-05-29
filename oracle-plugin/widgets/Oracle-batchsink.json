@@ -171,6 +171,19 @@
           "widget-type": "textbox",
           "label": "Schema Name",
           "name": "dbSchemaName"
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Operation Name",
+          "name": "operationName",
+          "widget-attributes" : {
+            "default": "insert"
+          }
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Table Key",
+          "name": "relationTableKey"
         }
       ]
     },

@@ -83,6 +83,11 @@
       <version>RELEASE</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.plugin</groupId>
+      <artifactId>postgresql-plugin</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -99,6 +104,7 @@
           <instructions>
             <_exportcontents>
                 io.cdap.plugin.auroradb.postgres.*;
+                io.cdap.plugin.postgres.*;
                 io.cdap.plugin.db.source.*;
                 io.cdap.plugin.db.sink.*;
                 org.apache.commons.lang;

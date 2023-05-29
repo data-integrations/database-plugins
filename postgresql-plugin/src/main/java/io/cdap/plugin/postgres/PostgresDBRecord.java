@@ -20,6 +20,7 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.DBRecord;
+import io.cdap.plugin.db.Operation;
 import io.cdap.plugin.db.SchemaReader;
 
 import java.lang.reflect.InvocationTargetException;
@@ -35,8 +36,9 @@ import java.util.List;
  */
 public class PostgresDBRecord extends DBRecord {
 
-  public PostgresDBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
-    super(record, columnTypes);
+  public PostgresDBRecord(StructuredRecord record, List<ColumnType> columnTypes, Operation operationName,
+                          String relationTableKey) {
+    super(record, columnTypes, operationName, relationTableKey);
   }
 
   /**
@@ -86,7 +88,7 @@ public class PostgresDBRecord extends DBRecord {
   protected void writeNonNullToDB(PreparedStatement stmt, Schema fieldSchema,
                                   String fieldName, int fieldIndex) throws SQLException {
     int sqlIndex = fieldIndex + 1;
-    ColumnType columnType = columnTypes.get(fieldIndex);
+    ColumnType columnType = modifiableColumnTypes.get(fieldIndex);
     if (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(columnType.getTypeName()) ||
       PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(columnType.getType())) {
       stmt.setObject(sqlIndex, createPGobject(columnType.getTypeName(),
@@ -100,5 +102,14 @@ public class PostgresDBRecord extends DBRecord {
   @Override
   protected SchemaReader getSchemaReader() {
     return new PostgresSchemaReader();
+  }
+
+  @Override
+  protected void upsertOperation(PreparedStatement stmt) throws SQLException {
+    for (int fieldIndex = 0; fieldIndex < columnTypes.size(); fieldIndex++) {
+      ColumnType columnType = columnTypes.get(fieldIndex);
+      Schema.Field field = record.getSchema().getField(columnType.getName());
+      writeToDB(stmt, field, fieldIndex);
+    }
   }
 }

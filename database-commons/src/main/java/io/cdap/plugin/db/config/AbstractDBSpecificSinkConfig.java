@@ -16,12 +16,14 @@
 
 package io.cdap.plugin.db.config;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.Constants;
+import io.cdap.plugin.db.Operation;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
 
 import java.util.Collections;
@@ -37,6 +39,8 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   public static final String TABLE_NAME = "tableName";
   public static final String DB_SCHEMA_NAME = "dbSchemaName";
   public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
+  public static final String OPERATION_NAME = "operationName";
+  public static final String RELATION_TABLE_KEY = "relationTableKey";
 
   @Name(Constants.Reference.REFERENCE_NAME)
   @Description(Constants.Reference.REFERENCE_NAME_DESCRIPTION)
@@ -52,6 +56,16 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   @Macro
   @Nullable
   private String dbSchemaName;
+  @Name(OPERATION_NAME)
+  @Description("Operation for the query to perform. By default, the query performs INSERT operation")
+  @Macro
+  @Nullable
+  protected String operationName;
+  @Name(RELATION_TABLE_KEY)
+  @Macro
+  @Nullable
+  @Description("List of fields that determines relation between tables during Update and Upsert operations.")
+  protected String relationTableKey;
 
   @Override
   public String getTableName() {
@@ -126,5 +140,13 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   @Override
   public String getReferenceName() {
     return referenceName;
+  }
+  @Override
+  public Operation getOperationName() {
+    return Strings.isNullOrEmpty(operationName) ? Operation.INSERT : Operation.valueOf(operationName.toUpperCase());
+  }
+  @Override
+  public String getRelationTableKey() {
+    return relationTableKey;
   }
 }

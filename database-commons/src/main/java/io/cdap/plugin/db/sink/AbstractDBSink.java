@@ -43,6 +43,7 @@ import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.DBConfig;
 import io.cdap.plugin.db.DBRecord;
+import io.cdap.plugin.db.Operation;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DatabaseSinkConfig;
 import io.cdap.plugin.util.DBUtils;
@@ -62,6 +63,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -71,6 +73,9 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+
+import static io.cdap.plugin.db.sink.AbstractDBSink.DBSinkConfig.OPERATION_NAME;
+import static io.cdap.plugin.db.sink.AbstractDBSink.DBSinkConfig.RELATION_TABLE_KEY;
 
 /**
  * Sink that can be configured to export data to a database table.
@@ -86,10 +91,14 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
   protected List<String> columns;
   protected List<ColumnType> columnTypes;
   protected String dbColumns;
+  private ConnectionConfigAccessor configAccessor;
+  private Configuration configuration;
 
   public AbstractDBSink(T dbSinkConfig) {
     super(new ReferencePluginConfig(dbSinkConfig.getReferenceName()));
     this.dbSinkConfig = dbSinkConfig;
+    this.configAccessor = new ConnectionConfigAccessor();
+    this.configuration = configAccessor.getConfiguration();
   }
 
   private String getJDBCPluginId() {
@@ -102,6 +111,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     StageConfigurer configurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector collector = configurer.getFailureCollector();
     dbSinkConfig.validate(collector);
+    validateOperations(collector, dbSinkConfig, configurer.getInputSchema());
     DBUtils.validateJDBCPluginPipeline(pipelineConfigurer, dbSinkConfig, getJDBCPluginId());
     Schema inputSchema = configurer.getInputSchema();
     if (inputSchema == null || dbSinkConfig.containsMacro(ConnectionConfig.JDBC_PLUGIN_NAME)) {
@@ -112,6 +122,44 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
       pipelineConfigurer, dbSinkConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
     if (driverClass != null && dbSinkConfig.canConnect()) {
       validateSchema(collector, driverClass, dbSinkConfig.getTableName(), inputSchema, dbSinkConfig.getDBSchemaName());
+    }
+  }
+  public void validateOperations(FailureCollector collector, T dbSinkConfig, @Nullable Schema inputSchema) {
+    if (dbSinkConfig.containsMacro(OPERATION_NAME) || dbSinkConfig.containsMacro(RELATION_TABLE_KEY)) {
+      return;
+    }
+    Operation operation = dbSinkConfig.getOperationName();
+    String relationTableKey = dbSinkConfig.getRelationTableKey();
+    if (operation.equals(Operation.INSERT) && relationTableKey == null) {
+      return;
+    }
+    if (operation.equals(Operation.INSERT) && relationTableKey != null) {
+      collector.addFailure("Table key should be null in case of 'INSERT'", null)
+        .withConfigProperty(RELATION_TABLE_KEY).withConfigProperty(OPERATION_NAME);
+      return;
+    }
+    if ((operation.equals(Operation.UPDATE) ||
+      operation.equals(Operation.UPSERT)) && relationTableKey == null) {
+      collector.addFailure(
+          "Table key must be set if the operation is 'Update' or 'Upsert'.", null)
+        .withConfigProperty(RELATION_TABLE_KEY).withConfigProperty(OPERATION_NAME);
+      return;
+    }
+    if (inputSchema == null) {
+      return;
+    }
+    List<String> fields = Objects.requireNonNull(inputSchema.getFields()).stream().map(Schema.Field::getName)
+      .collect(Collectors.toList());
+    List<String> keyFields = Arrays.stream(Objects.requireNonNull(dbSinkConfig.getRelationTableKey()).split(","))
+      .map(String::trim).collect(Collectors.toList());
+
+    for (String keyField : keyFields) {
+      if (!fields.contains(keyField)) {
+        collector.addFailure(
+            String.format("Table key field '%s' does not exist in the schema.", keyField),
+            "Change the Table key field to be one of the schema fields.")
+          .withConfigElement(RELATION_TABLE_KEY, keyField);
+      }
     }
   }
 
@@ -136,6 +184,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     try {
       if (Objects.nonNull(outputSchema)) {
         FailureCollector collector = context.getFailureCollector();
+        validateOperations(collector, dbSinkConfig, outputSchema);
         validateSchema(collector, driverClass, tableName,
                 outputSchema, dbSchemaName);
         collector.getOrThrowException();
@@ -150,7 +199,6 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
 
     emitLineage(context, outputSchema.getFields());
 
-    ConnectionConfigAccessor configAccessor = new ConnectionConfigAccessor();
     configAccessor.setConnectionArguments(dbSinkConfig.getConnectionArguments());
     configAccessor.setInitQueries(dbSinkConfig.getInitQueries());
     configAccessor.getConfiguration().set(DBConfiguration.DRIVER_CLASS_PROPERTY, driverClass.getName());
@@ -159,6 +207,10 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
             : dbSchemaName + "." + dbSinkConfig.getEscapedTableName();
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_TABLE_NAME_PROPERTY, fullyQualifiedTableName);
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_FIELD_NAMES_PROPERTY, dbColumns);
+    configAccessor.setOperationName(dbSinkConfig.getOperationName());
+    if (dbSinkConfig.getRelationTableKey() != null) {
+      configAccessor.setRelationTableKey(dbSinkConfig.getRelationTableKey());
+    }
     if (dbSinkConfig.getUser() != null) {
       configAccessor.getConfiguration().set(DBConfiguration.USERNAME_PROPERTY, dbSinkConfig.getUser());
     }
@@ -170,18 +222,22 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
       configAccessor.setTransactionIsolationLevel(dbSinkConfig.getTransactionIsolationLevel());
     }
 
-    // Get Hadoop configuration object
-    Configuration configuration = configAccessor.getConfiguration();
-
     // Configure batch size if specified in pipeline arguments.
     if (context.getArguments().has(ETLDBOutputFormat.COMMIT_BATCH_SIZE)) {
       configuration.set(ETLDBOutputFormat.COMMIT_BATCH_SIZE,
                         context.getArguments().get(ETLDBOutputFormat.COMMIT_BATCH_SIZE));
     }
 
+    addOutputContext(context);
+  }
+  protected void addOutputContext(BatchSinkContext context) {
     context.addOutput(Output.of(dbSinkConfig.getReferenceName(),
-                                new SinkOutputFormatProvider(ETLDBOutputFormat.class,
-                                                             configuration)));
+      new SinkOutputFormatProvider(ETLDBOutputFormat.class,
+        configuration)));
+  }
+
+  protected Configuration getConfiguration() {
+    return configuration;
   }
 
   /**
@@ -399,6 +455,8 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     public static final String TABLE_NAME = "tableName";
     public static final String DB_SCHEMA_NAME = "dbSchemaName";
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
+    public static final String OPERATION_NAME = "operationName";
+    public static final String RELATION_TABLE_KEY = "relationTableKey";
 
     @Name(TABLE_NAME)
     @Description("Name of the database table to write to.")
@@ -410,6 +468,16 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     @Macro
     @Nullable
     private String dbSchemaName;
+    @Name(OPERATION_NAME)
+    @Description("Operation for the query to perform. By default, the query performs INSERT operation")
+    @Macro
+    @Nullable
+    protected String operationName;
+    @Name(RELATION_TABLE_KEY)
+    @Macro
+    @Nullable
+    @Description("List of fields that determines relation between tables during Update and Upsert operations.")
+    protected String relationTableKey;
 
     public String getTableName() {
       return tableName;
@@ -417,6 +485,14 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
 
     public String getDBSchemaName() {
       return dbSchemaName;
+    }
+    @Override
+    public Operation getOperationName() {
+      return Strings.isNullOrEmpty(operationName) ? Operation.INSERT : Operation.valueOf(operationName.toUpperCase());
+    }
+    @Override
+    public String getRelationTableKey() {
+      return relationTableKey;
     }
 
     /**
