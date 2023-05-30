@@ -39,7 +39,7 @@ import java.util.TimeZone;
  */
 public class MssqlClient {
 
-    private static Connection getMssqlConnection() throws SQLException, ClassNotFoundException {
+    public static Connection getMssqlConnection() throws SQLException, ClassNotFoundException {
         TimeZone timezone = TimeZone.getTimeZone("UTC");
         TimeZone.setDefault(timezone);
         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");

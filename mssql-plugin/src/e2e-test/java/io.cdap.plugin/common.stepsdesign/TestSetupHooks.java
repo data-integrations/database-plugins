@@ -129,7 +129,7 @@ public class TestSetupHooks {
                 PluginPropertyUtils.pluginProp("InsertBQDataQueryFile"));
     }
 
-    @After(order = 1, value = "@BQ_SOURCE_TEST")
+    @After(order = 1, value = "@BQ_SOrURCE_TEST")
     public static void deleteTempSourceBQTable() throws IOException, InterruptedException {
         String bqSourceTable = PluginPropertyUtils.pluginProp("bqSourceTable");
         BigQueryClient.dropBqQuery(bqSourceTable);

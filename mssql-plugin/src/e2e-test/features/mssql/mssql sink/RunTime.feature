@@ -58,3 +58,4 @@ Feature: Mssql - Verify Mssql sink data transfer
     Then Open and capture logs
     Then Verify the pipeline status is "Succeeded"
     Then Close the pipeline logs
+    Then Validate the values of records transferred to target MsSql table is equal to the values from source BigQuery table

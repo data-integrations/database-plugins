@@ -38,7 +38,7 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Close the Plugin Properties page
     And Navigate to the properties page of plugin: "BigQuery"
     And Enter input plugin property: "referenceName" with value: "Reference"
-    And Replace input plugin property: "project" with value: "project.id"
+    And Replace input plugin property: "project" with value: "projectId"
     And Enter input plugin property: "datasetProject" with value: "datasetprojectId"
     And Enter input plugin property: "dataset" with value: "dataset"
     And Enter input plugin property: "table" with value: "bqtarget.table"
@@ -57,6 +57,7 @@ Feature: Mssql - Verify Mssql source data transfer
     Then Open and capture logs
     Then Verify the pipeline status is "Succeeded"
     Then Close the pipeline logs
+    Then Validate the values of records transferred to target BigQuery table is equal to the values from source Table
 
   @MSSQL_SOURCE_TEST @BQ_SINK @Mssql_Required
   Scenario: To verify data is getting transferred from Mssql to BigQuery successfully
