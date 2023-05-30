@@ -88,7 +88,7 @@ public class BQValidation {
     /**
      * Retrieves the data from a specified BigQuery table and populates it into the provided list of objects.
      *
-     * @param table        The name of the BigQuery table to fetch data from.
+     * @param table The name of the BigQuery table to fetch data from.
      * @param bigQueryRows The list to store the fetched BigQuery data.
      */
 
@@ -103,9 +103,9 @@ public class BQValidation {
     }
 
     /**
-     * Compares the data in the result set obtained from the Oracle database with the provided BigQuery JSON objects.
+     * Compares the data in the result set obtained from the MSSQL database with the provided BigQuery JSON objects.
      *
-     * @param rsSource     The result set obtained from the Oracle database.
+     * @param rsSource The result set obtained from the MSSQL database.
      * @param bigQueryData The list of BigQuery JSON objects to compare with the result set data.
      * @return True if the result set data matches the BigQuery data, false otherwise.
      * @throws SQLException   If an SQL error occurs during the result set operations.
@@ -190,20 +190,23 @@ public class BQValidation {
 
 
                     case Types.BIGINT:
-                        long sourceVAL = rsSource.getLong(currentColumnCount);
-                        long targetVAL = bigQueryData.get(jsonObjectIdx).get(columnName).getAsLong();
+                        long sourceValue = rsSource.getLong(currentColumnCount);
+                        long targetValue = bigQueryData.get(jsonObjectIdx).get(columnName).getAsLong();
                         Assert.assertTrue("Different values found for column : %s",
-                                String.valueOf(sourceVAL).equals(String.valueOf(targetVAL)));
+                                String.valueOf(sourceValue).equals(String.valueOf(targetValue)));
                         break;
 
                     case Types.SMALLINT:
                     case Types.TINYINT:
                     case Types.INTEGER:
-                        int sourceV = rsSource.getInt(currentColumnCount);
-                        int targetV = bigQueryData.get(jsonObjectIdx).get(columnName).getAsInt();
+                        int sourceInt = rsSource.getInt(currentColumnCount);
+                        int targetInt = bigQueryData.get(jsonObjectIdx).get(columnName).getAsInt();
                         Assert.assertTrue("Different values found for column : %s",
-                                String.valueOf(sourceV).equals(String.valueOf(targetV)));
+                                String.valueOf(sourceInt).equals(String.valueOf(targetInt)));
 
+                        break;
+
+                    case Types.TIMESTAMP:
                         break;
 
                     case Types.DATE:

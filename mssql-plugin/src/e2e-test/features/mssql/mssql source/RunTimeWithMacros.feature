@@ -67,6 +67,7 @@ Feature: Mssql Source - Run time scenarios (macro)
     Then Wait till pipeline is in running state
     Then Open and capture logs
     Then Verify the pipeline status is "Succeeded"
+    Then Validate records transferred to target table are equal to number of records from the source table
 
   @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
   Scenario: To verify data is getting transferred from Mssql to Mssql successfully using macros for Basic section
@@ -115,8 +116,9 @@ Feature: Mssql Source - Run time scenarios (macro)
     Then Wait till pipeline is in running state
     Then Open and capture logs
     Then Verify the pipeline status is "Succeeded"
+    Then Validate records transferred to target table are equal to number of records from the source table
 
-  @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
+  @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required @BQ_SINK
   Scenario: To verify data is getting transferred from Mssql to BigQuery successfully using macros for Connection section
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -137,7 +139,7 @@ Feature: Mssql Source - Run time scenarios (macro)
     Then Close the Plugin Properties page
     And Navigate to the properties page of plugin: "BigQuery"
     And Enter input plugin property: "referenceName" with value: "Reference"
-    And Replace input plugin property: "project" with value: "project.id"
+    And Replace input plugin property: "project" with value: "projectId"
     And Enter input plugin property: "datasetProject" with value: "datasetprojectId"
     And Enter input plugin property: "dataset" with value: "dataset"
     And Enter input plugin property: "table" with value: "bqtarget.table"
@@ -164,9 +166,10 @@ Feature: Mssql Source - Run time scenarios (macro)
     Then Wait till pipeline is in running state
     Then Open and capture logs
     Then Verify the pipeline status is "Succeeded"
+    Then Validate the values of records transferred to target BigQuery table is equal to the values from source Table
 
-  @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
-  Scenario: To verify data is getting transferred from Mssql to BigQuery successfully using macros for Connection section
+  @MSSQL_SOURCE_TEST @Mssql_Required @BQ_SINK
+  Scenario: To verify data is getting transferred from Mssql to BigQuery successfully using macros for Basic section
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
     When Select plugin: "SQL Server" from the plugins list as: "Source"
@@ -189,6 +192,7 @@ Feature: Mssql Source - Run time scenarios (macro)
     Then Preview and run the pipeline
     Then Enter runtime argument value "databaseName" for key "DatabaseName"
     Then Enter runtime argument value "fetchSize" for key "fetchSize"
+    And Run the preview of pipeline with runtime arguments
     Then Verify the preview of pipeline is "success"
     Then Close the preview
     Then Deploy the pipeline
@@ -199,9 +203,10 @@ Feature: Mssql Source - Run time scenarios (macro)
     Then Wait till pipeline is in running state
     Then Open and capture logs
     Then Verify the pipeline status is "Succeeded"
+    Then Validate the values of records transferred to target BigQuery table is equal to the values from source Table
 
     @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
-    Scenario: Verify pipeline failure message in logs when user provides invalid Table name in importQuery of plugin with MacrosScenario: To verify data is getting transferred from Mssql to Mssql successfully
+    Scenario: Verify pipeline failure message in logs when user provides invalid Table name in importQuery of plugin with Macros
       Given Open Datafusion Project to configure pipeline
       When Expand Plugin group in the LHS plugins list: "Source"
       When Select plugin: "SQL Server" from the plugins list as: "Source"
@@ -237,6 +242,9 @@ Feature: Mssql Source - Run time scenarios (macro)
       And Run the Pipeline in Runtime with runtime arguments
       Then Wait till pipeline is in running state
       And Verify the pipeline status is "Failed"
+      Then Open Pipeline logs and verify Log entries having below listed Level and Message:
+        | Level | Message                         |
+        | ERROR | errorMessageInvalidsourcetable    |
 
       @MSSQL_SOURCE_TEST @MSSQL_SINK_TEST @Mssql_Required
       Scenario: Verify pipeline failure message in logs when user provides invalid Credentials for connection with Macros
@@ -278,6 +286,8 @@ Feature: Mssql Source - Run time scenarios (macro)
         And Enter runtime argument value "invalid.password" for key "Password"
         And Run the Pipeline in Runtime with runtime arguments
         Then Wait till pipeline is in running state
-        Then Open and capture logs
         And Verify the pipeline status is "Failed"
+        Then Open Pipeline logs and verify Log entries having below listed Level and Message:
+          | Level | Message                                |
+          | ERROR | errorMessageInvalidCredentialSource    |
 
