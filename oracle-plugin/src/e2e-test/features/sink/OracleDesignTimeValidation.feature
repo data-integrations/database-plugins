@@ -40,7 +40,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "invalidRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Replace input plugin property: "tableName" with value: "targetTable"
@@ -62,7 +62,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
@@ -79,7 +79,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Select radio button plugin property: "connectionType" with value: "TNS"
     Then Replace input plugin property: "database" with value: "invalidDatabaseName"
     Then Replace input plugin property: "tableName" with value: "targetTable"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Click on the Validate button
     Then Verify that the Plugin is displaying an error message: "errorMessageInvalidSinkDatabase" on the header
@@ -99,7 +99,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
@@ -114,7 +114,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "TNS"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Replace input plugin property: "tableName" with value: "invalidTable"
@@ -131,7 +131,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Replace input plugin property: "tableName" with value: "targetTable"
@@ -153,7 +153,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
@@ -169,7 +169,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Select radio button plugin property: "connectionType" with value: "TNS"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Replace input plugin property: "tableName" with value: "invalidTable"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Click on the Validate button
     Then Verify that the Plugin is displaying an error message: "errorMessageInvalidHost" on the header

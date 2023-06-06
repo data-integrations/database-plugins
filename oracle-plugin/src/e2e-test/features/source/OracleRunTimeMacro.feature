@@ -33,7 +33,7 @@ Feature: Oracle - Verify Oracle plugin data transfer with macro arguments
     Then Click on the Macro button of Property: "password" and set the value to: "oraclePassword"
     Then Click on the Macro button of Property: "database" and set the value to: "oracleDatabase"
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
     Then Validate "Oracle" plugin properties
@@ -45,7 +45,7 @@ Feature: Oracle - Verify Oracle plugin data transfer with macro arguments
     Then Click on the Macro button of Property: "user" and set the value to: "oracleUsername"
     Then Click on the Macro button of Property: "password" and set the value to: "oraclePassword"
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Replace input plugin property: "tableName" with value: "targetTable"
@@ -96,7 +96,7 @@ Feature: Oracle - Verify Oracle plugin data transfer with macro arguments
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Click on the Macro button of Property: "splitBy" and set the value to: "oracleSplitByColumn"
@@ -114,7 +114,7 @@ Feature: Oracle - Verify Oracle plugin data transfer with macro arguments
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Validate "Oracle2" plugin properties
     Then Close the Plugin Properties page
     Then Save the pipeline
@@ -160,7 +160,7 @@ Feature: Oracle - Verify Oracle plugin data transfer with macro arguments
     Then Click on the Macro button of Property: "password" and set the value to: "oraclePassword"
     Then Click on the Macro button of Property: "database" and set the value to: "oracleDatabase"
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
     Then Validate "Oracle" plugin properties
@@ -176,7 +176,7 @@ Feature: Oracle - Verify Oracle plugin data transfer with macro arguments
     Then Replace input plugin property: "tableName" with value: "targetTable"
     Then Replace input plugin property: "dbSchemaName" with value: "schema"
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Validate "Oracle2" plugin properties
     Then Close the Plugin Properties page
     Then Save the pipeline
@@ -205,7 +205,7 @@ Feature: Oracle - Verify Oracle plugin data transfer with macro arguments
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Click on the Macro button of Property: "importQuery" and set the value in textarea: "oracleInvalidImportQuery"
@@ -222,7 +222,7 @@ Feature: Oracle - Verify Oracle plugin data transfer with macro arguments
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Validate "Oracle2" plugin properties
     Then Close the Plugin Properties page
     Then Save the pipeline
@@ -249,7 +249,7 @@ Feature: Oracle - Verify Oracle plugin data transfer with macro arguments
     Then Click on the Macro button of Property: "user" and set the value to: "oracleUsername"
     Then Click on the Macro button of Property: "password" and set the value to: "oraclePassword"
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Click on the Macro button of Property: "database" and set the value to: "oracleDatabase"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"

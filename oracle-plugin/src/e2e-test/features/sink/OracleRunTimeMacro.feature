@@ -40,7 +40,7 @@ Feature: Oracle - Verify data transfer to Oracle sink with macro arguments
     Then Click on the Macro button of Property: "user" and set the value to: "oracleUsername"
     Then Click on the Macro button of Property: "password" and set the value to: "oraclePassword"
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Click on the Macro button of Property: "database" and set the value to: "oracleDatabaseName"
     Then Click on the Macro button of Property: "tableName" and set the value to: "oracleTableName"
     Then Click on the Macro button of Property: "dbSchemaName" and set the value to: "oracleSchemaName"

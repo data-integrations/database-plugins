@@ -31,13 +31,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 /**
- * Oracle client.
+ *  Oracle client.
  */
 public class OracleClient {
 
@@ -88,12 +89,11 @@ public class OracleClient {
 
   /**
    * Compares the result Set data in source table and sink table.
-   *
    * @param rsSource result set of the source table data
    * @param rsTarget result set of the target table data
    * @return true if rsSource matches rsTarget
    */
-  public static boolean compareResultSetData(ResultSet rsSource, ResultSet rsTarget) throws SQLException {
+  private static boolean compareResultSetData(ResultSet rsSource, ResultSet rsTarget) throws SQLException {
     ResultSetMetaData mdSource = rsSource.getMetaData();
     ResultSetMetaData mdTarget = rsTarget.getMetaData();
     int columnCountSource = mdSource.getColumnCount();
@@ -115,29 +115,50 @@ public class OracleClient {
             byte[] sourceArrayBlob = blobSource.getBytes(1, (int) blobSource.length());
             Blob blobTarget = rsTarget.getBlob(currentColumnCount);
             byte[] targetArrayBlob = blobTarget.getBytes(1, (int) blobTarget.length());
-            Assert.assertArrayEquals(String.format("Different values found for column : %s", columnName),
-                                     sourceArrayBlob, targetArrayBlob);
+            Assert.assertTrue(String.format("Different BLOB values found for column : %s", columnName),
+                              Arrays.equals(sourceArrayBlob, targetArrayBlob));
             break;
           case Types.CLOB:
             Clob clobSource = rsSource.getClob(currentColumnCount);
             String sourceClobString = clobSource.getSubString(1, (int) clobSource.length());
             Clob clobTarget = rsTarget.getClob(currentColumnCount);
             String targetClobString = clobTarget.getSubString(1, (int) clobTarget.length());
-            Assert.assertEquals(String.format("Different values found for column : %s", columnName), sourceClobString,
-                                targetClobString);
+            Assert.assertEquals(String.format("Different CLOB values found for column : %s", columnName),
+                                sourceClobString, targetClobString);
             break;
           case Types.TIMESTAMP:
             GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
             gc.setGregorianChange(new Date(Long.MIN_VALUE));
             Timestamp sourceTS = rsSource.getTimestamp(currentColumnCount, gc);
             Timestamp targetTS = rsTarget.getTimestamp(currentColumnCount, gc);
-            Assert.assertTrue(String.format("Different values found for column : %s", columnName),
-                              sourceTS.equals(targetTS));
+            Assert.assertEquals(String.format("Different TIMESTAMP values found for column : %s", columnName),
+                                sourceTS, targetTS);
+            break;
+          case OracleSourceSchemaReader.TIMESTAMP_TZ:
+            // The timezone information in the field is lost during pipeline execution hence it is required to
+            // convert both values into the system timezone and then compare.
+            GregorianCalendar gregorianCalendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+            gregorianCalendar.setGregorianChange(new Date(Long.MIN_VALUE));
+            Timestamp tsSource = rsSource.getTimestamp(currentColumnCount, gregorianCalendar);
+            Timestamp tsTarget = rsTarget.getTimestamp(currentColumnCount, gregorianCalendar);
+            if (tsSource == null && tsTarget == null) {
+              break;
+            }
+            Assert.assertNotNull(
+              String.format("Column : %s is null in source table and is not Null in target table.", columnName),
+              tsSource);
+            Assert.assertNotNull(
+              String.format("Column : %s is null in target table and is not Null in source table.", columnName),
+              tsTarget);
+            Instant sourceInstant = tsSource.toInstant();
+            Instant targetInstant = tsTarget.toInstant();
+            Assert.assertEquals(String.format("Different TIMESTAMPTZ values found for column : %s", columnName),
+                                sourceInstant, targetInstant);
             break;
           default:
             String sourceString = rsSource.getString(currentColumnCount);
             String targetString = rsTarget.getString(currentColumnCount);
-            Assert.assertEquals(String.format("Different values found for column : %s", columnName),
+            Assert.assertEquals(String.format("Different %s values found for column : %s", columnTypeName, columnName),
                                 String.valueOf(sourceString), String.valueOf(targetString));
         }
         currentColumnCount++;

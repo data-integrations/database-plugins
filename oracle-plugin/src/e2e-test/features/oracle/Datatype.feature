@@ -32,7 +32,7 @@ Feature: Oracle - Verify Oracle source data transfer for multiple datatypes
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
@@ -51,7 +51,7 @@ Feature: Oracle - Verify Oracle source data transfer for multiple datatypes
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Validate "Oracle2" plugin properties
     Then Close the Plugin Properties page
     Then Save the pipeline

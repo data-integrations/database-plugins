@@ -42,7 +42,7 @@ Feature: Oracle - Verify data transfer from BigQuery source to Oracle sink
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Replace input plugin property: "tableName" with value: "targetTable"
@@ -51,7 +51,7 @@ Feature: Oracle - Verify data transfer from BigQuery source to Oracle sink
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Validate "Oracle" plugin properties
     Then Close the Plugin Properties page
     Then Save the pipeline
@@ -92,7 +92,7 @@ Feature: Oracle - Verify data transfer from BigQuery source to Oracle sink
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Replace input plugin property: "tableName" with value: "targetTable"
@@ -102,7 +102,7 @@ Feature: Oracle - Verify data transfer from BigQuery source to Oracle sink
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Select radio button plugin property: "connectionType" with value: "service"
     Then Enter key value pairs for plugin property: "connectionArguments" with values from json: "connectionArgumentsList"
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Validate "Oracle" plugin properties
     Then Close the Plugin Properties page
     Then Save the pipeline

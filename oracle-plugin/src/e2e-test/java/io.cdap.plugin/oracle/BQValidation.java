@@ -162,19 +162,29 @@ public class BQValidation {
             break;
 
           case Types.NUMERIC:
-            long sourceVal = rsSource.getLong(currentColumnCount);
-            long targetVal = bigQueryData.get(jsonObjectIdx).get(columnName).getAsLong();
-            Assert.assertEquals("Different values found for column : %s", String.valueOf(sourceVal),
-                                String.valueOf(targetVal));
+            Number sourceVal = rsSource.getBigDecimal(currentColumnCount);
+            Number targetVal = bigQueryData.get(jsonObjectIdx).get(columnName).getAsBigDecimal();
+            Assert.assertEquals(String.format("Different values found for column: %s", columnName),
+                                sourceVal.intValue(), targetVal.intValue());
             break;
 
           case Types.TIMESTAMP:
             Timestamp sourceTS = rsSource.getTimestamp(columnName);
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'");
-            Date parsedDate = dateFormat.parse(bigQueryData.get(jsonObjectIdx).get(columnName).getAsString());
-            Timestamp targetTs = new java.sql.Timestamp(parsedDate.getTime());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+            String targetT = bigQueryData.get(jsonObjectIdx).get(columnName).getAsString();
+            Date dateParsed = dateFormat.parse(targetT);
+            Timestamp targetTs = new java.sql.Timestamp(dateParsed.getTime());
             result = String.valueOf(sourceTS).equals(String.valueOf(targetTs));
             Assert.assertTrue("Different values found for column : %s", result);
+            break;
+
+          case OracleSourceSchemaReader.TIMESTAMP_TZ:
+            Timestamp sourceTZ = rsSource.getTimestamp(columnName);
+            SimpleDateFormat dateValue = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            String targetTS = bigQueryData.get(jsonObjectIdx).get(columnName).getAsString();
+            Date date = dateValue.parse(targetTS);
+            Timestamp targetTZ = new Timestamp(date.getTime());
+            Assert.assertTrue("Different columns found for Timestamp", sourceTZ.equals(targetTZ));
             break;
 
           case OracleSourceSchemaReader.BINARY_FLOAT:

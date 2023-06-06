@@ -27,7 +27,7 @@ Feature: Oracle sink - Verify Oracle sink plugin design time scenarios
     Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Select radio button plugin property: "connectionType" with value: "service"
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Replace input plugin property: "database" with value: "databaseName"
@@ -46,7 +46,7 @@ Feature: Oracle sink - Verify Oracle sink plugin design time scenarios
     Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Select radio button plugin property: "connectionType" with value: "service"
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Replace input plugin property: "database" with value: "databaseName"
@@ -66,7 +66,7 @@ Feature: Oracle sink - Verify Oracle sink plugin design time scenarios
     Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
-    Then Select radio button plugin property: "role" with value: "sysdba"
+    Then Select radio button plugin property: "role" with value: "normal"
     Then Select radio button plugin property: "connectionType" with value: "service"
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Replace input plugin property: "database" with value: "databaseName"
