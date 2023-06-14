@@ -40,7 +40,7 @@ jobs:
           )
     strategy:
       matrix:
-        module: [mysql-plugin, postgresql-plugin, oracle-plugin, mssql-plugin]
+        module: [mysql-plugin, postgresql-plugin, oracle-plugin, mssql-plugin, cloudsql-postgresql-plugin, cloudsql-mysql-plugin]
       fail-fast: false
 
     steps:
