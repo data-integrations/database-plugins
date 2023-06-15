@@ -144,6 +144,10 @@ Data Types Mapping
     | SQLVARIANT       | string                 |                                                                |
     | GEOMETRY         | bytes                  |                                                                |
     | GEOGRAPHY        | bytes                  |                                                                |
+    | CURSOR           | unsupported            |                                                                |
+    | ROWVERSION       | unsupported            |                                                                |
+    | SQL_VARIANT      | unsupported            |                                                                |
+    | TABLE            | unsupported            |                                                                |
 
 
 Example
