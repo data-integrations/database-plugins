@@ -128,6 +128,11 @@ public class OracleSink extends AbstractDBSink<OracleSink.OracleSinkConfig> {
     }
 
     @Override
+    public String getEscapedDbSchemaName() {
+      return ESCAPE_CHAR + getDBSchemaName() + ESCAPE_CHAR;
+    }
+
+    @Override
     protected OracleConnectorConfig getConnection() {
       return connection;
     }

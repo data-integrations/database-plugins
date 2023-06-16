@@ -66,6 +66,15 @@ public interface DatabaseSinkConfig extends DatabaseConnectionConfig {
   String getEscapedTableName();
 
   /**
+   * Adds escape characters (back quotes, double quotes, etc.) to the database schema name for
+   * databases with case-sensitive identifiers.
+   *
+   * @return dBSchemaName with leading and trailing escape characters appended.
+   * Default implementation returns unchanged table name string.
+   */
+  String getEscapedDbSchemaName();
+
+  /**
    * Validate the sink config
    *
    * @param collector the failure collector

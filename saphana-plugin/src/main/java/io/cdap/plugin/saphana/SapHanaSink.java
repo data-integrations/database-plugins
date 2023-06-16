@@ -92,5 +92,10 @@ public class SapHanaSink extends AbstractDBSink<SapHanaSink.SapHanaSinkConfig> {
       return ESCAPE_CHAR + tableName + ESCAPE_CHAR;
     }
 
+    @Override
+    public String getEscapedDbSchemaName() {
+      return ESCAPE_CHAR + dbSchemaName + ESCAPE_CHAR;
+    }
+
   }
 }

@@ -56,11 +56,13 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   @Macro
   @Nullable
   private String dbSchemaName;
+  
   @Name(OPERATION_NAME)
   @Description("Operation for the query to perform. By default, the query performs INSERT operation")
   @Macro
   @Nullable
   protected String operationName;
+  
   @Name(RELATION_TABLE_KEY)
   @Macro
   @Nullable
@@ -87,6 +89,10 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   @Override
   public String getEscapedTableName() {
     return tableName;
+  }
+
+  public String getEscapedDbSchemaName() {
+    return dbSchemaName;
   }
 
   @Override

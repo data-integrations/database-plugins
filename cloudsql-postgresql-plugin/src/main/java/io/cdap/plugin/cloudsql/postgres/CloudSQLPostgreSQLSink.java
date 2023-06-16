@@ -182,6 +182,11 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
     public String getEscapedTableName() {
       return ESCAPE_CHAR + getTableName() + ESCAPE_CHAR;
     }
+    
+    @Override
+    public String getEscapedDbSchemaName() {
+      return ESCAPE_CHAR + getDBSchemaName() + ESCAPE_CHAR;
+    }
 
     @Override
     public Map<String, String> getDBSpecificArguments() {

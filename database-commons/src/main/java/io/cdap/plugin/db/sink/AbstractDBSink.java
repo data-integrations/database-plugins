@@ -204,7 +204,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     configAccessor.getConfiguration().set(DBConfiguration.DRIVER_CLASS_PROPERTY, driverClass.getName());
     configAccessor.getConfiguration().set(DBConfiguration.URL_PROPERTY, connectionString);
     String fullyQualifiedTableName = dbSchemaName == null ? dbSinkConfig.getEscapedTableName()
-            : dbSchemaName + "." + dbSinkConfig.getEscapedTableName();
+            : dbSinkConfig.getEscapedDbSchemaName() + "." + dbSinkConfig.getEscapedTableName();
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_TABLE_NAME_PROPERTY, fullyQualifiedTableName);
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_FIELD_NAMES_PROPERTY, dbColumns);
     configAccessor.setOperationName(dbSinkConfig.getOperationName());
@@ -267,7 +267,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     List<Schema.Field> inferredFields = new ArrayList<>();
     String dbSchemaName = dbSinkConfig.getDBSchemaName();
     String fullyQualifiedTableName = dbSchemaName == null ? dbSinkConfig.getEscapedTableName()
-            : dbSchemaName + "." + dbSinkConfig.getEscapedTableName();
+            : dbSinkConfig.getEscapedDbSchemaName() + "." + dbSinkConfig.getEscapedTableName();
     try {
       DBUtils.ensureJDBCDriverIsAvailable(driverClass, dbSinkConfig.getConnectionString(),
                                           dbSinkConfig.getJdbcPluginName());
@@ -318,7 +318,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     String connectionString = dbSinkConfig.getConnectionString();
     String dbSchemaName = dbSinkConfig.getDBSchemaName();
     String fullyQualifiedTableName = dbSchemaName == null ? dbSinkConfig.getEscapedTableName()
-            : dbSchemaName + "." + dbSinkConfig.getEscapedTableName();
+            : dbSinkConfig.getEscapedDbSchemaName() + "." + dbSinkConfig.getEscapedTableName();
 
     driverCleanup = DBUtils
       .ensureJDBCDriverIsAvailable(driverClass, connectionString, dbSinkConfig.getJdbcPluginName());
@@ -381,7 +381,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
                               Schema inputSchema, String dbSchemaName) {
     String connectionString = dbSinkConfig.getConnectionString();
     String fullyQualifiedTableName = dbSchemaName == null ? dbSinkConfig.getEscapedTableName()
-            : dbSchemaName + "." + dbSinkConfig.getEscapedTableName();
+            : dbSinkConfig.getEscapedDbSchemaName() + "." + dbSinkConfig.getEscapedTableName();
     try {
       DBUtils.ensureJDBCDriverIsAvailable(jdbcDriverClass, connectionString, dbSinkConfig.getJdbcPluginName());
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
@@ -467,12 +467,14 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     @Description("Name of the database schema of table.")
     @Macro
     @Nullable
-    private String dbSchemaName;
+    public String dbSchemaName;
+
     @Name(OPERATION_NAME)
     @Description("Operation for the query to perform. By default, the query performs INSERT operation")
     @Macro
     @Nullable
     protected String operationName;
+
     @Name(RELATION_TABLE_KEY)
     @Macro
     @Nullable
@@ -486,6 +488,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     public String getDBSchemaName() {
       return dbSchemaName;
     }
+    
     @Override
     public Operation getOperationName() {
       return Strings.isNullOrEmpty(operationName) ? Operation.INSERT : Operation.valueOf(operationName.toUpperCase());
@@ -504,6 +507,17 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
      */
     public String getEscapedTableName() {
       return tableName;
+    }
+
+    /**
+     * Adds escape characters (back quotes, double quotes, etc.) to the database schema name for
+     * databases with case-sensitive identifiers.
+     *
+     * @return dbschemaName with leading and trailing escape characters appended.
+     * Default implementation returns unchanged table name string.
+     */
+    public String getEscapedDbSchemaName() {
+      return dbSchemaName;
     }
 
     public boolean canConnect() {

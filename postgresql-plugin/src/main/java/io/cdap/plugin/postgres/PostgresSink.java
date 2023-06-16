@@ -156,6 +156,11 @@ public class PostgresSink extends AbstractDBSink<PostgresSink.PostgresSinkConfig
     }
 
     @Override
+    public String getEscapedDbSchemaName() {
+      return ESCAPE_CHAR + getDBSchemaName() + ESCAPE_CHAR;
+    }
+
+    @Override
     public Map<String, String> getDBSpecificArguments() {
       return ImmutableMap.of(PostgresConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
     }
