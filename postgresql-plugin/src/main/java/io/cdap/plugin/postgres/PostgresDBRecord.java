@@ -26,6 +26,8 @@ import io.cdap.plugin.util.DBUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -57,8 +59,9 @@ public class PostgresDBRecord extends DBRecord {
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                              int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
-    String columnTypeName = resultSet.getMetaData().getColumnTypeName(columnIndex);
-    if (isUseSchema(resultSet.getMetaData(), columnIndex)) {
+    ResultSetMetaData metadata = resultSet.getMetaData();
+    String columnTypeName = metadata.getColumnTypeName(columnIndex);
+    if (isUseSchema(metadata, columnIndex)) {
       setFieldAccordingToSchema(resultSet, recordBuilder, field, columnIndex);
     } else if (sqlType == Types.TIMESTAMP && columnTypeName.equalsIgnoreCase("timestamp")) {
       Timestamp timestamp = resultSet.getTimestamp(columnIndex, DBUtils.PURE_GREGORIAN_CALENDAR);
@@ -80,6 +83,24 @@ public class PostgresDBRecord extends DBRecord {
         recordBuilder.set(field.getName(), null);
       }
     } else {
+      int columnType = metadata.getColumnType(columnIndex);
+      if (columnType == Types.NUMERIC) {
+        Schema nonNullableSchema = field.getSchema().isNullable() ?
+                field.getSchema().getNonNullable() : field.getSchema();
+        int precision = metadata.getPrecision(columnIndex);
+        if (precision == 0 && Schema.Type.STRING.equals(nonNullableSchema.getType())) {
+          // When output schema is set to String for precision less numbers
+          recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
+        } else if (Schema.LogicalType.DECIMAL.equals(nonNullableSchema.getLogicalType())) {
+          BigDecimal orgValue = resultSet.getBigDecimal(columnIndex);
+          if (orgValue != null) {
+            BigDecimal decimalValue = new BigDecimal(orgValue.toPlainString())
+                    .setScale(nonNullableSchema.getScale(), RoundingMode.HALF_EVEN);
+            recordBuilder.setDecimal(field.getName(), decimalValue);
+          }
+        }
+        return;
+      }
       setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     }
   }
@@ -98,14 +119,14 @@ public class PostgresDBRecord extends DBRecord {
   }
 
   private static boolean isUseSchema(ResultSetMetaData metadata, int columnIndex) throws SQLException {
-    switch (metadata.getColumnTypeName(columnIndex)) {
-      case "bit":
-      case "timetz":
-      case "money":
-        return true;
-      default:
-        return PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(metadata.getColumnType(columnIndex));
+    String columnTypeName = metadata.getColumnTypeName(columnIndex);
+    // If the column Type Name is present in the String mapped PostgreSQL types then return true.
+    if (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(columnTypeName)
+        || PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(metadata.getColumnType(columnIndex))) {
+      return true;
     }
+
+    return false;
   }
 
   private Object createPGobject(String type, String value, ClassLoader classLoader) throws SQLException {
@@ -133,9 +154,17 @@ public class PostgresDBRecord extends DBRecord {
       stmt.setObject(sqlIndex, createPGobject(columnType.getTypeName(),
                                               record.get(fieldName),
                                               stmt.getClass().getClassLoader()));
-    } else {
-      super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);
+      return;
+    } else if (columnType.getType() == Types.NUMERIC) {
+      if (record.get(fieldName) != null) {
+        if (fieldSchema.getType() == Schema.Type.STRING) {
+          stmt.setBigDecimal(sqlIndex, new BigDecimal((String) record.get(fieldName)));
+          return;
+        }
+      }
     }
+
+    super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);
   }
 
   @Override

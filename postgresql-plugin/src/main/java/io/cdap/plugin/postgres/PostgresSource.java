@@ -142,6 +142,17 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
     @Override
     protected void validateField(FailureCollector collector, Schema.Field field,
                                  Schema actualFieldSchema, Schema expectedFieldSchema) {
+
+      // This change is needed to make sure that the pipeline upgrade continues to work post upgrade.
+      // Since the older handling of the precision less used to convert to the decimal type,
+      // and the new version would try to convert to the String type. In that case the output schema would
+      // contain Decimal(38, 0) (or something similar), and the code internally would try to identify
+      // the schema of the field(without precision and scale) as String.
+      if (Schema.LogicalType.DECIMAL.equals(expectedFieldSchema.getLogicalType())
+              && actualFieldSchema.getType().equals(Schema.Type.STRING)) {
+        return;
+      }
+
       // This change is needed to make sure that the pipeline upgrade continues to work post upgrade.
       // Since the older handling of the Timestamp used to convert to CDAP TIMESTAMP type,
       // but since PostgreSQL Timestamp does not have a timezone information, hence it should ideally map to
