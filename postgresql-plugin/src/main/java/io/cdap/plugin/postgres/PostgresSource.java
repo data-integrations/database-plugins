@@ -153,6 +153,15 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
         return;
       }
 
+      // This change is needed to make sure that the pipeline upgrade continues to work post upgrade.
+      // Since the older handling of the Timestamp used to convert to CDAP TIMESTAMP type,
+      // but since PostgreSQL Timestamp does not have a timezone information, hence it should ideally map to
+      // CDAP DATETIME type. In that case the output schema would be set to TIMESTAMP,
+      // and the code internally would try to identify the schema of the field as DATETIME.
+      if (Schema.LogicalType.TIMESTAMP_MICROS.equals(expectedFieldSchema.getLogicalType())
+          && Schema.LogicalType.DATETIME.equals(actualFieldSchema.getLogicalType())) {
+        return;
+      }
       super.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
     }
   }
