@@ -33,15 +33,15 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 /**
- *  MySQL client.
+ * MySQL client.
  */
 public class MysqlClient {
   private static final String database = PluginPropertyUtils.pluginProp("databaseName");
 
-  private static Connection getMysqlConnection() throws SQLException, ClassNotFoundException {
+  public static Connection getMysqlConnection() throws SQLException, ClassNotFoundException {
     Class.forName("com.mysql.cj.jdbc.Driver");
     return DriverManager.getConnection("jdbc:mysql://" + System.getenv("MYSQL_HOST") + ":" +
-                                         System.getenv("MYSQL_PORT") + "/" + database,
+                                         System.getenv("MYSQL_PORT") + "/" + database + "?tinyInt1isBit=false",
                                        System.getenv("MYSQL_USERNAME"), System.getenv("MYSQL_PASSWORD"));
   }
 
@@ -60,6 +60,7 @@ public class MysqlClient {
 
   /**
    * Extracts entire data from source and target tables.
+   *
    * @param sourceTable table at the source side
    * @param targetTable table at the sink side
    * @return true if the values in source and target side are equal
@@ -82,6 +83,7 @@ public class MysqlClient {
 
   /**
    * Compares the result Set data in source table and sink table..
+   *
    * @param rsSource result set of the source table data
    * @param rsTarget result set of the target table data
    * @return true if rsSource matches rsTarget
@@ -106,20 +108,20 @@ public class MysqlClient {
           Timestamp targetTS = rsTarget.getTimestamp(currentColumnCount, gc);
           if (sourceTS == null) {
             Assert.assertNull(String.format("Not null TIMESTAMP value found in target for column : %s", columnName),
-                    targetTS);
+                              targetTS);
           } else {
             Assert.assertEquals(String.format("Different TIMESTAMP values found for column : %s", columnName),
-                    sourceTS, targetTS);
+                                sourceTS, targetTS);
           }
         } else {
           String sourceString = rsSource.getString(currentColumnCount);
           String targetString = rsTarget.getString(currentColumnCount);
           if (Strings.isNullOrEmpty(sourceString)) {
             Assert.assertTrue(String.format("Not null/empty value found in target for column : %s", columnName),
-                    Strings.isNullOrEmpty(targetString));
+                              Strings.isNullOrEmpty(targetString));
           } else {
             Assert.assertEquals(String.format("Different values found for column : %s", columnName),
-                    sourceString, targetString);
+                                sourceString, targetString);
           }
         }
         currentColumnCount++;
@@ -165,6 +167,18 @@ public class MysqlClient {
     }
   }
 
+  public static void createTargetTable1(String targetTable) throws SQLException, ClassNotFoundException {
+    try (Connection connect = getMysqlConnection();
+         Statement statement = connect.createStatement()) {
+      String createTargetTableQuery = "CREATE TABLE IF NOT EXISTS " + targetTable +
+        "(id bigint(20),lastName varchar(255))";
+      statement.executeUpdate(createTargetTableQuery);
+      // Truncate table to clean the data of last failure run.
+      String truncateTargetTableQuery = "TRUNCATE TABLE " + targetTable;
+      statement.executeUpdate(truncateTargetTableQuery);
+    }
+  }
+
   public static void createSourceDatatypesTable(String sourceTable) throws SQLException, ClassNotFoundException {
     try (Connection connect = getMysqlConnection();
          Statement statement = connect.createStatement()) {
@@ -201,4 +215,13 @@ public class MysqlClient {
       }
     }
   }
+
+  public static void dropTable(String table) throws SQLException, ClassNotFoundException {
+    try (Connection connect = getMysqlConnection();
+         Statement statement = connect.createStatement()) {
+      String dropTableQuery = "Drop Table " + table;
+      statement.executeUpdate(dropTableQuery);
+    }
+  }
 }
+

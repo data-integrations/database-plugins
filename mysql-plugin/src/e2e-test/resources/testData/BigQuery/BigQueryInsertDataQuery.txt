@@ -1,0 +1,4 @@
+insert into `DATASET.TABLE_NAME` (id,lastName) values
+(92233720,'BHATNAGAR'),
+(92233721,'KUMAR');
+

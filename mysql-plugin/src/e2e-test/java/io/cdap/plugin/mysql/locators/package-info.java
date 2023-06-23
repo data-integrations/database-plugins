@@ -15,6 +15,6 @@
  */
 
 /**
- * Package contains Mysql client.
+ * Package contains the locators for Mysql features.
  */
-package io.cdap.plugin;
+package io.cdap.plugin.mysql.locators;
