@@ -203,9 +203,20 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
       // map datetimeoffset to timestamp which is invalid. In such case runtime will still fail even validation passes.
       // But we don't have the original source type information here and don't want to do big refactoring here
       if (actualFieldSchema.getLogicalType() == Schema.LogicalType.DATETIME &&
-            expectedFieldSchema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS ||
-            actualFieldSchema.getLogicalType() == Schema.LogicalType.DATETIME &&
-              expectedFieldSchema.getType() == Schema.Type.STRING) {
+        expectedFieldSchema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS) {
+        // SmallDateTime case where we map it to CDAP DateTime now as opposed to CDAP Timestamp earlier, as
+        // SmallDateTime does not contain any TimeZone information
+        return;
+      }
+      if ((actualFieldSchema.getLogicalType() == Schema.LogicalType.DATETIME ||
+        actualFieldSchema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS) &&
+          expectedFieldSchema.getType() == Schema.Type.STRING) {
+        // Case when user manually sets the type to string
+        return;
+      }
+      if (actualFieldSchema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS &&
+          expectedFieldSchema.getLogicalType() == Schema.LogicalType.DATETIME) {
+        // DateTimeOffset case where we map it to CDAP Timestamp as opposed to CDAP DateTime earlier
         return;
       }
       super.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
