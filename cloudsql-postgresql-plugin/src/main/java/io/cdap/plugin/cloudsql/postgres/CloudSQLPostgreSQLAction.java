@@ -18,11 +18,13 @@ package io.cdap.plugin.cloudsql.postgres;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.action.Action;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.action.AbstractDBAction;
 import io.cdap.plugin.db.action.QueryConfig;
 import io.cdap.plugin.util.CloudSQLUtil;
@@ -48,11 +50,13 @@ public class CloudSQLPostgreSQLAction extends AbstractDBAction {
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
-    
-    CloudSQLUtil.checkConnectionName(
-        failureCollector,
-        cloudsqlPostgresqlActionConfig.instanceType,
-        cloudsqlPostgresqlActionConfig.connectionName);
+
+    if (cloudsqlPostgresqlActionConfig.canConnect()) {
+      CloudSQLUtil.checkConnectionName(
+          failureCollector,
+          cloudsqlPostgresqlActionConfig.instanceType,
+          cloudsqlPostgresqlActionConfig.connectionName);
+    }
     
     super.configurePipeline(pipelineConfigurer);
   }
@@ -69,10 +73,18 @@ public class CloudSQLPostgreSQLAction extends AbstractDBAction {
         "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
             + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
             + "instance, enter the internal IP address of the Compute Engine VM cloudsql proxy is running on.")
+    @Macro
     public String connectionName;
+
+    @Name(ConnectionConfig.PORT)
+    @Description("Database port number")
+    @Macro
+    @Nullable
+    private Integer port;
 
     @Name(DATABASE)
     @Description("Database name to connect to")
+    @Macro
     public String database;
 
     @Name(CloudSQLPostgreSQLConstants.CONNECTION_TIMEOUT)
@@ -94,6 +106,7 @@ public class CloudSQLPostgreSQLAction extends AbstractDBAction {
         return String.format(
             CloudSQLPostgreSQLConstants.PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
             connectionName,
+            getPort(),
             database);
       }
       
@@ -103,10 +116,19 @@ public class CloudSQLPostgreSQLAction extends AbstractDBAction {
           connectionName);
     }
 
+    public int getPort() {
+      return port == null ? 5432 : port;
+    }
+
     @Override
     public Map<String, String> getDBSpecificArguments() {
       return ImmutableMap.of(
           CloudSQLPostgreSQLConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
+    }
+
+    public boolean canConnect() {
+      return !containsMacro(CloudSQLUtil.CONNECTION_NAME) && !containsMacro(ConnectionConfig.PORT) &&
+          !containsMacro(DATABASE);
     }
   }
 }

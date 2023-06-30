@@ -54,7 +54,7 @@ public class CloudSQLPostgreSQLConnectorTest extends DBSpecificConnectorBaseTest
     test(
       new CloudSQLPostgreSQLConnector(
         new CloudSQLPostgreSQLConnectorConfig(username, password, JDBC_PLUGIN_NAME, connectionArguments, instanceType,
-                                              connectionName, database)
+                                              connectionName, database, null)
       ),
       JDBC_DRIVER_CLASS_NAME,
       CloudSQLPostgreSQLConstants.PLUGIN_NAME

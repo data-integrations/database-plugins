@@ -18,6 +18,8 @@ Properties
 **Connection Name:** The CloudSQL instance to connect to in the format <PROJECT_ID>:\<REGION>:<INSTANCE_NAME>.
 Can be found in the instance overview page.
 
+**Port:** Port that MySQL is running on.
+
 **Database:** MySQL database name.
 
 **Username:** User identity for connecting to the specified database. Required for databases that need

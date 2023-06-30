@@ -93,6 +93,7 @@ public class CloudSQLPostgreSQLSource
       return String.format(
           CloudSQLPostgreSQLConstants.PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
           cloudsqlPostgresqlSourceConfig.connection.getConnectionName(),
+          cloudsqlPostgresqlSourceConfig.connection.getPort(),
           cloudsqlPostgresqlSourceConfig.connection.getDatabase());
     }
 
@@ -116,7 +117,8 @@ public class CloudSQLPostgreSQLSource
       host = connectionParams[2];
       location = connectionParams[1];
     }
-    String fqn = DBUtils.constructFQN("postgres", host, 5432,
+    String fqn = DBUtils.constructFQN("postgres", host,
+                                      cloudsqlPostgresqlSourceConfig.getConnection().getPort(),
                                       cloudsqlPostgresqlSourceConfig.getConnection().getDatabase(),
                                       cloudsqlPostgresqlSourceConfig.getReferenceName());
     Asset.Builder assetBuilder = Asset.builder(cloudsqlPostgresqlSourceConfig.getReferenceName()).setFqn(fqn);
