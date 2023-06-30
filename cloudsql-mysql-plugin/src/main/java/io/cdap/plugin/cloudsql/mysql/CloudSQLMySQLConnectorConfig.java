@@ -17,6 +17,7 @@
 package io.cdap.plugin.cloudsql.mysql;
 
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
@@ -38,10 +39,18 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
     "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
       + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
       + "instance, enter the internal IP address of the Compute Engine VM cloudsql proxy is running on.")
+  @Macro
   private String connectionName;
+
+  @Name(ConnectionConfig.PORT)
+  @Description("Database port number")
+  @Macro
+  @Nullable
+  private Integer port;
 
   @Name(ConnectionConfig.DATABASE)
   @Description("Database name to connect to")
+  @Macro
   private String database;
 
   @Name(CloudSQLUtil.INSTANCE_TYPE)
@@ -49,7 +58,8 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
   private String instanceType;
 
   public CloudSQLMySQLConnectorConfig(String user, String password, String jdbcPluginName, String connectionArguments,
-                                      String instanceType, String connectionName, String database) {
+                                      String instanceType, String connectionName, String database,
+                                      @Nullable Integer port) {
     this.user = user;
     this.password = password;
     this.jdbcPluginName = jdbcPluginName;
@@ -57,6 +67,7 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
     this.instanceType = instanceType;
     this.connectionName = connectionName;
     this.database = database;
+    this.port = port;
   }
 
   public String getDatabase() {
@@ -71,12 +82,17 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
     return connectionName;
   }
 
+  public int getPort() {
+    return port == null ? 3306 : port;
+  }
+
   @Override
   public String getConnectionString() {
     if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
       return String.format(
         CloudSQLMySQLConstants.PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
         connectionName,
+        getPort(),
         database);
     }
 
@@ -92,5 +108,11 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
     properties.put(JDBC_PROPERTY_CONNECT_TIMEOUT_MILLIS, "20000");
     properties.put(JDBC_PROPERTY_SOCKET_TIMEOUT_MILLIS, "20000");
     return properties;
+  }
+
+  @Override
+  public boolean canConnect() {
+    return super.canConnect() && !containsMacro(CloudSQLUtil.CONNECTION_NAME) &&
+        !containsMacro(ConnectionConfig.PORT) && !containsMacro(ConnectionConfig.DATABASE);
   }
 }

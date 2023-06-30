@@ -23,6 +23,8 @@ Properties
 **Connection Name:** The CloudSQL instance to connect to in the format <PROJECT_ID>:\<REGION>:<INSTANCE_NAME>. 
 Can be found in the instance overview page.
 
+**Port:** Port that PostgreSQL is running on.
+
 **CloudSQL Instance Type:** Whether the CloudSQL instance to connect to is private or public. Defaults to 'Public'.
 
 **Username:** User identity for connecting to the specified database.

@@ -46,6 +46,14 @@
           "widget-attributes": {
             "placeholder": "CloudSQL instance connection name"
           }
+        },
+        {
+          "widget-type": "number",
+          "label": "Port",
+          "name": "port",
+          "widget-attributes": {
+            "default": "3306"
+          }
         }
       ]
     },
@@ -88,5 +96,19 @@
       ]
     }
   ],
-  "outputs": []
+  "outputs": [],
+  "filters": [
+    {
+      "name": "showPrivateInstanceProperties ",
+      "condition": {
+        "expression": "instanceType == 'private'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "port"
+        }
+      ]
+    }
+  ]
 }

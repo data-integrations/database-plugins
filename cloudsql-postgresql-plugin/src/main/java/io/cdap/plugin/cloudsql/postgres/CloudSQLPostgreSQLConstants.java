@@ -26,5 +26,5 @@ public final class CloudSQLPostgreSQLConstants {
   public static final String CONNECTION_TIMEOUT = "connectionTimeout";
   public static final String PUBLIC_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT =
       "jdbc:postgresql:///%s?cloudSqlInstance=%s&socketFactory=com.google.cloud.sql.postgres.SocketFactory";
-  public static final String PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT = "jdbc:postgresql://%s/%s";
+  public static final String PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT = "jdbc:postgresql://%s:%s/%s";
 }

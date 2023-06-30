@@ -86,6 +86,7 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
       return String.format(
           CloudSQLMySQLConstants.PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT,
           cloudsqlMysqlSourceConfig.connection.getConnectionName(),
+          cloudsqlMysqlSourceConfig.connection.getPort(),
           cloudsqlMysqlSourceConfig.connection.getDatabase());
     }
 
@@ -108,7 +109,8 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
       host = connectionParams[2];
       location = connectionParams[1];
     }
-    String fqn = DBUtils.constructFQN("mysql", host, 3306,
+    String fqn = DBUtils.constructFQN("mysql", host,
+                                      cloudsqlMysqlSourceConfig.getConnection().getPort(),
                                       cloudsqlMysqlSourceConfig.getConnection().getDatabase(),
                                       cloudsqlMysqlSourceConfig.getReferenceName());
     Asset.Builder assetBuilder = Asset.builder(cloudsqlMysqlSourceConfig.getReferenceName()).setFqn(fqn);

@@ -67,6 +67,14 @@
           }
         },
         {
+          "widget-type": "number",
+          "label": "Port",
+          "name": "port",
+          "widget-attributes": {
+            "default": "5432"
+          }
+        },
+        {
           "widget-type": "textbox",
           "label": "Username",
           "name": "user"
@@ -204,6 +212,18 @@
         {
           "type": "property",
           "name": "connection"
+        }
+      ]
+    },
+    {
+      "name": "showPrivateInstanceProperties ",
+      "condition": {
+        "expression": "instanceType == 'private'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "port"
         }
       ]
     }
