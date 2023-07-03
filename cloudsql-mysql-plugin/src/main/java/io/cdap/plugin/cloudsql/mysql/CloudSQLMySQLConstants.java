@@ -26,5 +26,5 @@ public final class CloudSQLMySQLConstants {
   public static final String CONNECTION_TIMEOUT = "connectionTimeout";
   public static final String PUBLIC_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT =
       "jdbc:mysql:///%s?cloudSqlInstance=%s&socketFactory=com.google.cloud.sql.mysql.SocketFactory";
-  public static final String PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT = "jdbc:mysql://%s/%s";
+  public static final String PRIVATE_CLOUDSQL_MYSQL_CONNECTION_STRING_FORMAT = "jdbc:mysql://%s:%s/%s";
 }

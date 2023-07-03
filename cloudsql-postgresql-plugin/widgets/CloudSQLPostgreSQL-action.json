@@ -74,6 +74,14 @@
           }
         },
         {
+          "widget-type": "number",
+          "label": "Port",
+          "name": "port",
+          "widget-attributes": {
+            "default": "5432"
+          }
+        },
+        {
           "widget-type": "textarea",
           "label": "Database Command",
           "name": "query"
@@ -102,6 +110,20 @@
             "kv-delimiter": "=",
             "delimiter": ";"
           }
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "name": "showPrivateInstanceProperties ",
+      "condition": {
+        "expression": "instanceType == 'private'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "port"
         }
       ]
     }

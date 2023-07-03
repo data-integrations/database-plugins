@@ -91,7 +91,8 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
       host = connectionParams[2];
       location = connectionParams[1];
     }
-    String fqn = DBUtils.constructFQN("mysql", host, 3306,
+    String fqn = DBUtils.constructFQN("mysql", host,
+                                      cloudsqlMysqlSinkConfig.getConnection().getPort(),
                                       cloudsqlMysqlSinkConfig.getConnection().getDatabase(),
                                       cloudsqlMysqlSinkConfig.getReferenceName());
     Asset.Builder assetBuilder = Asset.builder(cloudsqlMysqlSinkConfig.getReferenceName()).setFqn(fqn);

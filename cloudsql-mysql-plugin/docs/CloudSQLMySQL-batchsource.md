@@ -31,6 +31,8 @@ You also can use the macro function ${conn(connection-name)}.
 **Connection Name:** The CloudSQL instance to connect to in the format <PROJECT_ID>:\<REGION>:<INSTANCE_NAME>.
 Can be found in the instance overview page.
 
+**Port:** Port that MySQL is running on.
+
 **CloudSQL Instance Type:** Whether the CloudSQL instance to connect to is private or public. Defaults to 'Public'.
 
 **Import Query:** The SELECT query to use to import data from the specified table.
