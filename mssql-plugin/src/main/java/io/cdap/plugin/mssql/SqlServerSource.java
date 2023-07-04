@@ -197,8 +197,8 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
     @Override
     protected void validateField(FailureCollector collector, Schema.Field field, Schema actualFieldSchema,
                                  Schema expectedFieldSchema) {
-      // we allow the case when actual type is Datetime but user manually set it to timestamp (datetime and datetime2)
-      // or string (datetimeoffset). To make it compatible with old behavior that convert datetime to timestamp.
+      // we allow the case when actual type is Datetime but user manually set it to timestamp (datetime and datetime2).
+      // To make it compatible with old behavior that convert datetime to timestamp.
       // below validation is kind of loose, it's possible users try to manually map datetime to string or
       // map datetimeoffset to timestamp which is invalid. In such case runtime will still fail even validation passes.
       // But we don't have the original source type information here and don't want to do big refactoring here
@@ -206,12 +206,6 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
         expectedFieldSchema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS) {
         // SmallDateTime case where we map it to CDAP DateTime now as opposed to CDAP Timestamp earlier, as
         // SmallDateTime does not contain any TimeZone information
-        return;
-      }
-      if ((actualFieldSchema.getLogicalType() == Schema.LogicalType.DATETIME ||
-        actualFieldSchema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS) &&
-          expectedFieldSchema.getType() == Schema.Type.STRING) {
-        // Case when user manually sets the type to string
         return;
       }
       if (actualFieldSchema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS &&

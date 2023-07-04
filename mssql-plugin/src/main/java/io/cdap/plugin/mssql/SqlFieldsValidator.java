@@ -64,9 +64,8 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
           || super.isFieldCompatible(field, metadata, index);
       case STRING:
         return
-          sqlType == SqlServerSinkSchemaReader.DATETIME_OFFSET_TYPE
           // Value of GEOMETRY and GEOGRAPHY type can be set as Well Known Text string such as "POINT(3 40 5 6)"
-          || sqlType == SqlServerSinkSchemaReader.GEOGRAPHY_TYPE
+          sqlType == SqlServerSinkSchemaReader.GEOGRAPHY_TYPE
           || sqlType == SqlServerSinkSchemaReader.GEOMETRY_TYPE
           || sqlType == SqlServerSinkSchemaReader.SQL_VARIANT
           || sqlType == Types.ROWID
