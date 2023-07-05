@@ -15,7 +15,7 @@
 @Mysql
 Feature: MySQL Sink - Design time scenarios (macro)
 
-  @MYSQL_SOURCE_TEST @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_SOURCE_TEST @MYSQL_TARGET_TEST @Mysql_Required
   Scenario: Verify user should be able to validate sink plugin with macros for Connection section
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -45,7 +45,7 @@ Feature: MySQL Sink - Design time scenarios (macro)
     Then Replace input plugin property: "tableName" with value: "targetTable"
     Then Click on the Validate button
 
-  @MYSQL_SOURCE_TEST @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_SOURCE_TEST @MYSQL_TARGET_TEST @Mysql_Required
   Scenario: Verify user should be able to validate sink plugin with macros for Basic section
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"

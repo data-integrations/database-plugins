@@ -17,7 +17,7 @@
 @Mysql
 Feature: Mysql - Verify Mysql source data transfer for different datatype
 
-  @MYSQL_SOURCE_DATATYPES_TEST @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_SOURCE_DATATYPES_TEST @MYSQL_TARGET_DATATYPES_TEST @Mysql_Required
   Scenario: To verify data is getting transferred from Mysql to Mysql successfully
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -61,7 +61,7 @@ Feature: Mysql - Verify Mysql source data transfer for different datatype
     Then Verify the pipeline status is "Succeeded"
     Then Validate the values of records transferred to target table is equal to the values from source table
 
-  @MYSQL_SOURCE_DATATYPES_TEST @BQ_SINK @Mysql_Required @Plugin-20670
+  @MYSQL_SOURCE_DATATYPES_TEST @BQ_SINK @BQ_SINK_CLEANUP @Mysql_Required @Plugin-20670
   Scenario: To verify data is getting transferred from Mysql to BigQuery successfully
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"

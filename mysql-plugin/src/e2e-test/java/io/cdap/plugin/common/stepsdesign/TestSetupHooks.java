@@ -64,21 +64,59 @@ public class TestSetupHooks {
   }
 
   @Before(order = 2, value = "@MYSQL_SOURCE_TEST")
-  public static void createTables() throws SQLException, ClassNotFoundException {
+  public static void createSourceTables() throws SQLException, ClassNotFoundException {
     MysqlClient.createSourceTable(PluginPropertyUtils.pluginProp("sourceTable"));
+    BeforeActions.scenario.write("MYSQL Source table - " + PluginPropertyUtils.pluginProp("sourceTable")
+                                   + " created successfully");
+  }
+
+  @Before(order = 2, value = "@MYSQL_TARGET_TEST")
+  public static void createTargetTables() throws SQLException, ClassNotFoundException {
     MysqlClient.createTargetTable(PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("MYSQL Target table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
   }
 
   @Before(order = 2, value = "@MYSQL_SOURCE_DATATYPES_TEST")
-  public static void createDatatypesTable() throws SQLException, ClassNotFoundException {
+  public static void createSourceDatatypesTable() throws SQLException, ClassNotFoundException {
     MysqlClient.createSourceDatatypesTable(PluginPropertyUtils.pluginProp("sourceTable"));
-    MysqlClient.createTargetDatatypesTable(PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("MYSQL Source Table - " + PluginPropertyUtils.pluginProp("sourceTable") +
+                                   " created successfully");
   }
 
-  @After(order = 2, value = "@MYSQL_SINK_TEST")
-  public static void dropTables() throws SQLException, ClassNotFoundException {
-    MysqlClient.dropTables(new String[]{PluginPropertyUtils.pluginProp("sourceTable"),
-      PluginPropertyUtils.pluginProp("targetTable")});
+  @Before(order = 2, value = "@MYSQL_TARGET_DATATYPES_TEST")
+  public static void createTargetDatatypesTable() throws SQLException, ClassNotFoundException {
+    MysqlClient.createTargetDatatypesTable(PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("MYSQL Target table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@MYSQL_SOURCE_TEST")
+  public static void dropSourceTables() throws SQLException, ClassNotFoundException {
+    MysqlClient.dropTable(PluginPropertyUtils.pluginProp("sourceTable"));
+    BeforeActions.scenario.write("MYSQL Source Table - " + PluginPropertyUtils.pluginProp("sourceTable") +
+                                   " deleted successfully");
+  }
+
+  @After(order = 2, value = "@MYSQL_TARGET_TEST")
+  public static void dropTargetTables() throws SQLException, ClassNotFoundException {
+    MysqlClient.dropTable(PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("MYSQL Target table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " deleted successfully");
+  }
+
+  @After(order = 2, value = "@MYSQL_SOURCE_DATATYPES_TEST")
+  public static void dropSourceDatatypeTables() throws SQLException, ClassNotFoundException {
+    MysqlClient.dropTable(PluginPropertyUtils.pluginProp("sourceTable"));
+    BeforeActions.scenario.write("MYSQL Source Table - " + PluginPropertyUtils.pluginProp("sourceTable") +
+                                   " deleted successfully");
+  }
+
+  @After(order = 2, value = "@MYSQL_TARGET_DATATYPES_TEST")
+  public static void dropTargetDatatypeTables() throws SQLException, ClassNotFoundException {
+    MysqlClient.dropTable(PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("MYSQL Target table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " deleted successfully");
   }
 
   @Before(order = 1, value = "@BQ_SINK")
@@ -103,17 +141,19 @@ public class TestSetupHooks {
     }
   }
 
-  @Before(order = 1, value = "@MYSQL_TARGET_TABLE")
+  @Before(order = 2, value = "@MYSQL_TARGET_TABLE")
   public static void createMysqlTargetTable() throws SQLException, ClassNotFoundException {
     MysqlClient.createTargetTable1(PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("MYSQL Target table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
   }
 
   @After(order = 2, value = "@MYSQL_TARGET_TABLE")
   public static void dropTargetTable() throws SQLException, ClassNotFoundException {
     MysqlClient.dropTable(PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("MYSQL Target table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " deleted successfully");
   }
-
-
 
   /**
    * Create BigQuery table.
@@ -173,3 +213,4 @@ public class TestSetupHooks {
     BeforeActions.scenario.write("New Connection name: " + connectionName);
   }
 }
+
