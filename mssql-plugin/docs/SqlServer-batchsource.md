@@ -110,7 +110,7 @@ Data Types Mapping
     | DATE             | date                   |                                                                |
     | DATETIME         | datetime               | Users can manually set output schema to map it to timestamp.   |
     | DATETIME2        | datetime               | Users can manually set output schema to map it to timestamp.   |
-    | DATETIMEOFFSET   | datetime               | Users can manually set output schema to map it to string.      |
+    | DATETIMEOFFSET   | timestamp              | Users can manually set output schema to map it to datetime.    |
     | DECIMAL          | decimal                |                                                                |
     | FLOAT            | double                 |                                                                |
     | IMAGE            | bytes                  |                                                                |
@@ -122,7 +122,7 @@ Data Types Mapping
     | NVARCHAR         | string                 |                                                                |
     | NVARCHAR(MAX)    | string                 |                                                                |
     | REAL             | float                  |                                                                |
-    | SMALLDATETIME    | timestamp              |                                                                |
+    | SMALLDATETIME    | datetime               | Users can manually set output schema to map it to timestamp.   |
     | SMALLINT         | int                    |                                                                |
     | SMALLMONEY       | decimal                |                                                                |
     | TEXT             | string                 |                                                                |
@@ -144,6 +144,10 @@ Data Types Mapping
     | SQLVARIANT       | string                 |                                                                |
     | GEOMETRY         | bytes                  |                                                                |
     | GEOGRAPHY        | bytes                  |                                                                |
+    | CURSOR           | unsupported            |                                                                |
+    | ROWVERSION       | unsupported            |                                                                |
+    | SQL_VARIANT      | unsupported            |                                                                |
+    | TABLE            | unsupported            |                                                                |
 
 
 Example

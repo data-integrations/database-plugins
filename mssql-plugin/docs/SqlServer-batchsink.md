@@ -92,9 +92,9 @@ Data Types Mapping
     | BIT              | boolean                |                                                                |
     | CHAR             | string                 |                                                                |
     | DATE             | date                   |                                                                |
-    | DATETIME         | timestamp              |                                                                |
-    | DATETIME2        | timestamp              |                                                                |
-    | DATETIMEOFFSET   | string                 |  DATETIMEOFFSET string literal in the following format:        |
+    | DATETIME         | datetime               |                                                                |
+    | DATETIME2        | datetime               |                                                                |
+    | DATETIMEOFFSET   | timestamp              |  DATETIMEOFFSET string literal in the following format:        |
     |                  |                        |  "2019-06-24 16:19:15.8010000 +03:00"                          |
     | DECIMAL          | decimal                |                                                                |
     | FLOAT            | double                 |                                                                |
@@ -107,7 +107,7 @@ Data Types Mapping
     | NVARCHAR         | string                 |                                                                |
     | NVARCHAR(MAX)    | string                 |                                                                |
     | REAL             | float                  |                                                                |
-    | SMALLDATETIME    | timestamp              |                                                                |
+    | SMALLDATETIME    | datetime               |                                                                |
     | SMALLINT         | int                    |                                                                |
     | SMALLMONEY       | decimal                |                                                                |
     | TEXT             | string                 |                                                                |

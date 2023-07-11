@@ -21,6 +21,7 @@ import io.cdap.plugin.db.sink.CommonFieldsValidator;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Objects;
 
 /**
@@ -30,8 +31,8 @@ public class PostgresFieldsValidator extends CommonFieldsValidator {
 
   @Override
   public boolean isFieldCompatible(Schema.Field field, ResultSetMetaData metadata, int index) throws SQLException {
-    Schema.Type fieldType = field.getSchema().isNullable() ? field.getSchema().getNonNullable().getType()
-      : field.getSchema().getType();
+    Schema schema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+    Schema.Type fieldType = schema.getType();
 
     String colTypeName = metadata.getColumnTypeName(index);
     int columnType = metadata.getColumnType(index);
@@ -44,6 +45,19 @@ public class PostgresFieldsValidator extends CommonFieldsValidator {
                     "{} type.", field.getName(), fieldType, colTypeName);
         return false;
       }
+    }
+
+    // Since Numeric types without precision and scale are getting converted into CDAP String type at the Source
+    // plugin, hence making the String type compatible with the Numeric type at the Sink as well.
+    if (fieldType.equals(Schema.Type.STRING)) {
+      if (Types.NUMERIC == columnType) {
+        return true;
+      }
+    }
+    
+    if (colTypeName.equalsIgnoreCase("timestamp")
+        && schema.getLogicalType().equals(Schema.LogicalType.DATETIME)) {
+      return true;
     }
 
     return super.isFieldCompatible(field, metadata, index);

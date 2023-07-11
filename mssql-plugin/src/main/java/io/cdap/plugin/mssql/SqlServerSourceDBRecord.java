@@ -28,7 +28,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * SQL Server Source implementation {@link org.apache.hadoop.mapreduce.lib.db.DBWritable} and {@link
@@ -52,21 +58,35 @@ public class SqlServerSourceDBRecord extends DBRecord {
       fieldSchema = fieldSchema.getNonNullable();
     }
 
-    if (SqlServerSourceSchemaReader.shouldConvertToDatetime(resultSet.getMetaData(), columnIndex) &&
-          fieldSchema.getLogicalType() == Schema.LogicalType.DATETIME) {
-      try {
-        Method getLocalDateTime = resultSet.getClass().getMethod("getDateTime", int.class);
-        Timestamp value = (Timestamp) getLocalDateTime.invoke(resultSet, columnIndex);
-        recordBuilder.setDateTime(field.getName(), value == null ? null : value.toLocalDateTime());
-        return;
-      } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-        throw new RuntimeException(String.format("Fail to convert column %s of type %s to datetime. Error: %s.",
-                                                 resultSet.getMetaData().getColumnName(columnIndex),
-                                                 resultSet.getMetaData().getColumnTypeName(columnIndex),
-                                                 e.getMessage()), e);
-      }
-    }
     switch (sqlType) {
+      case Types.TIMESTAMP:
+        // SmallDateTime, DateTime, DateTime2 usecase
+        GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        gc.setGregorianChange(new Date(Long.MIN_VALUE));
+        Timestamp timestampSmalldatetime = resultSet.getTimestamp(columnIndex, gc);
+        if (timestampSmalldatetime == null) {
+          recordBuilder.set(field.getName(), null);
+        } else if (fieldSchema.getLogicalType() == Schema.LogicalType.DATETIME) {
+          // SmallDateTime, Datetime, datetime2 to CDAP Datetime type conversion
+          setDateTime(resultSet, recordBuilder, field, columnIndex);
+        } else {
+            // Deprecated use case of supporting SmallDateTime to CDAP Timestamp conversion
+            recordBuilder.setTimestamp(field.getName(), timestampSmalldatetime.toInstant()
+              .atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
+        }
+        break;
+      case SqlServerSourceSchemaReader.DATETIME_OFFSET_TYPE:
+        OffsetDateTime timestampOffset = resultSet.getObject(columnIndex, OffsetDateTime.class);
+        if (timestampOffset == null) {
+          recordBuilder.set(field.getName(), null);
+        } else if (fieldSchema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS) {
+          // DateTimeOffset to CDAP Timestamp type conversion
+          recordBuilder.setTimestamp(field.getName(), timestampOffset.atZoneSameInstant(ZoneId.of("UTC")));
+        } else {
+          // Deprecated use case of supporting DateTimeOffset to CDAP DateTime conversion.
+          setDateTime(resultSet, recordBuilder, field, columnIndex);
+        }
+        break;
       case Types.TIME:
         // Handle reading SQL Server 'TIME' data type to avoid accuracy loss.
         // 'TIME' data type has the accuracy of 100 nanoseconds(1 millisecond in Informatica)
@@ -75,11 +95,22 @@ public class SqlServerSourceDBRecord extends DBRecord {
         recordBuilder.setTime(field.getName(),
             timestamp == null ? null : timestamp.toLocalDateTime().toLocalTime());
         break;
-      case SqlServerSourceSchemaReader.DATETIME_OFFSET_TYPE:
-        recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
-        break;
       default:
         setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
+    }
+  }
+
+  public void setDateTime(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
+                          int columnIndex) throws SQLException {
+    try {
+      Method getLocalDateTime = resultSet.getClass().getMethod("getDateTime", int.class);
+      Timestamp value = (Timestamp) getLocalDateTime.invoke(resultSet, columnIndex);
+      recordBuilder.setDateTime(field.getName(), value == null ? null : value.toLocalDateTime());
+    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+      throw new RuntimeException(String.format("Fail to convert column %s of type %s to datetime. Error: %s.",
+                                               resultSet.getMetaData().getColumnName(columnIndex),
+                                               resultSet.getMetaData().getColumnTypeName(columnIndex),
+                                               e.getMessage()), e);
     }
   }
 

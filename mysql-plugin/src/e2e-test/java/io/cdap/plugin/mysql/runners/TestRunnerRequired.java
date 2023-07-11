@@ -26,7 +26,9 @@ import org.junit.runner.RunWith;
 @CucumberOptions(
   features = {"src/e2e-test/features"},
   glue = {"stepsdesign", "io.cdap.plugin.common.stepsdesign", "io.cdap.plugin.mysql.stepsdesign"},
-  tags = {"@Mysql_Required"},
+  tags = {"@Mysql_Required and not @Plugin-20670"},
+  /* TODO :Enable tests once issue fixed https://cdap.atlassian.net/browse/CDAP-20670
+   */
   plugin = {"pretty", "html:target/cucumber-html-report/mysql-required",
     "json:target/cucumber-reports/cucumber-mysql-required.json",
     "junit:target/cucumber-reports/cucumber-mysql-required.xml"}

@@ -23,7 +23,9 @@ import io.cdap.plugin.db.SchemaReader;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
@@ -53,12 +55,23 @@ public class SqlServerSinkDBRecord extends SqlServerSourceDBRecord {
   @Override
   protected void writeNonNullToDB(PreparedStatement stmt, Schema fieldSchema,
                                   String fieldName, int fieldIndex) throws SQLException {
-    Object fieldValue = (fieldName != null) ? record.get(fieldName) : null;
     int sqlType = columnTypes.get(fieldIndex).getType();
+    Schema.LogicalType fieldLogicalType = fieldSchema.getLogicalType();
     int sqlIndex = fieldIndex + 1;
+    if (fieldLogicalType == Schema.LogicalType.TIMESTAMP_MICROS) {
+      ZonedDateTime timestamp = record.getTimestamp(fieldName);
+      if (timestamp != null) {
+        Timestamp localTimestamp = Timestamp.valueOf(timestamp.toLocalDateTime());
+        stmt.setTimestamp(sqlIndex, localTimestamp);
+      } else {
+        stmt.setNull(sqlIndex, sqlType);
+      }
+      return;
+    }
     switch (sqlType) {
       case SqlServerSourceSchemaReader.GEOGRAPHY_TYPE:
       case SqlServerSourceSchemaReader.GEOMETRY_TYPE:
+        Object fieldValue = (fieldName != null) ? record.get(fieldName) : null;
         if (fieldValue instanceof String) {
           // Handle setting GEOGRAPHY and GEOMETRY values from Well Known Text.
           // For example, "POINT(3 40 5 6)"

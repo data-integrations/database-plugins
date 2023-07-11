@@ -41,11 +41,17 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
     // Handles datetime datatypes
     // Case when Timestamp maps to datetime
     // Case when Datetime2 maps to datetime
-    // Case when DatetimeOffset maps to datetime
     if ((sqlType == Types.TIMESTAMP || sqlType == SqlServerSourceSchemaReader.DATETIME_OFFSET_TYPE)
-            && fieldLogicalType.equals(Schema.LogicalType.DATETIME)) {
+      && fieldLogicalType.equals(Schema.LogicalType.DATETIME)) {
       return true;
     }
+
+    // Case when datetimeoffset maps to timestamp
+    if (sqlType == SqlServerSourceSchemaReader.DATETIME_OFFSET_TYPE &&
+      fieldLogicalType.equals(Schema.LogicalType.TIMESTAMP_MICROS)) {
+      return true;
+    }
+
     // Handle logical types first
     if (fieldLogicalType != null) {
       return super.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
@@ -57,9 +63,9 @@ public class SqlFieldsValidator extends CommonFieldsValidator {
           || sqlType == SqlServerSinkSchemaReader.GEOMETRY_TYPE
           || super.isFieldCompatible(field, metadata, index);
       case STRING:
-        return sqlType == SqlServerSinkSchemaReader.DATETIME_OFFSET_TYPE
+        return
           // Value of GEOMETRY and GEOGRAPHY type can be set as Well Known Text string such as "POINT(3 40 5 6)"
-          || sqlType == SqlServerSinkSchemaReader.GEOGRAPHY_TYPE
+          sqlType == SqlServerSinkSchemaReader.GEOGRAPHY_TYPE
           || sqlType == SqlServerSinkSchemaReader.GEOMETRY_TYPE
           || sqlType == SqlServerSinkSchemaReader.SQL_VARIANT
           || sqlType == Types.ROWID

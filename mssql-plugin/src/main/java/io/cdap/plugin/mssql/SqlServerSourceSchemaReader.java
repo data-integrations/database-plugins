@@ -21,6 +21,7 @@ import io.cdap.plugin.db.CommonSchemaReader;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 
 /**
  * SQL Server Source schema reader.
@@ -49,39 +50,17 @@ public class SqlServerSourceSchemaReader extends CommonSchemaReader {
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     int columnSqlType = metadata.getColumnType(index);
 
-    if (shouldConvertToDatetime(metadata, index)) {
+    if (DATETIME_OFFSET_TYPE == columnSqlType) {
+      return Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
+    }
+    if (columnSqlType == Types.TIMESTAMP) {
+      // SmallDateTime, DateTime and DateTime2 will be mapped to Types.DATETIME
       return Schema.of(Schema.LogicalType.DATETIME);
-
     }
     if (GEOMETRY_TYPE == columnSqlType || GEOGRAPHY_TYPE == columnSqlType) {
       return Schema.of(Schema.Type.BYTES);
     }
     return super.getSchema(metadata, index);
-  }
-
-  /**
-   * Whether the corresponding column should be converted to CDAP Datetime Logical Type
-   * @param metadata result set metadata
-   * @param index index of the column
-   * @return whether the corresponding column should be converted to CDAP Datetime Logical Type
-   * @throws SQLException
-   */
-  public static boolean shouldConvertToDatetime(ResultSetMetaData metadata, int index) throws SQLException {
-    // datetimeoffset will have type DATETIME_OFFSET_TYPE
-    // datetime and datetime2 will have type Types.TIMESTAMP
-    // cannot decide based on sql type
-    String columnTypeName = metadata.getColumnTypeName(index);
-    return shouldConvertToDatetime(columnTypeName);
-  }
-
-  /**
-   * Whether the corresponding data type should be converted to CDAP Datetime Logical Type
-   * SQL Server data type datetime, datetime2 and datetimeoffset will be converted to CDAP Datetime Logical Type
-   * @param typeName the data type name
-   * @return Whether the corresponding data type should be converted to CDAP Datetime Logical Type
-   */
-  public static boolean shouldConvertToDatetime(String typeName) {
-    return typeName.startsWith(DATETIME_TYPE_PREFIX);
   }
 
   @Override

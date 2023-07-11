@@ -17,6 +17,7 @@
 package io.cdap.plugin.cloudsql.postgres;
 
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
@@ -34,10 +35,18 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
     "The CloudSQL instance to connect to. For a public instance, the connection string should be in the format "
       + "<PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page. For a private "
       + "instance, enter the internal IP address of the Compute Engine VM cloudsql proxy is running on.")
+  @Macro
   private String connectionName;
+
+  @Name(ConnectionConfig.PORT)
+  @Description("Database port number")
+  @Macro
+  @Nullable
+  private Integer port;
 
   @Name(ConnectionConfig.DATABASE)
   @Description("Database name to connect to")
+  @Macro
   private String database;
 
   @Name(CloudSQLUtil.INSTANCE_TYPE)
@@ -46,7 +55,7 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
 
   public CloudSQLPostgreSQLConnectorConfig(String username, String password, String jdbcPluginName,
                                            String connectionArguments, String instanceType,
-                                           String connectionName, String database) {
+                                           String connectionName, String database, @Nullable Integer port) {
     this.user = username;
     this.password = password;
     this.jdbcPluginName = jdbcPluginName;
@@ -54,6 +63,7 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
     this.instanceType = instanceType;
     this.connectionName = connectionName;
     this.database = database;
+    this.port = port;
   }
 
   public String getDatabase() {
@@ -68,12 +78,17 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
     return connectionName;
   }
 
+  public int getPort() {
+    return port == null ? 5432 : port;
+  }
+
   @Override
   public String getConnectionString() {
     if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
       return String.format(
         CloudSQLPostgreSQLConstants.PRIVATE_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
         connectionName,
+        getPort(),
         database);
     }
 
@@ -81,5 +96,11 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
       CloudSQLPostgreSQLConstants.PUBLIC_CLOUDSQL_POSTGRES_CONNECTION_STRING_FORMAT,
       database,
       connectionName);
+  }
+
+  @Override
+  public boolean canConnect() {
+    return super.canConnect() && !containsMacro(CloudSQLUtil.CONNECTION_NAME) &&
+        !containsMacro(ConnectionConfig.PORT) && !containsMacro(ConnectionConfig.DATABASE);
   }
 }

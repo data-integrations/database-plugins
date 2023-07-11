@@ -16,6 +16,7 @@
 
 package io.cdap.plugin;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.e2e.utils.PluginPropertyUtils;
 import org.junit.Assert;
 
@@ -29,6 +30,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -227,7 +229,7 @@ public class MssqlClient {
                 String columnTypeName = mdSource.getColumnTypeName(currentColumnCount);
                 int columnType = mdSource.getColumnType(currentColumnCount);
                 String columnName = mdSource.getColumnName(currentColumnCount);
-                if (columnType == Types.TIMESTAMP) {
+                if (columnType == Types.TIMESTAMP || columnTypeName.equalsIgnoreCase("datetimeoffset")) {
                     GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
                     gc.setGregorianChange(new Date(Long.MIN_VALUE));
                     Timestamp sourceTS = rsSource.getTimestamp(currentColumnCount, gc);

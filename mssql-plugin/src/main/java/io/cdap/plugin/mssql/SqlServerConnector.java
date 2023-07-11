@@ -149,16 +149,4 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
                          limit, sessionID, limit, strata);
   }
 
-  @Override
-  protected Schema getSchema(int sqlType, String typeName, int scale, int precision, String columnName,
-                             boolean isSigned, boolean handleAsDecimal) throws SQLException {
-    if (SqlServerSourceSchemaReader.shouldConvertToDatetime(typeName)) {
-      return Schema.of(Schema.LogicalType.DATETIME);
-    }
-
-    if (SqlServerSourceSchemaReader.GEOMETRY_TYPE == sqlType || SqlServerSourceSchemaReader.GEOGRAPHY_TYPE == sqlType) {
-      return Schema.of(Schema.Type.BYTES);
-    }
-    return super.getSchema(sqlType, typeName, scale, precision, columnName, isSigned, handleAsDecimal);
-  }
 }

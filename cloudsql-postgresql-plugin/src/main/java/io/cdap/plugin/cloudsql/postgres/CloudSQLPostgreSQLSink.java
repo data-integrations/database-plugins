@@ -136,7 +136,8 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
       host = connectionParams[2];
       location = connectionParams[1];
     }
-    String fqn = DBUtils.constructFQN("postgres", host, 5432,
+    String fqn = DBUtils.constructFQN("postgres", host,
+                                      cloudsqlPostgresqlSinkConfig.getConnection().getPort(),
                                       cloudsqlPostgresqlSinkConfig.getConnection().getDatabase(),
                                       cloudsqlPostgresqlSinkConfig.getReferenceName());
     Asset.Builder assetBuilder = Asset.builder(cloudsqlPostgresqlSinkConfig.getReferenceName()).setFqn(fqn);
