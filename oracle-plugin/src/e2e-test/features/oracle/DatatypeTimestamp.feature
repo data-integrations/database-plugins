@@ -16,7 +16,7 @@
 
 @Oracle
 Feature: Oracle - Verify Oracle source data transfer for all Timestamp types
-  @ORACLE_SOURCE_DATATYPE_TIMESTAMP @ORACLE_SINK_TEST @Oracle_Required
+  @ORACLE_SOURCE_DATATYPE_TIMESTAMP @ORACLE_TARGET_DATATYPE_TIMESTAMP @Oracle_Required
   Scenario: To verify data is getting transferred from Oracle to Oracle successfully
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -32,6 +32,7 @@ Feature: Oracle - Verify Oracle source data transfer for all Timestamp types
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Select radio button plugin property: "connectionType" with value: "service"
     Then Select radio button plugin property: "role" with value: "normal"
+    Then Select dropdown plugin property: "select-transactionIsolationLevel" with option value: "TRANSACTION_READ_COMMITTED"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
@@ -51,6 +52,7 @@ Feature: Oracle - Verify Oracle source data transfer for all Timestamp types
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Select radio button plugin property: "connectionType" with value: "service"
     Then Select radio button plugin property: "role" with value: "normal"
+    Then Select dropdown plugin property: "select-transactionIsolationLevel" with option value: "TRANSACTION_READ_COMMITTED"
     Then Validate "Oracle2" plugin properties
     Then Close the Plugin Properties page
     Then Save the pipeline

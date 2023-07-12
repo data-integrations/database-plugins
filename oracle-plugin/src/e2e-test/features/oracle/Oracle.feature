@@ -16,7 +16,7 @@
 
 @Oracle
 Feature: Oracle - Verify Oracle source data transfer
-  @ORACLE_SOURCE_TEST @ORACLE_SINK_TEST @Oracle_Required
+  @ORACLE_SOURCE_TEST @ORACLE_TARGET_TEST @Oracle_Required
   Scenario: To verify data is getting transferred from Oracle to Oracle successfully
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"

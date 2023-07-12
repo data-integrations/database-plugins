@@ -53,78 +53,243 @@ public class TestSetupHooks {
   }
 
   @Before(order = 2, value = "@ORACLE_SOURCE_TEST")
-  public static void createTables() throws SQLException, ClassNotFoundException {
+  public static void createSourceTable() throws SQLException, ClassNotFoundException {
     OracleClient.createSourceTable(PluginPropertyUtils.pluginProp("sourceTable"),
                                    PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_SOURCE_TEST")
+  public static void dropSourceTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                              PluginPropertyUtils.pluginProp("sourceTable"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable") +
+                                   " deleted successfully");
+  }
+
+  @Before(order = 2, value = "@ORACLE_TARGET_TEST")
+  public static void createTargetTable() throws SQLException, ClassNotFoundException {
     OracleClient.createTargetTable(PluginPropertyUtils.pluginProp("targetTable"),
                                    PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_TARGET_TEST")
+  public static void dropTargetTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable") +
+                                   " deleted successfully");
   }
 
   @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST")
-  public static void createAllDatatypesTables() throws SQLException, ClassNotFoundException {
+  public static void createSourceAllDatatypesTable() throws SQLException, ClassNotFoundException {
     OracleClient.createSourceDatatypesTable(PluginPropertyUtils.pluginProp("sourceTable"),
                                    PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST")
+  public static void dropSourceAllDatatypesTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("sourceTable"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable") +
+                                   " deleted successfully");
+  }
+
+  @Before(order = 2, value = "@ORACLE_TARGET_DATATYPES_TEST")
+  public static void createTargetAllDatatypesTable() throws SQLException, ClassNotFoundException {
     OracleClient.createTargetDatatypesTable(PluginPropertyUtils.pluginProp("targetTable"),
-                                   PluginPropertyUtils.pluginProp("schema"));
+                                            PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_TARGET_DATATYPES_TEST")
+  public static void dropTargetAllDatatypesTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable") +
+                                   " deleted successfully");
   }
 
   @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST2")
-  public static void createDatatypesTablesLong() throws SQLException, ClassNotFoundException {
+  public static void createSourceDatatypesTableLong() throws SQLException, ClassNotFoundException {
     OracleClient.createSourceLongTable(PluginPropertyUtils.pluginProp("sourceTable"),
                                             PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST2")
+  public static void dropSourceDatatypesTableLong() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("sourceTable"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable") +
+                                   " deleted successfully");
+  }
+
+  @Before(order = 2, value = "@ORACLE_TARGET_DATATYPES_TEST2")
+  public static void createTargetDatatypesTableLong() throws SQLException, ClassNotFoundException {
     OracleClient.createTargetLongTable(PluginPropertyUtils.pluginProp("targetTable"),
-                                            PluginPropertyUtils.pluginProp("schema"));
+                                       PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_TARGET_DATATYPES_TEST2")
+  public static void dropTargetDatatypesTableLong() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable") +
+                                   " deleted successfully");
   }
 
   @Before(order = 2, value = "@ORACLE_SOURCE_LONGRAW_TEST")
-  public static void createDatatypesTablesLongRaw() throws SQLException, ClassNotFoundException {
+  public static void createSourceDatatypesTableLongRaw() throws SQLException, ClassNotFoundException {
     OracleClient.createSourceLongRawTable(PluginPropertyUtils.pluginProp("sourceTable"),
                                             PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_SOURCE_LONGRAW_TEST")
+  public static void dropSourceDatatypesTableLongRaw() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("sourceTable"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable") +
+                                   " deleted successfully");
+  }
+
+  @Before(order = 2, value = "@ORACLE_TARGET_LONGRAW_TEST")
+  public static void createTargetDatatypesTableLongRaw() throws SQLException, ClassNotFoundException {
     OracleClient.createTargetLongRawTable(PluginPropertyUtils.pluginProp("targetTable"),
-                                            PluginPropertyUtils.pluginProp("schema"));
+                                          PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_TARGET_LONGRAW_TEST")
+  public static void dropTargetDatatypesTableLongRaw() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable") +
+                                   " deleted successfully");
   }
 
   @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST4")
-  public static void createLongVarcharTables() throws SQLException, ClassNotFoundException {
+  public static void createSourceLongVarcharTable() throws SQLException, ClassNotFoundException {
     OracleClient.createSourceLongVarcharTable(PluginPropertyUtils.pluginProp("sourceTable"),
                                             PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST4")
+  public static void dropSourceLongVarcharTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("sourceTable"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable") +
+                                   " deleted successfully");
+  }
+
+  @Before(order = 2, value = "@ORACLE_TARGET_DATATYPES_TEST4")
+  public static void createTargetLongVarcharTable() throws SQLException, ClassNotFoundException {
     OracleClient.createTargetLongVarCharTable(PluginPropertyUtils.pluginProp("targetTable"),
-                                            PluginPropertyUtils.pluginProp("schema"));
+                                              PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_TARGET_DATATYPES_TEST4")
+  public static void dropTargetLongVarcharTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable") +
+                                   " deleted successfully");
   }
 
   @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPE_TIMESTAMP")
-  public static void createTimestampDatatypeTables() throws SQLException, ClassNotFoundException {
+  public static void createSourceTimestampDatatypeTable() throws SQLException, ClassNotFoundException {
     OracleClient.createTimestampSourceTable(PluginPropertyUtils.pluginProp("sourceTable"),
-            PluginPropertyUtils.pluginProp("schema"));
-    OracleClient.createTimestampTargetTable(PluginPropertyUtils.pluginProp("targetTable"),
-            PluginPropertyUtils.pluginProp("schema"));
+                                            PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable")
+                                   + " created successfully");
   }
 
-  @After(order = 1, value = "@ORACLE_SINK_TEST")
-  public static void dropTables() throws SQLException, ClassNotFoundException {
-    OracleClient.deleteTables(PluginPropertyUtils.pluginProp("schema"),
-                              new String[]{PluginPropertyUtils.pluginProp("sourceTable"),
-                                PluginPropertyUtils.pluginProp("targetTable")});
+  @After(order = 2, value = "@ORACLE_SOURCE_DATATYPE_TIMESTAMP")
+  public static void dropSourceTimestampDatatypeTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("sourceTable"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable") +
+                                   " deleted successfully");
+  }
+
+  @Before(order = 2, value = "@ORACLE_TARGET_DATATYPE_TIMESTAMP")
+  public static void createTargetTimestampDatatypeTable() throws SQLException, ClassNotFoundException {
+    OracleClient.createTimestampTargetTable(PluginPropertyUtils.pluginProp("targetTable"),
+                                            PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_TARGET_DATATYPE_TIMESTAMP")
+  public static void dropTargetTimestampDatatypeTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable") +
+                                   " deleted successfully");
   }
 
   @Before(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST1")
-  public static void createAllOracleDatatypesTables() throws SQLException, ClassNotFoundException {
+  public static void createSourceAllOracleDatatypesTable() throws SQLException, ClassNotFoundException {
     OracleClient.createSourceOracleDatatypesTable(PluginPropertyUtils.pluginProp("sourceTable"),
                                                   PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_SOURCE_DATATYPES_TEST1")
+  public static void dropSourceAllOracleDatatypesTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("sourceTable"));
+    BeforeActions.scenario.write("Oracle Source Table - " + PluginPropertyUtils.pluginProp("sourceTable") +
+                                   " deleted successfully");
+  }
+
+  @Before(order = 2, value = "@ORACLE_TARGET_DATATYPES_TEST1")
+  public static void createTargetAllOracleDatatypesTable() throws SQLException, ClassNotFoundException {
     OracleClient.createTargetOracleDatatypesTable(PluginPropertyUtils.pluginProp("targetTable"),
                                                   PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_TARGET_DATATYPES_TEST1")
+  public static void dropTargetAllOracleDatatypesTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable") +
+                                   " deleted successfully");
   }
 
   @Before(order = 2, value = "@ORACLE_TEST_TABLE")
-  public static void createOracleTestTable() throws SQLException, ClassNotFoundException {
+  public static void createOracleTargetTestTable() throws SQLException, ClassNotFoundException {
     OracleClient.createTargetTable(PluginPropertyUtils.pluginProp("targetTable"),
                                    PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
   }
 
-  @After(order = 1, value = "@ORACLE_TEST_TABLE")
-  public static void dropTestTables() throws SQLException, ClassNotFoundException {
-    OracleClient.deleteTables(PluginPropertyUtils.pluginProp("schema"),
-                              new String[]{PluginPropertyUtils.pluginProp("targetTable")});
+  @After(order = 2, value = "@ORACLE_TEST_TABLE")
+  public static void dropOracleTargetTestTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " deleted successfully");
   }
 
   @Before(order = 1, value = "@BQ_SINK_TEST")

@@ -16,7 +16,7 @@
 
 @Oracle
 Feature: Oracle - Verify Oracle source data transfer of type LONG RAW
-  @ORACLE_SOURCE_LONGRAW_TEST @ORACLE_SINK_TEST @Oracle_Required
+  @ORACLE_SOURCE_LONGRAW_TEST @ORACLE_TARGET_LONGRAW_TEST @Oracle_Required
     # Oracle Sanity test to transfer table data containing LONG RAW
   Scenario: To verify data is getting transferred from Oracle to Oracle successfully
     Given Open Datafusion Project to configure pipeline

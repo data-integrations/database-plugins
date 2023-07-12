@@ -341,10 +341,10 @@ public class OracleClient {
     }
   }
 
-  public static void deleteTables(String schema, String[] tables)
+  public static void deleteTable(String schema, String table)
     throws SQLException, ClassNotFoundException {
     try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
-      for (String table : tables) {
+      {
         String dropTableQuery = "DROP TABLE " + schema + "." + table;
         statement.execute(dropTableQuery);
       }

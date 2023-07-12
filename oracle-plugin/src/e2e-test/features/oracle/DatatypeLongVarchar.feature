@@ -16,7 +16,7 @@
 
 @Oracle
 Feature: Oracle - Verify Oracle source data transfer of type LONG VARCHAR
-  @ORACLE_SOURCE_DATATYPES_TEST4 @ORACLE_SINK_TEST @Oracle_Required
+  @ORACLE_SOURCE_DATATYPES_TEST4 @ORACLE_TARGET_DATATYPES_TEST4 @Oracle_Required
     # Oracle Sanity test to transfer table data containing LONG VARCHAR
   Scenario: To verify data is getting transferred from Oracle to Oracle successfully
     Given Open Datafusion Project to configure pipeline

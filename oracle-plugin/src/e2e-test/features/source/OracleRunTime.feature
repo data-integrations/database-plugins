@@ -17,7 +17,7 @@
 @Oracle @Oracle_Required
 Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
 
-  @ORACLE_SOURCE_TEST @BQ_SINK_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_TEST @BQ_SINK_TEST
   Scenario: To verify data is getting transferred from Oracle source to BigQuery sink successfully
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -65,7 +65,7 @@ Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
     Then Close the pipeline logs
     Then Validate the values of records transferred to target Big Query table is equal to the values from source table
 
-  @ORACLE_SOURCE_DATATYPES_TEST2 @BQ_SINK_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_DATATYPES_TEST2 @BQ_SINK_TEST
   Scenario: To verify data is getting transferred from Oracle source to BigQuery sink successfully using long datatypes
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -113,7 +113,7 @@ Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
     Then Close the pipeline logs
     Then Validate the values of records transferred to target Big Query table is equal to the values from source table
 
-  @ORACLE_SOURCE_LONGRAW_TEST @BQ_SINK_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_LONGRAW_TEST @BQ_SINK_TEST
   Scenario: To verify data is getting transferred from Oracle source to BigQuery sink successfully using long raw datatypes
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -161,7 +161,7 @@ Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
     Then Close the pipeline logs
     Then Validate the values of records transferred to target Big Query table is equal to the values from source table
 
-  @ORACLE_SOURCE_DATATYPES_TEST4 @BQ_SINK_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_DATATYPES_TEST4 @BQ_SINK_TEST
   Scenario: To verify data is getting transferred from Oracle source to BigQuery sink successfully using long Varchar datatypes
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -209,7 +209,7 @@ Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
     Then Close the pipeline logs
     Then Validate the values of records transferred to target Big Query table is equal to the values from source table
 
-  @ORACLE_SOURCE_DATATYPES_TEST4 @BQ_SINK_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_DATATYPES_TEST4 @BQ_SINK_TEST
   Scenario: To verify data is getting transferred from Oracle source to BigQuery sink successfully when connection arguments are set
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -258,7 +258,7 @@ Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
     Then Close the pipeline logs
     Then Validate the values of records transferred to target Big Query table is equal to the values from source table
 
-  @ORACLE_SOURCE_TEST @ORACLE_SINK_TEST @BQ_SINK_TEST
+  @ORACLE_SOURCE_TEST @BQ_SINK_TEST
   Scenario: To verify the pipeline fails while preview with invalid bounding query setting the split-By field
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -299,7 +299,7 @@ Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
     Then Wait till pipeline preview is in running state
     Then Verify the preview run status of pipeline in the logs is "failed"
 
-  @ORACLE_SOURCE_TEST @ORACLE_SINK_TEST @BQ_SINK_TEST
+  @ORACLE_SOURCE_TEST @BQ_SINK_TEST
   Scenario: To verify pipeline failure message in logs when an invalid bounding query is provided
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -343,7 +343,7 @@ Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
       | Level | Message                                  |
       | ERROR | errorLogsMessageInvalidBoundingQuery     |
 
-  @ORACLE_SOURCE_DATATYPES_TEST1 @BQ_SINK_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_DATATYPES_TEST1 @BQ_SINK_TEST
   Scenario: To verify data is getting transferred from Oracle source to BigQuery sink successfully using different datatypes
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -391,7 +391,7 @@ Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
     Then Close the pipeline logs
     Then Validate the values of records transferred to target Big Query table is equal to the values from source table
 
-  @ORACLE_SOURCE_DATATYPES_TEST @BQ_SINK_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_DATATYPES_TEST @BQ_SINK_TEST
   Scenario: To verify data is getting transferred from Oracle source to BigQuery sink successfully using multiple datatypes
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"

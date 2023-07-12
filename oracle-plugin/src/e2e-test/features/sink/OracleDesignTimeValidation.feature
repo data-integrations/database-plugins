@@ -47,7 +47,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Click on the Validate button
     Then Verify that the Plugin Property: "referenceName" is displaying an in-line error message: "errorMessageOracleInvalidReferenceName"
 
-  @ORACLE_SOURCE_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_TEST @ORACLE_TARGET_TEST
   Scenario: To verify Oracle sink plugin validation error message with invalid database
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -84,7 +84,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Click on the Validate button
     Then Verify that the Plugin is displaying an error message: "errorMessageInvalidSinkDatabase" on the header
 
-  @ORACLE_SOURCE_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_TEST @ORACLE_TARGET_TEST
   Scenario: To verify Oracle sink plugin validation error message with invalid table name
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -138,7 +138,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Click on the Validate button
     Then Verify that the Plugin Property: "user" is displaying an in-line error message: "errorMessageBlankUsername"
 
-  @ORACLE_SOURCE_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_TEST @ORACLE_TARGET_TEST
   Scenario: To verify Oracle sink plugin validation error message with invalid Host
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"

@@ -17,7 +17,7 @@
 @Oracle @Oracle_Required
 Feature: Oracle source- Verify Oracle source plugin design time scenarios
 
-  @ORACLE_SOURCE_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_TEST
   Scenario: To verify Oracle source plugin validation with connection and basic details for connectivity
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -38,7 +38,7 @@ Feature: Oracle source- Verify Oracle source plugin design time scenarios
     Then Validate "Oracle" plugin properties
     Then Close the Plugin Properties page
 
-  @ORACLE_SOURCE_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_TEST
   Scenario: To verify Oracle source plugin validation with connection arguments
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -60,7 +60,7 @@ Feature: Oracle source- Verify Oracle source plugin design time scenarios
     Then Validate "Oracle" plugin properties
     Then Close the Plugin Properties page
 
-  @ORACLE_SOURCE_TEST @ORACLE_SINK_TEST
+  @ORACLE_SOURCE_TEST
   Scenario: To verify Oracle source plugin validation with advanced details
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
