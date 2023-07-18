@@ -15,7 +15,7 @@
 @Mysql
 Feature: MySQL Sink - Design time scenarios
 
-  @MYSQL_SOURCE_TEST @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_TARGET_TEST @Mysql_Required
   Scenario: Verify user can validate successfully when sink plugin is configured for table with basic details
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Sink"
@@ -31,7 +31,7 @@ Feature: MySQL Sink - Design time scenarios
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Validate "MySQL2" plugin properties
 
-  @MYSQL_SOURCE_TEST @CONNECTION @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_TARGET_TEST @CONNECTION @Mysql_Required
   Scenario: Verify the MySQL Sink plugin using connection manager functionality
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Sink"
@@ -58,7 +58,7 @@ Feature: MySQL Sink - Design time scenarios
     Then Validate "MySQL" plugin properties
     Then Close the Plugin Properties page
 
-  @MYSQL_SOURCE_TEST @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_TARGET_TEST @Mysql_Required
   Scenario: Verify user should be able to validate sink plugin successfully by setting the advanced section fields
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Sink"

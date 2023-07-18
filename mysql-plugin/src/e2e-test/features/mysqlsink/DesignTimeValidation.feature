@@ -15,7 +15,7 @@
 @Mysql
 Feature: MySQL Sink - Design time validation scenarios
 
-  @MYSQL_SOURCE_TEST @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_SOURCE_TEST @MYSQL_TARGET_TEST @Mysql_Required
   Scenario: Verify Database field validation error message with invalid test data
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -46,7 +46,7 @@ Feature: MySQL Sink - Design time validation scenarios
     Then Click on the Validate button
     Then Verify that the Plugin is displaying an error message: "invalid.sink.database.message" on the header
 
-  @MYSQL_SOURCE_TEST @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_SOURCE_TEST @MYSQL_TARGET_TEST @Mysql_Required
   Scenario: Verify Table Name Field validation error message with invalid test data
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -77,7 +77,7 @@ Feature: MySQL Sink - Design time validation scenarios
     Then Click on the Validate button
     Then Verify that the Plugin Property: "tableName" is displaying an in-line error message: "invalidtableName.error.message"
 
-  @MYSQL_SOURCE_TEST @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_SOURCE_TEST @MYSQL_TARGET_TEST @Mysql_Required
   Scenario: Verify Reference Name field validation error message with invalid test data
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -108,7 +108,7 @@ Feature: MySQL Sink - Design time validation scenarios
     Then Click on the Validate button
     Then Verify that the Plugin Property: "referenceName" is displaying an in-line error message: "invalidreferenceName.error.message"
 
-  @MYSQL_SOURCE_TEST @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_SOURCE_TEST @MYSQL_TARGET_TEST @Mysql_Required
   Scenario: Verify the Username field validation error message with blank value
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
@@ -138,7 +138,7 @@ Feature: MySQL Sink - Design time validation scenarios
     Then Click on the Validate button
     Then Verify that the Plugin Property: "user" is displaying an in-line error message: "blank.username.message"
 
-  @MYSQL_SOURCE_TEST @MYSQL_SINK_TEST @Mysql_Required
+  @MYSQL_SOURCE_TEST @MYSQL_TARGET_TEST @Mysql_Required
   Scenario: Verify the host validation error message with blank value
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
