@@ -20,8 +20,6 @@ import com.google.common.base.Strings;
 import io.cdap.e2e.utils.PluginPropertyUtils;
 import io.cdap.plugin.oracle.OracleSourceSchemaReader;
 import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Blob;
 import java.sql.Clob;
@@ -44,7 +42,7 @@ import java.util.TimeZone;
  */
 public class OracleClient {
 
-  private static Connection getOracleConnection() throws SQLException, ClassNotFoundException {
+  public static Connection getOracleConnection() throws SQLException, ClassNotFoundException {
     TimeZone timezone = TimeZone.getTimeZone("UTC");
     TimeZone.setDefault(timezone);
     Class.forName("oracle.jdbc.driver.OracleDriver");
@@ -68,6 +66,7 @@ public class OracleClient {
 
   /**
    * Extracts entire data from source and target tables.
+   *
    * @param sourceTable table at the source side
    * @param targetTable table at the sink side
    * @return true if the values in source and target side are equal
@@ -146,15 +145,15 @@ public class OracleClient {
               break;
             }
             Assert.assertNotNull(
-                    String.format("Column : %s is null in source table and is not Null in target table.", columnName),
-                    tsSource);
+              String.format("Column : %s is null in source table and is not Null in target table.", columnName),
+              tsSource);
             Assert.assertNotNull(
-                    String.format("Column : %s is null in target table and is not Null in source table.", columnName),
-                    tsTarget);
+              String.format("Column : %s is null in target table and is not Null in source table.", columnName),
+              tsTarget);
             Instant sourceInstant = tsSource.toInstant();
             Instant targetInstant = tsTarget.toInstant();
             Assert.assertEquals(String.format("Different TIMESTAMPTZ values found for column : %s", columnName),
-                    sourceInstant, targetInstant);
+                                sourceInstant, targetInstant);
             break;
           default:
             String sourceString = rsSource.getString(currentColumnCount);
@@ -166,9 +165,9 @@ public class OracleClient {
       }
     }
     Assert.assertFalse("Number of rows in Source table is greater than the number of rows in Target table",
-                      rsSource.next());
+                       rsSource.next());
     Assert.assertFalse("Number of rows in Target table is greater than the number of rows in Source table",
-                      rsTarget.next());
+                       rsTarget.next());
     return true;
   }
 
@@ -243,7 +242,7 @@ public class OracleClient {
   }
 
   public static void createTimestampSourceTable(String sourceTable, String schema) throws SQLException,
-          ClassNotFoundException {
+    ClassNotFoundException {
     try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
       String timestampColumns = PluginPropertyUtils.pluginProp("timestampColumns");
       String createSourceTableQuery = "CREATE TABLE " + schema + "." + sourceTable + " " + timestampColumns;
@@ -255,14 +254,14 @@ public class OracleClient {
         String timestampValue = PluginPropertyUtils.pluginProp("timestampValue" + rowCount);
         String timestampColumnsList = PluginPropertyUtils.pluginProp("timestampColumnsList");
         statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + timestampColumnsList + " " +
-                timestampValue);
+                                  timestampValue);
         rowCount++;
       }
     }
   }
 
   public static void createTimestampTargetTable(String targetTable, String schema) throws SQLException,
-          ClassNotFoundException {
+    ClassNotFoundException {
     try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
       String timestampColumns = PluginPropertyUtils.pluginProp("timestampColumns");
       String createTargetTableQuery = "CREATE TABLE " + schema + "." + targetTable + " " + timestampColumns;
@@ -318,10 +317,34 @@ public class OracleClient {
     }
   }
 
-  public static void deleteTables(String schema, String[] tables)
+  public static void createSourceOracleDatatypesTable(String sourceTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String datatypeColumns1 = PluginPropertyUtils.pluginProp("bigQueryColumns");
+      String createSourceTableQuery6 = "CREATE TABLE " + schema + "." + sourceTable + " " + datatypeColumns1;
+      statement.executeUpdate(createSourceTableQuery6);
+
+      // Insert dummy data.
+      String datatypeValues1 = PluginPropertyUtils.pluginProp("bigQueryColumnsValues");
+      String datatypeColumnsList1 = PluginPropertyUtils.pluginProp("bigQueryColumnsList");
+      statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " " + datatypeColumnsList1 + " " +
+                                datatypeValues1);
+    }
+  }
+
+  public static void createTargetOracleDatatypesTable(String targetTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String datatypeColumns1 = PluginPropertyUtils.pluginProp("bigQueryColumns");
+      String createTargetTableQuery6 = "CREATE TABLE " + schema + "." + targetTable + " " + datatypeColumns1;
+      statement.executeUpdate(createTargetTableQuery6);
+    }
+  }
+
+  public static void deleteTable(String schema, String table)
     throws SQLException, ClassNotFoundException {
     try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
-      for (String table : tables) {
+      {
         String dropTableQuery = "DROP TABLE " + schema + "." + table;
         statement.execute(dropTableQuery);
       }

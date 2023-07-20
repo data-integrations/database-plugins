@@ -15,6 +15,6 @@
  */
 
 /**
- * Package contains Oracle client.
+ * Package contains Oracle common classes used in e2e tests.
  */
 package io.cdap.plugin;

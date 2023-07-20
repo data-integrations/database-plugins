@@ -14,16 +14,14 @@
 # the License.
 #
 
-@Oracle
-Feature: Oracle - Verify Oracle source data transfer
-  @ORACLE_SOURCE_TEST @ORACLE_TARGET_TEST @Oracle_Required
-  Scenario: To verify data is getting transferred from Oracle to Oracle successfully
+@Oracle @Oracle_Required
+Feature: Oracle source- Verify Oracle source plugin design time scenarios
+
+  @ORACLE_SOURCE_TEST
+  Scenario: To verify Oracle source plugin validation with connection and basic details for connectivity
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
     When Select plugin: "Oracle" from the plugins list as: "Source"
-    When Expand Plugin group in the LHS plugins list: "Sink"
-    When Select plugin: "Oracle" from the plugins list as: "Sink"
-    Then Connect plugins: "Oracle" and "Oracle2" to establish connection
     Then Navigate to the properties page of plugin: "Oracle"
     Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
     Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
@@ -39,29 +37,48 @@ Feature: Oracle - Verify Oracle source data transfer
     Then Verify the Output Schema matches the Expected Schema: "outputSchema"
     Then Validate "Oracle" plugin properties
     Then Close the Plugin Properties page
-    Then Navigate to the properties page of plugin: "Oracle2"
+
+  @ORACLE_SOURCE_TEST
+  Scenario: To verify Oracle source plugin validation with connection arguments
+    Given Open Datafusion Project to configure pipeline
+    When Expand Plugin group in the LHS plugins list: "Source"
+    When Select plugin: "Oracle" from the plugins list as: "Source"
+    Then Navigate to the properties page of plugin: "Oracle"
     Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
     Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
     Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
-    Then Replace input plugin property: "database" with value: "databaseName"
-    Then Replace input plugin property: "tableName" with value: "targetTable"
-    Then Replace input plugin property: "dbSchemaName" with value: "schema"
     Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
-    Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Select radio button plugin property: "connectionType" with value: "service"
     Then Select radio button plugin property: "role" with value: "normal"
-    Then Validate "Oracle2" plugin properties
+    Then Enter input plugin property: "referenceName" with value: "sourceRef"
+    Then Replace input plugin property: "database" with value: "databaseName"
+    Then Enter key value pairs for plugin property: "connectionArguments" with values from json: "connectionArgumentsList"
+    Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
+    Then Click on the Get Schema button
+    Then Verify the Output Schema matches the Expected Schema: "outputSchema"
+    Then Validate "Oracle" plugin properties
     Then Close the Plugin Properties page
-    Then Save the pipeline
-    Then Preview and run the pipeline
-    Then Verify the preview of pipeline is "success"
-    Then Click on preview data for Oracle sink
-    Then Verify preview output schema matches the outputSchema captured in properties
-    Then Close the preview data
-    Then Deploy the pipeline
-    Then Run the Pipeline in Runtime
-    Then Wait till pipeline is in running state
-    Then Open and capture logs
-    Then Verify the pipeline status is "Succeeded"
-    Then Validate the values of records transferred to target table is equal to the values from source table
+
+  @ORACLE_SOURCE_TEST
+  Scenario: To verify Oracle source plugin validation with advanced details
+    Given Open Datafusion Project to configure pipeline
+    When Expand Plugin group in the LHS plugins list: "Source"
+    When Select plugin: "Oracle" from the plugins list as: "Source"
+    Then Navigate to the properties page of plugin: "Oracle"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
+    Then Select radio button plugin property: "connectionType" with value: "service"
+    Then Select radio button plugin property: "role" with value: "normal"
+    Then Enter input plugin property: "referenceName" with value: "sourceRef"
+    Then Replace input plugin property: "database" with value: "databaseName"
+    Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
+    Then Replace input plugin property: "defaultBatchValue" with value: "batchValue"
+    Then Replace input plugin property: "defaultRowPrefetch" with value: "rowPrefetch"
+    Then Click on the Get Schema button
+    Then Verify the Output Schema matches the Expected Schema: "outputSchema"
+    Then Validate "Oracle" plugin properties
+    Then Close the Plugin Properties page
