@@ -15,6 +15,6 @@
  */
 
 /**
- * Package contains the runners for Postgresql features.
+ * Package contains BQ Validation.
  */
-package io.cdap.plugin.postgresql.runners;
+package io.cdap.plugin.postgresql;
