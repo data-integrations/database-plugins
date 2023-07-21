@@ -33,18 +33,23 @@ import java.sql.SQLException;
  */
 public class CloudMysql implements CdfHelper {
 
-  private static final String TARGET_TABLE = PluginPropertyUtils.pluginProp("targetTable");
-  private static final String BQ_SOURCE_TABLE = PluginPropertyUtils.pluginProp("bqSourceTable");
+  private String targetTable = PluginPropertyUtils.pluginProp("targetTable");
+
+  private String bqSourceTable = PluginPropertyUtils.pluginProp("bqSourceTable");
+
+  private String sourceTable = PluginPropertyUtils.pluginProp("sourceTable");
+
+  private String bqTargetTable = PluginPropertyUtils.pluginProp("bqTargetTable");
 
   @Then("Validate the values of records transferred to target table is equal to the values from source table")
   public void validateTheValuesOfRecordsTransferredToTargetTableIsEqualToTheValuesFromSourceTable()
     throws SQLException, ClassNotFoundException {
-    int countRecords = CloudMySqlClient.countRecord(TARGET_TABLE);
+    int countRecords = CloudMySqlClient.countRecord(targetTable);
     Assert.assertEquals("Number of records transferred should be equal to records out ",
                         countRecords, recordOut());
     BeforeActions.scenario.write(" ******** Number of records transferred ********:" + countRecords);
-    boolean recordsMatched = CloudMySqlClient.validateRecordValues(PluginPropertyUtils.pluginProp("sourceTable")
-      , TARGET_TABLE);
+    boolean recordsMatched = CloudMySqlClient.validateRecordValues(
+      sourceTable, targetTable);
     Assert.assertTrue("Value of records transferred to the target table should be equal to the value " +
                         "of the records in the source table", recordsMatched);
   }
@@ -52,13 +57,13 @@ public class CloudMysql implements CdfHelper {
   @Then("Validate the values of records transferred to target Big Query table is equal to the values from source table")
   public void validateTheValuesOfRecordsTransferredToTargetBigQueryTableIsEqualToTheValuesFromSourceTable()
     throws InterruptedException, IOException, SQLException, ClassNotFoundException {
-    int targetBQRecordsCount = BigQueryClient.countBqQuery(PluginPropertyUtils.pluginProp("bqTargetTable"));
+    int targetBQRecordsCount = BigQueryClient.countBqQuery(bqTargetTable);
     BeforeActions.scenario.write("No of Records Transferred to BigQuery:" + targetBQRecordsCount);
     Assert.assertEquals("Out records should match with target BigQuery table records count",
                         CdfPipelineRunAction.getCountDisplayedOnSourcePluginAsRecordsOut(), targetBQRecordsCount);
 
-    boolean recordsMatched = BQValidation.validateDBAndBQRecordValues(PluginPropertyUtils.pluginProp
-      ("sourceTable"), PluginPropertyUtils.pluginProp("bqTargetTable"));
+    boolean recordsMatched = BQValidation.validateDBAndBQRecordValues(
+      sourceTable, bqTargetTable);
     Assert.assertTrue("Value of records transferred to the target table should be equal to the value " +
                         "of the records in the source table", recordsMatched);
   }
@@ -67,12 +72,13 @@ public class CloudMysql implements CdfHelper {
     "BigQuery table")
   public void validateTheValuesOfRecordsTransferredToTargetCloudSQLMySqlTableIsEqualToTheValuesFromSourceBigQueryTable()
     throws InterruptedException, IOException, SQLException, ClassNotFoundException {
-    int sourceBQRecordsCount = BigQueryClient.countBqQuery(BQ_SOURCE_TABLE);
+    int sourceBQRecordsCount = BigQueryClient.countBqQuery(bqSourceTable);
     BeforeActions.scenario.write("No of Records from source BigQuery table:" + sourceBQRecordsCount);
     Assert.assertEquals("Out records should match with target PostgreSQL table records count",
                         CdfPipelineRunAction.getCountDisplayedOnSourcePluginAsRecordsOut(), sourceBQRecordsCount);
 
-    boolean recordsMatched = BQValidation.validateBQAndDBRecordValues(BQ_SOURCE_TABLE, TARGET_TABLE);
+    boolean recordsMatched = BQValidation.validateBQAndDBRecordValues(
+      bqSourceTable, targetTable);
     Assert.assertTrue("Value of records transferred to the target table should be equal to the value " +
                         "of the records in the source table", recordsMatched);
   }
