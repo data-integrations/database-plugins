@@ -23,7 +23,6 @@ import io.cdap.e2e.utils.PluginPropertyUtils;
 import io.cdap.plugin.MssqlClient;
 import org.apache.spark.sql.types.Decimal;
 import org.junit.Assert;
-import stepsdesign.BeforeActions;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -67,12 +66,8 @@ public class BQValidation {
     }
 
     String getSourceQuery = "SELECT * FROM " + schema + "." + sourceTable;
-    try (Connection connect = MssqlClient.getMssqlConnection()) {
-      connect.setHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT);
-      Statement statement1 = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE,
-                                                     ResultSet.HOLD_CURSORS_OVER_COMMIT);
-
-      ResultSet rsSource = statement1.executeQuery(getSourceQuery);
+    try (Connection connect = MssqlClient.getMssqlConnection();
+         ResultSet rsSource = executeQuery(connect, getSourceQuery)) {
       return compareResultSetAndJsonData(rsSource, targetBigQueryResponse);
     }
   }
@@ -88,15 +83,27 @@ public class BQValidation {
       sourceBigQueryResponse.add(json);
     }
     String getTargetQuery = "SELECT * FROM " + schema + "." + targetTable;
-    try (Connection connect = MssqlClient.getMssqlConnection()) {
-      connect.setHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT);
-      Statement statement1 = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE,
-                                                     ResultSet.HOLD_CURSORS_OVER_COMMIT);
-      ResultSet rsTarget = statement1.executeQuery(getTargetQuery);
-
-      return compareResultSetAndJsonData(rsTarget, sourceBigQueryResponse);
+    try (Connection connect = MssqlClient.getMssqlConnection();
+         ResultSet rsSource = executeQuery(connect, getTargetQuery)) {
+      return compareResultSetAndJsonData(rsSource, sourceBigQueryResponse);
     }
   }
+
+  /**
+   * Executes the given SQL query on the provided database connection and returns the result set.
+   *
+   * @param connect The Connection object representing the active database connection.
+   * @param query   The SQL query to be executed on the database.
+   * @return A ResultSet object containing the data retrieved by the executed query.
+   * @throws SQLException If a database access error occurs or the SQL query is invalid.
+   */
+
+  public static ResultSet executeQuery(Connection connect, String query) throws SQLException {
+    connect.setHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    Statement statement = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE,
+                                                     ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return statement.executeQuery(query);
+    }
 
   /**
    * Retrieves the data from a specified BigQuery table and populates it into the provided list of objects.

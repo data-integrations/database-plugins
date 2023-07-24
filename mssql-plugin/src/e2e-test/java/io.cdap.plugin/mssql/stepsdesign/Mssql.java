@@ -21,9 +21,12 @@ import io.cdap.e2e.utils.BigQueryClient;
 import io.cdap.e2e.utils.CdfHelper;
 import io.cdap.e2e.utils.PluginPropertyUtils;
 import io.cdap.plugin.MssqlClient;
+import io.cdap.plugin.common.stepsdesign.TestSetupHooks;
 import io.cdap.plugin.mssql.BQValidation;
 import io.cucumber.java.en.Then;
+import junit.extensions.TestSetup;
 import org.junit.Assert;
+import org.junit.Test;
 import stepsdesign.BeforeActions;
 
 import java.io.IOException;
@@ -43,14 +46,12 @@ public class Mssql implements CdfHelper {
   @Then("Validate records transferred to target table are equal to number of records from the source table")
   public void validateRecordsTransferredToTargetTableAreEqualToTheNumberOfRecordsTheFromSourceTable() throws
     SQLException, ClassNotFoundException {
-    int countRecords = MssqlClient.countRecord(PluginPropertyUtils.pluginProp("targetTable"),
-                                               PluginPropertyUtils.pluginProp("schema"));
+    int countRecords = MssqlClient.countRecord(TestSetupHooks.targetTable, TestSetupHooks.schema);
     Assert.assertEquals("Number of records transferred should be equal to records out ",
                         countRecords, recordOut());
     BeforeActions.scenario.write("******** Number of records transferred ********* : " + countRecords);
-    boolean recordsMatched = MssqlClient.validateRecordValues(PluginPropertyUtils.pluginProp("schema"),
-                                                              PluginPropertyUtils.pluginProp("sourceTable"),
-                                                              PluginPropertyUtils.pluginProp("targetTable"));
+    boolean recordsMatched = MssqlClient.validateRecordValues(TestSetupHooks.schema, TestSetupHooks.sourceTable,
+                                                              TestSetupHooks.targetTable);
     Assert.assertTrue("Value of records transferred to the target table should be equal to the value " +
                         "of the records in the source table", recordsMatched);
   }
@@ -72,9 +73,8 @@ public class Mssql implements CdfHelper {
     Assert.assertEquals("Out records should match with target msSql table records count",
                         CdfPipelineRunAction.getCountDisplayedOnSourcePluginAsRecordsOut(), targetBQRecordsCount);
 
-    boolean recordsMatched = BQValidation.validateDBToBQRecordValues(PluginPropertyUtils.pluginProp("schema"),
-                                                                     PluginPropertyUtils.pluginProp("sourceTable"),
-                                                                     PluginPropertyUtils.pluginProp("bqtarget.table"));
+    boolean recordsMatched = BQValidation.validateDBToBQRecordValues(TestSetupHooks.schema, TestSetupHooks.sourceTable,
+      PluginPropertyUtils.pluginProp("bqtarget.table"));
     Assert.assertTrue("Value of records transferred to the target table should be equal to the value " +
                         "of the records in the source table", recordsMatched);
   }
@@ -87,9 +87,9 @@ public class Mssql implements CdfHelper {
     BeforeActions.scenario.write("No of Records Transferred from BigQuery:" + sourceBQRecordsCount);
     Assert.assertEquals("Out records should match with target BigQuery table records count",
                         CdfPipelineRunAction.getCountDisplayedOnSourcePluginAsRecordsOut(), sourceBQRecordsCount);
-    boolean recordsMatched = BQValidation.validateBQToDBRecordValues(PluginPropertyUtils.pluginProp("schema"),
+    boolean recordsMatched = BQValidation.validateBQToDBRecordValues(TestSetupHooks.schema,
                                                                      PluginPropertyUtils.pluginProp("bqSourceTable"),
-                                                                     PluginPropertyUtils.pluginProp("targetTable"));
+                                                                     TestSetupHooks.targetTable);
     Assert.assertTrue("Value of records transferred to the target table should be equal to the value " +
                         "of the records in the source table", recordsMatched);
   }
