@@ -36,7 +36,7 @@ import java.util.TimeZone;
 
 public class CloudMySqlClient {
 
-  private static final String DATATYPES_COLUMNS = PluginPropertyUtils.pluginProp("datatypesColumns");
+  private static String dataTypesColumns = PluginPropertyUtils.pluginProp("datatypesColumns");
 
   public static Connection getCloudSqlConnection() throws ClassNotFoundException, SQLException {
     Class.forName("com.google.cloud.sql.mysql.SocketFactory");
@@ -158,8 +158,7 @@ public class CloudMySqlClient {
 
   public static void createTargetDatatypesTable(String targetTable) throws SQLException, ClassNotFoundException {
     try (Connection connect = getCloudSqlConnection(); Statement statement = connect.createStatement()) {
-      String datatypesColumns = DATATYPES_COLUMNS;
-      String createTargetTableQuery = "CREATE TABLE " + targetTable + " " + datatypesColumns;
+      String createTargetTableQuery = "CREATE TABLE " + targetTable + " " + dataTypesColumns;
       statement.executeUpdate(createTargetTableQuery);
     }
   }
