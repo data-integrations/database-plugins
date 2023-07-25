@@ -15,7 +15,6 @@
  */
 
 /**
- * Package contains the runners for Mssql features.
+ * Package contains BQ Validation.
  */
-package io.cdap.plugin.mssql.runners;
-
+package io.cdap.plugin.mssql;
