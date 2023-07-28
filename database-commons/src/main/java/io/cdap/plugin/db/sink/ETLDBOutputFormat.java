@@ -89,8 +89,8 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
           try {
             if (!emptyData) {
               getStatement().executeBatch();
-              getConnection().commit();
             }
+            getConnection().commit();
           } catch (SQLException e) {
             try {
               getConnection().rollback();
@@ -127,6 +127,7 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
             // This is done to reduce memory usage in the worker, as processed records can now be GC'd.
             if (batchSize > 0 && numWrittenRecords % batchSize == 0) {
               getStatement().executeBatch();
+              emptyData = true;
             }
           } catch (SQLException e) {
             throw new IOException(e);
