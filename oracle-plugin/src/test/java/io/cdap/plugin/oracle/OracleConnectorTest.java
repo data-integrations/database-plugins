@@ -29,7 +29,7 @@ public class OracleConnectorTest extends DBSpecificConnectorBaseTest {
   @Test
   public void test() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
     test(new OracleConnector(
-           new OracleConnectorConfig(host, port, username, password, JDBC_PLUGIN_NAME, connectionArguments)),
+           new OracleConnectorConfig(host, port, username, password, JDBC_PLUGIN_NAME, connectionArguments, database)),
          JDBC_DRIVER_CLASS_NAME, OracleConstants.PLUGIN_NAME);
 
     test(new OracleConnector(
