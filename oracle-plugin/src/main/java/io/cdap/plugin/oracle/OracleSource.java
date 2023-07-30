@@ -103,6 +103,21 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     @Description("The existing connection to use.")
     private OracleConnectorConfig connection;
 
+    @Name(OracleConstants.ROLE)
+    @Description("Login role of the user when connecting to the database.")
+    @Nullable
+    private String role;
+
+    @Name(OracleConstants.NAME_DATABASE)
+    @Description("SID or Service Name to connect to")
+    @Nullable
+    private String database;
+
+    @Name(OracleConstants.TRANSACTION_ISOLATION_LEVEL)
+    @Description("The transaction isolation level for the database session.")
+    @Nullable
+    private String transactionIsolationLevel;
+
     @Name(OracleConstants.DEFAULT_BATCH_VALUE)
     @Description("The default batch value that triggers an execution request.")
     @Nullable
@@ -112,6 +127,18 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     @Description("The default number of rows to prefetch from the server.")
     @Nullable
     private Integer defaultRowPrefetch;
+
+    public OracleSourceConfig(String host, int port, String user, String password, String jdbcPluginName,
+                              String connectionArguments, String connectionType, String role, String database,
+                              String transactionIsolationLevel, int defaultBatchValue, int defaultRowPrefetch) {
+      this.connection = new OracleConnectorConfig(host, port, user, password, jdbcPluginName, connectionArguments,
+                                                  connectionType);
+      this.role = role;
+      this.database = database;
+      this.transactionIsolationLevel = transactionIsolationLevel;
+      this.defaultBatchValue = defaultBatchValue;
+      this.defaultRowPrefetch = defaultRowPrefetch;
+    }
 
     @Override
     public String getConnectionString() {
