@@ -45,7 +45,7 @@
     <dependency>
       <groupId>io.cdap.plugin</groupId>
       <artifactId>postgresql-plugin</artifactId>
-      <version>1.7.0</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
