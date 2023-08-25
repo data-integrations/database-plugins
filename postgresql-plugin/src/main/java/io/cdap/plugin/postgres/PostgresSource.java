@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
@@ -123,5 +124,22 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
       ConfigUtil.validateConnection(this, useConnection, connection, collector);
       super.validate(collector);
     }
+
+    @Override
+    protected void validateField(FailureCollector collector, Schema.Field field, Schema actualFieldSchema,
+                                 Schema expectedFieldSchema) {
+
+      // This change is needed to make sure that the pipeline upgrade continues to work post upgrade.
+      // Since the older handling of the precision less used to convert to the decimal type,
+      // and the new version would try to convert to the String type. In that case the output schema would
+      // contain Decimal(38, 0) (or something similar), and the code internally would try to identify
+      // the schema of the field(without precision and scale) as String.
+      if (Schema.LogicalType.DECIMAL.equals(expectedFieldSchema.getLogicalType()) &&
+        actualFieldSchema.getType().equals(Schema.Type.STRING)) {
+        return;
+      }
+      super.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
+    }
   }
 }
+
