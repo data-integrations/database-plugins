@@ -21,6 +21,7 @@ import io.cdap.plugin.db.batch.sink.CommonFieldsValidator;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Objects;
 
 /**
@@ -43,6 +44,13 @@ public class PostgresFieldsValidator extends CommonFieldsValidator {
         LOG.error("Field '{}' was given as type '{}' but must be of type 'string' for the PostgreSQL column of " +
                     "{} type.", field.getName(), fieldType, colTypeName);
         return false;
+      }
+    }
+    // Since Numeric types without precision and scale are getting converted into CDAP String type at the Source
+    // plugin, hence making the String type compatible with the Numeric type at the Sink as well.
+    if (fieldType.equals(Schema.Type.STRING)) {
+      if (Types.NUMERIC == columnType) {
+        return true;
       }
     }
 
