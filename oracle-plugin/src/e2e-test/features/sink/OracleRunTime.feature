@@ -117,3 +117,4 @@ Feature: Oracle - Verify data transfer from BigQuery source to Oracle sink
     Then Verify the pipeline status is "Succeeded"
     Then Validate records transferred to target table with record counts of BigQuery table
     Then Validate the values of records transferred to target Oracle table is equal to the values from source BigQuery table
+
