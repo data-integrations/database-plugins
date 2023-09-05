@@ -24,10 +24,13 @@ import io.cdap.plugin.db.SchemaReader;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.List;
 
 /**
@@ -49,23 +52,40 @@ public class PostgresDBRecord extends DBRecord {
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                              int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
+    ResultSetMetaData metadata = resultSet.getMetaData();
     if (isUseSchema(resultSet.getMetaData(), columnIndex)) {
       setFieldAccordingToSchema(resultSet, recordBuilder, field, columnIndex);
-    } else {
-      setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
+      return;
     }
+    int columnType = metadata.getColumnType(columnIndex);
+    if (columnType == Types.NUMERIC) {
+      Schema nonNullableSchema = field.getSchema().isNullable() ?
+        field.getSchema().getNonNullable() : field.getSchema();
+      int precision = metadata.getPrecision(columnIndex);
+      if (precision == 0 && Schema.Type.STRING.equals(nonNullableSchema.getType())) {
+        // When output schema is set to String for precision less numbers
+        recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
+        return;
+      }
+      BigDecimal orgValue = resultSet.getBigDecimal(columnIndex);
+      if (Schema.LogicalType.DECIMAL.equals(nonNullableSchema.getLogicalType()) && orgValue != null) {
+        BigDecimal decimalValue = new BigDecimal(orgValue.toPlainString())
+          .setScale(nonNullableSchema.getScale(), RoundingMode.HALF_EVEN);
+        recordBuilder.setDecimal(field.getName(), decimalValue);
+        return;
+      }
+    }
+    setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
   }
 
   private static boolean isUseSchema(ResultSetMetaData metadata, int columnIndex) throws SQLException {
-    switch (metadata.getColumnTypeName(columnIndex)) {
-      case "bit":
-      case "timetz":
-      case "money":
-        return true;
-      default:
-        return PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(metadata.getColumnType(columnIndex));
-    }
+    String columnTypeName = metadata.getColumnTypeName(columnIndex);
+    // If the column Type Name is present in the String mapped PostgreSQL types then return true.
+    return (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(columnTypeName)
+      || PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(metadata.getColumnType(columnIndex)));
+
   }
+
 
   private Object createPGobject(String type, String value, ClassLoader classLoader) throws SQLException {
     try {
@@ -89,11 +109,17 @@ public class PostgresDBRecord extends DBRecord {
     if (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(columnType.getTypeName()) ||
       PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(columnType.getType())) {
       stmt.setObject(sqlIndex, createPGobject(columnType.getTypeName(),
-                                              record.get(field.getName()),
-                                              stmt.getClass().getClassLoader()));
-    } else {
-      super.writeToDB(stmt, field, fieldIndex);
+        record.get(field.getName()),
+        stmt.getClass().getClassLoader()));
+      return;
     }
+    if (columnType.getType() == Types.NUMERIC && record.get(field.getName()) != null &&
+      field.getSchema().getType() == Schema.Type.STRING) {
+      stmt.setBigDecimal(sqlIndex, new BigDecimal((String) record.get(field.getName())));
+      return;
+    }
+
+    super.writeToDB(stmt, field, fieldIndex);
   }
 
   @Override
