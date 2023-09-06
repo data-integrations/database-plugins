@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
  * class to de-register driver
  */
 public class DriverCleanup implements Destroyable {
-  public final JDBCDriverShim driverShim;
+  private final JDBCDriverShim driverShim;
 
   DriverCleanup(@Nullable JDBCDriverShim driverShim) {
     this.driverShim = driverShim;
