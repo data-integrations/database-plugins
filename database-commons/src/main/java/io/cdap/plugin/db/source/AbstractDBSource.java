@@ -146,7 +146,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     }
   }
 
-  public Schema loadSchemaFromDB(Connection connection, String query) throws SQLException {
+  private Schema loadSchemaFromDB(Connection connection, String query) throws SQLException {
     Statement statement = connection.createStatement();
     statement.setMaxRows(1);
     if (query.contains("$CONDITIONS")) {
