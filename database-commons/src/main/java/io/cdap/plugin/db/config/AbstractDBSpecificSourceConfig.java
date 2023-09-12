@@ -61,7 +61,7 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
     "For example, 'SELECT * FROM table WHERE $CONDITIONS'. The '$CONDITIONS' string" +
     "will be replaced by 'splitBy' field limits specified by the bounding query.")
   @Macro
-  private String importQuery;
+  protected String importQuery;
 
   @Nullable
   @Name(BOUNDING_QUERY)
@@ -69,13 +69,13 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
     "values of the 'splitBy' field. For example, 'SELECT MIN(id),MAX(id) FROM table'. " +
     "This is required unless numSplits is set to one.")
   @Macro
-  private String boundingQuery;
+  protected String boundingQuery;
 
   @Nullable
   @Name(SPLIT_BY)
   @Description("Field Name which will be used to generate splits. This is required unless numSplits is set to one.")
   @Macro
-  private String splitBy;
+  protected String splitBy;
 
   @Nullable
   @Name(NUM_SPLITS)
@@ -83,7 +83,7 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
     "and no $CONDITIONS string needs to be specified in the importQuery. If not specified, the " +
     "execution framework will pick a value.")
   @Macro
-  private Integer numSplits;
+  protected Integer numSplits;
 
   @Nullable
   @Name(SCHEMA)
@@ -97,7 +97,7 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
   @Macro
   @Description("The number of rows to fetch at a time per split. Larger fetch size can result in faster import, " +
     "with the tradeoff of higher memory usage.")
-  private Integer fetchSize;
+  protected Integer fetchSize;
 
   public String getImportQuery() {
     return cleanQuery(importQuery);

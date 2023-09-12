@@ -113,6 +113,22 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     @Nullable
     private Integer defaultRowPrefetch;
 
+    public OracleSourceConfig(String host, int port, String user, String password, String jdbcPluginName,
+                              String connectionArguments, String connectionType, String database, String role,
+                              int defaultBatchValue, int defaultRowPrefetch,
+                              String importQuery, Integer numSplits, int fetchSize,
+                              String boundingQuery, String splitBy) {
+      this.connection = new OracleConnectorConfig(host, port, user, password, jdbcPluginName, connectionArguments,
+                                                  connectionType, database, role);
+      this.defaultBatchValue = defaultBatchValue;
+      this.defaultRowPrefetch = defaultRowPrefetch;
+      this.fetchSize = fetchSize;
+      this.importQuery = importQuery;
+      this.numSplits = numSplits;
+      this.boundingQuery = boundingQuery;
+      this.splitBy = splitBy;
+    }
+
     @Override
     public String getConnectionString() {
       if (OracleConstants.TNS_CONNECTION_TYPE.equals(connection.getConnectionType())) {
@@ -140,7 +156,7 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     }
 
     @Override
-    protected OracleConnectorConfig getConnection() {
+    public OracleConnectorConfig getConnection() {
       return connection;
     }
 

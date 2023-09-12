@@ -37,12 +37,18 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   private static final String ROLE_NORMAL = "normal";
 
   public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
-                               String connectionArguments) {
-    this(host, port, user, password, jdbcPluginName, connectionArguments, null);
+                               String connectionArguments, String database) {
+    this(host, port, user, password, jdbcPluginName, connectionArguments, null, database);
   }
 
   public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
-                               String connectionArguments, String connectionType) {
+                               String connectionArguments, String connectionType, String database) {
+    this(host, port, user, password, jdbcPluginName, connectionArguments, connectionType, database, null);
+  }
+
+  public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
+                               String connectionArguments, String connectionType, String database,
+                               String role) {
 
     this.host = host;
     this.port = port;
@@ -51,6 +57,8 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
     this.jdbcPluginName = jdbcPluginName;
     this.connectionArguments = connectionArguments;
     this.connectionType = connectionType;
+    this.database = database;
+    this.role = role;
   }
 
   @Override

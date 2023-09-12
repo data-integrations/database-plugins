@@ -133,16 +133,31 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     try {
 
       driverCleanup = loadPluginClassAndGetDriver(driverClass);
-      try (Connection connection = getConnection()) {
-        executeInitQueries(connection, sourceConfig.getInitQueries());
-        String query = sourceConfig.getImportQuery();
-        return loadSchemaFromDB(connection, query);
+      try {
+        return getSchema();
       } finally {
         driverCleanup.destroy();
       }
     } catch (Exception e) {
       LOG.error("Exception while performing getSchema", e);
       throw e;
+    }
+  }
+
+  /**
+   * Returns the schema of the importQuery from the database using the SourceConfig details.
+   *
+   * @return Schema instance
+   * @throws SQLException In case of
+   *                      1. Error while creating connection to the database.
+   *                      2. Error while running any init queries.
+   *                      3. Error while running the import query.
+   */
+  public Schema getSchema() throws SQLException {
+    try (Connection connection = getConnection()) {
+      executeInitQueries(connection, sourceConfig.getInitQueries());
+      String query = sourceConfig.getImportQuery();
+      return loadSchemaFromDB(connection, query);
     }
   }
 
@@ -229,22 +244,56 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     sourceConfig.validate(collector);
     collector.getOrThrowException();
 
-    String connectionString = sourceConfig.getConnectionString();
-
     LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
                 "boundingQuery = {};",
-              ConnectionConfig.JDBC_PLUGIN_TYPE, sourceConfig.getJdbcPluginName(),
-              connectionString,
-              sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery());
-    ConnectionConfigAccessor connectionConfigAccessor = new ConnectionConfigAccessor();
+              ConnectionConfig.JDBC_PLUGIN_TYPE,
+              sourceConfig.getJdbcPluginName(),
+              sourceConfig.getConnectionString(),
+              sourceConfig.getImportQuery(),
+              sourceConfig.getBoundingQuery());
 
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
+    Schema schemaFromDB = loadSchemaFromDB(driverClass);
+
+    ConnectionConfigAccessor connectionConfigAccessor = getConnectionConfigAccessor(
+                                                            driverClass.getName(),
+                                                            schemaFromDB,
+                                                            collector);
+
+    LineageRecorder lineageRecorder = getLineageRecorder(context);
+    Schema schema = sourceConfig.getSchema() == null ? schemaFromDB : sourceConfig.getSchema();
+    lineageRecorder.createExternalDataset(schema);
+    if (schema != null && schema.getFields() != null) {
+      lineageRecorder.recordRead("Read", "Read from database plugin",
+                                 schema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList()));
+    }
+    context.setInput(Input.of(sourceConfig.getReferenceName(), new SourceInputFormatProvider(
+      DataDrivenETLDBInputFormat.class, connectionConfigAccessor.getConfiguration())));
+  }
+
+  /**
+   * Returns the ConnectionConfigAccessor object containing the Configuration object for the SourceConfig
+   * and Schema. The configuration is later used by the InputFormat object for split calculation, reader creation.
+   *
+   * @param driverClassName   Class name of the driver in use
+   * @param schemaFromDB      Schema object
+   * @param collector         Failure Collector object
+   * @return                  ConnectionConfigAccessor instance
+   * @throws IOException
+   */
+  public ConnectionConfigAccessor getConnectionConfigAccessor (String driverClassName,
+                                                               Schema schemaFromDB,
+                                                               FailureCollector collector) throws IOException {
+    ConnectionConfigAccessor connectionConfigAccessor = new ConnectionConfigAccessor();
+
     if (sourceConfig.getUser() == null && sourceConfig.getPassword() == null) {
-      DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(), connectionString);
+      DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(),
+          driverClassName, sourceConfig.getConnectionString());
     } else {
-      DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(), connectionString,
-                                  sourceConfig.getUser(), sourceConfig.getPassword());
+      DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(),
+          driverClassName, sourceConfig.getConnectionString(),
+          sourceConfig.getUser(), sourceConfig.getPassword());
     }
 
     if (sourceConfig.getFetchSize() != null) {
@@ -254,7 +303,6 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
                                         sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery(),
                                         false);
-
 
     if (sourceConfig.getTransactionIsolationLevel() != null) {
       connectionConfigAccessor.setTransactionIsolationLevel(sourceConfig.getTransactionIsolationLevel());
@@ -273,7 +321,6 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
       connectionConfigAccessor.getConfiguration().setInt(MRJobConfig.NUM_MAPS, sourceConfig.getNumSplits());
     }
 
-    Schema schemaFromDB = loadSchemaFromDB(driverClass);
     if (sourceConfig.getSchema() != null) {
       sourceConfig.validateSchema(schemaFromDB, collector);
       collector.getOrThrowException();
@@ -283,15 +330,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
       connectionConfigAccessor.setSchema(schemaStr);
     }
 
-    LineageRecorder lineageRecorder = getLineageRecorder(context);
-    Schema schema = sourceConfig.getSchema() == null ? schemaFromDB : sourceConfig.getSchema();
-    lineageRecorder.createExternalDataset(schema);
-    if (schema != null && schema.getFields() != null) {
-      lineageRecorder.recordRead("Read", "Read from database plugin",
-                                 schema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList()));
-    }
-    context.setInput(Input.of(sourceConfig.getReferenceName(), new SourceInputFormatProvider(
-      DataDrivenETLDBInputFormat.class, connectionConfigAccessor.getConfiguration())));
+    return connectionConfigAccessor;
   }
 
   protected LineageRecorder getLineageRecorder(BatchSourceContext context) {

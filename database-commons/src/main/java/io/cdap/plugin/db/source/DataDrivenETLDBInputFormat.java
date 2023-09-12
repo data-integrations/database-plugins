@@ -129,7 +129,7 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
   }
 
   @Override
-  protected RecordReader createDBRecordReader(DBInputSplit split, Configuration conf) throws IOException {
+  public RecordReader createDBRecordReader(DBInputSplit split, Configuration conf) throws IOException {
     final RecordReader dbRecordReader = super.createDBRecordReader(split, conf);
     return new RecordReader() {
       @Override
