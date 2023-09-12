@@ -219,7 +219,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
     }
   }
 
-  private Schema getNonNullableSchema(Schema.Field field) {
+  protected Schema getNonNullableSchema(Schema.Field field) {
     Schema schema = field.getSchema();
     if (field.getSchema().isNullable()) {
       schema = field.getSchema().getNonNullable();
