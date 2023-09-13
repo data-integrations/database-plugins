@@ -28,7 +28,7 @@ Feature: PostgreSQL source- Verify PostgreSQL source plugin design time macro sc
     Then Click on the Macro button of Property: "user" and set the value to: "postGreSQLUser"
     Then Click on the Macro button of Property: "password" and set the value to: "postGreSQLPassword"
     Then Click on the Macro button of Property: "connectionArguments" and set the value to: "postGreSQLConnectionArguments"
-    Then Replace input plugin property: "database" with value: "databaseName"
+    Then Click on the Macro button of Property: "database" and set the value to: "postGreSQLDatabase"
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
     Then Validate "PostgreSQL" plugin properties
