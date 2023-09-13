@@ -17,6 +17,7 @@
 package io.cdap.plugin.postgres;
 
 import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 
@@ -38,6 +39,7 @@ public class PostgresConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   @Name(NAME_DATABASE)
   @Description("Database to connect to.")
+  @Macro
   private String database;
 
   @Override
