@@ -106,6 +106,7 @@ public class PostgresDBRecord extends DBRecord {
   protected void writeToDB(PreparedStatement stmt, Schema.Field field, int fieldIndex) throws SQLException {
     int sqlIndex = fieldIndex + 1;
     ColumnType columnType = columnTypes.get(fieldIndex);
+    Schema fieldSchema = getNonNullableSchema(field);
     if (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(columnType.getTypeName()) ||
       PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(columnType.getType())) {
       stmt.setObject(sqlIndex, createPGobject(columnType.getTypeName(),
@@ -114,7 +115,7 @@ public class PostgresDBRecord extends DBRecord {
       return;
     }
     if (columnType.getType() == Types.NUMERIC && record.get(field.getName()) != null &&
-      field.getSchema().getType() == Schema.Type.STRING) {
+      fieldSchema.getType() == Schema.Type.STRING) {
       stmt.setBigDecimal(sqlIndex, new BigDecimal((String) record.get(field.getName())));
       return;
     }
