@@ -102,6 +102,11 @@ public class AuroraPostgresSink extends AbstractDBSink<AuroraPostgresSink.Aurora
     }
 
     @Override
+    public String getEscapedDbSchemaName() {
+      return ESCAPE_CHAR + dbSchemaName + ESCAPE_CHAR;
+    }
+
+    @Override
     public Map<String, String> getDBSpecificArguments() {
       if (connectionTimeout != null) {
         return ImmutableMap.of(AuroraPostgresConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
