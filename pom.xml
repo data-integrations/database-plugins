@@ -44,6 +44,7 @@
     <module>cloudsql-postgresql-plugin</module>
     <module>teradata-plugin</module>
     <module>generic-db-argument-setter</module>
+    <module>amazon-redshift-plugin</module>
   </modules>
 
   <licenses>
