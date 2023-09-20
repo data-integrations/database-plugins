@@ -63,46 +63,50 @@ public class PostgresDBRecord extends DBRecord {
     String columnTypeName = metadata.getColumnTypeName(columnIndex);
     if (isUseSchema(metadata, columnIndex)) {
       setFieldAccordingToSchema(resultSet, recordBuilder, field, columnIndex);
-    } else if (sqlType == Types.TIMESTAMP && columnTypeName.equalsIgnoreCase("timestamp")) {
+      return;
+    }
+    if (sqlType == Types.TIMESTAMP && columnTypeName.equalsIgnoreCase("timestamp")) {
       Timestamp timestamp = resultSet.getTimestamp(columnIndex, DBUtils.PURE_GREGORIAN_CALENDAR);
       if (timestamp != null) {
         ZonedDateTime zonedDateTime = OffsetDateTime.of(timestamp.toLocalDateTime(), OffsetDateTime.now().getOffset())
-                .atZoneSameInstant(ZoneId.of("UTC"));
+          .atZoneSameInstant(ZoneId.of("UTC"));
         Schema nonNullableSchema = field.getSchema().isNullable() ?
-                field.getSchema().getNonNullable() : field.getSchema();
+          field.getSchema().getNonNullable() : field.getSchema();
         setZonedDateTimeBasedOnOuputSchema(recordBuilder, nonNullableSchema.getLogicalType(),
-                field.getName(), zonedDateTime);
+          field.getName(), zonedDateTime);
       } else {
         recordBuilder.set(field.getName(), null);
       }
-    } else if (sqlType == Types.TIMESTAMP && columnTypeName.equalsIgnoreCase("timestamptz")) {
+      return;
+    }
+    if (sqlType == Types.TIMESTAMP && columnTypeName.equalsIgnoreCase("timestamptz")) {
       OffsetDateTime timestamp = resultSet.getObject(columnIndex, OffsetDateTime.class);
       if (timestamp != null) {
         recordBuilder.setTimestamp(field.getName(), timestamp.atZoneSameInstant(ZoneId.of("UTC")));
       } else {
         recordBuilder.set(field.getName(), null);
       }
-    } else {
-      int columnType = metadata.getColumnType(columnIndex);
-      if (columnType == Types.NUMERIC) {
-        Schema nonNullableSchema = field.getSchema().isNullable() ?
-                field.getSchema().getNonNullable() : field.getSchema();
-        int precision = metadata.getPrecision(columnIndex);
-        if (precision == 0 && Schema.Type.STRING.equals(nonNullableSchema.getType())) {
-          // When output schema is set to String for precision less numbers
-          recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
-        } else if (Schema.LogicalType.DECIMAL.equals(nonNullableSchema.getLogicalType())) {
-          BigDecimal orgValue = resultSet.getBigDecimal(columnIndex);
-          if (orgValue != null) {
-            BigDecimal decimalValue = new BigDecimal(orgValue.toPlainString())
-                    .setScale(nonNullableSchema.getScale(), RoundingMode.HALF_EVEN);
-            recordBuilder.setDecimal(field.getName(), decimalValue);
-          }
-        }
+      return;
+    }
+    int columnType = metadata.getColumnType(columnIndex);
+    if (columnType == Types.NUMERIC) {
+      Schema nonNullableSchema = field.getSchema().isNullable() ?
+        field.getSchema().getNonNullable() : field.getSchema();
+      int precision = metadata.getPrecision(columnIndex);
+      if (precision == 0 && Schema.Type.STRING.equals(nonNullableSchema.getType())) {
+        // When output schema is set to String for precision less numbers
+        recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
         return;
       }
-      setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
+      BigDecimal orgValue = resultSet.getBigDecimal(columnIndex);
+      if (Schema.LogicalType.DECIMAL.equals(nonNullableSchema.getLogicalType()) && orgValue != null) {
+        BigDecimal decimalValue = new BigDecimal(orgValue.toPlainString())
+          .setScale(nonNullableSchema.getScale(), RoundingMode.HALF_EVEN);
+        recordBuilder.setDecimal(field.getName(), decimalValue);
+        return;
+      }
     }
+    setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
   }
 
   private void setZonedDateTimeBasedOnOuputSchema(StructuredRecord.Builder recordBuilder,
@@ -121,12 +125,8 @@ public class PostgresDBRecord extends DBRecord {
   private static boolean isUseSchema(ResultSetMetaData metadata, int columnIndex) throws SQLException {
     String columnTypeName = metadata.getColumnTypeName(columnIndex);
     // If the column Type Name is present in the String mapped PostgreSQL types then return true.
-    if (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(columnTypeName)
-        || PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(metadata.getColumnType(columnIndex))) {
-      return true;
-    }
-
-    return false;
+    return (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(columnTypeName)
+      || PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(metadata.getColumnType(columnIndex)));
   }
 
   private Object createPGobject(String type, String value, ClassLoader classLoader) throws SQLException {
@@ -152,16 +152,14 @@ public class PostgresDBRecord extends DBRecord {
     if (PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES_NAMES.contains(columnType.getTypeName()) ||
       PostgresSchemaReader.STRING_MAPPED_POSTGRES_TYPES.contains(columnType.getType())) {
       stmt.setObject(sqlIndex, createPGobject(columnType.getTypeName(),
-                                              record.get(fieldName),
-                                              stmt.getClass().getClassLoader()));
+        record.get(fieldName),
+        stmt.getClass().getClassLoader()));
       return;
-    } else if (columnType.getType() == Types.NUMERIC) {
-      if (record.get(fieldName) != null) {
-        if (fieldSchema.getType() == Schema.Type.STRING) {
-          stmt.setBigDecimal(sqlIndex, new BigDecimal((String) record.get(fieldName)));
-          return;
-        }
-      }
+    }
+    if (columnType.getType() == Types.NUMERIC && record.get(fieldName) != null &&
+      fieldSchema.getType() == Schema.Type.STRING) {
+      stmt.setBigDecimal(sqlIndex, new BigDecimal((String) record.get(fieldName)));
+      return;
     }
 
     super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);

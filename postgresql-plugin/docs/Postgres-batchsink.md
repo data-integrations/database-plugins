@@ -79,6 +79,7 @@ Please, refer to PostgreSQL data types documentation to figure out proper format
 | double precision                                    | double                |                                              |
 | integer                                             | int                   |                                              |
 | numeric(precision, scale)/decimal(precision, scale) | decimal               |                                              |
+| numeric(with 0 precision)                           | string                |                                              |
 | real                                                | float                 |                                              |
 | smallint                                            | int                   |                                              |
 | text                                                | string                |                                              |
