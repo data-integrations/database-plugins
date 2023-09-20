@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2020 CDAP
+  Copyright © 2023 CDAP
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -23,15 +23,25 @@
     <version>1.8.8-SNAPSHOT</version>
   </parent>
 
-  <name>CloudSQL PostgreSQL plugin</name>
-  <artifactId>cloudsql-postgresql-plugin</artifactId>
+  <name>Amazon Redshift plugin</name>
+  <artifactId>amazon-redshift-plugin</artifactId>
   <modelVersion>4.0.0</modelVersion>
+  
+  <properties>
+    <redshift-jdbc.version>2.1.0.18</redshift-jdbc.version>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>redshift</id>
+      <url>http://redshift-maven-repository.s3-website-us-east-1.amazonaws.com/release</url>
+    </repository>
+  </repositories>
 
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-api</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.cdap.plugin</groupId>
@@ -43,16 +53,17 @@
       <artifactId>hydrator-common</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.cdap.plugin</groupId>
-      <artifactId>postgresql-plugin</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>23.0</version>
     </dependency>
+
     <!-- test dependencies -->
+    <dependency>
+      <groupId>com.amazon.redshift</groupId>
+      <artifactId>redshift-jdbc42</artifactId>
+      <version>${redshift-jdbc.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>io.cdap.plugin</groupId>
       <artifactId>database-commons</artifactId>
@@ -67,7 +78,6 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-data-pipeline2_2.11</artifactId>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -79,50 +89,45 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.jetbrains</groupId>
       <artifactId>annotations</artifactId>
       <version>RELEASE</version>
       <scope>compile</scope>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/com.google.cloud.sql/postgres-socket-factory -->
-    <dependency>
-      <groupId>com.google.cloud.sql</groupId>
-      <artifactId>postgres-socket-factory</artifactId>
-      <version>1.4.0</version>
-      <scope>test</scope>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>42.3.1</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
+        <groupId>io.cdap</groupId>
+        <artifactId>cdap-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
+        <version>5.1.2</version>
+        <extensions>true</extensions>
         <configuration>
           <instructions>
             <_exportcontents>
-              io.cdap.plugin.*
+                io.cdap.plugin.amazon.redshift.*;
+                io.cdap.plugin.db.*;
+                org.apache.commons.lang;
+                org.apache.commons.logging.*;
+                org.codehaus.jackson.*
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
             <Embed-Directory>lib</Embed-Directory>
           </instructions>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>io.cdap</groupId>
-        <artifactId>cdap-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

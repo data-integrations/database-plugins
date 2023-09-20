@@ -20,7 +20,7 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.8.7</version>
+    <version>1.8.8-SNAPSHOT</version>
   </parent>
 
   <name>PostgreSQL plugin</name>
