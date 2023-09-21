@@ -20,7 +20,7 @@
 
   <groupId>io.cdap.plugin</groupId>
   <artifactId>database-plugins-parent</artifactId>
-  <version>1.10.3</version>
+  <version>1.10.4</version>
   <packaging>pom</packaging>
   <name>Database Plugins</name>
   <description>Collection of database plugins</description>
