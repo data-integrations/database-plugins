@@ -91,6 +91,53 @@
   <build>
     <testSourceDirectory>${testSourceLocation}</testSourceDirectory>
     <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.0.0</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit47</artifactId>
+            <version>3.0.0</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <includes>
+            <include>TestRunner.java</include>
+          </includes>
+          <!--Start configuration to run TestRunners in parallel-->
+          <parallel>classes</parallel> <!--Running TestRunner classes in parallel-->
+          <threadCount>2</threadCount> <!--Number of classes to run in parallel-->
+          <forkCount>2</forkCount> <!--Number of JVM processes -->
+          <reuseForks>true</reuseForks>
+          <!--End configuration to run TestRunners in parallel-->
+          <environmentVariables>
+            <GOOGLE_APPLICATION_CREDENTIALS>
+              ${GOOGLE_APPLICATION_CREDENTIALS}
+            </GOOGLE_APPLICATION_CREDENTIALS>
+            <SERVICE_ACCOUNT_TYPE>
+              ${SERVICE_ACCOUNT_TYPE}
+            </SERVICE_ACCOUNT_TYPE>
+            <SERVICE_ACCOUNT_FILE_PATH>
+              ${SERVICE_ACCOUNT_FILE_PATH}
+            </SERVICE_ACCOUNT_FILE_PATH>
+            <SERVICE_ACCOUNT_JSON>
+              ${SERVICE_ACCOUNT_JSON}
+            </SERVICE_ACCOUNT_JSON>
+          </environmentVariables>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+<!--              <goal>verify</goal>-->
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
