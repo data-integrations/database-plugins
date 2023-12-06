@@ -135,7 +135,7 @@
         },
         {
           "widget-type": "textbox",
-          "label": "Split Column",
+          "label": "Split-By Field Name",
           "name": "splitBy"
         },
         {
