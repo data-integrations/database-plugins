@@ -39,6 +39,19 @@ public class RedshiftConnectorUnitTest {
                         CONNECTOR.getTableName("db", "schema", "table"));
   }
 
+  @Test
+  public void getRandomQuery() {
+    Assert.assertEquals("SELECT * FROM TestData\n" +
+        "TABLESAMPLE BERNOULLI (100.0 * 10 / (SELECT COUNT(*) FROM TestData))",
+      CONNECTOR.getRandomQuery("TestData", 10));
+  }
+
+  @Test
+  public void getDBRecordType() {
+    Assert.assertEquals("class io.cdap.plugin.amazon.redshift.RedshiftDBRecord",
+      CONNECTOR.getDBRecordType().toString());
+  }
+
   /**
    * Unit tests for getTableQuery()
    */

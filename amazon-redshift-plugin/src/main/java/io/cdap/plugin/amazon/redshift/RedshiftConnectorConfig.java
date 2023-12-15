@@ -72,16 +72,16 @@ public class RedshiftConnectorConfig extends AbstractDBConnectorConfig {
 
   @Override
   public String getConnectionString() {
-      return String.format(
-        RedshiftConstants.REDSHIFT_CONNECTION_STRING_FORMAT,
-        host,
-        getPort(),
-        database);
+    return String.format(
+      RedshiftConstants.REDSHIFT_CONNECTION_STRING_FORMAT,
+      host,
+      getPort(),
+      database);
   }
 
   @Override
   public boolean canConnect() {
     return super.canConnect() && !containsMacro(ConnectionConfig.HOST) &&
-        !containsMacro(ConnectionConfig.PORT) && !containsMacro(ConnectionConfig.DATABASE);
+      !containsMacro(ConnectionConfig.PORT) && !containsMacro(ConnectionConfig.DATABASE);
   }
 }

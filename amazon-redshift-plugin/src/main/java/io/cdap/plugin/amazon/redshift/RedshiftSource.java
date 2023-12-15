@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.amazon.redshift;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Metadata;
@@ -106,6 +107,13 @@ public class RedshiftSource
     @Override
     public Map<String, String> getDBSpecificArguments() {
       return Collections.emptyMap();
+    }
+
+    @VisibleForTesting
+    public RedshiftSourceConfig(@Nullable Boolean useConnection,
+                                @Nullable RedshiftConnectorConfig connection) {
+      this.useConnection = useConnection;
+      this.connection = connection;
     }
 
     @Override
