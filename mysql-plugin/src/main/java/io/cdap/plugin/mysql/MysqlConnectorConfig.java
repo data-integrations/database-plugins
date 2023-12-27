@@ -57,9 +57,9 @@ public class MysqlConnectorConfig extends AbstractDBSpecificConnectorConfig {
   public Properties getConnectionArgumentsProperties() {
     Properties prop = super.getConnectionArgumentsProperties();
     // the unit below is milli-second
-    prop.put(JDBC_PROPERTY_CONNECT_TIMEOUT, "20000");
-    prop.put(JDBC_PROPERTY_SOCKET_TIMEOUT, "20000");
-    prop.put(JDBC_REWRITE_BATCHED_STATEMENTS, "true");
+    prop.putIfAbsent(JDBC_PROPERTY_CONNECT_TIMEOUT, "20000");
+    prop.putIfAbsent(JDBC_PROPERTY_SOCKET_TIMEOUT, "20000");
+    prop.putIfAbsent(JDBC_REWRITE_BATCHED_STATEMENTS, "true");
     // MySQL property to ensure that TINYINT(1) type data is not converted to MySQL Bit/Boolean type in the ResultSet.
     prop.putIfAbsent(MYSQL_TINYINT1_IS_BIT, "false");
     return prop;
