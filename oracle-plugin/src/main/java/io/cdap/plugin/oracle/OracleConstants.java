@@ -16,6 +16,8 @@
 
 package io.cdap.plugin.oracle;
 
+import javax.annotation.Nullable;
+
 /**
  * Oracle Constants.
  */
@@ -36,4 +38,28 @@ public final class OracleConstants {
   public static final String NAME_DATABASE = "database";
   public static final String TNS_CONNECTION_TYPE = "TNS";
   public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
+
+  /**
+   * Returns the Connection String for the given ConnectionType.
+   *
+   * @param connectionType TNS/Service/SID
+   * @param host Host name of the oracle server
+   * @param port Port of the oracle server
+   * @param database Database to connect to
+   * @return Connection String based on the given ConnectionType
+   */
+  public static String getConnectionString(String connectionType,
+                                           @Nullable String host,
+                                           @Nullable int port,
+                                           String database) {
+    if (OracleConstants.TNS_CONNECTION_TYPE.equalsIgnoreCase(connectionType)) {
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_TNS_FORMAT, database);
+    }
+    if (OracleConstants.SERVICE_CONNECTION_TYPE.equalsIgnoreCase(connectionType)) {
+      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT,
+          host, port, database);
+    }
+    return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT,
+        host, port, database);
+  }
 }
