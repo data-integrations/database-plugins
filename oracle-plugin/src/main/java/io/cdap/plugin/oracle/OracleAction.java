@@ -57,15 +57,8 @@ public class OracleAction extends AbstractDBAction {
 
     @Override
     public String getConnectionString() {
-      if (OracleConstants.TNS_CONNECTION_TYPE.equals(this.connectionType)) {
-        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_TNS_FORMAT, database);
-      } else if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(this.connectionType)) {
-        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT, host, port, database);
-      } else {
-        return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT, host, port, database);
-      }
+      return OracleConstants.getConnectionString(this.connectionType, host, port, database);
     }
-
 
     @Override
     protected Map<String, String> getDBSpecificArguments() {
