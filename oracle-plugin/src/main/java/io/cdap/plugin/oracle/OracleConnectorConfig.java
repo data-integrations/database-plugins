@@ -63,7 +63,7 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   @Override
   public String getConnectionString() {
-    return OracleConstants.getConnectionString(database, host, getPort(), database);
+    return OracleConstants.getConnectionString(connectionType, host, getPort(), database);
   }
 
   @Name(OracleConstants.CONNECTION_TYPE)
