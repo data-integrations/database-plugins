@@ -472,6 +472,14 @@
                 <exclude>**/org/apache/hadoop/**</exclude>
                 <!-- exclude resource files-->
                 <exclude>**/resources/**</exclude>
+                <exclude>e2e-test/**/*.properties</exclude>
+                <exclude>e2e-test/**/*.feature</exclude>
+                <exclude>e2e-test/**/cucumber**/**</exclude>
+                <exclude>e2e-test/**/maven-status/**</exclude>
+                <exclude>e2e-test/**/failsafe-reports/**</exclude>
+                <exclude>e2e-test/**/e2e-debug/**</exclude>
+                <exclude>e2e-test/**/*-result.xml</exclude>
+                <exclude>e2e-test/e2e-test.iml</exclude>
               </excludes>
             </configuration>
           </execution>
