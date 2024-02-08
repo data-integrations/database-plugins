@@ -20,7 +20,7 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.11.0</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
 
   <name>PostgreSQL plugin</name>
@@ -100,9 +100,9 @@
         <configuration>
           <instructions>
             <_exportcontents>
-                io.cdap.plugin.postgres.*;
-                io.cdap.plugin.db.source.*;
-                io.cdap.plugin.db.sink.*;
+              io.cdap.plugin.postgres.*;
+              io.cdap.plugin.db.source.*;
+              io.cdap.plugin.db.sink.*;
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
