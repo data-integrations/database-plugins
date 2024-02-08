@@ -31,10 +31,26 @@ public class MysqlFailedConnectionTest extends DBSpecificFailedConnectionTest {
       new MysqlConnectorConfig("localhost", 3306, "username", "password", "jdbc", ""));
 
     super.test(JDBC_DRIVER_CLASS_NAME, connector, "Failed to create connection to database via connection string: " +
-                                                    "jdbc:mysql://localhost:3306 and arguments: {user=username, " +
-                                                    "rewriteBatchedStatements=true, "  +
-                                                    "connectTimeout=20000, tinyInt1isBit=false, " +
-                                                    "socketTimeout=20000}. Error: " +
-                                                    "ConnectException: Connection refused (Connection refused).");
+      "jdbc:mysql://localhost:3306 and arguments: {user=username, " +
+      "rewriteBatchedStatements=true, " +
+      "connectTimeout=20000, tinyInt1isBit=false, " +
+      "socketTimeout=20000}. Error: " +
+      "ConnectException: Connection refused (Connection refused).");
   }
+
+  @Test
+  public void testWithUpdatedConnectionArguments() throws ClassNotFoundException, IOException {
+
+    MysqlConnector connector = new MysqlConnector(
+      new MysqlConnectorConfig("localhost", 3306, "username", "password", "jdbc",
+                               "connectTimeout=30000;socketTimeout=30000"));
+
+    super.test(JDBC_DRIVER_CLASS_NAME, connector, "Failed to create connection to database via connection string: " +
+      "jdbc:mysql://localhost:3306 and arguments: {user=username, " +
+      "rewriteBatchedStatements=true, " +
+      "connectTimeout=30000, tinyInt1isBit=false, " +
+      "socketTimeout=30000}. Error: " +
+      "ConnectException: Connection refused (Connection refused).");
+  }
+
 }

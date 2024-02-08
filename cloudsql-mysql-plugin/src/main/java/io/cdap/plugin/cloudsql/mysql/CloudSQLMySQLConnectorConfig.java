@@ -105,14 +105,14 @@ public class CloudSQLMySQLConnectorConfig extends AbstractDBConnectorConfig {
   @Override
   public Properties getConnectionArgumentsProperties() {
     Properties properties = super.getConnectionArgumentsProperties();
-    properties.put(JDBC_PROPERTY_CONNECT_TIMEOUT_MILLIS, "20000");
-    properties.put(JDBC_PROPERTY_SOCKET_TIMEOUT_MILLIS, "20000");
+    properties.putIfAbsent(JDBC_PROPERTY_CONNECT_TIMEOUT_MILLIS, "20000");
+    properties.putIfAbsent(JDBC_PROPERTY_SOCKET_TIMEOUT_MILLIS, "20000");
     return properties;
   }
 
   @Override
   public boolean canConnect() {
     return super.canConnect() && !containsMacro(CloudSQLUtil.CONNECTION_NAME) &&
-        !containsMacro(ConnectionConfig.PORT) && !containsMacro(ConnectionConfig.DATABASE);
+      !containsMacro(ConnectionConfig.PORT) && !containsMacro(ConnectionConfig.DATABASE);
   }
 }
