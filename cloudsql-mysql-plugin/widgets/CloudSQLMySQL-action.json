@@ -74,11 +74,11 @@
           }
         },
         {
-          "widget-type": "textbox",
-          "label": "Instance Name",
-          "name": "instanceName",
+          "widget-type": "number",
+          "label": "Port",
+          "name": "port",
           "widget-attributes": {
-            "placeholder": "CloudSQL instance connection name"
+            "default": "3306"
           }
         },
         {
@@ -110,6 +110,20 @@
             "kv-delimiter": "=",
             "delimiter": ";"
           }
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "name": "showPrivateInstanceProperties ",
+      "condition": {
+        "expression": "instanceType == 'private'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "port"
         }
       ]
     }

@@ -20,7 +20,7 @@
 
   <groupId>io.cdap.plugin</groupId>
   <artifactId>database-plugins-parent</artifactId>
-  <version>1.10.4</version>
+  <version>1.10.5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Database Plugins</name>
   <description>Collection of database plugins</description>
@@ -715,7 +715,7 @@
         <dependency>
           <groupId>io.cdap.tests.e2e</groupId>
           <artifactId>cdap-e2e-framework</artifactId>
-          <version>0.2.0</version>
+          <version>0.2.3</version>
           <scope>test</scope>
         </dependency>
         <dependency>

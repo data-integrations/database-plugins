@@ -54,7 +54,7 @@ public class CloudSQLMySQLConnectorTest extends DBSpecificConnectorBaseTest {
     test(
       new CloudSQLMySQLConnector(
         new CloudSQLMySQLConnectorConfig(username, password, JDBC_PLUGIN_NAME, connectionArguments, instanceType,
-                                         connectionName, database)
+                                         connectionName, database, null)
       ),
       JDBC_DRIVER_CLASS_NAME,
       CloudSQLMySQLConstants.PLUGIN_NAME
