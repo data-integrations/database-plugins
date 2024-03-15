@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.cloudsql.mysql;
 
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.annotation.Category;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
@@ -75,7 +76,7 @@ public class CloudSQLMySQLConnector extends AbstractDBSpecificConnector<MysqlDBR
 
   @Override
   protected SchemaReader getSchemaReader(String sessionID) {
-    return new MysqlSchemaReader(sessionID);
+    return new MysqlSchemaReader(sessionID, Maps.fromProperties(config.getConnectionArgumentsProperties()));
   }
 
   @Override

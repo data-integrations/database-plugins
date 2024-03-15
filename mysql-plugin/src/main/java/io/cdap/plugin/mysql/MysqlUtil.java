@@ -18,6 +18,7 @@ package io.cdap.plugin.mysql;
 
 import com.google.common.collect.ImmutableMap;
 
+import java.sql.Types;
 import java.util.Map;
 
 /**
@@ -90,5 +91,21 @@ public final class MysqlUtil {
    */
   public static String getConnectionString(String host, Integer port, String database) {
     return String.format(MysqlConstants.MYSQL_CONNECTION_STRING_FORMAT, host, port, database);
+  }
+
+  public static boolean isDateTimeLikeType(int columnType) {
+    int[] dateTimeLikeTypes = new int[]{Types.TIMESTAMP, Types.TIMESTAMP_WITH_TIMEZONE, Types.DATE};
+
+    for (int dttType : dateTimeLikeTypes) {
+      if (dttType == columnType) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isZeroDateTimeToNull(Map<String, String> connectionArguments) {
+    String argValue = connectionArguments.getOrDefault(MysqlConstants.ZERO_DATE_TIME_BEHAVIOR, "");
+    return argValue.equals("CONVERT_TO_NULL") || argValue.equals("convertToNull");
   }
 }
