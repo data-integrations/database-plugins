@@ -16,12 +16,16 @@
 
 package io.cdap.plugin.mysql;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.CommonSchemaReader;
 
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Schema reader for mapping Mysql DB type
@@ -31,10 +35,41 @@ public class MysqlSchemaReader extends CommonSchemaReader {
   public static final String YEAR_TYPE_NAME = "YEAR";
   public static final String MEDIUMINT_UNSIGNED_TYPE_NAME = "MEDIUMINT UNSIGNED";
   private final String sessionID;
+  private boolean zeroDateTimeToNull;
+
 
   public MysqlSchemaReader(String sessionID) {
     super();
     this.sessionID = sessionID;
+  }
+
+  public MysqlSchemaReader(String sessionID, Map<String, String> connectionArguments) {
+    super();
+    this.sessionID = sessionID;
+    this.zeroDateTimeToNull = MysqlUtil.isZeroDateTimeToNull(connectionArguments);
+  }
+
+  @Override
+  public List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
+    List<Schema.Field> schemaFields = Lists.newArrayList();
+    ResultSetMetaData metadata = resultSet.getMetaData();
+    // ResultSetMetadata columns are numbered starting with 1
+    for (int i = 1; i <= metadata.getColumnCount(); i++) {
+      if (shouldIgnoreColumn(metadata, i)) {
+        continue;
+      }
+
+      String columnName = metadata.getColumnName(i);
+      Schema columnSchema = getSchema(metadata, i);
+
+      if (ResultSetMetaData.columnNullable == metadata.isNullable(i)
+          || (zeroDateTimeToNull && MysqlUtil.isDateTimeLikeType(metadata.getColumnType(i)))) {
+        columnSchema = Schema.nullableOf(columnSchema);
+      }
+      Schema.Field field = Schema.Field.of(columnName, columnSchema);
+      schemaFields.add(field);
+    }
+    return schemaFields;
   }
 
   @Override
