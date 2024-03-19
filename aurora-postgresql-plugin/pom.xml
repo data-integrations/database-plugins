@@ -20,7 +20,7 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.10.5</version>
+    <version>1.10.6-SNAPSHOT</version>
   </parent>
 
   <name>Aurora DB PostgreSQL plugin</name>
@@ -98,12 +98,12 @@
         <configuration>
           <instructions>
             <_exportcontents>
-                io.cdap.plugin.auroradb.postgres.*;
-                io.cdap.plugin.db.source.*;
-                io.cdap.plugin.db.sink.*;
-                org.apache.commons.lang;
-                org.apache.commons.logging.*;
-                org.codehaus.jackson.*
+              io.cdap.plugin.auroradb.postgres.*;
+              io.cdap.plugin.db.source.*;
+              io.cdap.plugin.db.sink.*;
+              org.apache.commons.lang;
+              org.apache.commons.logging.*;
+              org.codehaus.jackson.*
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>

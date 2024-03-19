@@ -20,13 +20,13 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.10.5</version>
+    <version>1.10.6-SNAPSHOT</version>
   </parent>
 
   <name>Mysql plugin</name>
   <artifactId>mysql-plugin</artifactId>
   <modelVersion>4.0.0</modelVersion>
-  
+
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
