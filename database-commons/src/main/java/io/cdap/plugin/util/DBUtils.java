@@ -59,7 +59,7 @@ import javax.management.ReflectionException;
 public final class DBUtils {
   private static final Logger LOG = LoggerFactory.getLogger(DBUtils.class);
 
-  private static final Calendar PURE_GREGORIAN_CALENDAR = createPureGregorianCalender();
+  public static final Calendar PURE_GREGORIAN_CALENDAR = createPureGregorianCalender();
 
   // Java by default uses October 15, 1582 as a Gregorian cut over date.
   // Any timestamp created with time less than this cut over date is treated as Julian date.
