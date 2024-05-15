@@ -28,7 +28,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <properties>
-    <redshift-jdbc.version>2.1.0.18</redshift-jdbc.version>
+    <redshift-jdbc.version>2.1.0.28</redshift-jdbc.version>
   </properties>
 
   <repositories>
