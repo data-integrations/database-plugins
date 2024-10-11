@@ -29,6 +29,16 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.oracle.database.xml</groupId>
+      <artifactId>xdb</artifactId>
+      <version>23.5.0.24.07</version>
+    </dependency>
+    <dependency>
+      <groupId>com.oracle.database.xml</groupId>
+      <artifactId>xmlparserv2</artifactId>
+      <version>23.5.0.24.07</version>
+    </dependency>
+    <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-api</artifactId>
     </dependency>
@@ -118,7 +128,8 @@
                 io.cdap.plugin.db.sink.*;
                 org.apache.commons.lang;
                 org.apache.commons.logging.*;
-                org.codehaus.jackson.*
+                org.codehaus.jackson.*;
+                oracle.*;
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>

@@ -43,6 +43,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   public static final int BFILE = -13;
   public static final int LONG = -1;
   public static final int LONG_RAW = -4;
+  public static final int XML_TYPE = 2009; // Add XMLType constant
 
   /**
    * Logger instance for Oracle Schema reader.
@@ -61,7 +62,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     LONG,
     LONG_RAW,
     Types.NUMERIC,
-    Types.DECIMAL
+    Types.DECIMAL, XML_TYPE
   );
 
   private final String sessionID;
@@ -95,6 +96,9 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
       case INTERVAL_DS:
       case INTERVAL_YM:
       case LONG:
+      case XML_TYPE:
+        LOG.info(String.format("Column '%s' is of XMLType, converting to STRING for CDAP.",
+                metadata.getColumnName(index)));
         return Schema.of(Schema.Type.STRING);
       case Types.NUMERIC:
       case Types.DECIMAL:

@@ -169,6 +169,16 @@ public class OracleSourceDBRecord extends DBRecord {
     }
   }
 
+
+
+  private String getXmlDataAsString(ResultSet resultSet, int columnIndex) throws SQLException {
+    // Retrieve the XML data as a String
+    String xmlString = resultSet.getString(columnIndex);
+
+    //Check if the XML content is not null and return it
+    return xmlString != null ? xmlString : "No XML data present."; // Testing purpose
+  }
+
   /**
    * Creates an instance of 'oracle.sql.TIMESTAMPTZ' which corresponds to the specified timestamp with time zone string.
    * @param connection sql connection.
@@ -340,6 +350,10 @@ public class OracleSourceDBRecord extends DBRecord {
         break;
       case OracleSourceSchemaReader.LONG_RAW:
         recordBuilder.set(field.getName(), resultSet.getBytes(columnIndex));
+        break;
+      case OracleSourceSchemaReader.XML_TYPE:
+        String xmlData = getXmlDataAsString(resultSet, columnIndex);
+        recordBuilder.set(field.getName(), xmlData);
         break;
       case Types.DECIMAL:
       case Types.NUMERIC:
