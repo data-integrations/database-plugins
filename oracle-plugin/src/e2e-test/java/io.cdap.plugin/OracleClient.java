@@ -350,4 +350,14 @@ public class OracleClient {
       }
     }
   }
+
+  public static void createTargetDateTable(String targetTable, String schema) throws SQLException,
+    ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String createTargetTableQuery = "CREATE TABLE " + schema + "." + targetTable +
+        "(ID varchar2(100),DATE_COL DATE,TIMESTAMP_TZ_COL TIMESTAMP WITH TIME ZONE,TIMESTAMP_LTZ_COL " +
+        "TIMESTAMP WITH LOCAL TIME ZONE,INTERVAL_YM_COL INTERVAL YEAR TO MONTH,DATE_TYPE DATE)";
+      statement.executeUpdate(createTargetTableQuery);
+    }
+  }
 }
