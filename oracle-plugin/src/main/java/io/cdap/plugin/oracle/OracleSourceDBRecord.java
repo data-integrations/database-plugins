@@ -160,8 +160,8 @@ public class OracleSourceDBRecord extends DBRecord {
         String timestampString = Timestamp.valueOf(localDateTime).toString();
         Object timestampWithTimeZone = createOracleTimestamp(stmt.getConnection(), timestampString);
         stmt.setObject(sqlIndex, timestampWithTimeZone);
-      } else if (Schema.LogicalType.TIMESTAMP_MICROS.equals(fieldSchema.getLogicalType())) {
-        // Deprecated: Handle the case when the Timestamp is mapped to CDAP Timestamp type
+      } else {
+        // Handle the case when the Timestamp is mapped to CDAP Timestamp type or CDAP Date type.
         super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);
       }
     } else {

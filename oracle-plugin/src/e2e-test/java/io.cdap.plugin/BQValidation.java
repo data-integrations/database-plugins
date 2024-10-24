@@ -33,7 +33,12 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
@@ -43,6 +48,13 @@ import java.util.List;
  */
 
 public class BQValidation {
+
+  private static final List<SimpleDateFormat> TIMESTAMP_DATE_FORMATS = Arrays.asList(
+    new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss"),
+    new SimpleDateFormat("yyyy-MM-dd"));
+  private static final List<DateTimeFormatter> TIMESTAMP_TZ_DATE_FORMATS = Arrays.asList(
+    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"),
+    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX"));
 
   /**
    * Extracts entire data from source and target tables.
@@ -173,21 +185,43 @@ public class BQValidation {
 
           case Types.TIMESTAMP:
             Timestamp sourceTS = rsSource.getTimestamp(columnName);
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
             String targetT = bigQueryData.get(jsonObjectIdx).get(columnName).getAsString();
-            Date dateParsed = dateFormat.parse(targetT);
+            Date dateParsed = null;
+            for (SimpleDateFormat dateTimeFormatter : TIMESTAMP_DATE_FORMATS) {
+              try {
+                dateParsed = dateTimeFormatter.parse(targetT);
+                break;
+              } catch (ParseException exception) {
+                // do nothing
+              }
+            }
             Timestamp targetTs = new java.sql.Timestamp(dateParsed.getTime());
-            result = String.valueOf(sourceTS).equals(String.valueOf(targetTs));
+            result = sourceTS.equals(targetTs);
             Assert.assertTrue("Different values found for column : %s", result);
             break;
 
           case OracleSourceSchemaReader.TIMESTAMP_TZ:
             Timestamp sourceTZ = rsSource.getTimestamp(columnName);
-            SimpleDateFormat dateValue = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
             String targetTS = bigQueryData.get(jsonObjectIdx).get(columnName).getAsString();
-            Date date = dateValue.parse(targetTS);
-            Timestamp targetTZ = new Timestamp(date.getTime());
-            Assert.assertTrue("Different columns found for Timestamp", sourceTZ.equals(targetTZ));
+            ZonedDateTime targetDate = null;
+            for (DateTimeFormatter dateTimeFormatter : TIMESTAMP_TZ_DATE_FORMATS) {
+              try {
+                targetDate = ZonedDateTime.parse(targetTS, dateTimeFormatter);
+                break;
+              } catch (DateTimeParseException exception) {
+                // do nothing
+              }
+            }
+            Assert.assertTrue("Different columns found for Timestamp",
+                              sourceTZ.toLocalDateTime().equals(targetDate.toLocalDateTime()));
+            break;
+
+          case OracleSourceSchemaReader.TIMESTAMP_LTZ:
+            Timestamp sourceLTZ = rsSource.getTimestamp(columnName);
+            String targetLTZ = bigQueryData.get(jsonObjectIdx).get(columnName).getAsString();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+            Assert.assertTrue("Different columns found for Timestamp",
+                              sourceLTZ.toLocalDateTime().equals(LocalDateTime.parse(targetLTZ, formatter)));
             break;
 
           case OracleSourceSchemaReader.BINARY_FLOAT:

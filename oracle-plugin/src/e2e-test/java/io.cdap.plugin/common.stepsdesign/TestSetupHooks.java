@@ -386,4 +386,34 @@ public class TestSetupHooks {
     BeforeActions.scenario.write("BQ source Table " + bqSourceTable + " deleted successfully");
     PluginPropertyUtils.removePluginProp("bqSourceTable");
   }
+
+  @Before(order = 1, value = "@BQ_SOURCE_TEST_DATE")
+  public static void createTempSourceBQTableWithDateColumns() throws IOException, InterruptedException {
+    createSourceBQTableWithQueries(PluginPropertyUtils.pluginProp("CreateBQTableQueryFileDate"),
+                                   PluginPropertyUtils.pluginProp("InsertBQDataQueryFileDate"));
+  }
+
+  @After(order = 1, value = "@BQ_SOURCE_TEST_DATE")
+  public static void deleteTempSourceBQTableWithDateColumns() throws IOException, InterruptedException {
+    String bqSourceTable = PluginPropertyUtils.pluginProp("bqSourceTable");
+    BigQueryClient.dropBqQuery(bqSourceTable);
+    BeforeActions.scenario.write("BQ source Table " + bqSourceTable + " deleted successfully");
+    PluginPropertyUtils.removePluginProp("bqSourceTable");
+  }
+
+  @Before(order = 2, value = "@ORACLE_DATE_TABLE")
+  public static void createOracleTargetDateTable() throws SQLException, ClassNotFoundException {
+    OracleClient.createTargetDateTable(PluginPropertyUtils.pluginProp("targetTable"),
+                                       PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_DATE_TABLE")
+  public static void dropOracleTargetDateTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+                             PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+                                   + " deleted successfully");
+  }
 }

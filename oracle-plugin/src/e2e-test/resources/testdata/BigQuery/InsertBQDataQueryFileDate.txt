@@ -1,0 +1,1 @@
+INSERT INTO `DATASET.TABLE_NAME` (id, date_col, timestamp_tz_col, timestamp_ltz_col, interval_ym_col,date_type) VALUES('2', '2024-10-11', '2024-10-11 14:30:00.123456+00:00',  '2024-10-11 14:30:00.123456','2-6','2024-10-11');
