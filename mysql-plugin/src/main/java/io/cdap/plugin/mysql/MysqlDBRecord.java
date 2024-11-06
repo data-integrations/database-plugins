@@ -93,4 +93,13 @@ public class MysqlDBRecord extends DBRecord {
 
     super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);
   }
+
+  @Override
+  protected void insertOperation(PreparedStatement stmt) throws SQLException {
+    for (int fieldIndex = 0; fieldIndex < columnTypes.size(); fieldIndex++) {
+      ColumnType columnType = columnTypes.get(fieldIndex);
+      Schema.Field field = record.getSchema().getField(columnType.getName(), true);
+      writeToDB(stmt, field, fieldIndex);
+    }
+  }
 }

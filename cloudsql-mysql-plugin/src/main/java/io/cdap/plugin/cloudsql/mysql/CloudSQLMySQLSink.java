@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.cloudsql.mysql;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
@@ -25,6 +26,7 @@ import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSink;
@@ -40,7 +42,11 @@ import io.cdap.plugin.mysql.MysqlDBRecord;
 import io.cdap.plugin.util.CloudSQLUtil;
 import io.cdap.plugin.util.DBUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /** Sink support for a CloudSQL MySQL database. */
@@ -52,6 +58,7 @@ import javax.annotation.Nullable;
 public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQLMySQLSinkConfig> {
 
   private final CloudSQLMySQLSinkConfig cloudsqlMysqlSinkConfig;
+  private static final Character ESCAPE_CHAR = '`';
 
   public CloudSQLMySQLSink(CloudSQLMySQLSinkConfig cloudsqlMysqlSinkConfig) {
     super(cloudsqlMysqlSinkConfig);
@@ -76,6 +83,24 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
   @Override
   protected DBRecord getDBRecord(StructuredRecord output) {
     return new MysqlDBRecord(output, columnTypes);
+  }
+
+  @Override
+  protected void setColumnsInfo(List<Schema.Field> fields) {
+    List<String> columnsList = new ArrayList<>();
+    StringJoiner columnsJoiner = new StringJoiner(",");
+    for (Schema.Field field : fields) {
+      columnsList.add(field.getName());
+      columnsJoiner.add(ESCAPE_CHAR + field.getName() + ESCAPE_CHAR);
+    }
+
+    super.columns = Collections.unmodifiableList(columnsList);
+    super.dbColumns = columnsJoiner.toString();
+  }
+
+  @VisibleForTesting
+  String getDbColumns() {
+    return dbColumns;
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.mysql;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
@@ -24,6 +25,7 @@ import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
@@ -39,9 +41,12 @@ import io.cdap.plugin.db.sink.AbstractDBSink;
 import io.cdap.plugin.db.sink.FieldsValidator;
 import io.cdap.plugin.util.DBUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -54,6 +59,7 @@ import javax.annotation.Nullable;
 public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
 
   private final MysqlSinkConfig mysqlSinkConfig;
+  private static final Character ESCAPE_CHAR = '`';
 
   public MysqlSink(MysqlSinkConfig mysqlSinkConfig) {
     super(mysqlSinkConfig);
@@ -83,6 +89,24 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
   @Override
   protected SchemaReader getSchemaReader() {
     return new MysqlSchemaReader(null);
+  }
+
+  @Override
+  protected void setColumnsInfo(List<Schema.Field> fields) {
+    List<String> columnsList = new ArrayList<>();
+    StringJoiner columnsJoiner = new StringJoiner(",");
+    for (Schema.Field field : fields) {
+      columnsList.add(field.getName());
+      columnsJoiner.add(ESCAPE_CHAR + field.getName() + ESCAPE_CHAR);
+    }
+
+    super.columns = Collections.unmodifiableList(columnsList);
+    super.dbColumns = columnsJoiner.toString();
+  }
+
+  @VisibleForTesting
+  String getDbColumns() {
+    return dbColumns;
   }
 
   /**
