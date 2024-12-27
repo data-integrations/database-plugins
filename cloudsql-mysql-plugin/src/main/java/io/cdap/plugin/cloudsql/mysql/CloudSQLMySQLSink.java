@@ -109,6 +109,11 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
   }
 
   @Override
+  protected String getExternalDocumentationLink() {
+    return DBUtils.CLOUDSQLMYSQL_SUPPORTED_DOC_URL;
+  }
+
+  @Override
   protected LineageRecorder getLineageRecorder(BatchSinkContext context) {
     String host;
     String location = "";

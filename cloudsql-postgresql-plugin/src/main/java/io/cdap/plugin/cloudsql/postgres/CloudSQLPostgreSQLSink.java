@@ -152,6 +152,11 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
     return CloudSQLPostgreSQLErrorDetailsProvider.class.getName();
   }
 
+  @Override
+  protected String getExternalDocumentationLink() {
+    return DBUtils.CLOUDSQLPOSTGRES_SUPPORTED_DOC_URL;
+  }
+
   /** CloudSQL PostgreSQL sink config. */
   public static class CloudSQLPostgreSQLSinkConfig extends AbstractDBSpecificSinkConfig {
 
