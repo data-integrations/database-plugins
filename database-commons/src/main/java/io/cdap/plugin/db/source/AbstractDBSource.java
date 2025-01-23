@@ -239,7 +239,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
    * @return ErrorDetailsProvider class name
    */
   protected String getErrorDetailsProviderClassName() {
-    return DBErrorDetailsProvider.class.getName();
+    return null;
   }
 
   private DriverCleanup loadPluginClassAndGetDriver(Class<? extends Driver> driverClass)
@@ -299,7 +299,9 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
                                  schema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList()));
     }
     // set error details provider
-    context.setErrorDetailsProvider(new ErrorDetailsProviderSpec(getErrorDetailsProviderClassName()));
+    if (!Strings.isNullOrEmpty(getErrorDetailsProviderClassName())) {
+      context.setErrorDetailsProvider(new ErrorDetailsProviderSpec(getErrorDetailsProviderClassName()));
+    }
     context.setInput(Input.of(sourceConfig.getReferenceName(), new SourceInputFormatProvider(
       DataDrivenETLDBInputFormat.class, connectionConfigAccessor.getConfiguration())));
   }

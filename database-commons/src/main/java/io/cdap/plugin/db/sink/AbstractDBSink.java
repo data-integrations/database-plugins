@@ -176,7 +176,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
    * @return ErrorDetailsProvider class name
    */
   protected String getErrorDetailsProviderClassName() {
-    return DBErrorDetailsProvider.class.getName();
+    return null;
   }
 
   /**
@@ -254,7 +254,9 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
                         context.getArguments().get(ETLDBOutputFormat.COMMIT_BATCH_SIZE));
     }
     // set error details provider
-    context.setErrorDetailsProvider(new ErrorDetailsProviderSpec(getErrorDetailsProviderClassName()));
+    if (!Strings.isNullOrEmpty(getErrorDetailsProviderClassName())) {
+      context.setErrorDetailsProvider(new ErrorDetailsProviderSpec(getErrorDetailsProviderClassName()));
+    }
     addOutputContext(context);
   }
   protected void addOutputContext(BatchSinkContext context) {
