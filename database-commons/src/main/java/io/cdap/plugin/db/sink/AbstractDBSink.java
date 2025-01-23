@@ -25,6 +25,10 @@ import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCodeType;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.ErrorUtils;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -175,6 +179,16 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     return DBErrorDetailsProvider.class.getName();
   }
 
+  /**
+   * Returns the external documentation link.
+   * Override this method to provide a custom external documentation link.
+   *
+   * @return external documentation link
+   */
+  protected String getExternalDocumentationLink() {
+    return null;
+  }
+
   @Override
   public void prepareRun(BatchSinkContext context) {
     String connectionString = dbSinkConfig.getConnectionString();
@@ -296,8 +310,21 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
           inferredFields.addAll(getSchemaReader().getSchemaFields(rs));
         }
       } catch (SQLException e) {
-        throw new InvalidStageException("Error while reading table metadata", e);
-
+        // wrap exception to ensure SQLException-child instances not exposed to contexts w/o jdbc driver in classpath
+        String errorMessageWithDetails = String.format("Error while reading table metadata." +
+          "Error message: '%s'. Error code: '%s'. SQLState: '%s'", e.getMessage(), e.getErrorCode(), e.getSQLState());
+        String externalDocumentationLink = getExternalDocumentationLink();
+        if (!Strings.isNullOrEmpty(externalDocumentationLink)) {
+          if (!errorMessageWithDetails.endsWith(".")) {
+            errorMessageWithDetails = errorMessageWithDetails + ".";
+          }
+          errorMessageWithDetails = String.format("%s For more details, see %s", errorMessageWithDetails,
+            externalDocumentationLink);
+        }
+        throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN),
+          e.getMessage(), errorMessageWithDetails, ErrorType.USER, false, ErrorCodeType.SQLSTATE,
+          e.getSQLState(), externalDocumentationLink, new SQLException(e.getMessage(),
+            e.getSQLState(), e.getErrorCode()));
       }
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
       throw new InvalidStageException("JDBC Driver unavailable: " + dbSinkConfig.getJdbcPluginName(), e);

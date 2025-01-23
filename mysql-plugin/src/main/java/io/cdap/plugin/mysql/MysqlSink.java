@@ -114,6 +114,11 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
     return MysqlErrorDetailsProvider.class.getName();
   }
 
+  @Override
+  protected String getExternalDocumentationLink() {
+    return DBUtils.MYSQL_SUPPORTED_DOC_URL;
+  }
+
   /**
    * MySQL action configuration.
    */

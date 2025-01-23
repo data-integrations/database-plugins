@@ -373,6 +373,12 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     return DBRecord.class;
   }
 
+  /**
+   * Returns the external documentation link.
+   * Override this method to provide a custom external documentation link.
+   *
+   * @return external documentation link
+   */
   protected String getExternalDocumentationLink() {
     return null;
   }

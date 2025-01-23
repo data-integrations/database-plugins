@@ -121,6 +121,11 @@ public class PostgresSink extends AbstractDBSink<PostgresSink.PostgresSinkConfig
     return PostgresErrorDetailsProvider.class.getName();
   }
 
+  @Override
+  protected String getExternalDocumentationLink() {
+    return DBUtils.POSTGRES_SUPPORTED_DOC_URL;
+  }
+
   /**
    * PostgreSQL action configuration.
    */
