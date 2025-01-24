@@ -82,6 +82,15 @@ public class OracleSink extends AbstractDBSink<OracleSink.OracleSinkConfig> {
     return new LineageRecorder(context, asset);
   }
 
+  @Override
+  protected String getErrorDetailsProviderClassName() {
+    return OracleErrorDetailsProvider.class.getName();
+  }
+
+  @Override
+  protected String getExternalDocumentationLink() {
+    return DBUtils.ORACLE_SUPPORTED_DOC_URL;
+  }
 
   /**
    * Oracle action configuration.

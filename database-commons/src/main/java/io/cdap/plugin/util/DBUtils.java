@@ -64,6 +64,7 @@ public final class DBUtils {
   public static final String CLOUDSQLMYSQL_SUPPORTED_DOC_URL = "https://cloud.google.com/sql/docs/mysql/error-messages";
   public static final String POSTGRES_SUPPORTED_DOC_URL =
     "https://www.postgresql.org/docs/current/errcodes-appendix.html";
+  public static final String ORACLE_SUPPORTED_DOC_URL = "https://docs.oracle.com/en/error-help/db/ora-index.html";
   public static final String CLOUDSQLPOSTGRES_SUPPORTED_DOC_URL =
     "https://cloud.google.com/sql/docs/postgres/error-messages";
 

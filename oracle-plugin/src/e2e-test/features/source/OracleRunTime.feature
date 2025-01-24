@@ -338,7 +338,9 @@ Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
     And Save and Deploy Pipeline
     And Run the Pipeline in Runtime
     And Wait till pipeline is in running state
+    And Open and capture logs
     And Verify the pipeline status is "Failed"
+    And Close the pipeline logs
     Then Open Pipeline logs and verify Log entries having below listed Level and Message:
       | Level | Message                                  |
       | ERROR | errorLogsMessageInvalidBoundingQuery     |
