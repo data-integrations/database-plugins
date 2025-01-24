@@ -76,6 +76,11 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
   }
 
   @Override
+  protected String getErrorDetailsProviderClassName() {
+    return SqlServerErrorDetailsProvider.class.getName();
+  }
+
+  @Override
   protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
     String fqn = DBUtils.constructFQN("mssql",
                                       sqlServerSourceConfig.getConnection().getHost(),
@@ -84,6 +89,11 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
     Asset asset = Asset.builder(sqlServerSourceConfig.getReferenceName()).setFqn(fqn).build();
     return new LineageRecorder(context, asset);
   }
+
+ @Override
+ protected String getExternalDocumentationLink() {
+   return DBUtils.MSSQL_SUPPORTED_DOC_URL;
+ }
 
   /**
    * MSSQL source config.
