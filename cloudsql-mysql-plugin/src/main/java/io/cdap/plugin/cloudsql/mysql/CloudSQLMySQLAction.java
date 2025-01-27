@@ -55,7 +55,8 @@ public class CloudSQLMySQLAction extends AbstractDBAction {
       CloudSQLUtil.checkConnectionName(
           failureCollector,
           cloudsqlMysqlActionConfig.instanceType,
-          cloudsqlMysqlActionConfig.connectionName);
+          cloudsqlMysqlActionConfig.connectionName,
+          CloudSQLUtil.CLOUDSQL_MYSQL);
     }
     
     super.configurePipeline(pipelineConfigurer);

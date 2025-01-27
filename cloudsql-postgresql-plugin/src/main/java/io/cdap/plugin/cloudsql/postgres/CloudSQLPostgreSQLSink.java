@@ -81,7 +81,8 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
       CloudSQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlPostgresqlSinkConfig.connection.getInstanceType(),
-        cloudsqlPostgresqlSinkConfig.connection.getConnectionName());
+        cloudsqlPostgresqlSinkConfig.connection.getConnectionName(),
+        CloudSQLUtil.CLOUDSQL_POSTGRESQL);
     }
     
     super.configurePipeline(pipelineConfigurer);

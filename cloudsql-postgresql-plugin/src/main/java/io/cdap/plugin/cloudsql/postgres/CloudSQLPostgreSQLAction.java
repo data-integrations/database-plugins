@@ -55,7 +55,8 @@ public class CloudSQLPostgreSQLAction extends AbstractDBAction {
       CloudSQLUtil.checkConnectionName(
           failureCollector,
           cloudsqlPostgresqlActionConfig.instanceType,
-          cloudsqlPostgresqlActionConfig.connectionName);
+          cloudsqlPostgresqlActionConfig.connectionName,
+          CloudSQLUtil.CLOUDSQL_POSTGRESQL);
     }
     
     super.configurePipeline(pipelineConfigurer);
