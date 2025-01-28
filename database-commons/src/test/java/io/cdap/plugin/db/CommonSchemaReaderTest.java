@@ -17,6 +17,7 @@
 package io.cdap.plugin.db;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.exception.ProgramFailureException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -162,49 +163,49 @@ public class CommonSchemaReaderTest {
     reader.getSchema(metadata, 1);
   }
 
-  @Test(expected = SQLException.class)
+  @Test(expected = ProgramFailureException.class)
   public void testGetSchemaThrowsExceptionOnArray() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.ARRAY);
     reader.getSchema(metadata, 1);
   }
 
-  @Test(expected = SQLException.class)
+  @Test(expected = ProgramFailureException.class)
   public void testGetSchemaThrowsExceptionOnDatalink() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.DATALINK);
     reader.getSchema(metadata, 1);
   }
 
-  @Test(expected = SQLException.class)
+  @Test(expected = ProgramFailureException.class)
   public void testGetSchemaThrowsExceptionOnDistinct() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.DISTINCT);
     reader.getSchema(metadata, 1);
   }
 
-  @Test(expected = SQLException.class)
+  @Test(expected = ProgramFailureException.class)
   public void testGetSchemaThrowsExceptionOnJavaObject() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.JAVA_OBJECT);
     reader.getSchema(metadata, 1);
   }
 
-  @Test(expected = SQLException.class)
+  @Test(expected = ProgramFailureException.class)
   public void testGetSchemaThrowsExceptionOnOther() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.OTHER);
     reader.getSchema(metadata, 1);
   }
 
-  @Test(expected = SQLException.class)
+  @Test(expected = ProgramFailureException.class)
   public void testGetSchemaThrowsExceptionOnRef() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.REF);
     reader.getSchema(metadata, 1);
   }
 
-  @Test(expected = SQLException.class)
+  @Test(expected = ProgramFailureException.class)
   public void testGetSchemaThrowsExceptionOnSQLXML() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.SQLXML);
     reader.getSchema(metadata, 1);
   }
 
-  @Test(expected = SQLException.class)
+  @Test(expected = ProgramFailureException.class)
   public void testGetSchemaThrowsExceptionOnStruct() throws SQLException {
     when(metadata.getColumnType(eq(1))).thenReturn(Types.STRUCT);
     reader.getSchema(metadata, 1);
