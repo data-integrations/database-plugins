@@ -47,7 +47,6 @@ import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.DBConfig;
-import io.cdap.plugin.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.Operation;
 import io.cdap.plugin.db.SchemaReader;
@@ -313,18 +312,20 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
         }
       } catch (SQLException e) {
         // wrap exception to ensure SQLException-child instances not exposed to contexts w/o jdbc driver in classpath
+        String errorMessage =
+          String.format("SQL Exception occurred: [Message='%s', SQLState='%s', ErrorCode='%s'].", e.getMessage(),
+            e.getSQLState(), e.getErrorCode());
         String errorMessageWithDetails = String.format("Error while reading table metadata." +
           "Error message: '%s'. Error code: '%s'. SQLState: '%s'", e.getMessage(), e.getErrorCode(), e.getSQLState());
         String externalDocumentationLink = getExternalDocumentationLink();
         if (!Strings.isNullOrEmpty(externalDocumentationLink)) {
-          if (!errorMessageWithDetails.endsWith(".")) {
-            errorMessageWithDetails = errorMessageWithDetails + ".";
+          if (!errorMessage.endsWith(".")) {
+            errorMessage = errorMessage + ".";
           }
-          errorMessageWithDetails = String.format("%s For more details, see %s", errorMessageWithDetails,
-            externalDocumentationLink);
+          errorMessage = String.format("%s For more details, see %s", errorMessageWithDetails, errorMessage);
         }
         throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN),
-          e.getMessage(), errorMessageWithDetails, ErrorType.USER, false, ErrorCodeType.SQLSTATE,
+          errorMessage, errorMessageWithDetails, ErrorType.USER, false, ErrorCodeType.SQLSTATE,
           e.getSQLState(), externalDocumentationLink, new SQLException(e.getMessage(),
             e.getSQLState(), e.getErrorCode()));
       }

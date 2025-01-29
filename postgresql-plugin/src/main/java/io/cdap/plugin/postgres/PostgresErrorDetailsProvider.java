@@ -19,7 +19,7 @@ package io.cdap.plugin.postgres;
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorType;
-import io.cdap.plugin.db.DBErrorDetailsProvider;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.util.DBUtils;
 
 import java.util.HashMap;
@@ -77,7 +77,7 @@ public class PostgresErrorDetailsProvider extends DBErrorDetailsProvider {
   }
 
   @Override
-  protected ErrorType getErrorTypeFromErrorCode(int errorCode, String sqlState) {
+  protected ErrorType getErrorTypeFromErrorCodeAndSqlState(int errorCode, String sqlState) {
     if (!Strings.isNullOrEmpty(sqlState) && sqlState.length() >= 2 &&
       ERROR_CODE_TO_ERROR_TYPE.containsKey(sqlState.substring(0, 2))) {
       return ERROR_CODE_TO_ERROR_TYPE.get(sqlState.substring(0, 2));
