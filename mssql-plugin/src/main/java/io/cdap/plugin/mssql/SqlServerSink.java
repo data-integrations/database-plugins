@@ -88,6 +88,16 @@ public class SqlServerSink extends AbstractDBSink<SqlServerSink.SqlServerSinkCon
     return new LineageRecorder(context, asset);
   }
 
+  @Override
+  protected String getErrorDetailsProviderClassName() {
+    return SqlServerErrorDetailsProvider.class.getName();
+  }
+
+  @Override
+  protected String getExternalDocumentationLink() {
+    return DBUtils.MSSQL_SUPPORTED_DOC_URL;
+  }
+
   /**
    * MSSQL action configuration.
    */

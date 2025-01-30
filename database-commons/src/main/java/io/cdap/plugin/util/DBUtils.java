@@ -61,6 +61,8 @@ public final class DBUtils {
 
   public static final Calendar PURE_GREGORIAN_CALENDAR = createPureGregorianCalender();
   public static final String MYSQL_SUPPORTED_DOC_URL = "https://dev.mysql.com/doc/mysql-errors/9.0/en/";
+  public static final String MSSQL_SUPPORTED_DOC_URL =
+    "https://docs.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors";
   public static final String CLOUDSQLMYSQL_SUPPORTED_DOC_URL = "https://cloud.google.com/sql/docs/mysql/error-messages";
   public static final String POSTGRES_SUPPORTED_DOC_URL =
     "https://www.postgresql.org/docs/current/errcodes-appendix.html";
