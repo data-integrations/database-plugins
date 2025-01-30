@@ -72,6 +72,16 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
   }
 
   @Override
+  protected String getExternalDocumentationLink() {
+    return DBUtils.ORACLE_SUPPORTED_DOC_URL;
+  }
+
+  @Override
+  protected String getErrorDetailsProviderClassName() {
+    return OracleErrorDetailsProvider.class.getName();
+  }
+
+  @Override
   protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
     String fqn = DBUtils.constructFQN("oracle",
                                       oracleSourceConfig.getConnection().getHost(),
