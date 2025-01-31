@@ -296,7 +296,7 @@ Feature: Oracle - Verify data transfer from Oracle source to BigQuery sink
     Then Close the Plugin Properties page
     Then Save the pipeline
     Then Preview and run the pipeline
-    Then Wait till pipeline preview is in running state
+    Then Wait till pipeline preview is in running state and check if any error occurs
     Then Verify the preview run status of pipeline in the logs is "failed"
 
   @ORACLE_SOURCE_TEST @BQ_SINK_TEST
