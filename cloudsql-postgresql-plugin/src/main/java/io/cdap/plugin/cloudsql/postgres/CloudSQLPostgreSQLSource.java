@@ -70,7 +70,8 @@ public class CloudSQLPostgreSQLSource
       CloudSQLUtil.checkConnectionName(
         failureCollector,
         cloudsqlPostgresqlSourceConfig.connection.getInstanceType(),
-        cloudsqlPostgresqlSourceConfig.connection.getConnectionName());
+        cloudsqlPostgresqlSourceConfig.connection.getConnectionName(),
+        CloudSQLUtil.CLOUDSQL_POSTGRESQL);
     }
     
     super.configurePipeline(pipelineConfigurer);
