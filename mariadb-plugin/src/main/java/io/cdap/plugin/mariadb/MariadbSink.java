@@ -25,8 +25,8 @@ import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.sink.AbstractDBSink;
+import io.cdap.plugin.util.DBUtils;
 
-import io.cdap.plugin.mysql.MysqlDBRecord;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -59,6 +59,16 @@ public class MariadbSink extends AbstractDBSink<MariadbSink.MariadbSinkConfig> {
     return new MariadbSchemaReader(null);
   }
 
+
+  @Override
+  protected String getErrorDetailsProviderClassName() {
+    return MariadbErrorDetailsProvider.class.getName();
+  }
+
+  @Override
+  protected String getExternalDocumentationLink() {
+    return DBUtils.MARIADB_SUPPORTED_DOC_URL;
+  }
 
   /**
    * MariaDB Sink Config.

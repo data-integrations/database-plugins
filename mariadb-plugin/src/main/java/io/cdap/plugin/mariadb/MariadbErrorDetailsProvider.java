@@ -1,0 +1,33 @@
+/*
+ * Copyright © 2025 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.plugin.mariadb;
+
+
+import io.cdap.plugin.mysql.MysqlErrorDetailsProvider;
+import io.cdap.plugin.util.DBUtils;
+
+/**
+ * A custom ErrorDetailsProvider for MariaDb plugins.
+ */
+public class MariadbErrorDetailsProvider extends MysqlErrorDetailsProvider {
+
+  @Override
+  protected String getExternalDocumentationLink() {
+    return DBUtils.MARIADB_SUPPORTED_DOC_URL;
+  }
+
+}
