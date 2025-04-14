@@ -78,43 +78,39 @@ with the tradeoff of higher memory usage.
 
 Data Types Mapping
 ----------
-
-    +--------------------------------+-----------------------+------------------------------------+
-    |        MariaDB Data Type       | CDAP Schema Data Type |               Comment              |
-    +--------------------------------+-----------------------+------------------------------------+
-    | TINYINT                        | int                   |                                    |
-    | BOOLEAN, BOOL                  | boolean               |                                    |
-    | SMALLINT                       | int                   |                                    |
-    | MEDIUMINT                      | int                   |                                    |
-    | INT, INTEGER                   | int                   |                                    |
-    | BIGINT                         | long                  |                                    |
-    | DECIMAL, DEC, NUMERIC, FIXED   | decimal               |                                    |
-    | FLOAT                          | float                 |                                    |
-    | DOUBLE, DOUBLE PRECISION, REAL | decimal               |                                    |
-    | BIT                            | boolean               |                                    |
-    | CHAR                           | string                |                                    |
-    | VARCHAR                        | string                |                                    |
-    | BINARY                         | bytes                 |                                    |
-    | CHAR BYTE                      | bytes                 |                                    |
-    | VARBINARY                      | bytes                 |                                    |
-    | TINYBLOB                       | bytes                 |                                    |
-    | BLOB                           | bytes                 |                                    |
-    | MEDIUMBLOB                     | bytes                 |                                    |
-    | LONGBLOB                       | bytes                 |                                    |
-    | TINYTEXT                       | string                |                                    |
-    | TEXT                           | string                |                                    |
-    | MEDIUMTEXT                     | string                |                                    |
-    | LONGTEXT                       | string                |                                    |
-    | JSON                           | string                | In MariaDB it is alias to LONGTEXT |
-    | ENUM                           | string                | Mapping to String by default       |
-    | SET                            | string                |                                    |
-    | DATE                           | date                  |                                    |
-    | TIME                           | time_micros           |                                    |
-    | DATETIME                       | timestamp_micros      |                                    |
-    | TIMESTAMP                      | timestamp_micros      |                                    |
-    | YEAR                           | date                  |                                    |
-    +--------------------------------+-----------------------+------------------------------------+
-
+   |        MariaDB Data Type       | CDAP Schema Data Type |                         Comment                         |
+   |--------------------------------|-----------------------|---------------------------------------------------------|
+   | TINYINT                        | int                   |                                                         |
+   | BOOLEAN, BOOL                  | boolean               |                                                         |
+   | SMALLINT                       | int                   |                                                         |
+   | MEDIUMINT                      | int                   |                                                         |
+   | INT, INTEGER                   | int                   |                                                         |
+   | BIGINT                         | long                  |                                                         |
+   | DECIMAL, DEC, NUMERIC, FIXED   | decimal               |                                                         |
+   | FLOAT                          | float                 |                                                         |
+   | DOUBLE, DOUBLE PRECISION, REAL | decimal               |                                                         |
+   | BIT                            | boolean               |                                                         |
+   | CHAR                           | string                |                                                         |
+   | VARCHAR                        | string                |                                                         |
+   | BINARY                         | bytes                 |                                                         |
+   | CHAR BYTE                      | bytes                 |                                                         |
+   | VARBINARY                      | bytes                 |                                                         |
+   | TINYBLOB                       | bytes                 |                                                         |
+   | BLOB                           | bytes                 |                                                         |
+   | MEDIUMBLOB                     | bytes                 |                                                         |
+   | LONGBLOB                       | bytes                 |                                                         |
+   | TINYTEXT                       | string                |                                                         |
+   | TEXT                           | string                |                                                         |
+   | MEDIUMTEXT                     | string                |                                                         |
+   | LONGTEXT                       | string                |                                                         |
+   | JSON                           | string                | In MariaDB it is alias to LONGTEXT                      |
+   | ENUM                           | string                | Mapping to String by default                            |
+   | SET                            | string                |                                                         |
+   | DATE                           | date                  |                                                         |
+   | TIME                           | time_micros           |                                                         |
+   | DATETIME                       | timestamp_micros      |                                                         |
+   | TIMESTAMP                      | timestamp_micros      |                                                         |
+   | YEAR                           | int                   | Users can manually set output schema to map it to Date. |
 
 Example
 ------
