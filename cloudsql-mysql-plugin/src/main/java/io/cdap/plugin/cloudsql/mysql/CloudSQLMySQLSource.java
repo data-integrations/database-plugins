@@ -31,9 +31,11 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.mysql.MysqlDBRecord;
+import io.cdap.plugin.mysql.MysqlSchemaReader;
 import io.cdap.plugin.util.CloudSQLUtil;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
@@ -118,6 +120,11 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
       assetBuilder.setLocation(location);
     }
     return new LineageRecorder(context, assetBuilder.build());
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new MysqlSchemaReader(null, cloudsqlMysqlSourceConfig.getConnectionArguments());
   }
 
   /** CloudSQL MySQL source config. */

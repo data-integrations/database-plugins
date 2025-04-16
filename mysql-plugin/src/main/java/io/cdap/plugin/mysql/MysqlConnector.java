@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.mysql;
 
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.annotation.Category;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
@@ -62,7 +63,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
 
   @Override
   protected SchemaReader getSchemaReader(String sessionID) {
-    return new MysqlSchemaReader(sessionID);
+    return new MysqlSchemaReader(sessionID, Maps.fromProperties(config.getConnectionArgumentsProperties()));
   }
 
   @Override
