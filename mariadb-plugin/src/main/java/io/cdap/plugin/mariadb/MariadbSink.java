@@ -19,10 +19,14 @@ package io.cdap.plugin.mariadb;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.plugin.db.DBRecord;
+import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.sink.AbstractDBSink;
 
+import io.cdap.plugin.mysql.MysqlDBRecord;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -44,6 +48,17 @@ public class MariadbSink extends AbstractDBSink<MariadbSink.MariadbSinkConfig> {
     super(mariadbSinkConfig);
     this.mariadbSinkConfig = mariadbSinkConfig;
   }
+
+  @Override
+  protected DBRecord getDBRecord(StructuredRecord output) {
+    return new MariadbDBRecord(output, columnTypes);
+  }
+
+  @Override
+  protected SchemaReader getSchemaReader() {
+    return new MariadbSchemaReader(null);
+  }
+
 
   /**
    * MariaDB Sink Config.
