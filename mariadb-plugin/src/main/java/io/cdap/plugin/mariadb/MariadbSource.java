@@ -81,6 +81,16 @@ public class MariadbSource extends AbstractDBSource<MariadbSource.MariadbSourceC
     return new MariadbSchemaReader(null, mariadbSourceConfig.getConnectionArguments());
   }
 
+  @Override
+  protected String getErrorDetailsProviderClassName() {
+    return MariadbErrorDetailsProvider.class.getName();
+  }
+
+  @Override
+  protected String getExternalDocumentationLink() {
+    return DBUtils.MARIADB_SUPPORTED_DOC_URL;
+  }
+
   /**
    * MaraiDB source mariadbSourceConfig.
    */
