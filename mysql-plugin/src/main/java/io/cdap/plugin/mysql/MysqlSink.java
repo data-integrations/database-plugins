@@ -149,6 +149,11 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
     }
 
     @Override
+    public String getTransactionIsolationLevel() {
+      return connection.getTransactionIsolationLevel();
+    }
+
+    @Override
     public MysqlConnectorConfig getConnection() {
       return connection;
     }

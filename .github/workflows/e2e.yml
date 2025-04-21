@@ -16,9 +16,9 @@ name: Build e2e tests
 
 on:
   push:
-    branches: [ develop, release/* ]
+    branches: [ develop, release/** ]
   pull_request:
-      branches: [ develop, release/* ]
+      branches: [ develop, release/** ]
       types: [ opened, synchronize, reopened, labeled ]
   workflow_dispatch:
 
@@ -45,7 +45,7 @@ jobs:
 
     steps:
       # Pinned 1.0.0 version
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           path: plugin
           submodules: 'recursive'
@@ -61,14 +61,14 @@ jobs:
               - '${{ matrix.module }}/**/e2e-test/**'
 
       - name: Checkout e2e test repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: cdapio/cdap-e2e-tests
           path: e2e
           ref: release/6.10
 
       - name: Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
@@ -96,6 +96,12 @@ jobs:
             POSTGRESQL_USERNAME:cdapio-github-builds/POSTGRESQL_USERNAME
             POSTGRESQL_PASSWORD:cdapio-github-builds/POSTGRESQL_PASSWORD
             POSTGRESQL_PORT:cdapio-github-builds/POSTGRESQL_PORT
+            CLOUDSQL_POSTGRESQL_USERNAME:cdapio-github-builds/CLOUDSQL_POSTGRESQL_USERNAME
+            CLOUDSQL_POSTGRESQL_PASSWORD:cdapio-github-builds/CLOUDSQL_POSTGRESQL_PASSWORD
+            CLOUDSQL_POSTGRESQL_CONNECTION_NAME:cdapio-github-builds/CLOUDSQL_POSTGRESQL_CONNECTION_NAME
+            CLOUDSQL_MYSQL_USERNAME:cdapio-github-builds/CLOUDSQL_MYSQL_USERNAME
+            CLOUDSQL_MYSQL_PASSWORD:cdapio-github-builds/CLOUDSQL_MYSQL_PASSWORD
+            CLOUDSQL_MYSQL_CONNECTION_NAME:cdapio-github-builds/CLOUDSQL_MYSQL_CONNECTION_NAME
 
       - name: Run required e2e tests
         if: github.event_name != 'workflow_dispatch' && github.event_name != 'push' && steps.filter.outputs.e2e-test == 'false'
@@ -117,6 +123,12 @@ jobs:
           POSTGRESQL_USERNAME: ${{ steps.secrets.outputs.POSTGRESQL_USERNAME }}
           POSTGRESQL_PASSWORD: ${{ steps.secrets.outputs.POSTGRESQL_PASSWORD }}
           POSTGRESQL_PORT: ${{ steps.secrets.outputs.POSTGRESQL_PORT }}
+          CLOUDSQL_POSTGRESQL_USERNAME: ${{ steps.secrets.outputs.CLOUDSQL_POSTGRESQL_USERNAME }}
+          CLOUDSQL_POSTGRESQL_PASSWORD: ${{ steps.secrets.outputs.CLOUDSQL_POSTGRESQL_PASSWORD }}
+          CLOUDSQL_POSTGRESQL_CONNECTION_NAME: ${{ steps.secrets.outputs.CLOUDSQL_POSTGRESQL_CONNECTION_NAME }}
+          CLOUDSQL_MYSQL_USERNAME: ${{ steps.secrets.outputs.CLOUDSQL_MYSQL_USERNAME }}
+          CLOUDSQL_MYSQL_PASSWORD: ${{ steps.secrets.outputs.CLOUDSQL_MYSQL_PASSWORD }}
+          CLOUDSQL_MYSQL_CONNECTION_NAME: ${{ steps.secrets.outputs.CLOUDSQL_MYSQL_CONNECTION_NAME }}
 
       - name: Run all e2e tests
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || steps.filter.outputs.e2e-test == 'true'
@@ -138,25 +150,28 @@ jobs:
           POSTGRESQL_USERNAME: ${{ steps.secrets.outputs.POSTGRESQL_USERNAME }}
           POSTGRESQL_PASSWORD: ${{ steps.secrets.outputs.POSTGRESQL_PASSWORD }}
           POSTGRESQL_PORT: ${{ steps.secrets.outputs.POSTGRESQL_PORT }}
-
-      - name: Upload report
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: Cucumber report - ${{ matrix.module }}
-          path: ./**/target/cucumber-reports
+          CLOUDSQL_POSTGRESQL_USERNAME: ${{ steps.secrets.outputs.CLOUDSQL_POSTGRESQL_USERNAME }}
+          CLOUDSQL_POSTGRESQL_PASSWORD: ${{ steps.secrets.outputs.CLOUDSQL_POSTGRESQL_PASSWORD }}
+          CLOUDSQL_POSTGRESQL_CONNECTION_NAME: ${{ steps.secrets.outputs.CLOUDSQL_POSTGRESQL_CONNECTION_NAME }}
+          CLOUDSQL_MYSQL_USERNAME: ${{ steps.secrets.outputs.CLOUDSQL_MYSQL_USERNAME }}
+          CLOUDSQL_MYSQL_PASSWORD: ${{ steps.secrets.outputs.CLOUDSQL_MYSQL_PASSWORD }}
+          CLOUDSQL_MYSQL_CONNECTION_NAME: ${{ steps.secrets.outputs.CLOUDSQL_MYSQL_CONNECTION_NAME }}
 
       - name: Upload debug files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Debug files - ${{ matrix.module }}
           path: ./**/target/e2e-debug
 
       - name: Upload files to GCS
-        uses: google-github-actions/upload-cloud-storage@v0
+        uses: google-github-actions/upload-cloud-storage@v2
         if: always()
         with:
           path: ./plugin
           destination: e2e-tests-cucumber-reports/${{ github.event.repository.name }}/${{ github.ref }}
           glob: '**/target/cucumber-reports/**'
+
+      - name: Cucumber Report URL
+        if: always()
+        run: echo "https://storage.googleapis.com/e2e-tests-cucumber-reports/${{ github.event.repository.name }}/${{ github.ref }}/plugin/${{ matrix.module }}/target/cucumber-reports/advanced-reports/cucumber-html-reports/overview-features.html"
