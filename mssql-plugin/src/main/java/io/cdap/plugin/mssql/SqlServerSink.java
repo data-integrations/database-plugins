@@ -178,6 +178,11 @@ public class SqlServerSink extends AbstractDBSink<SqlServerSink.SqlServerSinkCon
     }
 
     @Override
+    public String getTransactionIsolationLevel() {
+      return connection.getTransactionIsolationLevel();
+    }
+
+    @Override
     public String getConnectionString() {
       return String.format(SqlServerConstants.SQL_SERVER_CONNECTION_STRING_FORMAT,
                            connection.getHost(), connection.getPort(), database);

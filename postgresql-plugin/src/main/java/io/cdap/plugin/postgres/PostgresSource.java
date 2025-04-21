@@ -144,6 +144,11 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
     }
 
     @Override
+    public String getTransactionIsolationLevel() {
+      return connection.getTransactionIsolationLevel();
+    }
+
+    @Override
     public void validate(FailureCollector collector) {
       ConfigUtil.validateConnection(this, useConnection, connection, collector);
       super.validate(collector);

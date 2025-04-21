@@ -198,6 +198,11 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
     }
 
     @Override
+    public String getTransactionIsolationLevel() {
+      return connection.getTransactionIsolationLevel();
+    }
+
+    @Override
     public void validate(FailureCollector collector) {
       ConfigUtil.validateConnection(this, useConnection, connection, collector);
       super.validate(collector);
