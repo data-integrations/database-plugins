@@ -147,6 +147,11 @@ public class PostgresSink extends AbstractDBSink<PostgresSink.PostgresSinkConfig
     }
 
     @Override
+    public String getTransactionIsolationLevel() {
+      return connection.getTransactionIsolationLevel();
+    }
+
+    @Override
     protected PostgresConnectorConfig getConnection() {
       return connection;
     }

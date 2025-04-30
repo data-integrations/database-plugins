@@ -22,6 +22,14 @@ authentication. Optional for databases that do not require authentication.
 
 **Password:** Password to use to connect to the specified database.
 
+**Transaction Isolation Level** The transaction isolation level of the database connection
+- TRANSACTION_READ_COMMITTED: No dirty reads. Non-repeatable reads and phantom reads are possible.
+- TRANSACTION_SERIALIZABLE: No dirty reads. Non-repeatable and phantom reads are prevented.
+- TRANSACTION_REPEATABLE_READ: No dirty reads. Prevents non-repeatable reads, but phantom reads are still possible.
+- TRANSACTION_READ_UNCOMMITTED: Allows dirty reads (reading uncommitted changes from other transactions). Non-repeatable reads and phantom reads are possible.
+
+For more details on the Transaction Isolation Levels supported in SQL Server, refer to the [SQL Server documentation](https://learn.microsoft.com/en-us/sql/t-sql/statements/set-transaction-isolation-level-transact-sql?view=sql-server-ver16)
+
 **Authentication Type:** Indicates which authentication method will be used for the connection. Use 'SQL Login'. to
 connect to a SQL Server using username and password properties. Use 'Active Directory Password' to connect to an Azure
 SQL Database/Data Warehouse using an Azure AD principal name and password.
