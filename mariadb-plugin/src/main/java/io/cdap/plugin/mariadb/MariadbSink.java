@@ -25,6 +25,8 @@ import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DBSpecificSinkConfig;
 import io.cdap.plugin.db.sink.AbstractDBSink;
+import io.cdap.plugin.db.sink.FieldsValidator;
+import io.cdap.plugin.mysql.MysqlFieldsValidator;
 import io.cdap.plugin.util.DBUtils;
 
 import java.util.Map;
@@ -68,6 +70,11 @@ public class MariadbSink extends AbstractDBSink<MariadbSink.MariadbSinkConfig> {
   @Override
   protected String getExternalDocumentationLink() {
     return DBUtils.MARIADB_SUPPORTED_DOC_URL;
+  }
+
+  @Override
+  protected FieldsValidator getFieldsValidator() {
+    return new MariadbFieldsValidator();
   }
 
   /**

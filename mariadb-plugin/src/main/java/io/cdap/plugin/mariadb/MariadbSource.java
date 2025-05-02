@@ -19,6 +19,8 @@ package io.cdap.plugin.mariadb;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.Asset;
@@ -171,6 +173,31 @@ public class MariadbSource extends AbstractDBSource<MariadbSource.MariadbSourceC
       // ResultSet.
       arguments.putIfAbsent(MARIADB_TINYINT1_IS_BIT, "false");
       return arguments;
+    }
+
+    @Override
+    protected void validateField(FailureCollector collector,
+                                 Schema.Field field,
+                                 Schema actualFieldSchema,
+                                 Schema expectedFieldSchema) {
+      // Backward compatibility changes to support MySQL YEAR to Date type conversion
+      if (Schema.LogicalType.DATE.equals(expectedFieldSchema.getLogicalType())
+        && Schema.Type.INT.equals(actualFieldSchema.getType())) {
+        return;
+      }
+
+      // Backward compatibility change to support MySQL MEDIUMINT UNSIGNED to Long type conversion
+      if (Schema.Type.LONG.equals(expectedFieldSchema.getType())
+        && Schema.Type.INT.equals(actualFieldSchema.getType())) {
+        return;
+      }
+
+      // Backward compatibility change to support MySQL TINYINT(1) to Bool type conversion
+      if (Schema.Type.BOOLEAN.equals(expectedFieldSchema.getType())
+        && Schema.Type.INT.equals(actualFieldSchema.getType())) {
+        return;
+      }
+      super.validateField(collector, field, actualFieldSchema, expectedFieldSchema);
     }
   }
 }
