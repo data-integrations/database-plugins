@@ -529,7 +529,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     }
 
     @VisibleForTesting
-    static void validateSchema(Schema actualSchema, Schema configSchema, FailureCollector collector) {
+    void validateSchema(Schema actualSchema, Schema configSchema, FailureCollector collector) {
       if (configSchema == null) {
         collector.addFailure("Schema should not be null or empty.", null)
           .withConfigProperty(SCHEMA);
@@ -550,14 +550,20 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
         Schema expectedFieldSchema = field.getSchema().isNullable() ?
           field.getSchema().getNonNullable() : field.getSchema();
 
-        if (actualFieldSchema.getType() != expectedFieldSchema.getType() ||
-          actualFieldSchema.getLogicalType() != expectedFieldSchema.getLogicalType()) {
-          collector.addFailure(
-            String.format("Schema field '%s' has type '%s but found '%s'.",
-                          field.getName(), expectedFieldSchema.getDisplayName(),
-                          actualFieldSchema.getDisplayName()), null)
-            .withOutputSchemaField(field.getName());
-        }
+        validateField(collector, field, actualFieldSchema, expectedFieldSchema);
+      }
+    }
+
+    protected void validateField(FailureCollector collector, Schema.Field field, Schema actualFieldSchema,
+                                 Schema expectedFieldSchema) {
+      if (actualFieldSchema.getType() != expectedFieldSchema.getType() ||
+        actualFieldSchema.getLogicalType() != expectedFieldSchema.getLogicalType()) {
+        collector.addFailure(
+            String.format("Schema field '%s' is expected to have type '%s but found '%s'.", field.getName(),
+              expectedFieldSchema.getDisplayName(), actualFieldSchema.getDisplayName()),
+            String.format("Change the data type of field %s to %s.", field.getName(),
+              actualFieldSchema.getDisplayName()))
+          .withOutputSchemaField(field.getName());
       }
     }
 
