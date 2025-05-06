@@ -199,6 +199,11 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
     }
 
     @Override
+    public String getTransactionIsolationLevel() {
+      return connection.getTransactionIsolationLevel();
+    }
+
+    @Override
     public void validate(FailureCollector collector) {
       ConfigUtil.validateConnection(this, useConnection, connection, collector);
       super.validate(collector);
