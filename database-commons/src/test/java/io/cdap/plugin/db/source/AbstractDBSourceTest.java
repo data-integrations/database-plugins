@@ -43,11 +43,17 @@ public class AbstractDBSourceTest {
     Schema.Field.of("double_column", Schema.nullableOf(Schema.of(Schema.Type.DOUBLE))),
     Schema.Field.of("boolean_column", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN)))
   );
+  private static final AbstractDBSource.DBSourceConfig TEST_CONFIG = new AbstractDBSource.DBSourceConfig() {
+    @Override
+    public String getConnectionString() {
+      return "";
+    }
+  };
 
   @Test
   public void testValidateSourceSchemaCorrectSchema() {
     MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
-    AbstractDBSource.DBSourceConfig.validateSchema(SCHEMA, SCHEMA, collector);
+    TEST_CONFIG.validateSchema(SCHEMA, SCHEMA, collector);
     Assert.assertEquals(0, collector.getValidationFailures().size());
   }
 
@@ -65,7 +71,7 @@ public class AbstractDBSourceTest {
     );
 
     MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
-    AbstractDBSource.DBSourceConfig.validateSchema(actualSchema, SCHEMA, collector);
+    TEST_CONFIG.validateSchema(actualSchema, SCHEMA, collector);
     assertPropertyValidationFailed(collector, "boolean_column");
   }
 
@@ -84,7 +90,7 @@ public class AbstractDBSourceTest {
     );
 
     MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
-    AbstractDBSource.DBSourceConfig.validateSchema(actualSchema, SCHEMA, collector);
+    TEST_CONFIG.validateSchema(actualSchema, SCHEMA, collector);
     assertPropertyValidationFailed(collector, "boolean_column");
   }
 
