@@ -228,6 +228,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     configAccessor.setInitQueries(dbSinkConfig.getInitQueries());
     configAccessor.getConfiguration().set(DBConfiguration.DRIVER_CLASS_PROPERTY, driverClass.getName());
     configAccessor.getConfiguration().set(DBConfiguration.URL_PROPERTY, connectionString);
+    configAccessor.getConfiguration().set(ETLDBOutputFormat.STAGE_NAME, context.getStageName());
     String fullyQualifiedTableName = dbSchemaName == null ? dbSinkConfig.getEscapedTableName()
             : dbSinkConfig.getEscapedDbSchemaName() + "." + dbSinkConfig.getEscapedTableName();
     configAccessor.getConfiguration().set(DBConfiguration.OUTPUT_TABLE_NAME_PROPERTY, fullyQualifiedTableName);
