@@ -72,6 +72,12 @@
       <version>${guava.version}</version>
     </dependency>
 
+<!--    retry dependencies -->
+    <dependency>
+      <groupId>dev.failsafe</groupId>
+      <artifactId>failsafe</artifactId>
+    </dependency>
+
     <!-- test dependencies -->
     <dependency>
       <groupId>io.cdap.cdap</groupId>

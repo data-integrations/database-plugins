@@ -31,6 +31,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
@@ -69,11 +70,6 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
     return MysqlDBRecord.class;
   }
 
- @Override
- protected String getExternalDocumentationLink() {
-    return DBUtils.MYSQL_SUPPORTED_DOC_URL;
- }
-
   @Override
   protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
     String fqn = DBUtils.constructFQN("mysql",
@@ -92,6 +88,14 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
   @Override
   protected String getErrorDetailsProviderClassName() {
     return MysqlErrorDetailsProvider.class.getName();
+  }
+
+  @Override
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new MysqlErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   /**

@@ -31,6 +31,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
@@ -73,13 +74,16 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
   }
 
   @Override
-  protected Class<? extends DBWritable> getDBRecordType() {
-    return PostgresDBRecord.class;
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new PostgresErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   @Override
-  protected String getExternalDocumentationLink() {
-    return DBUtils.POSTGRES_SUPPORTED_DOC_URL;
+  protected Class<? extends DBWritable> getDBRecordType() {
+    return PostgresDBRecord.class;
   }
 
   @Override

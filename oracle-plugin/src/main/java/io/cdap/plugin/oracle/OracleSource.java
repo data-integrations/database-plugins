@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
@@ -77,13 +78,16 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
   }
 
   @Override
-  protected String getExternalDocumentationLink() {
-    return DBUtils.ORACLE_SUPPORTED_DOC_URL;
+  protected String getErrorDetailsProviderClassName() {
+    return OracleErrorDetailsProvider.class.getName();
   }
 
   @Override
-  protected String getErrorDetailsProviderClassName() {
-    return OracleErrorDetailsProvider.class.getName();
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new OracleErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   @Override

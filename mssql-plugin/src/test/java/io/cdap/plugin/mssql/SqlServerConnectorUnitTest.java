@@ -28,7 +28,11 @@ public class SqlServerConnectorUnitTest {
   @Rule
   public ExpectedException expectedEx = ExpectedException.none();
 
-  private static final SqlServerConnector CONNECTOR = new SqlServerConnector(null);
+  private static final SqlServerConnector CONNECTOR = new SqlServerConnector(
+    new SqlServerConnectorConfig("localhost", 1433, "user", "password",
+      "sqlserver", ""));
+
+  // private static final SqlServerConnector CONNECTOR = new SqlServerConnector(new SqlServerConnectorConfig());
 
   /**
    * Unit tests for getTableQuery()

@@ -31,6 +31,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
@@ -81,6 +82,14 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
   }
 
   @Override
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new SqlServerErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
+  }
+
+  @Override
   protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
     String fqn = DBUtils.constructFQN("mssql",
                                       sqlServerSourceConfig.getConnection().getHost(),
@@ -89,11 +98,6 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
     Asset asset = Asset.builder(sqlServerSourceConfig.getReferenceName()).setFqn(fqn).build();
     return new LineageRecorder(context, asset);
   }
-
- @Override
- protected String getExternalDocumentationLink() {
-   return DBUtils.MSSQL_SUPPORTED_DOC_URL;
- }
 
   /**
    * MSSQL source config.

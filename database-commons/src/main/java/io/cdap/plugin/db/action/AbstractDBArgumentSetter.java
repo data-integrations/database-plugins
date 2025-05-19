@@ -16,19 +16,22 @@
 
 package io.cdap.plugin.db.action;
 
+import dev.failsafe.RetryPolicy;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.action.ActionContext;
 import io.cdap.cdap.etl.api.action.SettableArguments;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
+import io.cdap.plugin.util.RetryPolicyUtil;
+import io.cdap.plugin.util.RetryUtils;
 
 import java.sql.Connection;
 import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -41,9 +44,13 @@ public class AbstractDBArgumentSetter extends Action {
 
   private static final String JDBC_PLUGIN_ID = "driver";
   private final ArgumentSetterConfig config;
+  private final RetryPolicy<?> retryPolicy;
+  protected DBErrorDetailsProvider dbErrorDetailsProvider;
 
   public AbstractDBArgumentSetter(ArgumentSetterConfig config) {
     this.config = config;
+    this.retryPolicy = RetryPolicyUtil.getRetryPolicy(config.getInitialRetryDuration(), config.getMaxRetryDuration(),
+      config.getMaxRetryCount());
   }
 
   @Override
@@ -100,10 +107,22 @@ public class AbstractDBArgumentSetter extends Action {
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(config.getConnectionArguments());
     try {
-      Connection connection = DriverManager
-        .getConnection(config.getConnectionString(), connectionProperties);
-      Statement statement = connection.createStatement();
-      ResultSet resultSet = statement.executeQuery(config.getQuery());
+      executeWithRetry(failureCollector, settableArguments, connectionProperties);
+    } finally {
+      driverCleanup.destroy();
+    }
+  }
+
+  private void executeWithRetry(FailureCollector failureCollector, SettableArguments settableArguments,
+                                Properties connectionProperties) throws SQLException {
+    try (Connection connection = RetryUtils.createConnectionWithRetry((RetryPolicy<Connection>) retryPolicy,
+        config.getConnectionString(), connectionProperties, getErrorDetailsProvider())) {
+      ResultSet resultSet;
+      try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
+        getErrorDetailsProvider())) {
+        resultSet = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement,
+          config.getQuery(), getErrorDetailsProvider());
+      }
       boolean hasRecord = resultSet.next();
       if (!hasRecord) {
         failureCollector.addFailure("No record found.",
@@ -118,8 +137,6 @@ public class AbstractDBArgumentSetter extends Action {
           .addFailure("More than one records found.",
                       "The argument selection conditions must match only one record.");
       }
-    } finally {
-      driverCleanup.destroy();
     }
   }
 
@@ -137,5 +154,18 @@ public class AbstractDBArgumentSetter extends Action {
     for (String column : columns) {
       arguments.set(column, resultSet.getString(column));
     }
+  }
+
+  /**
+   * Returns the DBErrorDetailsProvider instance.
+   * Override this method to provide a custom DBErrorDetailsProvider instance.
+   *
+   * @return DBErrorDetailsProvider instance
+   */
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider =  new DBErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 }

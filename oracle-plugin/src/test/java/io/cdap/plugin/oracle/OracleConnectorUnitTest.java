@@ -25,7 +25,8 @@ public class OracleConnectorUnitTest {
   @Rule
   public ExpectedException expectedEx = ExpectedException.none();
 
-  private static final OracleConnector CONNECTOR = new OracleConnector(null);
+  private static final OracleConnector CONNECTOR = new OracleConnector(new OracleConnectorConfig("localhost",
+    1521, "user", "password", "oracle", "", "testdb"));
 
   /**
    * Unit test for getTableName()

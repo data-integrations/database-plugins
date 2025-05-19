@@ -16,12 +16,15 @@
 
 package io.cdap.plugin.db.action;
 
+import dev.failsafe.RetryPolicy;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
+import io.cdap.plugin.util.RetryPolicyUtil;
+import io.cdap.plugin.util.RetryUtils;
 
 import java.sql.Connection;
 import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
@@ -34,6 +37,8 @@ public class DBRun {
   private final QueryConfig config;
   private final Class<? extends Driver> driverClass;
   private boolean enableAutoCommit;
+  private final RetryPolicy<?> retryPolicy;
+  protected DBErrorDetailsProvider dbErrorDetailsProvider;
 
   public DBRun(QueryConfig config, Class<? extends Driver> driverClass, Boolean enableAutocommit) {
     this.config = config;
@@ -41,6 +46,20 @@ public class DBRun {
     if (enableAutocommit != null) {
       this.enableAutoCommit = enableAutocommit;
     }
+    this.retryPolicy = RetryPolicyUtil.getRetryPolicy(config.getInitialRetryDuration(), config.getMaxRetryDuration(),
+      config.getMaxRetryCount());
+  }
+
+  /**
+   * Returns the DBErrorDetailsProvider instance.
+   *
+   * @return DBErrorDetailsProvider instance
+   */
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider =  new DBErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   /**
@@ -55,13 +74,15 @@ public class DBRun {
 
       Properties connectionProperties = new Properties();
       connectionProperties.putAll(config.getConnectionArguments());
-      try (Connection connection = DriverManager.getConnection(config.getConnectionString(), connectionProperties)) {
+      try (Connection connection = RetryUtils.createConnectionWithRetry((RetryPolicy<Connection>) retryPolicy,
+        config.getConnectionString(), connectionProperties, getErrorDetailsProvider())) {
         executeInitQueries(connection, config.getInitQueries());
         if (!enableAutoCommit) {
           connection.setAutoCommit(false);
         }
-        try (Statement statement = connection.createStatement()) {
-          statement.execute(config.query);
+        try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
+          getErrorDetailsProvider())) {
+          RetryUtils.executeInitQueryWithRetry(retryPolicy, statement, config.query, getErrorDetailsProvider());
           if (!enableAutoCommit) {
             connection.commit();
           }
@@ -76,8 +97,9 @@ public class DBRun {
 
   private void executeInitQueries(Connection connection, List<String> initQueries) throws SQLException {
     for (String query : initQueries) {
-      try (Statement statement = connection.createStatement()) {
-        statement.execute(query);
+      try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
+        getErrorDetailsProvider())) {
+        RetryUtils.executeInitQueryWithRetry(retryPolicy, statement, query, getErrorDetailsProvider());
       }
     }
   }

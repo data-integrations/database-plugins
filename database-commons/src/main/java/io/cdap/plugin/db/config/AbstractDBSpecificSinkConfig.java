@@ -155,4 +155,16 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
   public String getRelationTableKey() {
     return relationTableKey;
   }
+
+  public Integer getInitialRetryDuration() {
+    return getConnection().getInitialRetryDuration();
+  }
+
+  public Integer getMaxRetryDuration() {
+    return getConnection().getMaxRetryDuration();
+  }
+
+  public Integer getMaxRetryCount() {
+    return getConnection().getMaxRetryCount();
+  }
 }

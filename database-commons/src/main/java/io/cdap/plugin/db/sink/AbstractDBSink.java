@@ -18,6 +18,7 @@ package io.cdap.plugin.db.sink;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import dev.failsafe.RetryPolicy;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -25,10 +26,6 @@ import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
-import io.cdap.cdap.api.exception.ErrorCategory;
-import io.cdap.cdap.api.exception.ErrorCodeType;
-import io.cdap.cdap.api.exception.ErrorType;
-import io.cdap.cdap.api.exception.ErrorUtils;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -42,6 +39,7 @@ import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSink;
 import io.cdap.plugin.common.ReferencePluginConfig;
 import io.cdap.plugin.common.batch.sink.SinkOutputFormatProvider;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.ColumnType;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
@@ -53,6 +51,8 @@ import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DatabaseSinkConfig;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
+import io.cdap.plugin.util.RetryPolicyUtil;
+import io.cdap.plugin.util.RetryUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
@@ -61,7 +61,6 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -98,12 +97,16 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
   protected String dbColumns;
   private ConnectionConfigAccessor configAccessor;
   private Configuration configuration;
+  private final RetryPolicy<?> retryPolicy;
+  protected DBErrorDetailsProvider dbErrorDetailsProvider;
 
   public AbstractDBSink(T dbSinkConfig) {
     super(new ReferencePluginConfig(dbSinkConfig.getReferenceName()));
     this.dbSinkConfig = dbSinkConfig;
     this.configAccessor = new ConnectionConfigAccessor();
     this.configuration = configAccessor.getConfiguration();
+    this.retryPolicy = RetryPolicyUtil.getRetryPolicy(dbSinkConfig.getInitialRetryDuration(),
+      dbSinkConfig.getMaxRetryDuration(), dbSinkConfig.getMaxRetryCount());
   }
 
   private String getJDBCPluginId() {
@@ -126,7 +129,8 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     Class<? extends Driver> driverClass = DBUtils.getDriverClass(
       pipelineConfigurer, dbSinkConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
     if (driverClass != null && dbSinkConfig.canConnect()) {
-      validateSchema(collector, driverClass, dbSinkConfig.getTableName(), inputSchema, dbSinkConfig.getDBSchemaName());
+        validateSchema(collector, driverClass, dbSinkConfig.getTableName(), inputSchema,
+          dbSinkConfig.getDBSchemaName());
     }
   }
   public void validateOperations(FailureCollector collector, T dbSinkConfig, @Nullable Schema inputSchema) {
@@ -179,13 +183,16 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
   }
 
   /**
-   * Returns the external documentation link.
-   * Override this method to provide a custom external documentation link.
+   * Returns the DBErrorDetailsProvider instance.
+   * Override this method to provide a custom DBErrorDetailsProvider instance.
    *
-   * @return external documentation link
+   * @return DBErrorDetailsProvider instance
    */
-  protected String getExternalDocumentationLink() {
-    return null;
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider =  new DBErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   @Override
@@ -206,16 +213,16 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     // make sure that the destination table exists and column types are correct
+    FailureCollector collector = context.getFailureCollector();
     try {
       if (Objects.nonNull(outputSchema)) {
-        FailureCollector collector = context.getFailureCollector();
         validateOperations(collector, dbSinkConfig, outputSchema);
         validateSchema(collector, driverClass, tableName,
                 outputSchema, dbSchemaName);
-        collector.getOrThrowException();
       } else {
-        outputSchema = inferSchema(driverClass);
+        outputSchema = inferSchema(collector, driverClass);
       }
+      collector.getOrThrowException();
     } finally {
       DBUtils.cleanup(driverClass);
     }
@@ -286,13 +293,14 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     driverClass = context.loadPluginClass(getJDBCPluginId());
-    Schema outputSchema = Optional.ofNullable(context.getInputSchema()).orElse(inferSchema(driverClass));
+    FailureCollector collector = context.getFailureCollector();
+    Schema outputSchema = Optional.ofNullable(context.getInputSchema()).orElse(inferSchema(collector, driverClass));
 
     setColumnsInfo(outputSchema.getFields());
     setResultSetMetadata();
   }
 
-  private Schema inferSchema(Class<? extends Driver> driverClass) {
+  private Schema inferSchema(FailureCollector collector, Class<? extends Driver> driverClass) {
     List<Schema.Field> inferredFields = new ArrayList<>();
     String dbSchemaName = dbSinkConfig.getDBSchemaName();
     String fullyQualifiedTableName = dbSchemaName == null ? dbSinkConfig.getEscapedTableName()
@@ -302,33 +310,20 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
                                           dbSinkConfig.getJdbcPluginName());
       Properties connectionProperties = new Properties();
       connectionProperties.putAll(dbSinkConfig.getConnectionArguments());
-      try (Connection connection = DriverManager.getConnection(dbSinkConfig.getConnectionString(),
-                                                               connectionProperties)) {
+      try (Connection connection = RetryUtils.createConnectionWithRetry((RetryPolicy<Connection>) retryPolicy,
+        dbSinkConfig.getConnectionString(), connectionProperties, getErrorDetailsProvider())) {
         executeInitQueries(connection, dbSinkConfig.getInitQueries());
-
-        try (Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery("SELECT * FROM " + fullyQualifiedTableName
-                                                     + " WHERE 1 = 0")) {
+        try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy,
+          connection, getErrorDetailsProvider());
+             ResultSet rs = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement,
+               String.format("SELECT * FROM %s WHERE 1 = 0", fullyQualifiedTableName), getErrorDetailsProvider())) {
           inferredFields.addAll(getSchemaReader().getSchemaFields(rs));
         }
       } catch (SQLException e) {
-        // wrap exception to ensure SQLException-child instances not exposed to contexts w/o jdbc driver in classpath
-        String errorMessage =
-          String.format("SQL Exception occurred: [Message='%s', SQLState='%s', ErrorCode='%s'].", e.getMessage(),
-            e.getSQLState(), e.getErrorCode());
-        String errorMessageWithDetails = String.format("Error while reading table metadata." +
-          "Error message: '%s'. Error code: '%s'. SQLState: '%s'", e.getMessage(), e.getErrorCode(), e.getSQLState());
-        String externalDocumentationLink = getExternalDocumentationLink();
-        if (!Strings.isNullOrEmpty(externalDocumentationLink)) {
-          if (!errorMessage.endsWith(".")) {
-            errorMessage = errorMessage + ".";
-          }
-          errorMessage = String.format("%s For more details, see %s", errorMessageWithDetails, errorMessage);
-        }
-        throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN),
-          errorMessage, errorMessageWithDetails, ErrorType.USER, false, ErrorCodeType.SQLSTATE,
-          e.getSQLState(), externalDocumentationLink, new SQLException(e.getMessage(),
-            e.getSQLState(), e.getErrorCode()));
+        collector.addFailure(
+          String.format("Exception while trying to infer schema of database table '%s' for connection '%s' with %s. "
+            + "[SQLState='%s', ErrorCode='%s']", fullyQualifiedTableName, dbSinkConfig.getConnectionString(),
+              e.getMessage(), e.getSQLState(), e.getErrorCode()), null).withStacktrace(e.getStackTrace());
       }
     } catch (IllegalAccessException | InstantiationException | SQLException e) {
       throw new InvalidStageException("JDBC Driver unavailable: " + dbSinkConfig.getJdbcPluginName(), e);
@@ -357,7 +352,7 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
     }
   }
 
-  private void setResultSetMetadata() throws Exception {
+  private void setResultSetMetadata() throws SQLException, IllegalAccessException, InstantiationException {
     List<ColumnType> columnTypes = new ArrayList<>(columns.size());
     String connectionString = dbSinkConfig.getConnectionString();
     String dbSchemaName = dbSinkConfig.getDBSchemaName();
@@ -369,14 +364,16 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
 
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(dbSinkConfig.getConnectionArguments());
-    try (Connection connection = DriverManager.getConnection(connectionString, connectionProperties)) {
+    try (Connection connection = RetryUtils.createConnectionWithRetry((RetryPolicy<Connection>) retryPolicy,
+      connectionString, connectionProperties, getErrorDetailsProvider())) {
       executeInitQueries(connection, dbSinkConfig.getInitQueries());
-      try (Statement statement = connection.createStatement();
+      try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
+        getErrorDetailsProvider());
            // Run a query against the DB table that returns 0 records, but returns valid ResultSetMetadata
            // that can be used to construct DBRecord objects to sink to the database table.
-           ResultSet rs = statement.executeQuery(String.format("SELECT %s FROM %s WHERE 1 = 0",
-                                                               dbColumns, fullyQualifiedTableName))
-      ) {
+          ResultSet rs = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement,
+            String.format("SELECT %s FROM %s WHERE 1 = 0", dbColumns, fullyQualifiedTableName),
+              getErrorDetailsProvider())) {
         columnTypes.addAll(getMatchedColumnTypeList(rs, columns));
       }
     }
@@ -438,32 +435,31 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
 
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(dbSinkConfig.getConnectionArguments());
-    try (Connection connection = DriverManager.getConnection(connectionString, connectionProperties)) {
+    try (Connection connection = RetryUtils.createConnectionWithRetry((RetryPolicy<Connection>) retryPolicy,
+      connectionString, connectionProperties, getErrorDetailsProvider())) {
       executeInitQueries(connection, dbSinkConfig.getInitQueries());
       try (ResultSet tables = connection.getMetaData().getTables(null, dbSchemaName, tableName, null)) {
         if (!tables.next()) {
-          collector.addFailure(
-            String.format("Table '%s' does not exist.", tableName),
-                          String.format("Ensure table '%s' is set correctly and that the connection string '%s' " +
-                                  "points to a valid database.", fullyQualifiedTableName, connectionString))
+          collector.addFailure(String.format("Table '%s' does not exist.", tableName),
+            String.format("Ensure table '%s' is set correctly and that the connection string '%s' " +
+              "points to a valid database.", fullyQualifiedTableName, connectionString))
             .withConfigProperty(DBSinkConfig.TABLE_NAME);
           return;
         }
       }
       setColumnsInfo(inputSchema.getFields());
-      try (PreparedStatement pStmt = connection.prepareStatement(String.format("SELECT %s FROM %s WHERE 1 = 0",
-                                                                               dbColumns,
-                                                                               fullyQualifiedTableName));
-           ResultSet rs = pStmt.executeQuery()) {
+      try (PreparedStatement pStmt = RetryUtils.prepareStatementWithRetry((RetryPolicy<PreparedStatement>) retryPolicy,
+        connection, String.format("SELECT %s FROM %s WHERE 1 = 0", dbColumns, fullyQualifiedTableName),
+          getErrorDetailsProvider());
+           ResultSet rs = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, pStmt,
+             getErrorDetailsProvider())) {
         getFieldsValidator().validateFields(inputSchema, rs, collector);
       }
     } catch (SQLException e) {
-      LOG.error("Exception while trying to validate schema of database table {} for connection {}.",
-              fullyQualifiedTableName, connectionString, e);
       collector.addFailure(
-        String.format("Exception while trying to validate schema of database table '%s' for connection '%s' with %s",
-                fullyQualifiedTableName, connectionString, e.getMessage()),
-        null).withStacktrace(e.getStackTrace());
+        String.format("Exception while trying to validate schema of database table '%s' for connection '%s' with %s. "
+          + "[SQLState='%s', ErrorCode='%s']", fullyQualifiedTableName, connectionString, e.getMessage(),
+            e.getSQLState(), e.getErrorCode()), null).withStacktrace(e.getStackTrace());
     }
   }
 
@@ -486,8 +482,9 @@ public abstract class AbstractDBSink<T extends PluginConfig & DatabaseSinkConfig
 
   private void executeInitQueries(Connection connection, List<String> initQueries) throws SQLException {
     for (String query : initQueries) {
-      try (Statement statement = connection.createStatement()) {
-        statement.execute(query);
+      try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
+        getErrorDetailsProvider())) {
+        RetryUtils.executeInitQueryWithRetry(retryPolicy, statement, query, getErrorDetailsProvider());
       }
     }
   }

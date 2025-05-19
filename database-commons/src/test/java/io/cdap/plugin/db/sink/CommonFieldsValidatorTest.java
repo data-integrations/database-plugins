@@ -216,10 +216,14 @@ public class CommonFieldsValidatorTest {
   public void validateFieldCompatible(Schema.Type fieldType, Schema.LogicalType fieldLogicalType, int sqlType,
                                       boolean isCompatible, int precision, boolean isSigned) {
     String errorMessage = String.format("Expected type '%s' is %s with sql type '%d'",
-                                        fieldType,
-                                        isCompatible ? "compatible" : "not compatible",
-                                        sqlType);
-    Assert.assertEquals(errorMessage, isCompatible, VALIDATOR.isFieldCompatible(fieldType, fieldLogicalType, sqlType,
-                                                                                precision, isSigned));
+            fieldType,
+            isCompatible ? "compatible" : "not compatible",
+            sqlType);
+    try {
+      boolean actualCompatible = VALIDATOR.isFieldCompatible(fieldType, fieldLogicalType, sqlType, precision, isSigned);
+      Assert.assertEquals(errorMessage, isCompatible, actualCompatible);
+    } catch (Exception e) {
+      throw new AssertionError("Unexpected exception during compatibility check: " + e.getMessage(), e);
+    }
   }
 }

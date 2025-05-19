@@ -25,6 +25,7 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.KeyValueListParser;
 import io.cdap.plugin.common.db.DBConnectorProperties;
 import io.cdap.plugin.db.ConnectionConfig;
+import io.cdap.plugin.util.RetryUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,6 +64,26 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
   @Macro
   protected String connectionArguments;
 
+
+  @Name(RetryUtils.NAME_INITIAL_RETRY_DURATION)
+  @Description("Time taken for the first retry. Default is 5 seconds.")
+  @Nullable
+  @Macro
+  private Integer initialRetryDuration;
+
+  @Name(RetryUtils.NAME_MAX_RETRY_DURATION)
+  @Description("Maximum time in seconds retries can take. Default is 80 seconds.")
+  @Nullable
+  @Macro
+  private Integer maxRetryDuration;
+
+  @Name(RetryUtils.NAME_MAX_RETRY_COUNT)
+  @Description("Maximum number of retries allowed. Default is 5.")
+  @Nullable
+  @Macro
+  private Integer maxRetryCount;
+
+
   @Nullable
   @Override
   public String getUser() {
@@ -73,6 +94,18 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
   @Override
   public String getPassword() {
     return password;
+  }
+  
+  public Integer getInitialRetryDuration() {
+    return initialRetryDuration == null ? RetryUtils.DEFAULT_INITIAL_RETRY_DURATION_SECONDS : initialRetryDuration;
+  }
+  
+  public Integer getMaxRetryDuration() {
+    return maxRetryDuration == null ? RetryUtils.DEFAULT_MAX_RETRY_DURATION_SECONDS : maxRetryDuration;
+  }
+  
+  public Integer getMaxRetryCount() {
+    return maxRetryCount == null ? RetryUtils.DEFAULT_MAX_RETRY_COUNT : maxRetryCount;
   }
 
   @Override

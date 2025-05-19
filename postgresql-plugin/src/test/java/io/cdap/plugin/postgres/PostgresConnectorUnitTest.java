@@ -28,7 +28,9 @@ public class PostgresConnectorUnitTest {
   @Rule
   public ExpectedException expectedEx = ExpectedException.none();
 
-  private static final PostgresConnector CONNECTOR = new PostgresConnector(null);
+  private static final PostgresConnector CONNECTOR = new PostgresConnector(new PostgresConnectorConfig(
+    "localhost", 5432, "user", "password", "postgresql",
+    ""));
 
   /**
    * Unit test for getTableName()

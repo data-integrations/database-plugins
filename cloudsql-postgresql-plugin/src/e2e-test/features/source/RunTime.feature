@@ -147,7 +147,9 @@ Feature: CloudSQL-PostGreSQL Source - Run Time scenarios
     And Save and Deploy Pipeline
     And Run the Pipeline in Runtime
     And Wait till pipeline is in running state
+    And Open and capture logs
     And Verify the pipeline status is "Failed"
+    And Close the pipeline logs
     Then Open Pipeline logs and verify Log entries having below listed Level and Message:
       | Level | Message                                  |
       | ERROR | errorLogsMessageInvalidBoundingQuery     |
@@ -189,6 +191,7 @@ Feature: CloudSQL-PostGreSQL Source - Run Time scenarios
     Then Save the pipeline
     Then Preview and run the pipeline
     Then Wait till pipeline preview is in running state and check if any error occurs
+    Then Open and capture pipeline preview logs
     Then Verify the preview run status of pipeline in the logs is "failed"
 
   @CLOUDSQLPOSTGRESQL_SOURCE_TEST @CLOUDSQLPOSTGRESQL_TARGET_TEST

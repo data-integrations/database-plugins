@@ -31,6 +31,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
@@ -94,8 +95,11 @@ public class SqlServerSink extends AbstractDBSink<SqlServerSink.SqlServerSinkCon
   }
 
   @Override
-  protected String getExternalDocumentationLink() {
-    return DBUtils.MSSQL_SUPPORTED_DOC_URL;
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new SqlServerErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   /**

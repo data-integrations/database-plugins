@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.connector.PluginSpec;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.common.db.DBPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
@@ -117,5 +118,13 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
     sinkProperties.put(CloudSQLPostgreSQLSink.CloudSQLPostgreSQLSinkConfig.TABLE_NAME, table);
     sourceProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
     sinkProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
+  }
+
+  @Override
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new CloudSQLPostgreSQLErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 }

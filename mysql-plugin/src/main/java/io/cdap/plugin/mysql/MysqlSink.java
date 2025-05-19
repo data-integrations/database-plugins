@@ -33,6 +33,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
@@ -115,8 +116,11 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
   }
 
   @Override
-  protected String getExternalDocumentationLink() {
-    return DBUtils.MYSQL_SUPPORTED_DOC_URL;
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new MysqlErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   /**

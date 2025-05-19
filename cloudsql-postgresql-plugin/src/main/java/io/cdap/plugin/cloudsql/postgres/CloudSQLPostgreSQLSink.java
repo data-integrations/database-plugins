@@ -36,6 +36,7 @@ import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.batch.sink.SinkOutputFormatProvider;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSinkConfig;
@@ -154,8 +155,11 @@ public class CloudSQLPostgreSQLSink extends AbstractDBSink<CloudSQLPostgreSQLSin
   }
 
   @Override
-  protected String getExternalDocumentationLink() {
-    return DBUtils.CLOUDSQLPOSTGRES_SUPPORTED_DOC_URL;
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new CloudSQLPostgreSQLErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   /** CloudSQL PostgreSQL sink config. */

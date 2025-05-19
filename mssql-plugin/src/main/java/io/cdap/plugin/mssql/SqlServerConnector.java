@@ -32,6 +32,7 @@ import io.cdap.cdap.etl.api.connector.SampleType;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
@@ -147,6 +148,14 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
                            "ORDER BY %s",
                          sessionID, strata, sessionID, sessionID, tableName, limit, sessionID, sessionID, sessionID,
                          limit, sessionID, limit, strata);
+  }
+
+  @Override
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new SqlServerErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
 }

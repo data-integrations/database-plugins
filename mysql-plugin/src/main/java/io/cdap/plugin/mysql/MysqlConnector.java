@@ -32,6 +32,7 @@ import io.cdap.cdap.etl.api.connector.SampleType;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import org.apache.hadoop.io.LongWritable;
@@ -128,5 +129,13 @@ public class MysqlConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
   @Override
   public StructuredRecord transform(LongWritable longWritable, MysqlDBRecord mysqlDBRecord) {
     return mysqlDBRecord.getRecord();
+  }
+
+  @Override
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new MysqlErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 }

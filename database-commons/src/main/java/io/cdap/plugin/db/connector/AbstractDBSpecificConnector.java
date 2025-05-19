@@ -17,6 +17,7 @@
 package io.cdap.plugin.db.connector;
 
 import com.google.common.collect.Maps;
+import dev.failsafe.RetryPolicy;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchConnector;
@@ -28,11 +29,14 @@ import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.SourceInputFormatProvider;
 import io.cdap.plugin.common.db.AbstractDBConnector;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.common.util.ExceptionUtils;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.source.DataDrivenETLDBInputFormat;
+import io.cdap.plugin.util.RetryPolicyUtil;
+import io.cdap.plugin.util.RetryUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
@@ -56,10 +60,14 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   implements BatchConnector<LongWritable, T> {
 
   private final AbstractDBConnectorConfig config;
+  private final RetryPolicy<?> retryPolicy;
+  protected DBErrorDetailsProvider dbErrorDetailsProvider;
 
   protected AbstractDBSpecificConnector(AbstractDBConnectorConfig config) {
     super(config);
     this.config = config;
+    this.retryPolicy = RetryPolicyUtil.getRetryPolicy(config.getInitialRetryDuration(), config.getMaxRetryDuration(),
+      config.getMaxRetryCount());
   }
 
   public abstract boolean supportSchema();
@@ -114,6 +122,19 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     }
 
     return new SourceInputFormatProvider(DataDrivenETLDBInputFormat.class, connectionConfigAccessor.getConfiguration());
+  }
+
+  /**
+   * Returns the DBErrorDetailsProvider instance.
+   * Override this method to provide a custom DBErrorDetailsProvider instance.
+   *
+   * @return DBErrorDetailsProvider instance
+   */
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new DBErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   protected Connection getConnection(DBConnectorPath path) {
@@ -172,13 +193,16 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
 
   protected Schema loadTableSchema(Connection connection, String query, @Nullable Integer timeoutSec, String sessionID)
     throws SQLException {
-    Statement statement = connection.createStatement();
-    statement.setMaxRows(1);
-    if (timeoutSec != null) {
-      statement.setQueryTimeout(timeoutSec);
+      try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
+        getErrorDetailsProvider())) {
+        statement.setMaxRows(1);
+        if (timeoutSec != null) {
+          statement.setQueryTimeout(timeoutSec);
+        }
+        ResultSet resultSet = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement, query,
+          getErrorDetailsProvider());
+        return Schema.recordOf("outputSchema", getSchemaReader(sessionID).getSchemaFields(resultSet));
     }
-    ResultSet resultSet = statement.executeQuery(query);
-    return Schema.recordOf("outputSchema", getSchemaReader(sessionID).getSchemaFields(resultSet));
   }
 
   protected void setConnectionProperties(Map<String, String> properties, ConnectorSpecRequest request) {
