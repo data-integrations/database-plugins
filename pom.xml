@@ -298,6 +298,12 @@
         <version>${junit.version}</version>
         <scope>test</scope>
       </dependency>
+      <!--    retry dependencies -->
+      <dependency>
+        <groupId>dev.failsafe</groupId>
+        <artifactId>failsafe</artifactId>
+        <version>3.3.2</version>
+      </dependency>
       <dependency>
         <groupId>org.hsqldb</groupId>
         <artifactId>hsqldb</artifactId>

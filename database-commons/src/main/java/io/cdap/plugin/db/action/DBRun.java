@@ -16,8 +16,10 @@
 
 package io.cdap.plugin.db.action;
 
+import dev.failsafe.Failsafe;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
+import io.cdap.plugin.util.RetryPolicyUtil;
 
 import java.sql.Connection;
 import java.sql.Driver;
@@ -48,6 +50,7 @@ public class DBRun {
    * to use and which connection string to use come from the plugin configuration.
    */
   public void run() throws SQLException, InstantiationException, IllegalAccessException {
+
     DriverCleanup driverCleanup = null;
     try {
       driverCleanup = DBUtils.ensureJDBCDriverIsAvailable(driverClass, config.getConnectionString(),
@@ -55,18 +58,21 @@ public class DBRun {
 
       Properties connectionProperties = new Properties();
       connectionProperties.putAll(config.getConnectionArguments());
-      try (Connection connection = DriverManager.getConnection(config.getConnectionString(), connectionProperties)) {
-        executeInitQueries(connection, config.getInitQueries());
-        if (!enableAutoCommit) {
-          connection.setAutoCommit(false);
-        }
-        try (Statement statement = connection.createStatement()) {
-          statement.execute(config.query);
+      Failsafe.with(RetryPolicyUtil.createConnectionRetryPolicy(config.getInitialRetryDuration(),
+        config.getMaxRetryDuration(), config.getMaxRetryCount())).run(() -> {
+        try (Connection connection = DriverManager.getConnection(config.getConnectionString(), connectionProperties)) {
+          executeInitQueries(connection, config.getInitQueries());
           if (!enableAutoCommit) {
-            connection.commit();
+            connection.setAutoCommit(false);
+          }
+          try (Statement statement = connection.createStatement()) {
+            statement.execute(config.query);
+            if (!enableAutoCommit) {
+              connection.commit();
+            }
           }
         }
-      }
+      });
     } finally {
       if (driverCleanup != null) {
         driverCleanup.destroy();
@@ -74,11 +80,16 @@ public class DBRun {
     }
   }
 
-  private void executeInitQueries(Connection connection, List<String> initQueries) throws SQLException {
-    for (String query : initQueries) {
-      try (Statement statement = connection.createStatement()) {
-        statement.execute(query);
-      }
-    }
+  private void executeInitQueries(Connection connection, List<String> initQueries) {
+
+    Failsafe.with(RetryPolicyUtil.createConnectionRetryPolicy(config.getInitialRetryDuration(),
+      config.getMaxRetryDuration(), config.getMaxRetryCount()))
+      .run(() -> {
+        for (String query : initQueries) {
+          try (Statement statement = connection.createStatement()) {
+            statement.execute(query);
+          }
+        }
+      });
   }
 }

@@ -16,11 +16,13 @@
 
 package io.cdap.plugin.db.action;
 
+import dev.failsafe.Failsafe;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchActionContext;
 import io.cdap.cdap.etl.api.batch.PostAction;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.RetryPolicyUtil;
 
 import java.sql.Driver;
 
@@ -51,7 +53,8 @@ public abstract class AbstractQueryAction extends PostAction {
 
     Class<? extends Driver> driverClass = batchContext.loadPluginClass(JDBC_PLUGIN_ID);
     DBRun executeQuery = new DBRun(config, driverClass, enableAutoCommit);
-    executeQuery.run();
+    Failsafe.with(RetryPolicyUtil.createConnectionRetryPolicy(config.getInitialRetryDuration(),
+      config.getMaxRetryDuration(), config.getMaxRetryCount())).run(() -> executeQuery.run());
   }
 
   @Override

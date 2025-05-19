@@ -17,6 +17,7 @@
 package io.cdap.plugin.db.connector;
 
 import com.google.common.collect.Maps;
+import dev.failsafe.Failsafe;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchConnector;
@@ -33,6 +34,7 @@ import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.source.DataDrivenETLDBInputFormat;
+import io.cdap.plugin.util.RetryPolicyUtil;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
@@ -172,13 +174,16 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
 
   protected Schema loadTableSchema(Connection connection, String query, @Nullable Integer timeoutSec, String sessionID)
     throws SQLException {
-    Statement statement = connection.createStatement();
-    statement.setMaxRows(1);
-    if (timeoutSec != null) {
-      statement.setQueryTimeout(timeoutSec);
-    }
-    ResultSet resultSet = statement.executeQuery(query);
-    return Schema.recordOf("outputSchema", getSchemaReader(sessionID).getSchemaFields(resultSet));
+    return Failsafe.with(RetryPolicyUtil.createConnectionRetryPolicy(config.getInitialRetryDuration(),
+      config.getMaxRetryDuration(), config.getMaxRetryCount())).get(() -> {
+      Statement statement = connection.createStatement();
+      statement.setMaxRows(1);
+      if (timeoutSec != null) {
+        statement.setQueryTimeout(timeoutSec);
+      }
+      ResultSet resultSet = statement.executeQuery(query);
+      return Schema.recordOf("outputSchema", getSchemaReader(sessionID).getSchemaFields(resultSet));
+    });
   }
 
   protected void setConnectionProperties(Map<String, String> properties, ConnectorSpecRequest request) {

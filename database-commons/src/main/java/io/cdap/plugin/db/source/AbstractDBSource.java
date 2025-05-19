@@ -18,6 +18,7 @@ package io.cdap.plugin.db.source;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import dev.failsafe.Failsafe;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -52,13 +53,13 @@ import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.db.config.DatabaseSourceConfig;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
+import io.cdap.plugin.util.RetryPolicyUtil;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Driver;
@@ -137,7 +138,6 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     SQLException, InstantiationException {
     DriverCleanup driverCleanup;
     try {
-
       driverCleanup = loadPluginClassAndGetDriver(driverClass);
       try {
         return getSchema();
@@ -168,13 +168,15 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
   }
 
   private Schema loadSchemaFromDB(Connection connection, String query) throws SQLException {
-    Statement statement = connection.createStatement();
-    statement.setMaxRows(1);
-    if (query.contains("$CONDITIONS")) {
-      query = removeConditionsClause(query);
-    }
-    ResultSet resultSet = statement.executeQuery(query);
-    return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
+    return Failsafe.with(RetryPolicyUtil.createConnectionRetryPolicy(sourceConfig.getInitialRetryDuration(),
+     sourceConfig.getMaxRetryDuration(), sourceConfig.getMaxRetryCount()))
+      .get(() -> {
+        Statement statement = connection.createStatement();
+        statement.setMaxRows(1);
+        String finalQuery = query.contains("$CONDITIONS") ? removeConditionsClause(query) : query;
+        ResultSet resultSet = statement.executeQuery(finalQuery);
+        return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
+      });
   }
 
   @VisibleForTesting
@@ -191,41 +193,52 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     String connectionString = sourceConfig.getConnectionString();
     DriverCleanup driverCleanup
       = DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.getJdbcPluginName());
-
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(sourceConfig.getConnectionArguments());
-    try (Connection connection = DriverManager.getConnection(connectionString, connectionProperties)) {
-      executeInitQueries(connection, sourceConfig.getInitQueries());
-      return loadSchemaFromDB(connection, sourceConfig.getImportQuery());
-
-    } catch (SQLException e) {
-      // wrap exception to ensure SQLException-child instances not exposed to contexts without jdbc driver in classpath
-      String errorMessage =
-        String.format("SQL Exception occurred: [Message='%s', SQLState='%s', ErrorCode='%s'].", e.getMessage(),
-          e.getSQLState(), e.getErrorCode());
-      String errorMessageWithDetails = String.format("Error occurred while trying to get schema from database." +
-        "Error message: '%s'. Error code: '%s'. SQLState: '%s'", e.getMessage(), e.getErrorCode(), e.getSQLState());
-      String externalDocumentationLink = getExternalDocumentationLink();
-      if (!Strings.isNullOrEmpty(externalDocumentationLink)) {
-        if (!errorMessage.endsWith(".")) {
-          errorMessage = errorMessage + ".";
-        }
-        errorMessage = String.format("%s For more details, see %s", errorMessage, externalDocumentationLink);
-      }
-      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN),
-        errorMessage, errorMessageWithDetails, ErrorType.USER, false, ErrorCodeType.SQLSTATE,
-        e.getSQLState(), externalDocumentationLink, new SQLException(e.getMessage(),
-          e.getSQLState(), e.getErrorCode()));
-    } finally {
-      driverCleanup.destroy();
+      return Failsafe.with(RetryPolicyUtil.createConnectionRetryPolicy(sourceConfig.getInitialRetryDuration(),
+        sourceConfig.getMaxRetryDuration(), sourceConfig.getMaxRetryCount()))
+              .get(() -> {
+                try (Connection connection = DriverManager.getConnection(connectionString, connectionProperties)) {
+                  executeInitQueries(connection, sourceConfig.getInitQueries());
+                  return loadSchemaFromDB(connection, sourceConfig.getImportQuery());
+                }
+                catch (SQLException e) {
+                  // wrap exception to ensure SQLException-child instances not exposed to contexts without jdbc
+                  // driver in classpath
+                  String errorMessage =
+                          String.format("SQL Exception occurred: [Message='%s', SQLState='%s', ErrorCode='%s'].",
+                                  e.getMessage(),
+                                  e.getSQLState(), e.getErrorCode());
+                  String errorMessageWithDetails = String.format("Error occurred while trying to" +
+                                  " get schema from database." +
+                          "Error message: '%s'. Error code: '%s'. SQLState: '%s'", e.getMessage(), e.getErrorCode(),
+                          e.getSQLState());
+                  String externalDocumentationLink = getExternalDocumentationLink();
+                  if (!Strings.isNullOrEmpty(externalDocumentationLink)) {
+                    if (!errorMessage.endsWith(".")) {
+                      errorMessage = errorMessage + ".";
+                    }
+                    errorMessage = String.format("%s For more details, see %s", errorMessage,
+                            externalDocumentationLink);
+                  }
+                  throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN),
+                          errorMessage, errorMessageWithDetails, ErrorType.USER, false, ErrorCodeType.SQLSTATE,
+                          e.getSQLState(), externalDocumentationLink, new SQLException(e.getMessage(),
+                                  e.getSQLState(), e.getErrorCode()));
+                } finally {
+                  driverCleanup.destroy();
+                }
+              });
     }
-  }
 
   private void executeInitQueries(Connection connection, List<String> initQueries) throws SQLException {
     for (String query : initQueries) {
-      try (Statement statement = connection.createStatement()) {
-        statement.execute(query);
-      }
+        Failsafe.with(RetryPolicyUtil.createConnectionRetryPolicy(sourceConfig.getInitialRetryDuration(),
+          sourceConfig.getMaxRetryDuration(), sourceConfig.getMaxRetryCount())).run(() -> {
+          try (Statement statement = connection.createStatement()) {
+            statement.execute(query);
+          }
+        });
     }
   }
 
@@ -266,7 +279,9 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     String connectionString = createConnectionString();
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(sourceConfig.getConnectionArguments());
-    return DriverManager.getConnection(connectionString, connectionProperties);
+    return Failsafe.with(RetryPolicyUtil.createConnectionRetryPolicy(sourceConfig.getInitialRetryDuration(),
+      sourceConfig.getMaxRetryDuration(), sourceConfig.getMaxRetryCount()))
+            .get(() -> DriverManager.getConnection(connectionString, connectionProperties));
   }
 
   @Override

@@ -36,6 +36,12 @@ import javax.annotation.Nullable;
  *
  */
 public abstract class AbstractDBConnectorConfig extends PluginConfig implements DBConnectorProperties {
+  private static final String NAME_INITIAL_RETRY_DURATION = "initialRetryDuration";
+  private static final String NAME_MAX_RETRY_DURATION = "maxRetryDuration";
+  private static final String NAME_MAX_RETRY_COUNT = "maxRetryCount";
+  public static final int DEFAULT_INITIAL_RETRY_DURATION_SECONDS = 5;
+  public static final int DEFAULT_MAX_RETRY_COUNT = 5;
+  public static final int DEFAULT_MAX_RETRY_DURATION_SECONDS = 80;
 
   @Name(ConnectionConfig.JDBC_PLUGIN_NAME)
   @Description("Name of the JDBC driver to use. This is the value of the 'jdbcPluginName' key defined in the JSON " +
@@ -63,6 +69,26 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
   @Macro
   protected String connectionArguments;
 
+
+  @Name(NAME_INITIAL_RETRY_DURATION)
+  @Description("Time taken for the first retry. Default is 5 seconds.")
+  @Nullable
+  @Macro
+  private Integer initialRetryDuration;
+
+  @Name(NAME_MAX_RETRY_DURATION)
+  @Description("Maximum time in seconds retries can take. Default is 80 seconds.")
+  @Nullable
+  @Macro
+  private Integer maxRetryDuration;
+
+  @Name(NAME_MAX_RETRY_COUNT)
+  @Description("Maximum number of retries allowed. Default is 5.")
+  @Nullable
+  @Macro
+  private Integer maxRetryCount;
+
+
   @Nullable
   @Override
   public String getUser() {
@@ -73,6 +99,18 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
   @Override
   public String getPassword() {
     return password;
+  }
+  
+  public Integer getInitialRetryDuration() {
+    return initialRetryDuration == null ? DEFAULT_INITIAL_RETRY_DURATION_SECONDS : initialRetryDuration;
+  }
+  
+  public Integer getMaxRetryDuration() {
+    return maxRetryDuration == null ? DEFAULT_MAX_RETRY_DURATION_SECONDS : maxRetryDuration;
+  }
+  
+  public Integer getMaxRetryCount() {
+    return maxRetryCount == null ? DEFAULT_MAX_RETRY_COUNT : maxRetryCount;
   }
 
   @Override
