@@ -26,6 +26,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Oracle Source schema reader.
@@ -65,14 +66,17 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   );
 
   private final String sessionID;
+  private final Boolean isTimestampOldBehavior;
+  private final Boolean isPrecisionlessNumAsDecimal;
 
   public OracleSourceSchemaReader() {
-    this(null);
+    this(null, false, false);
   }
-
-  public OracleSourceSchemaReader(String sessionID) {
-    super();
+  public OracleSourceSchemaReader(@Nullable String sessionID, boolean isTimestampOldBehavior,
+                                  boolean isPrecisionlessNumAsDecimal) {
     this.sessionID = sessionID;
+    this.isTimestampOldBehavior = isTimestampOldBehavior;
+    this.isPrecisionlessNumAsDecimal = isPrecisionlessNumAsDecimal;
   }
 
   @Override
@@ -81,10 +85,12 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
 
     switch (sqlType) {
       case TIMESTAMP_TZ:
-        return Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
-      case Types.TIMESTAMP:
+        return isTimestampOldBehavior ? Schema.of(Schema.Type.STRING) : Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
       case TIMESTAMP_LTZ:
-        return Schema.of(Schema.LogicalType.DATETIME);
+        return isTimestampOldBehavior ? Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)
+          : Schema.of(Schema.LogicalType.DATETIME);
+      case Types.TIMESTAMP:
+        return isTimestampOldBehavior ? super.getSchema(metadata, index) : Schema.of(Schema.LogicalType.DATETIME);
       case BINARY_FLOAT:
         return Schema.of(Schema.Type.FLOAT);
       case BINARY_DOUBLE:
@@ -107,12 +113,24 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
           // For a Number type without specified precision and scale, precision will be 0 and scale will be -127
           if (precision == 0) {
             // reference : https://docs.oracle.com/cd/B28359_01/server.111/b28318/datatype.htm#CNCPT1832
-            LOG.warn(String.format("Field '%s' is a %s type without precision and scale, "
-                    + "converting into STRING type to avoid any precision loss.",
-                metadata.getColumnName(index),
-                metadata.getColumnTypeName(index),
-                metadata.getColumnName(index)));
-            return Schema.of(Schema.Type.STRING);
+            if (isPrecisionlessNumAsDecimal) {
+              precision = 38;
+              scale = 0;
+              LOG.warn(String.format("%s type with undefined precision and scale is detected, "
+                                       + "there may be a precision loss while running the pipeline. "
+                                       + "Please define an output precision and scale for field '%s' to avoid "
+                                       + "precision loss.",
+                                     metadata.getColumnTypeName(index),
+                                     metadata.getColumnName(index)));
+              return Schema.decimalOf(precision, scale);
+            } else {
+              LOG.warn(String.format("Field '%s' is a %s type without precision and scale, "
+                                       + "converting into STRING type to avoid any precision loss.",
+                                     metadata.getColumnName(index),
+                                     metadata.getColumnTypeName(index),
+                                     metadata.getColumnName(index)));
+              return Schema.of(Schema.Type.STRING);
+            }
           }
           return Schema.decimalOf(precision, scale);
         }
