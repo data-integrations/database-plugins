@@ -121,6 +121,44 @@
           }
         },
         {
+          "widget-type": "hidden",
+          "label": "Treat as old timestamp",
+          "name": "treatAsOldTimestamp",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "false",
+            "options": [
+              {
+                "id": "true",
+                "label": "true"
+              },
+              {
+                "id": "false",
+                "label": "false"
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Treat precision less number as Decimal(old behavior)",
+          "name": "treatPrecisionlessNumAsDeci",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "false",
+            "options": [
+              {
+                "id": "true",
+                "label": "true"
+              },
+              {
+                "id": "false",
+                "label": "false"
+              }
+            ]
+          }
+        },
+        {
           "name": "connectionType",
           "label": "Connection Type",
           "widget-type": "radio-group",
@@ -326,6 +364,14 @@
         {
           "type": "property",
           "name": "transactionIsolationLevel"
+        },
+        {
+          "type": "property",
+          "name": "getTreatAsOldTimestampConn"
+        },
+        {
+          "type": "property",
+          "name": "treatPrecisionlessNumAsDeci"
         }
       ]
     },
