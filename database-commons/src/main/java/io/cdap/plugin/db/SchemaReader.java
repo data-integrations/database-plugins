@@ -18,6 +18,7 @@ package io.cdap.plugin.db;
 
 import io.cdap.cdap.api.data.schema.Schema;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -64,4 +65,6 @@ public interface SchemaReader {
    * @throws SQLException
    */
   boolean shouldIgnoreColumn(ResultSetMetaData metadata, int index) throws SQLException;
+
+  List<Schema.Field> getSchemaFields(Connection connection, String tableName) throws SQLException;
 }

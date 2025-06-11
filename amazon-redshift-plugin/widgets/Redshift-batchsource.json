@@ -109,6 +109,30 @@
       "label": "SQL Query",
       "properties": [
         {
+          "widget-type": "radio-group",
+          "label": "Import Query Type",
+          "name": "importQueryType",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "nativeQuery",
+            "options": [
+              {
+                "id": "nativeQuery",
+                "label": "Native Query"
+              },
+              {
+                "id": "namedTable",
+                "label": "Named Table"
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Table Name",
+          "name": "tableName"
+        },
+        {
           "widget-type": "textarea",
           "label": "Import Query",
           "name": "importQuery",
@@ -229,6 +253,30 @@
         }
       ]
     },
+    {
+      "name": "ImportQuery",
+      "condition": {
+        "expression": "importQueryType != 'tableName'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "importQuery"
+        }
+      ]
+    },
+    {
+      "name": "NativeTableName",
+      "condition": {
+        "expression": "importQueryType == 'tableName'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "tableName"
+        }
+      ]
+    }
   ],
   "jump-config": {
     "datasets": [

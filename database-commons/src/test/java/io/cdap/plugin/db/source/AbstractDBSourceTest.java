@@ -48,6 +48,9 @@ public class AbstractDBSourceTest {
     public String getConnectionString() {
       return "";
     }
+    public String getTableName() {
+      return "";
+    }
   };
 
   @Test

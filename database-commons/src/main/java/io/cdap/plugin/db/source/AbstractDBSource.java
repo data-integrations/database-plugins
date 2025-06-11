@@ -52,6 +52,7 @@ import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.db.config.DatabaseSourceConfig;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
+import io.cdap.plugin.util.ImportQueryType;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
@@ -71,6 +72,11 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+
+import static io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig.IMPORT_QUERY;
+import static io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig.PROPERTY_IMPORT_QUERY_TYPE;
+import static io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig.TABLE_NAME;
+
 
 /**
  * Batch source to read from a DB table
@@ -163,11 +169,21 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     try (Connection connection = getConnection()) {
       executeInitQueries(connection, sourceConfig.getInitQueries());
       String query = sourceConfig.getImportQuery();
-      return loadSchemaFromDB(connection, query);
+      ImportQueryType type = ImportQueryType.fromString(sourceConfig.getImportQueryType());
+      if (type == ImportQueryType.TABLE_NAME) {
+        List<Schema.Field> fields = getSchemaReader().getSchemaFields(connection, sourceConfig.getTableName());
+        return Schema.recordOf("schema", fields);
+      }
+      return loadSchemaFromDBwithQuery(connection, query);
     }
   }
 
-  private Schema loadSchemaFromDB(Connection connection, String query) throws SQLException {
+  private Schema loadSchemaFromDBwithTableName(Connection connection, String tableName) throws SQLException {
+    return Schema.recordOf("schema", getSchemaReader().getSchemaFields(connection, sourceConfig.getTableName()));
+  }
+
+
+  private Schema loadSchemaFromDBwithQuery(Connection connection, String query) throws SQLException {
     Statement statement = connection.createStatement();
     statement.setMaxRows(1);
     if (query.contains("$CONDITIONS")) {
@@ -191,13 +207,18 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     String connectionString = sourceConfig.getConnectionString();
     DriverCleanup driverCleanup
       = DBUtils.ensureJDBCDriverIsAvailable(driverClass, connectionString, sourceConfig.getJdbcPluginName());
-
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(sourceConfig.getConnectionArguments());
     try (Connection connection = DriverManager.getConnection(connectionString, connectionProperties)) {
       executeInitQueries(connection, sourceConfig.getInitQueries());
-      return loadSchemaFromDB(connection, sourceConfig.getImportQuery());
-
+      String importQuery = sourceConfig.getImportQuery();
+      String tableName = sourceConfig.getTableName();
+      ImportQueryType type = ImportQueryType.fromString(sourceConfig.getImportQueryType());
+      if (type == ImportQueryType.TABLE_NAME) {
+        return loadSchemaFromDBwithTableName(connection, tableName);
+      } else {
+        return loadSchemaFromDBwithQuery(connection, importQuery);
+      }
     } catch (SQLException e) {
       // wrap exception to ensure SQLException-child instances not exposed to contexts without jdbc driver in classpath
       String errorMessage =
@@ -334,9 +355,15 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     if (sourceConfig.getFetchSize() != null) {
       connectionConfigAccessor.setFetchSize(sourceConfig.getFetchSize());
     }
-
+    ImportQueryType type = ImportQueryType.fromString(sourceConfig.getImportQueryType());
+    String query;
+    if (type == ImportQueryType.IMPORT_QUERY) {
+          query = sourceConfig.getImportQuery();
+    } else {
+       query = String.format("SELECT * FROM %s", sourceConfig.getTableName());
+    }
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
-                                        sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery(),
+                                        query , sourceConfig.getBoundingQuery(),
                                         false);
 
     if (sourceConfig.getTransactionIsolationLevel() != null) {
@@ -409,6 +436,42 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
   protected abstract String createConnectionString();
 
   /**
+   * Validates that either an import query or a table name is provided, according to the selected import query type.
+   * If the {@code importQueryType} property does not contain a macro, this method checks:
+   *    If {@code importQueryType} is {@code IMPORT_QUERY}, ensures that the {@code importQuery} property is not empty.
+   *    If {@code importQueryType} is {@code TABLE_NAME}, ensures that the {@code tableName} property is not empty.
+   * If the {@code importQueryType} property contains a macro, this method checks that at least one of
+   * {@code importQuery} or {@code tableName} is provided.
+   * Any validation failures are added to the provided {@link FailureCollector}. If any failures are present,
+   * this method will throw an exception at the end of validation.
+   * @param collector the {@link FailureCollector} used to collect validation failures
+   */
+  public void validateTableNameAndImportQuery(FailureCollector collector) {
+    if (!sourceConfig.containsMacro(PROPERTY_IMPORT_QUERY_TYPE)) {
+      ImportQueryType type = ImportQueryType.fromString(sourceConfig.getImportQueryType());
+      boolean isImportQuery = type == ImportQueryType.IMPORT_QUERY;
+
+      if (isImportQuery && Strings.isNullOrEmpty(sourceConfig.getImportQuery())) {
+        collector.addFailure("Import Query cannot be empty", "Please specify Import Query!")
+                .withConfigProperty(IMPORT_QUERY);
+      } else if (!isImportQuery && Strings.isNullOrEmpty(sourceConfig.getTableName())) {
+        collector.addFailure("Table Name cannot be empty", "Please specify Table Name!")
+                .withConfigProperty(TABLE_NAME);
+      }
+    } else {
+      boolean importQueryEmpty = Strings.isNullOrEmpty(sourceConfig.getImportQuery());
+      boolean tableNameEmpty = Strings.isNullOrEmpty(sourceConfig.getTableName());
+      if (importQueryEmpty && tableNameEmpty) {
+        collector.addFailure("Either 'Import Query' or 'Table Name' must be provided.",
+                        "Please specify Either 'ImportQuery' or 'Table Name.")
+                .withConfigProperty(IMPORT_QUERY)
+                .withConfigProperty(TABLE_NAME);
+      }
+    }
+    collector.getOrThrowException();
+  }
+
+  /**
    * {@link PluginConfig} for {@link AbstractDBSource}
    */
   public abstract static class DBSourceConfig extends DBConfig implements DatabaseSourceConfig {
@@ -420,6 +483,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
     public static final String FETCH_SIZE = "fetchSize";
 
+    @Nullable
     @Name(IMPORT_QUERY)
     @Description("The SELECT query to use to import data from the specified table. " +
       "You can specify an arbitrary number of columns to import, or import all columns using *. " +
@@ -467,6 +531,14 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
 
     public String getImportQuery() {
       return cleanQuery(importQuery);
+    }
+
+    public String getTableName() {
+      return null;
+    }
+
+    public String getImportQueryType() {
+      return null;
     }
 
     public String getBoundingQuery() {

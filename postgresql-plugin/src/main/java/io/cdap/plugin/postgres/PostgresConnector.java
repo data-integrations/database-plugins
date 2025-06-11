@@ -99,6 +99,8 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
     }
     sourceProperties.put(PostgresSource.PostgresSourceConfig.IMPORT_QUERY,
                          getTableQuery(path.getDatabase(), schema, table));
+    sourceProperties.put(PostgresSource.PostgresSourceConfig.PROPERTY_IMPORT_QUERY_TYPE,
+            PostgresSource.PostgresSourceConfig.IMPORT_QUERY);
     sinkProperties.put(PostgresSink.PostgresSinkConfig.TABLE_NAME, table);
     sourceProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
     sinkProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));

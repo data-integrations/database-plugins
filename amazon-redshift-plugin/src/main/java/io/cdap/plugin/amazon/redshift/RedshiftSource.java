@@ -17,6 +17,7 @@
 package io.cdap.plugin.amazon.redshift;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Metadata;
@@ -24,6 +25,8 @@ import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.FailureCollector;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.connector.Connector;
@@ -34,11 +37,16 @@ import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.ImportQueryType;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
+
+import static io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig.IMPORT_QUERY;
+import static io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig.PROPERTY_IMPORT_QUERY_TYPE;
+import static io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig.TABLE_NAME;
 
 /**
  * Batch source to read from an Amazon Redshift database.
@@ -57,6 +65,30 @@ public class RedshiftSource
   public RedshiftSource(RedshiftSourceConfig redshiftSourceConfig) {
     super(redshiftSourceConfig);
     this.redshiftSourceConfig = redshiftSourceConfig;
+  }
+
+  @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    FailureCollector collector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
+    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    if (sourceConfig.containsMacro(TABLE_NAME) || sourceConfig.containsMacro(IMPORT_QUERY)) {
+      if (sourceConfig.getSchema() != null) {
+        stageConfigurer.setOutputSchema(sourceConfig.getSchema());
+      }
+      return;
+    }
+    validateTableNameAndImportQuery(collector);
+    super.configurePipeline(pipelineConfigurer);
+  }
+
+  @Override
+  public void prepareRun(BatchSourceContext context) throws Exception {
+    FailureCollector collector = context.getFailureCollector();
+    if (sourceConfig.containsMacro(TABLE_NAME) || sourceConfig.containsMacro(IMPORT_QUERY)) {
+      return;
+    }
+    validateTableNameAndImportQuery(collector);
+    super.prepareRun(context);
   }
 
   @Override

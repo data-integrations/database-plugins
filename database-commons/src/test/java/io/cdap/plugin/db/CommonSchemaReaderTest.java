@@ -25,10 +25,14 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -40,10 +44,121 @@ public class CommonSchemaReaderTest {
   @Mock
   ResultSetMetaData metadata;
 
+  @Mock
+  Connection mockConn;
+  @Mock
+  DatabaseMetaData mockDbMeta;
+  @Mock
+  ResultSet mockColumns;
+  @Mock
+  ResultSet mockTables;
+
+
   @Before
   public void before() {
-    reader = new CommonSchemaReader();
+    reader = new CommonSchemaReader() {
+      @Override
+      public Schema getSchema(String typeName, int columnType, int precision, int scale, String columnName,
+                              boolean isSigned, boolean handleAsDecimal) {
+        if ("INTEGER".equalsIgnoreCase(typeName) || columnType == Types.INTEGER) {
+          return Schema.of(Schema.Type.INT);
+        }
+        if ("VARCHAR".equalsIgnoreCase(typeName) || columnType == Types.VARCHAR) {
+          return Schema.of(Schema.Type.STRING);
+        }
+        if ("BIGINT".equalsIgnoreCase(typeName) || columnType == Types.BIGINT) {
+          return Schema.of(Schema.Type.LONG);
+        }
+        return Schema.of(Schema.Type.STRING);
+      }
+    };
   }
+
+  /**
+   * Test: getSchemaFields(Connection, String) with a simple table name.
+   * This covers the case where the table exists, and two columns are present:
+   * one NOT NULL integer, one nullable string.
+   */
+  @Test
+  public void testGetSchemaFieldsWithConnection() throws Exception {
+    when(mockConn.getMetaData()).thenReturn(mockDbMeta);
+
+    when(mockDbMeta.getColumns(any(), any(), eq("MYTABLE"), any())).thenReturn(mockColumns);
+    when(mockColumns.next()).thenReturn(true, true, false);
+    when(mockColumns.getString("COLUMN_NAME")).thenReturn("id", "name");
+    when(mockColumns.getString("TYPE_NAME")).thenReturn("INTEGER", "VARCHAR");
+    when(mockColumns.getInt("DATA_TYPE")).thenReturn(Types.INTEGER, Types.VARCHAR);
+    when(mockColumns.getInt("COLUMN_SIZE")).thenReturn(10, 255);
+    when(mockColumns.getInt("DECIMAL_DIGITS")).thenReturn(0, 0);
+    when(mockColumns.getInt("NULLABLE")).thenReturn(DatabaseMetaData.columnNoNulls, DatabaseMetaData.columnNullable);
+
+    java.util.List<Schema.Field> fields = reader.getSchemaFields(mockConn, "MYTABLE");
+
+    Assert.assertEquals(2, fields.size());
+    Assert.assertEquals("id", fields.get(0).getName());
+    Assert.assertEquals(Schema.of(Schema.Type.INT), fields.get(0).getSchema());
+    Assert.assertEquals("name", fields.get(1).getName());
+    Assert.assertTrue(fields.get(1).getSchema().isNullable());
+    Assert.assertEquals(Schema.of(Schema.Type.STRING), fields.get(1).getSchema().getNonNullable());
+  }
+
+  /**
+   * Test: getSchemaFields(Connection, String) with a schema-qualified table name.
+   * This checks that "myschema.MYTABLE" is parsed and resolved correctly.
+   */
+  @Test
+  public void testGetSchemaFieldsWithSchemaQualifiedName() throws Exception {
+    // Setup for schema-qualified table name "myschema.MYTABLE"
+    when(mockConn.getMetaData()).thenReturn(mockDbMeta);
+
+    when(mockDbMeta.getColumns(any(), eq("myschema"), eq("MYTABLE"), any())).thenReturn(mockColumns);
+    when(mockColumns.next()).thenReturn(true, false);
+    when(mockColumns.getString("COLUMN_NAME")).thenReturn("id");
+    when(mockColumns.getString("TYPE_NAME")).thenReturn("INTEGER");
+    when(mockColumns.getInt("DATA_TYPE")).thenReturn(Types.INTEGER);
+    when(mockColumns.getInt("COLUMN_SIZE")).thenReturn(10);
+    when(mockColumns.getInt("DECIMAL_DIGITS")).thenReturn(0);
+    when(mockColumns.getInt("NULLABLE")).thenReturn(DatabaseMetaData.columnNoNulls);
+
+    java.util.List<Schema.Field> fields = reader.getSchemaFields(mockConn, "myschema.MYTABLE");
+    Assert.assertEquals(1, fields.size());
+    Assert.assertEquals("id", fields.get(0).getName());
+    Assert.assertEquals(Schema.of(Schema.Type.INT), fields.get(0).getSchema());
+  }
+
+  /**
+   * Test: Nullability logic is correct for columns.
+   */
+  @Test
+  public void testGetSchemaFieldsHandlesNullability() throws Exception {
+    when(mockConn.getMetaData()).thenReturn(mockDbMeta);
+    when(mockDbMeta.getColumns(any(), any(), eq("MYTABLE"), any())).thenReturn(mockColumns);
+    when(mockColumns.next()).thenReturn(true, true, false);
+    when(mockColumns.getString("COLUMN_NAME")).thenReturn("col1", "col2");
+    when(mockColumns.getString("TYPE_NAME")).thenReturn("INTEGER", "VARCHAR");
+    when(mockColumns.getInt("DATA_TYPE")).thenReturn(Types.INTEGER, Types.VARCHAR);
+    when(mockColumns.getInt("COLUMN_SIZE")).thenReturn(10, 255);
+    when(mockColumns.getInt("DECIMAL_DIGITS")).thenReturn(0, 0);
+    when(mockColumns.getInt("NULLABLE")).thenReturn(DatabaseMetaData.columnNullable, DatabaseMetaData.columnNoNulls);
+
+    java.util.List<Schema.Field> fields = reader.getSchemaFields(mockConn, "MYTABLE");
+    Assert.assertTrue(fields.get(0).getSchema().isNullable());
+    Assert.assertFalse(fields.get(1).getSchema().isNullable());
+  }
+
+  /**
+   * Test: Exception is thrown when table is not found.
+   */
+  @Test(expected = SQLException.class)
+  public void testGetSchemaFieldsThrowsWhenTableNotFound() throws Exception {
+    when(mockConn.getMetaData()).thenReturn(mockDbMeta);
+    when(mockDbMeta.getColumns(any(), any(), eq("NOTABLE"), any())).thenReturn(mockColumns);
+    when(mockColumns.next()).thenReturn(false); // No columns found
+
+    reader.getSchemaFields(mockConn, "NOTABLE");
+  }
+
+
 
   @Test
   public void testGetSchemaHandlesNull() throws SQLException {

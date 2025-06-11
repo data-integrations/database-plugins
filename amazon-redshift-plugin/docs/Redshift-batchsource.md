@@ -31,6 +31,10 @@ contain the '$CONDITIONS' string. For example, 'SELECT * FROM table WHERE $CONDI
 The '$CONDITIONS' string will be replaced by 'splitBy' field limits specified by the bounding query.
 The '$CONDITIONS' string is not required if numSplits is set to one.
 
+**Import Query Type**  - Determines how data is extracted—either by using a Table Name or a custom Import Query.
+
+**Table Name**: Extracts data directly from a specified database table.
+
 **Bounding Query:** Bounding Query should return the min and max of the values of the 'splitBy' field.
 For example, 'SELECT MIN(id),MAX(id) FROM table'. Not required if numSplits is set to one.
 

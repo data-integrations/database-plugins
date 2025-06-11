@@ -31,8 +31,8 @@ public class PostgresFailedConnectionTest extends DBSpecificFailedConnectionTest
       new PostgresConnectorConfig("localhost", 5432, "username", "password", "jdbc", ""));
 
     super.test(JDBC_DRIVER_CLASS_NAME, connector, "Failed to create connection to database via connection string: " +
-                                                    "jdbc:postgresql://localhost:5432/null and arguments: " +
-                                                    "{user=username}. Error: ConnectException: Connection refused " +
-                                                    "(Connection refused).");
+                                                  "jdbc:postgresql://localhost:5432/null and arguments: " +
+                                                  "{user=username}. Error: ConnectException: Connection refused " +
+                                                  "(Connection refused).");
   }
 }
