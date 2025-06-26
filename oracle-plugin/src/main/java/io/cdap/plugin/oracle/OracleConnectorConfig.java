@@ -22,8 +22,6 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
 
@@ -43,12 +41,14 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                                String connectionArguments, String connectionType, String database) {
-    this(host, port, user, password, jdbcPluginName, connectionArguments, connectionType, database, null, null);
+    this(host, port, user, password, jdbcPluginName, connectionArguments, connectionType, database, null, null, null,
+         null);
   }
 
   public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                                String connectionArguments, String connectionType, String database,
-                               String role, Boolean useSSL) {
+                               String role, Boolean useSSL, @Nullable Boolean treatAsOldTimestamp,
+                               @Nullable Boolean treatPrecisionlessNumAsDeci) {
 
     this.host = host;
     this.port = port;
@@ -60,6 +60,8 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
     this.database = database;
     this.role = role;
     this.useSSL = useSSL;
+    this.treatAsOldTimestamp = treatAsOldTimestamp;
+    this.treatPrecisionlessNumAsDeci = treatPrecisionlessNumAsDeci;
   }
 
   @Override
@@ -86,6 +88,16 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   @Nullable
   public Boolean useSSL;
 
+  @Name(OracleConstants.TREAT_AS_OLD_TIMESTAMP)
+  @Description("A hidden field to handle timestamp as CDAP's timestamp micros or string as per old behavior.")
+  @Nullable
+  public Boolean treatAsOldTimestamp;
+
+  @Name(OracleConstants.TREAT_PRECISIONLESSNUM_AS_DECI)
+  @Description("A hidden field to handle precision less number as CDAP's decimal per old behavior.")
+  @Nullable
+  public Boolean treatPrecisionlessNumAsDeci;
+
   @Override
   protected int getDefaultPort() {
     return 1521;
@@ -106,6 +118,14 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   public Boolean getSSlMode() {
     // return false if useSSL is null, otherwise return its value
     return useSSL != null && useSSL;
+  }
+
+  public Boolean getTreatAsOldTimestamp() {
+    return Boolean.TRUE.equals(treatAsOldTimestamp);
+  }
+
+  public Boolean getTreatPrecisionlessNumAsDeci() {
+    return Boolean.TRUE.equals(treatPrecisionlessNumAsDeci);
   }
 
   @Override

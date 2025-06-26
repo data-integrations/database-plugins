@@ -63,7 +63,12 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
 
   @Override
   protected SchemaReader getSchemaReader() {
-    return new OracleSourceSchemaReader();
+    // PLUGIN-1893 : Based on field/properties from Oracle source and Oracle connection we will pass the flag to control
+    // handle schema to make it backward compatible.
+    boolean treatAsOldTimestamp = oracleSourceConfig.getConnection().getTreatAsOldTimestamp();
+    boolean treatPrecisionlessNumAsDeci = oracleSourceConfig.getConnection().getTreatPrecisionlessNumAsDeci();
+
+    return new OracleSourceSchemaReader(null, treatAsOldTimestamp, treatPrecisionlessNumAsDeci);
   }
 
   @Override
@@ -127,9 +132,11 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
                               String connectionArguments, String connectionType, String database, String role,
                               int defaultBatchValue, int defaultRowPrefetch,
                               String importQuery, Integer numSplits, int fetchSize,
-                              String boundingQuery, String splitBy, Boolean useSSL) {
+                              String boundingQuery, String splitBy, Boolean useSSL, Boolean treatAsOldTimestamp,
+                              Boolean treatPrecisionlessNumAsDeci) {
       this.connection = new OracleConnectorConfig(host, port, user, password, jdbcPluginName, connectionArguments,
-                                                  connectionType, database, role, useSSL);
+                                                  connectionType, database, role, useSSL, treatAsOldTimestamp,
+                                                  treatPrecisionlessNumAsDeci);
       this.defaultBatchValue = defaultBatchValue;
       this.defaultRowPrefetch = defaultRowPrefetch;
       this.fetchSize = fetchSize;
