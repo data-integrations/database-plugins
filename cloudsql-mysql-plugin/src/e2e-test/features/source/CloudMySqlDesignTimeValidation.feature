@@ -192,7 +192,23 @@ Feature: CloudMySql source- Verify CloudMySql source plugin design time validati
       | connectionName |
       | database       |
       | referenceName  |
-      | importQuery    |
+
+  @CloudMySql_Required
+  Scenario: To verify CloudSQLMySQL source plugin validation error message with blank import query
+    Given Open Datafusion Project to configure pipeline
+    When Expand Plugin group in the LHS plugins list: "Source"
+    When Select plugin: "CloudSQL MySQL" from the plugins list as: "Source"
+    Then Navigate to the properties page of plugin: "CloudSQL MySQL"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Select radio button plugin property: "instanceType" with value: "public"
+    Then Replace input plugin property: "connectionName" with value: "connectionName" for Credentials and Authorization related fields
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
+    Then Enter input plugin property: "referenceName" with value: "sourceRef"
+    Then Replace input plugin property: "database" with value: "DatabaseName"
+    Then Click on the Validate button
+    Then Verify that the Plugin Property: "importQuery" is displaying an in-line error message: "errorMessageImportQuery"
+
 
   @CloudMySql_Required
   Scenario: To verify CloudSQLMySQL source plugin validation error message with invalid connection name with public instance

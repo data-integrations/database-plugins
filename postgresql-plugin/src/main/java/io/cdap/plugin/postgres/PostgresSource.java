@@ -25,6 +25,8 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.connector.Connector;
@@ -39,6 +41,9 @@ import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Map;
 import javax.annotation.Nullable;
+
+import static io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig.IMPORT_QUERY;
+import static io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig.TABLE_NAME;
 
 /**
  * Batch source to read from PostgreSQL.
@@ -55,6 +60,31 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
   public PostgresSource(PostgresSourceConfig postgresSourceConfig) {
     super(postgresSourceConfig);
     this.postgresSourceConfig = postgresSourceConfig;
+  }
+
+
+  @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    FailureCollector collector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
+    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    if (sourceConfig.containsMacro(TABLE_NAME) || sourceConfig.containsMacro(IMPORT_QUERY)) {
+      if (sourceConfig.getSchema() != null) {
+        stageConfigurer.setOutputSchema(sourceConfig.getSchema());
+      }
+      return;
+    }
+    validateTableNameAndImportQuery(collector);
+    super.configurePipeline(pipelineConfigurer);
+  }
+
+  @Override
+  public void prepareRun(BatchSourceContext context) throws Exception {
+    FailureCollector collector = context.getFailureCollector();
+    if (sourceConfig.containsMacro(TABLE_NAME) || sourceConfig.containsMacro(IMPORT_QUERY)) {
+      return;
+    }
+    validateTableNameAndImportQuery(collector);
+    super.prepareRun(context);
   }
 
   @Override

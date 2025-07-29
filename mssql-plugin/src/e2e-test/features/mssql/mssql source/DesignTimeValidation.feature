@@ -212,7 +212,22 @@ Feature: Mssql source- Verify Mssql source plugin design time validation scenari
       | jdbcPluginName |
       | referenceName  |
       | database       |
-      | importQuery    |
+
+  @Mssql_Required
+  Scenario: To verify MSSQL source plugin validation error message with blank import query
+    Given Open Datafusion Project to configure pipeline
+    When Expand Plugin group in the LHS plugins list: "Source"
+    When Select plugin: "SQL Server" from the plugins list as: "Source"
+    Then Navigate to the properties page of plugin: "SQL Server"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
+    Then Enter input plugin property: "referenceName" with value: "sourceRef"
+    Then Replace input plugin property: "database" with value: "databaseName"
+    Then Click on the Validate button
+    Then Verify that the Plugin Property: "importQuery" is displaying an in-line error message: "errorMessageImportQuery"
 
   @Mssql_Required
   Scenario: Verify the validation error message with missing jdbc plugin name

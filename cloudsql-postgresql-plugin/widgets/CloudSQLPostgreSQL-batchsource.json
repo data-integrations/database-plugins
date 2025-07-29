@@ -128,6 +128,30 @@
       "label": "CloudSQL Properties",
       "properties": [
         {
+          "widget-type": "hidden",
+          "label": "Import Query Type",
+          "name": "importQueryType",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "nativeQuery",
+            "options": [
+              {
+                "id": "nativeQuery",
+                "label": "Native Query"
+              },
+              {
+                "id": "namedTable",
+                "label": "Named Table"
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Table Name",
+          "name": "tableName"
+        },
+        {
           "widget-type": "textarea",
           "label": "Import Query",
           "name": "importQuery",

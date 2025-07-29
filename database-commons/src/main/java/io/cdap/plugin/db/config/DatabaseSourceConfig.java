@@ -90,4 +90,15 @@ public interface DatabaseSourceConfig extends DatabaseConnectionConfig {
    * @return the number of rows to fetch at a time per split
    */
   Integer getFetchSize();
+
+  /**
+   * Returns the name of the table from which data will be imported.
+   */
+  String getTableName();
+
+  /**
+   * @return a {@link String} indicating the import query type,
+   * typically "table" (for table name) or "query" (for custom import query)
+   */
+  String getImportQueryType();
 }

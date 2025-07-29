@@ -22,7 +22,6 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.CommonSchemaReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -56,34 +55,12 @@ public class RedshiftSchemaReader extends CommonSchemaReader {
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     String typeName = metadata.getColumnTypeName(index);
     int columnType = metadata.getColumnType(index);
+    int precision = metadata.getPrecision(index);
+    String columnName = metadata.getColumnName(index);
+    int scale = metadata.getScale(index);
+    boolean isSigned = metadata.isSigned(index);
 
-    if (STRING_MAPPED_REDSHIFT_TYPES_NAMES.contains(typeName)) {
-      return Schema.of(Schema.Type.STRING);
-    }
-    if (typeName.equalsIgnoreCase("INT")) {
-      return Schema.of(Schema.Type.INT);
-    }
-    if (typeName.equalsIgnoreCase("BIGINT")) {
-      return Schema.of(Schema.Type.LONG);
-    }
-
-    // If it is a numeric type without precision then use the Schema of String to avoid any precision loss
-    if (Types.NUMERIC == columnType) {
-      int precision = metadata.getPrecision(index);
-      if (precision == 0) {
-        LOG.warn(String.format("Field '%s' is a %s type without precision and scale, "
-                                 + "converting into STRING type to avoid any precision loss.",
-                               metadata.getColumnName(index),
-                               metadata.getColumnTypeName(index)));
-        return Schema.of(Schema.Type.STRING);
-      }
-    }
-
-    if (typeName.equalsIgnoreCase("timestamp")) {
-      return Schema.of(Schema.LogicalType.DATETIME);
-    }
-
-    return super.getSchema(metadata, index);
+    return getSchema(typeName, columnType, precision, scale, columnName, isSigned, true);
   }
 
   @Override
@@ -114,4 +91,45 @@ public class RedshiftSchemaReader extends CommonSchemaReader {
     return schemaFields;
   }
 
+  /**
+   * Returns the CDAP {@link Schema} for a database column based on JDBC metadata.
+   * Handles Redshift-specific and common JDBC types:
+   * Maps Redshift string types to {@link Schema.Type#STRING}
+   * Maps "INT" to {@link Schema.Type#INT}
+   * Maps "BIGINT" to {@link Schema.Type#LONG}.
+   * Maps NUMERIC with zero precision to {@link Schema.Type#STRING} and logs a warning.
+   * Maps "timestamp" to {@link Schema.LogicalType#DATETIME}.
+   * Delegates to the parent plugin for all other types.
+   * @param typeName    SQL type name (e.g. "INT", "BIGINT", "timestamp")
+   * @param columnType  JDBC type code (see {@link java.sql.Types})
+   * @param precision   column precision (for numeric types)
+   * @param scale       column scale (for numeric types)
+   * @param columnName  column name
+   * @param isSigned    whether the column is signed
+   * @param handleAsDecimal whether to handle as decimal
+   * @return the mapped {@link Schema} type
+   */
+  @Override
+  public Schema getSchema(String typeName, int columnType, int precision, int scale, String columnName,
+                          boolean isSigned, boolean handleAsDecimal) {
+    if (STRING_MAPPED_REDSHIFT_TYPES_NAMES.contains(typeName)) {
+      return Schema.of(Schema.Type.STRING);
+    }
+    if ("INT".equalsIgnoreCase(typeName)) {
+      return Schema.of(Schema.Type.INT);
+    }
+    if ("BIGINT".equalsIgnoreCase(typeName)) {
+      return Schema.of(Schema.Type.LONG);
+    }
+    if (Types.NUMERIC == columnType && precision == 0) {
+      LOG.warn(String.format("Field '%s' is a %s type without precision and scale," +
+                      " converting into STRING type to avoid any precision loss.",
+              columnName, typeName));
+      return Schema.of(Schema.Type.STRING);
+    }
+    if ("timestamp".equalsIgnoreCase(typeName)) {
+      return Schema.of(Schema.LogicalType.DATETIME);
+    }
+    return super.getSchema(typeName, columnType, precision, scale, columnName, isSigned, handleAsDecimal);
+  }
 }

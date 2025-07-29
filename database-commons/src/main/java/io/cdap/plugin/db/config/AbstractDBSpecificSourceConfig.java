@@ -28,6 +28,7 @@ import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
+import io.cdap.plugin.util.ImportQueryType;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -40,8 +41,9 @@ import javax.annotation.Nullable;
  * Abstract Config for DB Specific Source plugin
  */
 public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implements DatabaseSourceConfig {
-
+  public static final String TABLE_NAME = "tableName";
   public static final String IMPORT_QUERY = "importQuery";
+  public static final String PROPERTY_IMPORT_QUERY_TYPE = "importQueryType";
   public static final String BOUNDING_QUERY = "boundingQuery";
   public static final String SPLIT_BY = "splitBy";
   public static final String NUM_SPLITS = "numSplits";
@@ -54,6 +56,18 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
   @Description(Constants.Reference.REFERENCE_NAME_DESCRIPTION)
   public String referenceName;
 
+  @Nullable
+  @Name(PROPERTY_IMPORT_QUERY_TYPE)
+  @Description("Whether to select Table Name or Import Query to extract the data.")
+  public String importQueryType;
+
+  @Nullable
+  @Name(TABLE_NAME)
+  @Description("The name of the table to import data from. This can be used instead of specifying an import query.")
+  @Macro
+  protected String tableName;
+
+  @Nullable
   @Name(IMPORT_QUERY)
   @Description("The SELECT query to use to import data from the specified table. " +
     "You can specify an arbitrary number of columns to import, or import all columns using *. " +
@@ -103,11 +117,20 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
     return cleanQuery(importQuery);
   }
 
+  public String getTableName() {
+    return tableName;
+  }
+
+  @Nullable
+  public String getImportQueryType() {
+    return importQueryType == null ? ImportQueryType.IMPORT_QUERY.name() : importQueryType;
+  }
+
   public String getBoundingQuery() {
     return cleanQuery(boundingQuery);
   }
 
-  public void validate(FailureCollector collector) {
+    public void validate(FailureCollector collector) {
     boolean hasOneSplit = false;
     if (!containsMacro(NUM_SPLITS) && numSplits != null) {
       if (numSplits < 1) {
@@ -125,10 +148,16 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
       TransactionIsolationLevel.validate(getTransactionIsolationLevel(), collector);
     }
 
-    if (!containsMacro(IMPORT_QUERY) && Strings.isNullOrEmpty(importQuery)) {
-      collector.addFailure("Import Query is empty.", "Specify the Import Query.")
-        .withConfigProperty(IMPORT_QUERY);
-    }
+    if (!containsMacro(PROPERTY_IMPORT_QUERY_TYPE)) {
+        ImportQueryType importQueryType = ImportQueryType.fromString(getImportQueryType());
+        boolean isImportQuery = importQueryType == ImportQueryType.IMPORT_QUERY;
+
+        if ((isImportQuery && !containsMacro(IMPORT_QUERY) && Strings.isNullOrEmpty(importQuery)) ||
+                (!isImportQuery && !containsMacro(TABLE_NAME) && Strings.isNullOrEmpty(tableName))) {
+          collector.addFailure("Import Query cannot be null.", "Please specify the Import Query.")
+                  .withConfigProperty(isImportQuery ? IMPORT_QUERY : TABLE_NAME);
+        }
+      }
 
     if (!hasOneSplit && !containsMacro(IMPORT_QUERY) && !getImportQuery().contains("$CONDITIONS")) {
       collector.addFailure(String.format(

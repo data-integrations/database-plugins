@@ -111,6 +111,8 @@ public class RedshiftConnector extends AbstractDBSpecificConnector<io.cdap.plugi
     }
     sourceProperties.put(RedshiftSource.RedshiftSourceConfig.IMPORT_QUERY,
                          getTableQuery(path.getDatabase(), schema, table));
+    sourceProperties.put(RedshiftSource.RedshiftSourceConfig.PROPERTY_IMPORT_QUERY_TYPE,
+            RedshiftSource.RedshiftSourceConfig.IMPORT_QUERY);
     sourceProperties.put(Constants.Reference.REFERENCE_NAME, ReferenceNames.cleanseReferenceName(table));
   }
 
