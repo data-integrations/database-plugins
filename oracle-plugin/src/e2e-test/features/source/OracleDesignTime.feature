@@ -82,3 +82,4 @@ Feature: Oracle source- Verify Oracle source plugin design time scenarios
     Then Verify the Output Schema matches the Expected Schema: "outputSchema"
     Then Validate "Oracle" plugin properties
     Then Close the Plugin Properties page
+
