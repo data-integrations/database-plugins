@@ -156,6 +156,37 @@
           }
         }
       ]
+    },
+    {
+      "properties": [
+        {
+          "widget-type": "hidden",
+          "label": "Initial Retry Duration (sec)",
+          "name": "initialRetryDuration",
+          "widget-attributes": {
+            "default": 5,
+            "minimum": 0
+          }
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Maximum Retry Duration (sec)",
+          "name": "maxRetryDuration",
+          "widget-attributes": {
+            "default": 80,
+            "minimum": 0
+          }
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Maximum Retry Count",
+          "name": "maxRetryCount",
+          "widget-attributes": {
+            "default": 5,
+            "minimum": 0
+          }
+        }
+      ]
     }
   ]
 }

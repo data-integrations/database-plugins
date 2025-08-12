@@ -35,6 +35,7 @@ import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.batch.sink.SinkOutputFormatProvider;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSinkConfig;
@@ -122,8 +123,11 @@ public class PostgresSink extends AbstractDBSink<PostgresSink.PostgresSinkConfig
   }
 
   @Override
-  protected String getExternalDocumentationLink() {
-    return DBUtils.POSTGRES_SUPPORTED_DOC_URL;
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new PostgresErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   /**

@@ -254,4 +254,4 @@ Feature: MySQL Sink - Design time validation scenarios
     Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Click on the Validate button
-    Then Verify that the Plugin is displaying an error message: "blank.connection.message" on the header
+    Then Verify that the Plugin is displaying an error message: "blank.HostConnection.message" on the header

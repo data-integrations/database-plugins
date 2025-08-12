@@ -21,6 +21,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DBSpecificSinkConfig;
@@ -68,8 +69,11 @@ public class MariadbSink extends AbstractDBSink<MariadbSink.MariadbSinkConfig> {
   }
 
   @Override
-  protected String getExternalDocumentationLink() {
-    return DBUtils.MARIADB_SUPPORTED_DOC_URL;
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new MariadbErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   @Override

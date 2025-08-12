@@ -18,6 +18,7 @@ package io.cdap.plugin.db.source;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import dev.failsafe.RetryPolicy;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -25,10 +26,6 @@ import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
-import io.cdap.cdap.api.exception.ErrorCategory;
-import io.cdap.cdap.api.exception.ErrorCodeType;
-import io.cdap.cdap.api.exception.ErrorType;
-import io.cdap.cdap.api.exception.ErrorUtils;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -42,6 +39,7 @@ import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSource;
 import io.cdap.plugin.common.ReferencePluginConfig;
 import io.cdap.plugin.common.SourceInputFormatProvider;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
@@ -52,6 +50,8 @@ import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.db.config.DatabaseSourceConfig;
 import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
+import io.cdap.plugin.util.RetryPolicyUtil;
+import io.cdap.plugin.util.RetryUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
@@ -62,7 +62,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -87,13 +86,16 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
                                                                 Pattern.CASE_INSENSITIVE);
   private static final Pattern WHERE_CONDITIONS = Pattern.compile("\\s+where \\$conditions",
                                                                   Pattern.CASE_INSENSITIVE);
-
+  private final RetryPolicy<?> retryPolicy;
+  protected DBErrorDetailsProvider dbErrorDetailsProvider;
   protected final T sourceConfig;
   protected Class<? extends Driver> driverClass;
 
   public AbstractDBSource(T sourceConfig) {
     super(new ReferencePluginConfig(sourceConfig.getReferenceName()));
     this.sourceConfig = sourceConfig;
+    this.retryPolicy = RetryPolicyUtil.getRetryPolicy(sourceConfig.getInitialRetryDuration(),
+      sourceConfig.getMaxRetryDuration(), sourceConfig.getMaxRetryCount());
   }
 
   @Override
@@ -137,7 +139,6 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     SQLException, InstantiationException {
     DriverCleanup driverCleanup;
     try {
-
       driverCleanup = loadPluginClassAndGetDriver(driverClass);
       try {
         return getSchema();
@@ -168,13 +169,14 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
   }
 
   private Schema loadSchemaFromDB(Connection connection, String query) throws SQLException {
-    Statement statement = connection.createStatement();
-    statement.setMaxRows(1);
-    if (query.contains("$CONDITIONS")) {
-      query = removeConditionsClause(query);
+    try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
+      getErrorDetailsProvider())) {
+      statement.setMaxRows(1);
+      String finalQuery = query.contains("$CONDITIONS") ? removeConditionsClause(query) : query;
+      ResultSet resultSet = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement,
+        finalQuery, getErrorDetailsProvider());
+      return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
     }
-    ResultSet resultSet = statement.executeQuery(query);
-    return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
   }
 
   @VisibleForTesting
@@ -194,28 +196,10 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
 
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(sourceConfig.getConnectionArguments());
-    try (Connection connection = DriverManager.getConnection(connectionString, connectionProperties)) {
+    try (Connection connection = RetryUtils.createConnectionWithRetry((RetryPolicy<Connection>) retryPolicy,
+      connectionString, connectionProperties, getErrorDetailsProvider())) {
       executeInitQueries(connection, sourceConfig.getInitQueries());
       return loadSchemaFromDB(connection, sourceConfig.getImportQuery());
-
-    } catch (SQLException e) {
-      // wrap exception to ensure SQLException-child instances not exposed to contexts without jdbc driver in classpath
-      String errorMessage =
-        String.format("SQL Exception occurred: [Message='%s', SQLState='%s', ErrorCode='%s'].", e.getMessage(),
-          e.getSQLState(), e.getErrorCode());
-      String errorMessageWithDetails = String.format("Error occurred while trying to get schema from database." +
-        "Error message: '%s'. Error code: '%s'. SQLState: '%s'", e.getMessage(), e.getErrorCode(), e.getSQLState());
-      String externalDocumentationLink = getExternalDocumentationLink();
-      if (!Strings.isNullOrEmpty(externalDocumentationLink)) {
-        if (!errorMessage.endsWith(".")) {
-          errorMessage = errorMessage + ".";
-        }
-        errorMessage = String.format("%s For more details, see %s", errorMessage, externalDocumentationLink);
-      }
-      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN),
-        errorMessage, errorMessageWithDetails, ErrorType.USER, false, ErrorCodeType.SQLSTATE,
-        e.getSQLState(), externalDocumentationLink, new SQLException(e.getMessage(),
-          e.getSQLState(), e.getErrorCode()));
     } finally {
       driverCleanup.destroy();
     }
@@ -223,8 +207,9 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
 
   private void executeInitQueries(Connection connection, List<String> initQueries) throws SQLException {
     for (String query : initQueries) {
-      try (Statement statement = connection.createStatement()) {
-        statement.execute(query);
+      try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
+        getErrorDetailsProvider())) {
+        RetryUtils.executeInitQueryWithRetry(retryPolicy, statement, query, getErrorDetailsProvider());
       }
     }
   }
@@ -241,6 +226,19 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
    */
   protected String getErrorDetailsProviderClassName() {
     return null;
+  }
+
+  /**
+   * Returns the DBErrorDetailsProvider instance.
+   * Override this method to provide a custom DBErrorDetailsProvider instance.
+   *
+   * @return DBErrorDetailsProvider instance
+   */
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider =  new DBErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   private DriverCleanup loadPluginClassAndGetDriver(Class<? extends Driver> driverClass)
@@ -262,11 +260,12 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     }
   }
 
-  private Connection getConnection() throws SQLException {
+  private Connection getConnection() {
     String connectionString = createConnectionString();
     Properties connectionProperties = new Properties();
     connectionProperties.putAll(sourceConfig.getConnectionArguments());
-    return DriverManager.getConnection(connectionString, connectionProperties);
+    return RetryUtils.createConnectionWithRetry((RetryPolicy<Connection>) retryPolicy,
+      connectionString, connectionProperties, getErrorDetailsProvider());
   }
 
   @Override
@@ -374,16 +373,6 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
 
   protected Class<? extends DBWritable> getDBRecordType() {
     return DBRecord.class;
-  }
-
-  /**
-   * Returns the external documentation link.
-   * Override this method to provide a custom external documentation link.
-   *
-   * @return external documentation link
-   */
-  protected String getExternalDocumentationLink() {
-    return null;
   }
 
   @Override

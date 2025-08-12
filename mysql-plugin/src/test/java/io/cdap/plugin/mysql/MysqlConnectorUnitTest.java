@@ -28,7 +28,10 @@ public class MysqlConnectorUnitTest {
   @Rule
   public ExpectedException expectedEx = ExpectedException.none();
 
-  private static final MysqlConnector CONNECTOR = new MysqlConnector(null);
+  private static final MysqlConnectorConfig CONFIG =
+    new MysqlConnectorConfig("host", 3306, "user", "password", "mysql", null);
+
+  private static final MysqlConnector CONNECTOR = new MysqlConnector(CONFIG);
 
   /**
    * Unit test for getTableName()

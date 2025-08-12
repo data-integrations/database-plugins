@@ -28,7 +28,9 @@ public class RedshiftConnectorUnitTest {
   @Rule
   public ExpectedException expectedEx = ExpectedException.none();
 
-  private static final RedshiftConnector CONNECTOR = new RedshiftConnector(null);
+  private static final RedshiftConnector CONNECTOR = new RedshiftConnector(new RedshiftConnectorConfig(
+    "username", "password", "jdbc", "", "localhost",
+    "db", 5432));
 
   /**
    * Unit test for getTableName()

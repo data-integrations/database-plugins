@@ -31,6 +31,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
@@ -83,11 +84,6 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
   }
 
   @Override
-  protected String getExternalDocumentationLink() {
-    return DBUtils.CLOUDSQLMYSQL_SUPPORTED_DOC_URL;
-  }
-
-  @Override
   protected String createConnectionString() {
     if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(
         cloudsqlMysqlSourceConfig.connection.getInstanceType())) {
@@ -136,6 +132,14 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
   @Override
   protected String getErrorDetailsProviderClassName() {
     return CloudSQLMySQLErrorDetailsProvider.class.getName();
+  }
+
+  @Override
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new CloudSQLMySQLErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   /** CloudSQL MySQL source config. */

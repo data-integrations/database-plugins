@@ -25,6 +25,7 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
@@ -46,6 +47,7 @@ import javax.annotation.Nullable;
 public class MariadbSource extends AbstractDBSource<MariadbSource.MariadbSourceConfig> {
 
   private final MariadbSourceConfig mariadbSourceConfig;
+  private MariadbErrorDetailsProvider mariadbErrorDetailsProvider;
 
   /**
    * This is the constructor for MariadbSource.
@@ -89,8 +91,11 @@ public class MariadbSource extends AbstractDBSource<MariadbSource.MariadbSourceC
   }
 
   @Override
-  protected String getExternalDocumentationLink() {
-    return DBUtils.MARIADB_SUPPORTED_DOC_URL;
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new MariadbErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   /**

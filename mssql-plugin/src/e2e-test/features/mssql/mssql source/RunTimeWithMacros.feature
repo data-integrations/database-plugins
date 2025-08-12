@@ -249,7 +249,9 @@ Feature: Mssql Source - Run time scenarios (macro)
     And Enter runtime argument value "invalidSelectQuery" for key "importQuery"
     And Run the Pipeline in Runtime with runtime arguments
     Then Wait till pipeline is in running state
+    And Open and capture logs
     And Verify the pipeline status is "Failed"
+    And Close the pipeline logs
     Then Open Pipeline logs and verify Log entries having below listed Level and Message:
       | Level | Message                        |
       | ERROR | errorMessageInvalidsourcetable |
@@ -294,7 +296,9 @@ Feature: Mssql Source - Run time scenarios (macro)
     And Enter runtime argument value "invalid.password" for key "Password"
     And Run the Pipeline in Runtime with runtime arguments
     Then Wait till pipeline is in running state
+    And Open and capture logs
     And Verify the pipeline status is "Failed"
+    And Close the pipeline logs
     Then Open Pipeline logs and verify Log entries having below listed Level and Message:
       | Level | Message                             |
       | ERROR | errorMessageInvalidCredentialSource |

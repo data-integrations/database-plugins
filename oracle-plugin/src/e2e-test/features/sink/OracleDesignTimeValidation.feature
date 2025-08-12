@@ -260,5 +260,5 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Select radio button plugin property: "connectionType" with value: "service"
     Then Select radio button plugin property: "role" with value: "normal"
     Then Click on the Validate button
-    Then Verify that the Plugin is displaying an error message: "blank.connection.message" on the header
+    Then Verify that the Plugin is displaying an error message: "blank.HostBlank.message" on the header
 

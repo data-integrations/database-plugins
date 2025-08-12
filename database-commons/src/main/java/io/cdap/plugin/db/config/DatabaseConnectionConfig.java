@@ -50,4 +50,10 @@ public interface DatabaseConnectionConfig {
    */
   String getPassword();
 
+  Integer getInitialRetryDuration();
+
+  Integer getMaxRetryDuration();
+
+  Integer getMaxRetryCount();
+
 }

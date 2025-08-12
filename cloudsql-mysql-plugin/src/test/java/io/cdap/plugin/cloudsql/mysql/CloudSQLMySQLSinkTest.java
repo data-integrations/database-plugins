@@ -20,6 +20,9 @@ import io.cdap.cdap.api.data.schema.Schema;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 public class CloudSQLMySQLSinkTest {
    @Test
     public void testSetColumnsInfo() {
@@ -27,7 +30,13 @@ public class CloudSQLMySQLSinkTest {
         Schema.Field.of("id", Schema.of(Schema.Type.INT)),
         Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
         Schema.Field.of("insert", Schema.of(Schema.Type.STRING)));
-        CloudSQLMySQLSink cloudSQLMySQLSink = new CloudSQLMySQLSink(new CloudSQLMySQLSink.CloudSQLMySQLSinkConfig());
+
+        CloudSQLMySQLSink.CloudSQLMySQLSinkConfig mockConfig = mock(CloudSQLMySQLSink.CloudSQLMySQLSinkConfig.class);
+        when(mockConfig.getInitialRetryDuration()).thenReturn(5); // or appropriate value
+        when(mockConfig.getMaxRetryDuration()).thenReturn(80); // or appropriate value
+        when(mockConfig.getMaxRetryCount()).thenReturn(5); // or appropriate value
+
+        CloudSQLMySQLSink cloudSQLMySQLSink = new CloudSQLMySQLSink(mockConfig);
         Assert.assertNotNull(outputSchema.getFields());
         cloudSQLMySQLSink.setColumnsInfo(outputSchema.getFields());
         Assert.assertEquals("`id`,`name`,`insert`", cloudSQLMySQLSink.getDbColumns());

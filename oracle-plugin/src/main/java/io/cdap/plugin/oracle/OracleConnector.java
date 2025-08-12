@@ -32,6 +32,7 @@ import io.cdap.cdap.etl.api.connector.SampleType;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.common.db.DBPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
@@ -188,5 +189,13 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
       .toString()
       .replaceAll("-", "")
       .substring(0, 28);
+  }
+
+  @Override
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new OracleErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 }

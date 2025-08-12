@@ -31,6 +31,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSinkConfig;
@@ -88,8 +89,11 @@ public class OracleSink extends AbstractDBSink<OracleSink.OracleSinkConfig> {
   }
 
   @Override
-  protected String getExternalDocumentationLink() {
-    return DBUtils.ORACLE_SUPPORTED_DOC_URL;
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new OracleErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 
   /**

@@ -31,6 +31,7 @@ import io.cdap.cdap.etl.api.connector.SampleType;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
+import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.common.db.DBPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
@@ -141,5 +142,13 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
                            "LIMIT %d",
                          sessionID, strata, sessionID, sessionID, tableName, sessionID, sessionID, sessionID,
                          limit, strata, limit);
+  }
+
+  @Override
+  protected DBErrorDetailsProvider getErrorDetailsProvider() {
+    if (dbErrorDetailsProvider == null) {
+      dbErrorDetailsProvider = new PostgresErrorDetailsProvider();
+    }
+    return dbErrorDetailsProvider;
   }
 }
