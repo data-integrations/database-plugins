@@ -28,6 +28,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBInputFormat;
+import org.apache.hadoop.mapreduce.lib.db.DBSplitter;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 import org.apache.hadoop.mapreduce.lib.db.DataDrivenDBInputFormat;
 import org.slf4j.Logger;
@@ -39,6 +40,7 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.Properties;
 
 /**
@@ -126,6 +128,15 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
   // this is added for compatibility, more information at (HYDRATOR-791)
   public Connection createConnection() {
     return getConnection();
+  }
+
+  @Override
+  protected DBSplitter getSplitter(int sqlDataType) {
+    // Use SafeBigDecimalSplitter for columns having high precision decimal or numeric columns
+    if (sqlDataType == Types.NUMERIC || sqlDataType == Types.DECIMAL) {
+      return new SafeBigDecimalSplitter();
+    }
+    return super.getSplitter(sqlDataType);
   }
 
   @Override
