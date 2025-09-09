@@ -17,7 +17,7 @@
 @Postgresql
 Feature: PostgreSQL - Verify Postgresql source data transfer
   @POSTGRESQL_SOURCE_TEST @POSTGRESQL_SINK_TEST @Postgresql_Required
-  Scenario: To verify data is getting transferred from PostgreSQL to PostgreSQL successfully
+  Scenario: To verify data is getting transferred from PostgreSQL to PostgreSQL Successfully
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
     When Select plugin: "PostgreSQL" from the plugins list as: "Source"
