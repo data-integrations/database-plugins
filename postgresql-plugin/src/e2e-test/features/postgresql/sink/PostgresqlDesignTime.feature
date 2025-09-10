@@ -20,7 +20,7 @@ Feature: PostgreSQL sink - Verify PostgreSQL sink plugin design time scenarios
   Scenario: To verify PostgreSQL sink plugin validation with connection and basic details for connectivity
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Sink"
-    When Select plugin: "PostgreSQL" from the plugins list as: "Sink"
+    When Select plugin: "PostgreSQL" from the plugins list as: "Sinks"
     Then Navigate to the properties page of plugin: "PostgreSQL"
     Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
     Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
@@ -37,7 +37,7 @@ Feature: PostgreSQL sink - Verify PostgreSQL sink plugin design time scenarios
   Scenario: To verify PostgreSQL sink plugin validation with connection arguments
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Sink"
-    When Select plugin: "PostgreSQL" from the plugins list as: "Sink"
+    When Select plugin: "PostgreSQL" from the plugins list as: "Sinks"
     Then Navigate to the properties page of plugin: "PostgreSQL"
     Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
     Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
