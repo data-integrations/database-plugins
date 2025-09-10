@@ -49,9 +49,9 @@ Feature:PostgreSQL Sink - Verify PostgreSQL Sink Plugin Error scenarios
   Scenario: To verify PostgreSQL sink plugin validation error message with invalid database
     Given Open Datafusion Project to configure pipeline
     When Expand Plugin group in the LHS plugins list: "Source"
-    When Select plugin: "PostgreSQL" from the plugins list as: "Source"
+    When Select plugin: "PostgreSQL" from the plugins list as: "Sources"
     When Expand Plugin group in the LHS plugins list: "Sink"
-    When Select plugin: "PostgreSQL" from the plugins list as: "Sink"
+    When Select plugin: "PostgreSQL" from the plugins list as: "Sinks"
     Then Connect plugins: "PostgreSQL" and "PostgreSQL2" to establish connection
     Then Navigate to the properties page of plugin: "PostgreSQL"
     Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
@@ -84,7 +84,7 @@ Feature:PostgreSQL Sink - Verify PostgreSQL Sink Plugin Error scenarios
     When Expand Plugin group in the LHS plugins list: "Source"
     When Select plugin: "PostgreSQL" from the plugins list as: "Source"
     When Expand Plugin group in the LHS plugins list: "Sink"
-    When Select plugin: "PostgreSQL" from the plugins list as: "Sink"
+    When Select plugin: "PostgreSQL" from the plugins list as: "Sinks"
     Then Connect plugins: "PostgreSQL" and "PostgreSQL2" to establish connection
     Then Navigate to the properties page of plugin: "PostgreSQL"
     Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
