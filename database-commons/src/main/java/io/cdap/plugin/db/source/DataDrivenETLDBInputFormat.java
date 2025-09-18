@@ -26,6 +26,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.db.BigDecimalSplitter;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBInputFormat;
 import org.apache.hadoop.mapreduce.lib.db.DBSplitter;
@@ -35,6 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -178,6 +181,26 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
         }
       }
     };
+  }
+
+  @Override
+  protected DBSplitter getSplitter(int sqlDataType) {
+    if (sqlDataType == Types.NUMERIC || sqlDataType == Types.DECIMAL) {
+      return new CustomBigDecimalSplitter();
+    }
+    return super.getSplitter(sqlDataType);
+  }
+
+  static class CustomBigDecimalSplitter extends BigDecimalSplitter {
+    @Override
+    protected BigDecimal tryDivide(BigDecimal numerator, BigDecimal denominator) {
+      BigDecimal size = numerator.divide(denominator, RoundingMode.HALF_UP);
+      if (size.compareTo(new BigDecimal("0")) <= 0) {
+        int effectiveScale = Math.max(numerator.scale(), denominator.scale()) + 5;
+        return numerator.divide(denominator, effectiveScale, RoundingMode.HALF_UP);
+      }
+      return size;
+    }
   }
 
   @Override
