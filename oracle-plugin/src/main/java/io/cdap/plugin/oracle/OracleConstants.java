@@ -29,10 +29,11 @@ public final class OracleConstants {
   public static final String PLUGIN_NAME = "Oracle";
   public static final String ORACLE_CONNECTION_STRING_SID_FORMAT = "jdbc:oracle:thin:@%s:%s:%s";
   public static final String ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT = "jdbc:oracle:thin:@//%s:%s/%s";
-  // Connection formats to accept protocol (e.g., jdbc:oracle:thin:@<protocol>://<host>:<port>/<SID>)
-  public static final String ORACLE_CONNECTION_STRING_SID_FORMAT_WITH_PROTOCOL = "jdbc:oracle:thin:@%s:%s:%s/%s";
-  public static final String ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT_WITH_PROTOCOL =
-      "jdbc:oracle:thin:@%s://%s:%s/%s";
+  // Connection formats using TNS DESCRIPTOR to accept protocol
+  public static final String ORACLE_SERVICE_NAME_FORMAT_TNS_DESCRIPTOR_WITH_PROTOCOL =
+      "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=%s)(HOST=%s)(PORT=%s))(CONNECT_DATA=(SERVICE_NAME=%s)))";
+  public static final String ORACLE_SID_FORMAT_TNS_DESCRIPTOR_WITH_PROTOCOL =
+      "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=%s)(HOST=%s)(PORT=%s))(CONNECT_DATA=(SID=%s)))";
   public static final String ORACLE_CONNECTION_STRING_TNS_FORMAT = "jdbc:oracle:thin:@%s";
   public static final String DEFAULT_BATCH_VALUE = "defaultBatchValue";
   public static final String DEFAULT_ROW_PREFETCH = "defaultRowPrefetch";
@@ -102,7 +103,8 @@ public final class OracleConstants {
                                                        boolean isSSLEnabled) {
     // Choose the appropriate format based on whether SSL is enabled.
     if (isSSLEnabled) {
-      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT_WITH_PROTOCOL,
+      // Use the TNS descriptor format for TCPS to prevent automatic security injection.
+      return String.format(ORACLE_SERVICE_NAME_FORMAT_TNS_DESCRIPTOR_WITH_PROTOCOL,
           connectionProtocol, host, port, database);
     }
     return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT,
@@ -126,7 +128,8 @@ public final class OracleConstants {
                                                    boolean isSSLEnabled) {
     // Choose the appropriate format based on whether SSL is enabled.
     if (isSSLEnabled) {
-      return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT_WITH_PROTOCOL,
+      // Use the TNS descriptor format for TCPS to prevent automatic security injection.
+      return String.format(ORACLE_SID_FORMAT_TNS_DESCRIPTOR_WITH_PROTOCOL,
           connectionProtocol, host, port, database);
     }
     return String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT,
