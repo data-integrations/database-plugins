@@ -45,6 +45,7 @@ public final class OracleConstants {
   public static final String USE_SSL = "useSSL";
   public static final String TREAT_AS_OLD_TIMESTAMP = "treatAsOldTimestamp";
   public static final String TREAT_PRECISIONLESSNUM_AS_DECI = "treatPrecisionlessNumAsDeci";
+  public static final String TREAT_TIMESTAMP_LTZ_AS_TIMESTAMP = "treatTimestampLTZAsTimestamp";
 
   /**
    * Constructs the Oracle connection string based on the provided connection type, host, port, and database.

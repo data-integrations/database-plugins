@@ -113,7 +113,8 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
   @Override
   protected SchemaReader getSchemaReader(String sessionID) {
     return new OracleSourceSchemaReader(sessionID, config.getTreatAsOldTimestamp(),
-                                        config.getTreatPrecisionlessNumAsDeci());
+                                        config.getTreatPrecisionlessNumAsDeci(),
+                                        config.getTreatTimestampLTZAsTimestamp());
   }
 
   @Override
