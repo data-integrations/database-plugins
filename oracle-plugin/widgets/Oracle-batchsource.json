@@ -159,6 +159,25 @@
           }
         },
         {
+          "widget-type": "hidden",
+          "label": "Treat Timestamp_LTZ as Timestamp",
+          "name": "treatTimestampLTZAsTimestamp",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "false",
+            "options": [
+              {
+                "id": "true",
+                "label": "true"
+              },
+              {
+                "id": "false",
+                "label": "false"
+              }
+            ]
+          }
+        },
+        {
           "name": "connectionType",
           "label": "Connection Type",
           "widget-type": "radio-group",

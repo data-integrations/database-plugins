@@ -19,6 +19,7 @@ package io.cdap.plugin.oracle;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.CommonSchemaReader;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,15 +69,17 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   private final String sessionID;
   private final Boolean isTimestampOldBehavior;
   private final Boolean isPrecisionlessNumAsDecimal;
+  private final Boolean isTimestampLtzFieldTimestamp;
 
   public OracleSourceSchemaReader() {
-    this(null, false, false);
+    this(null, false, false, false);
   }
   public OracleSourceSchemaReader(@Nullable String sessionID, boolean isTimestampOldBehavior,
-                                  boolean isPrecisionlessNumAsDecimal) {
+                                  boolean isPrecisionlessNumAsDecimal, boolean isTimestampLtzFieldTimestamp) {
     this.sessionID = sessionID;
     this.isTimestampOldBehavior = isTimestampOldBehavior;
     this.isPrecisionlessNumAsDecimal = isPrecisionlessNumAsDecimal;
+    this.isTimestampLtzFieldTimestamp = isTimestampLtzFieldTimestamp;
   }
 
   @Override
@@ -87,8 +90,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
       case TIMESTAMP_TZ:
         return isTimestampOldBehavior ? Schema.of(Schema.Type.STRING) : Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
       case TIMESTAMP_LTZ:
-        return isTimestampOldBehavior ? Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)
-          : Schema.of(Schema.LogicalType.DATETIME);
+        return getTimestampLtzSchema();
       case Types.TIMESTAMP:
         return isTimestampOldBehavior ? super.getSchema(metadata, index) : Schema.of(Schema.LogicalType.DATETIME);
       case BINARY_FLOAT:
@@ -137,6 +139,12 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
       default:
         return super.getSchema(metadata, index);
     }
+  }
+
+  private @NotNull Schema getTimestampLtzSchema() {
+    return isTimestampOldBehavior || isTimestampLtzFieldTimestamp
+      ? Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)
+      : Schema.of(Schema.LogicalType.DATETIME);
   }
 
   @Override

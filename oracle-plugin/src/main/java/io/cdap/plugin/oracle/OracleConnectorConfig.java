@@ -42,13 +42,14 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                                String connectionArguments, String connectionType, String database) {
     this(host, port, user, password, jdbcPluginName, connectionArguments, connectionType, database, null, null, null,
-         null);
+         null, null);
   }
 
   public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                                String connectionArguments, String connectionType, String database,
                                String role, Boolean useSSL, @Nullable Boolean treatAsOldTimestamp,
-                               @Nullable Boolean treatPrecisionlessNumAsDeci) {
+                               @Nullable Boolean treatPrecisionlessNumAsDeci,
+                               @Nullable Boolean treatTimestampLTZAsTimestamp) {
 
     this.host = host;
     this.port = port;
@@ -62,6 +63,7 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
     this.useSSL = useSSL;
     this.treatAsOldTimestamp = treatAsOldTimestamp;
     this.treatPrecisionlessNumAsDeci = treatPrecisionlessNumAsDeci;
+    this.treatTimestampLTZAsTimestamp = treatTimestampLTZAsTimestamp;
   }
 
   @Override
@@ -98,6 +100,11 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   @Nullable
   public Boolean treatPrecisionlessNumAsDeci;
 
+  @Name(OracleConstants.TREAT_TIMESTAMP_LTZ_AS_TIMESTAMP)
+  @Description("A hidden field to handle mapping of Oracle Timestamp_LTZ data type to BQ Timestamp.")
+  @Nullable
+  public Boolean treatTimestampLTZAsTimestamp;
+
   @Override
   protected int getDefaultPort() {
     return 1521;
@@ -126,6 +133,10 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   public Boolean getTreatPrecisionlessNumAsDeci() {
     return Boolean.TRUE.equals(treatPrecisionlessNumAsDeci);
+  }
+
+  public Boolean getTreatTimestampLTZAsTimestamp() {
+    return Boolean.TRUE.equals(treatTimestampLTZAsTimestamp);
   }
 
   @Override
