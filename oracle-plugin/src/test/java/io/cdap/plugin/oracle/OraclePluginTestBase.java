@@ -79,6 +79,16 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
   private static int startCount;
 
   static {
+    System.out.println("--- OraclePluginTestBase static block ---");
+    // Initialize properties first
+    getProperties();
+    System.setProperty("oracle.host", BASE_PROPS.get(ConnectionConfig.HOST));
+    System.setProperty("oracle.port", BASE_PROPS.get(ConnectionConfig.PORT));
+    System.setProperty("oracle.database", BASE_PROPS.get(ConnectionConfig.DATABASE));
+    System.setProperty("oracle.username", BASE_PROPS.get(ConnectionConfig.USER));
+    System.setProperty("oracle.password", BASE_PROPS.get(ConnectionConfig.PASSWORD));
+    System.setProperty("oracle.connectionType", BASE_PROPS.get(OracleConstants.CONNECTION_TYPE));
+
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(new Date(CURRENT_TS));
     YEAR = calendar.get(Calendar.YEAR);
@@ -90,59 +100,74 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
     BASE_PROPS.put(ConnectionConfig.DATABASE, getPropertyOrSkip("oracle.database"));
     BASE_PROPS.put(ConnectionConfig.USER, getPropertyOrSkip("oracle.username"));
     BASE_PROPS.put(ConnectionConfig.PASSWORD, getPropertyOrSkip("oracle.password"));
-    BASE_PROPS.put(OracleConstants.CONNECTION_TYPE, getPropertyOrSkip("oracle.connectionType"));
+    BASE_PROPS.put(OracleConstants.CONNECTION_TYPE, "service"); // Force service type
     BASE_PROPS.put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME);
     BASE_PROPS.put(OracleConstants.DEFAULT_BATCH_VALUE, "10");
   }
 
   @BeforeClass
   public static void setupTest() throws Exception {
-    if (startCount++ > 0) {
-      return;
+    try {
+      LOGGER.warn("--- OraclePluginTestBase.setupTest() started ---");
+      if (startCount++ > 0) {
+        return;
+      }
+
+      // getProperties(); // Moved to static block
+
+      setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
+
+      addPluginArtifact(NamespaceId.DEFAULT.artifact(JDBC_DRIVER_NAME, "1.0.0"),
+                        DATAPIPELINE_ARTIFACT_ID,
+                        OracleSource.class, OracleSink.class, DBRecord.class, ETLDBOutputFormat.class,
+                        OracleETLDBOutputFormat.class, DataDrivenETLDBInputFormat.class, DBRecord.class,
+                        OraclePostAction.class, OracleAction.class);
+
+      Class<?> driverClass = Class.forName(DRIVER_CLASS);
+
+      // add oracle 3rd party plugin
+      PluginClass oracleDriver = new PluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME,
+                                                 "oracle driver class", driverClass.getName(),
+                                                 null, Collections.emptyMap());
+      addPluginArtifact(NamespaceId.DEFAULT.artifact("oracle-jdbc-connector", "1.0.0"),
+                        DATAPIPELINE_ARTIFACT_ID,
+                        Sets.newHashSet(oracleDriver), driverClass);
+
+      TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+
+      connectionUrl = String.format("jdbc:oracle:thin:@%s:%s/%s",
+                                      BASE_PROPS.get(ConnectionConfig.HOST),
+                                      BASE_PROPS.get(ConnectionConfig.PORT),
+                                      BASE_PROPS.get(ConnectionConfig.DATABASE));
+
+      LOGGER.warn("--- Connection Properties ---");
+      for (Map.Entry<String, String> entry : BASE_PROPS.entrySet()) {
+        LOGGER.warn(entry.getKey() + ": " + entry.getValue());
+      }
+      LOGGER.warn("Connection URL: " + connectionUrl);
+      LOGGER.warn("--- End Connection Properties ---");
+
+      Connection conn = createConnection();
+      createTestTables(conn);
+      prepareTestData(conn);
+    } catch (Exception e) {
+      LOGGER.error("Error during test setup: " + e.getMessage(), e);
+      throw e;
     }
-
-    getProperties();
-
-    setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
-
-    addPluginArtifact(NamespaceId.DEFAULT.artifact(JDBC_DRIVER_NAME, "1.0.0"),
-                      DATAPIPELINE_ARTIFACT_ID,
-                      OracleSource.class, OracleSink.class, DBRecord.class, ETLDBOutputFormat.class,
-                      DataDrivenETLDBInputFormat.class, DBRecord.class, OraclePostAction.class, OracleAction.class);
-
-    Class<?> driverClass = Class.forName(DRIVER_CLASS);
-
-    // add oracle 3rd party plugin
-    PluginClass oracleDriver = new PluginClass(ConnectionConfig.JDBC_PLUGIN_TYPE, JDBC_DRIVER_NAME,
-                                               "oracle driver class", driverClass.getName(),
-                                               null, Collections.emptyMap());
-    addPluginArtifact(NamespaceId.DEFAULT.artifact("oracle-jdbc-connector", "1.0.0"),
-                      DATAPIPELINE_ARTIFACT_ID,
-                      Sets.newHashSet(oracleDriver), driverClass);
-
-    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-
-    if (OracleConstants.SERVICE_CONNECTION_TYPE.equals(BASE_PROPS.get("oracle.connectionType"))) {
-      connectionUrl = String.format(OracleConstants.ORACLE_CONNECTION_STRING_SERVICE_NAME_FORMAT,
-                                    BASE_PROPS.get(ConnectionConfig.HOST),
-                                    BASE_PROPS.get(ConnectionConfig.PORT),
-                                    BASE_PROPS.get(ConnectionConfig.DATABASE)
-      );
-    } else {
-      connectionUrl = String.format(OracleConstants.ORACLE_CONNECTION_STRING_SID_FORMAT,
-                                    BASE_PROPS.get(ConnectionConfig.HOST),
-                                    BASE_PROPS.get(ConnectionConfig.PORT),
-                                    BASE_PROPS.get(ConnectionConfig.DATABASE)
-      );
-    }
-
-    Connection conn = createConnection();
-    createTestTables(conn);
-    prepareTestData(conn);
   }
 
   protected static void createTestTables(Connection conn) throws SQLException {
     try (Statement stmt = conn.createStatement()) {
+      // Best effort drop tables
+      dropTableIfExists(stmt, "dbActionTest");
+      dropTableIfExists(stmt, "postActionTest");
+      dropTableIfExists(stmt, MY_TABLE);
+      dropTableIfExists(stmt, MY_DEST_TABLE);
+      dropTableIfExists(stmt, YOUR_TABLE);
+      dropTableIfExists(stmt, MY_TABLE_FOR_LONG);
+      dropTableIfExists(stmt, MY_DEST_TABLE_FOR_LONG);
+      dropTableIfExists(stmt, "MERGE_DEST_TABLE");
+
       // create a table that the action will truncate at the end of the run
       stmt.execute("CREATE TABLE dbActionTest (x int, day varchar(10))");
       // create a table that the action will truncate at the end of the run
@@ -196,6 +221,13 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
 
       stmt.execute(String.format(createTableWithLongFormat, MY_TABLE_FOR_LONG));
       stmt.execute(String.format(createTableWithLongFormat, MY_DEST_TABLE_FOR_LONG));
+
+      // Table for MERGE tests
+      stmt.execute("CREATE TABLE MERGE_DEST_TABLE (" +
+                     "  ID INT PRIMARY KEY, " +
+                     "  NAME VARCHAR2(50), " +
+                     "  SCORE NUMBER" +
+                     ")");
     }
   }
 
@@ -297,6 +329,18 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
     }
   }
 
+  private static void dropTableIfExists(Statement stmt, String tableName) {
+    try {
+      stmt.execute("DROP TABLE " + tableName);
+      System.out.println("Dropped table " + tableName);
+    } catch (SQLException e) {
+      // ORA-00942: table or view does not exist - expected if not exists
+      if (!e.getMessage().contains("ORA-00942")) {
+        System.err.println("Error dropping table " + tableName + ": " + e.getMessage());
+      }
+    }
+  }
+
   protected static byte[] getBfileBytes(Object bfile) throws Exception {
     Class<?> bfileClass = Class.forName("oracle.sql.BFILE");
     return (byte[]) bfileClass.getMethod("getBytes").invoke(bfile);
@@ -322,12 +366,19 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
   public static Connection createConnection() {
     try {
       Class.forName(DRIVER_CLASS);
+      LOGGER.warn("--- createConnection() ---");
+      LOGGER.warn("Connection URL: " + connectionUrl);
+      DriverManager.setLoginTimeout(20); // Set timeout to 20 seconds
+      LOGGER.warn("DriverManager login timeout set to 20 seconds.");
       return DriverManager.getConnection(connectionUrl, BASE_PROPS.get(ConnectionConfig.USER),
                                          BASE_PROPS.get(ConnectionConfig.PASSWORD));
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      System.err.println("Exception in createConnection: " + e.getMessage());
+      e.printStackTrace(System.err);
+      throw new RuntimeException(e); // Re-throw as RuntimeException
     }
   }
+
 
   @AfterClass
   public static void tearDownDB() {
@@ -342,7 +393,8 @@ public abstract class OraclePluginTestBase extends DatabasePluginTestBase {
                                             () -> stmt.execute(String.format(dropTableFormat, "postActionTest")),
                                             () -> stmt.execute(String.format(dropTableFormat, "dbActionTest")),
                                             () -> stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE)),
-                                            () -> stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE_FOR_LONG))),
+                                            () -> stmt.execute(String.format(dropTableFormat, MY_DEST_TABLE_FOR_LONG)),
+                                            () -> stmt.execute(String.format(dropTableFormat, "MERGE_DEST_TABLE"))),
                      LOGGER);
 
     } catch (Exception e) {

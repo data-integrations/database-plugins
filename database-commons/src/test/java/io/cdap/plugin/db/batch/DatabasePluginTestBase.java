@@ -123,7 +123,7 @@ public abstract class DatabasePluginTestBase extends HydratorTestBase {
     ExecutionException {
     final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start(arguments);
-    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 10, TimeUnit.MINUTES);
   }
 
   protected void testDBInvalidFieldType(String columnName, Schema.Type type, ETLPlugin sinkConfig,

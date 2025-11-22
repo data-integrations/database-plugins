@@ -17,6 +17,7 @@
 package io.cdap.plugin.oracle;
 
 import io.cdap.cdap.common.test.TestSuite;
+import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -32,4 +33,14 @@ import org.junit.runners.Suite;
   OraclePostActionTestRun.class
 })
 public class OraclePluginTestSuite extends OraclePluginTestBase {
+
+  static {
+    System.out.println("--- OraclePluginTestSuite static block --- (Class Loading)");
+  }
+
+  @BeforeClass
+  public static void setupTestSuite() throws Exception {
+    System.out.println("--- OraclePluginTestSuite.setupTestSuite() called ---");
+    OraclePluginTestBase.setupTest();
+  }
 }

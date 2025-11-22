@@ -50,13 +50,16 @@ services:
     privileged: true
 
   oracle:
-    image: oracle/database:12.1.0.2-ee
+    image: container-registry.oracle.com/database/free:latest
     ports:
       - 1521:1521
     environment:
-      - ORACLE_SID=cdap
-      - ORACLE_PDB=mydb
-      - ORACLE_PWD=123Qwe123
+      - ORACLE_PWD=oracle
+    healthcheck:
+      test: sqlplus -L SYSTEM/oracle@//localhost:1521/FREEPDB1 @/opt/oracle/checkDBStatus.sql || exit 1
+      interval: 20s
+      timeout: 10s
+      retries: 10
 
   memsql:
     image: memsql/cluster-in-a-box:centos-6.8.10-a53e479edc-1.9.0-1.3.0

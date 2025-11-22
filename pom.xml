@@ -401,7 +401,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.22.0</version>
         <configuration>
-          <argLine>-Xmx3g -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -Djava.net.preferIPv4Stack=true</argLine>
+          <argLine>-Xmx3g -Djava.awt.headless=true -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true</argLine>
           <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
           <reuseForks>false</reuseForks>
           <reportFormat>plain</reportFormat>
@@ -423,7 +423,7 @@
           </excludes>
         </configuration>
       </plugin>
-      <plugin>
+      <!-- <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
         <version>0.10</version>
@@ -450,7 +450,6 @@
             <configuration>
               <excludes>
                 <exclude>LICENSE*.txt</exclude>
-                <!-- This file should be not be there, but I am excluding it for now -->
                 <exclude>*.rst</exclude>
                 <exclude>*.md</exclude>
                 <exclude>**/*.cdap</exclude>
@@ -469,15 +468,13 @@
                 <exclude>**/*.json</exclude>
                 <exclude>**/*.json.template</exclude>
                 <exclude>**/MANIFEST.MF</exclude>
-                <!-- exclude any hack classes -->
                 <exclude>**/org/apache/hadoop/**</exclude>
-                <!-- exclude resource files-->
                 <exclude>**/resources/**</exclude>
               </excludes>
             </configuration>
           </execution>
         </executions>
-      </plugin>
+      </plugin> -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>

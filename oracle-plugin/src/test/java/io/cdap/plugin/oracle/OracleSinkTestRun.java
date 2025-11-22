@@ -315,9 +315,145 @@ public class OracleSinkTestRun extends OraclePluginTestBase {
              schema, Collections.singletonList(record), getSinkConfig(), Collections.singletonList(test));
   }
 
-  private void testSink(String appName,
-                        String inputDatasetName,
-                        String tableName,
+  @Test
+  public void testDBSinkUniqueConstraintViolation() throws Exception {
+    String tableName = "UNIQUE_TEST_TABLE";
+    // 1. Setup: Create table with Primary Key
+    try (Connection conn = createConnection();
+         Statement stmt = conn.createStatement()) {
+      try {
+        stmt.execute("DROP TABLE " + tableName);
+      } catch (SQLException e) {
+        // Ignore if table doesn't exist
+      }
+      stmt.execute("CREATE TABLE " + tableName + " (ID INT PRIMARY KEY, NAME VARCHAR(50))");
+    }
+
+    Schema schema = Schema.recordOf("testRecord",
+                                   Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
+                                   Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("ID", 1).set("NAME", "Test User").build();
+
+    String insertSQL = "INSERT INTO " + tableName + " (ID, NAME) VALUES (?, ?)";
+
+    // 2. First Insert
+    try (Connection conn = createConnection()) {
+      conn.setAutoCommit(false);
+      try (java.sql.PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
+        pstmt.setInt(1, record.get("ID"));
+        pstmt.setString(2, record.get("NAME"));
+        pstmt.executeUpdate();
+        conn.commit();
+      } catch (SQLException e) {
+        conn.rollback();
+        Assert.fail("First insert failed: " + e.getMessage());
+      }
+    }
+
+    // 3. Second Insert (Simulating Retry)
+    try (Connection conn = createConnection()) {
+      conn.setAutoCommit(false);
+      try (java.sql.PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
+        pstmt.setInt(1, record.get("ID"));
+        pstmt.setString(2, record.get("NAME"));
+        pstmt.executeUpdate();
+        conn.commit();
+        Assert.fail("Second insert should have failed due to unique constraint violation.");
+      } catch (SQLException e) {
+        conn.rollback();
+        // 4. Assertion: Check for ORA-00001
+        Assert.assertTrue("Expected ORA-00001 unique constraint violation, but got: " + e.getMessage(),
+                   e.getMessage().contains("ORA-00001"));
+        System.out.println("Caught expected exception: " + e.getMessage());
+      }
+    } finally {
+      // Cleanup
+      try (Connection conn = createConnection();
+           Statement stmt = conn.createStatement()) {
+        stmt.execute("DROP TABLE " + tableName);
+      }
+    }
+  }
+    
+  @Test
+  public void testDBSinkMerge() throws Exception {
+    String tableName = "MERGE_DEST_TABLE";
+    Schema schema = Schema.recordOf("mergeRecord",
+                                   Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
+                                   Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
+                                   Schema.Field.of("SCORE", Schema.decimalOf(5, 2)));
+
+    // Initial data in the target table
+    try (Connection conn = createConnection()) {
+      conn.setAutoCommit(false);
+      try (Statement stmt = conn.createStatement()) {
+        stmt.execute("TRUNCATE TABLE " + tableName);
+        stmt.execute("INSERT INTO " + tableName + " (ID, NAME, SCORE) VALUES (1, 'Alice', 75.5)");
+        stmt.execute("INSERT INTO " + tableName + " (ID, NAME, SCORE) VALUES (2, 'Bob', 88.0)");
+        conn.commit();
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
+    }
+    // Input records for the sink
+    List<StructuredRecord> inputRecords = new ArrayList<>();
+    // This record should update ID 1
+    inputRecords.add(StructuredRecord.builder(schema).set("ID", 1).set("NAME", "Alice Smith")
+                       .setDecimal("SCORE", BigDecimal.valueOf(90.00).setScale(2)).build());
+    // This record should be inserted
+            inputRecords.add(StructuredRecord.builder(schema).set("ID", 3).set("NAME", "Charlie")
+                       .setDecimal("SCORE", BigDecimal.valueOf(95.50).setScale(2)).build());
+    // This record should update ID 2
+    inputRecords.add(StructuredRecord.builder(schema).set("ID", 2).set("NAME", "Bob Johnson")
+                       .setDecimal("SCORE", BigDecimal.valueOf(92.00).setScale(2)).build());
+
+    ETLPlugin sinkConfig = new ETLPlugin(
+      OracleConstants.PLUGIN_NAME,
+      BatchSink.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .putAll(BASE_PROPS)
+        .put(AbstractDBSink.DBSinkConfig.TABLE_NAME, tableName)
+        .put(Constants.Reference.REFERENCE_NAME, "DBMergeTest")
+        .put("operation", "upsert")
+        .put("mergeKeys", "ID")
+        .build(),
+      null);
+
+    testSink("testDBSinkMerge", "merge-input", tableName, schema, inputRecords, sinkConfig, Collections.emptyList());
+
+    // Verify the results
+    try (Connection conn = createConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery("SELECT ID, NAME, SCORE FROM " + tableName + " ORDER BY ID")) {
+
+      // ID 1 should be updated
+      Assert.assertTrue(rs.next());
+      Assert.assertEquals(1, rs.getInt("ID"));
+      Assert.assertEquals("Alice Smith", rs.getString("NAME"));
+      Assert.assertEquals(90.0, rs.getDouble("SCORE"), 0.001);
+
+      // ID 2 should be updated
+      Assert.assertTrue(rs.next());
+      Assert.assertEquals(2, rs.getInt("ID"));
+      Assert.assertEquals("Bob Johnson", rs.getString("NAME"));
+      Assert.assertEquals(92.0, rs.getDouble("SCORE"), 0.001);
+
+      // ID 3 should be inserted
+      Assert.assertTrue(rs.next());
+      Assert.assertEquals(3, rs.getInt("ID"));
+      Assert.assertEquals("Charlie", rs.getString("NAME"));
+      Assert.assertEquals(95.5, rs.getDouble("SCORE"), 0.001);
+
+      Assert.assertFalse(rs.next());
+    }
+  }
+
+
+    private void testSink(String appName,
+                          String inputDatasetName,
+                          String tableName,
+  
                         Schema schema,
                         List<StructuredRecord> inputRecords,
                         ETLPlugin sinkConfig,

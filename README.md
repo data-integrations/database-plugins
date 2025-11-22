@@ -13,9 +13,9 @@ mvn clean test \
 ```
 Notice that you must change properties for Aurora MySQL and Aurora Postgresql to real before running tests.
 ## Setup Local Environment
-MySQL, Postgresql, MSSQL, DB2, MemSQL, SAP HANA are using prebuild images.
+MySQL, Postgresql, MSSQL, DB2, MemSQL, SAP HANA, and Oracle are using prebuilt images.
 
-Oracle DB image should be build separately.
+MemSQL image should be configure after start.
 
 MemSQL image should be configure after start.
 
@@ -29,9 +29,8 @@ provided for this purpose.
 
 Netezza and Teradata require VMware Player for running emulator.
 
-* [Install Docker Compose](https://docs.docker.com/compose/install/)
-* Build local docker images
-  * [Build Oracle DB docker image version 12.1.0.2-ee](https://github.com/oracle/docker-images/tree/master/OracleDatabase/SingleInstance)
+* [Install Podman](https://podman.io/getting-started/installation)
+* [Install Podman Compose](https://github.com/containers/podman-compose#installation) or use `docker-compose`.
 * Enter the folder with docker-compose file:
 ```bash
 cd docker-compose/db-plugins-env/
@@ -42,16 +41,16 @@ export MEMSQL_LICENSE_KEY=YOUR_LICENSE_KEY
 ```
 * Initialize Memsql container:
 ```bash
-docker-compose up memsql
+podman-compose up memsql
 ```
 * Start SAP HANA password service
 ```bash
 bash saphana-password-server.sh &
 ```
-* Start docker environment by running commands:
+* Start container environment by running commands:
 ```bash
 cd docker-compose/db-plugins-env/
-docker-compose up -d
+podman-compose up -d
 ```
 * Connect to MemSQL Studio at [http://localhost:8888](http://localhost:8888) 
 The default Username is root and Password should be left blank.
@@ -100,9 +99,9 @@ grant all on *.* to 'root'@'%' identified by 'root' with grant option;
 * **oracle.host** - Server host. Default: localhost.
 * **oracle.port** - Server port. Default: 1521.
 * **oracle.username** - Server username. Default: SYSTEM.
-* **oracle.password** - Server password. Default: 123Qwe123.
-* **oracle.database** - Server sid/database. Default: cdap.
-* **oracle.connectionType** - Server connection type (service/sid) Default: sid.
+* **oracle.password** - Server password. Default: oracle (as set in `docker-compose.yml`).
+* **oracle.database** - Server sid/database. Default: FREEPDB1.
+* **oracle.connectionType** - Server connection type (service/sid) Default: service.
 #### Netezza
 * **netezza.host** - Server host. Default: localhost.
 * **netezza.port** - Server port. Default: 5480.
