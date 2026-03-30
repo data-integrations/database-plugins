@@ -116,8 +116,8 @@ public class OracleSourceDBRecord extends DBRecord {
   @Override
   protected void writeNonNullToDB(PreparedStatement stmt, Schema fieldSchema,
                                   String fieldName, int fieldIndex) throws SQLException {
-    int sqlType = columnTypes.get(fieldIndex).getType();
     int sqlIndex = fieldIndex + 1;
+    int sqlType = modifiableColumnTypes.get(fieldIndex).getType();
 
     // TIMESTAMP and TIMESTAMPTZ types needs to be handled using the specific oracle types to ensure that the data
     // inserted matches with the provided value. As Oracle driver internally alters the values provided
