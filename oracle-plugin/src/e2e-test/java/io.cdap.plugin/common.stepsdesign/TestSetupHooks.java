@@ -296,6 +296,38 @@ public class TestSetupHooks {
                                    + " deleted successfully");
   }
 
+  @Before(order = 2, value = "@ORACLE_UPDATE_TABLE")
+  public static void createOracleTargetUpdateTable() throws SQLException, ClassNotFoundException {
+    OracleClient.createOracleSinkUpdateTable(PluginPropertyUtils.pluginProp("targetTable"),
+        PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+        + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_UPDATE_TABLE")
+  public static void dropOracleTargetUpdateTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+        PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+        + " deleted successfully");
+  }
+
+  @Before(order = 2, value = "@ORACLE_UPSERT_TABLE")
+  public static void createOracleTargetUpsertTable() throws SQLException, ClassNotFoundException {
+    OracleClient.createOracleSinkUpsertTable(PluginPropertyUtils.pluginProp("targetTable"),
+        PluginPropertyUtils.pluginProp("schema"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+        + " created successfully");
+  }
+
+  @After(order = 2, value = "@ORACLE_UPSERT_TABLE")
+  public static void dropOracleTargetUpsertTable() throws SQLException, ClassNotFoundException {
+    OracleClient.deleteTable(PluginPropertyUtils.pluginProp("schema"),
+        PluginPropertyUtils.pluginProp("targetTable"));
+    BeforeActions.scenario.write("Oracle Target Table - " + PluginPropertyUtils.pluginProp("targetTable")
+        + " deleted successfully");
+  }
+
   @Before(order = 1, value = "@BQ_SINK_TEST")
   public static void setTempTargetBQTableName() {
     String bqTargetTableName = "E2E_TARGET_" + UUID.randomUUID().toString().replaceAll("-", "_");

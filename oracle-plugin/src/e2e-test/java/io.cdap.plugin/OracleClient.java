@@ -73,8 +73,8 @@ public class OracleClient {
    */
   public static boolean validateRecordValues(String schema, String sourceTable, String targetTable)
     throws SQLException, ClassNotFoundException {
-    String getSourceQuery = "SELECT * FROM " + schema + "." + sourceTable;
-    String getTargetQuery = "SELECT * FROM " + schema + "." + targetTable;
+    String getSourceQuery = "SELECT * FROM " + schema + "." + sourceTable + " ORDER BY ID";
+    String getTargetQuery = "SELECT * FROM " + schema + "." + targetTable + " ORDER BY ID";
     try (Connection connect = getOracleConnection()) {
       connect.setHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT);
       Statement statement1 = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE,
@@ -190,6 +190,34 @@ public class OracleClient {
       String createTargetTableQuery = "CREATE TABLE " + schema + "." + targetTable +
         "(ID number(38), LASTNAME varchar2(100))";
       statement.executeUpdate(createTargetTableQuery);
+    }
+  }
+
+  public static void createOracleSinkUpdateTable(String sourceTable, String schema) throws SQLException,
+      ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String createSourceTableQuery = "CREATE TABLE " + schema + "." + sourceTable +
+          "(ID number(38), LASTNAME varchar2(100))";
+      statement.executeUpdate(createSourceTableQuery);
+
+      // Insert dummy data.
+      statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " (ID, LASTNAME)" +
+          " VALUES (1, 'Maria')");
+      statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " (ID, LASTNAME)" +
+          " VALUES (2, 'Shelly')");
+    }
+  }
+
+  public static void createOracleSinkUpsertTable(String sourceTable, String schema) throws SQLException,
+      ClassNotFoundException {
+    try (Connection connect = getOracleConnection(); Statement statement = connect.createStatement()) {
+      String createSourceTableQuery = "CREATE TABLE " + schema + "." + sourceTable +
+          "(ID number(38), LASTNAME varchar2(100))";
+      statement.executeUpdate(createSourceTableQuery);
+
+      // Insert dummy data.
+      statement.executeUpdate("INSERT INTO " + schema + "." + sourceTable + " (ID, LASTNAME)" +
+          " VALUES (1, 'John')");
     }
   }
 

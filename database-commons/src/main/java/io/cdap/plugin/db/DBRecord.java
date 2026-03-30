@@ -314,10 +314,7 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   }
 
   private boolean fillUpdateParams(List<String> updatedKeyList, ColumnType columnType) {
-    if (operationName.equals(Operation.UPDATE) && updatedKeyList.contains(columnType.getName())) {
-      return true;
-    }
-    return false;
+    return operationName.equals(Operation.UPDATE) && updatedKeyList.contains(columnType.getName());
   }
 
   private Schema getNonNullableSchema(Schema.Field field) {
