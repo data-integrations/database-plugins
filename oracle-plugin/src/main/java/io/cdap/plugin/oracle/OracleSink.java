@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Metadata;
 import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
@@ -31,6 +32,7 @@ import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.batch.sink.SinkOutputFormatProvider;
 import io.cdap.plugin.db.DBRecord;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSinkConfig;
@@ -59,7 +61,8 @@ public class OracleSink extends AbstractDBSink<OracleSink.OracleSinkConfig> {
 
   @Override
   protected DBRecord getDBRecord(StructuredRecord output) {
-    return new OracleSinkDBRecord(output, columnTypes);
+    return new OracleSinkDBRecord(output, columnTypes, oracleSinkConfig.getOperationName(),
+        oracleSinkConfig.getRelationTableKey());
   }
 
   @Override
@@ -71,6 +74,13 @@ public class OracleSink extends AbstractDBSink<OracleSink.OracleSinkConfig> {
   protected SchemaReader getSchemaReader() {
     return new OracleSinkSchemaReader();
   }
+
+  @Override
+  protected void addOutputContext(BatchSinkContext context) {
+    context.addOutput(Output.of(oracleSinkConfig.getReferenceName(),
+        new SinkOutputFormatProvider(OracleETLDBOutputFormat.class, getConfiguration())));
+  }
+
   @Override
   protected LineageRecorder getLineageRecorder(BatchSinkContext context) {
     String fqn = DBUtils.constructFQN("oracle",

@@ -193,6 +193,29 @@
           "name": "dbSchemaName"
         },
         {
+          "widget-type": "radio-group",
+          "label": "Operation Name",
+          "name": "operationName",
+          "widget-attributes": {
+            "default": "insert",
+            "layout": "inline",
+            "options": [
+              {
+                "id": "insert",
+                "label": "INSERT"
+              },
+              {
+                "id": "update",
+                "label": "UPDATE"
+              },
+              {
+                "id": "upsert",
+                "label": "UPSERT"
+              }
+            ]
+          }
+        },
+        {
           "widget-type": "hidden",
           "label": "Operation Name",
           "name": "operationName",
@@ -201,9 +224,10 @@
           }
         },
         {
-          "widget-type": "hidden",
+          "name": "relationTableKey",
+          "widget-type": "csv",
           "label": "Table Key",
-          "name": "relationTableKey"
+          "widget-attributes": {}
         }
       ]
     },

@@ -173,3 +173,140 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Enter input plugin property: "referenceName" with value: "sourceRef"
     Then Click on the Validate button
     Then Verify that the Plugin is displaying an error message: "errorMessageInvalidHost" on the header
+
+  @Oracle_Required
+  Scenario: Verify the validation error message on header with blank database value
+    Given Open Datafusion Project to configure pipeline
+    When Expand Plugin group in the LHS plugins list: "Sink"
+    When Select plugin: "Oracle" from the plugins list as: "Sink"
+    Then Navigate to the properties page of plugin: "Oracle"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
+    Then Click plugin property: "switch-useConnection"
+    Then Click on the Validate button
+    Then Verify that the Plugin is displaying an error message: "blank.database.message" on the header
+
+  @ORACLE_SOURCE_DATATYPES_TEST @ORACLE_TARGET_DATATYPES_TEST @Oracle_Required
+  Scenario: Verify the validation error message with blank password value
+    Given Open Datafusion Project to configure pipeline
+    When Expand Plugin group in the LHS plugins list: "Source"
+    When Select plugin: "Oracle" from the plugins list as: "Source"
+    When Expand Plugin group in the LHS plugins list: "Sink"
+    When Select plugin: "Oracle" from the plugins list as: "Sink"
+    Then Connect plugins: "Oracle" and "Oracle2" to establish connection
+    Then Navigate to the properties page of plugin: "Oracle"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
+    Then Select radio button plugin property: "connectionType" with value: "service"
+    Then Select radio button plugin property: "role" with value: "normal"
+    Then Enter input plugin property: "referenceName" with value: "sourceRef"
+    Then Replace input plugin property: "database" with value: "databaseName"
+    Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
+    Then Click on the Get Schema button
+    Then Verify the Output Schema matches the Expected Schema: "outputDatatypesSchema"
+    Then Validate "Oracle" plugin properties
+    Then Close the Plugin Properties page
+    Then Navigate to the properties page of plugin: "Oracle2"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "database" with value: "databaseName"
+    Then Replace input plugin property: "tableName" with value: "targetTable"
+    Then Replace input plugin property: "dbSchemaName" with value: "schema"
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Enter input plugin property: "referenceName" with value: "targetRef"
+    Then Select radio button plugin property: "connectionType" with value: "service"
+    Then Select radio button plugin property: "role" with value: "normal"
+    Then Click on the Validate button
+    Then Verify that the Plugin is displaying an error message: "blank.connection.message" on the header
+
+  @ORACLE_SOURCE_DATATYPES_TEST @ORACLE_TARGET_DATATYPES_TEST @Oracle_Required
+  Scenario: Verify the validation error message with blank host value
+    Given Open Datafusion Project to configure pipeline
+    When Expand Plugin group in the LHS plugins list: "Source"
+    When Select plugin: "Oracle" from the plugins list as: "Source"
+    When Expand Plugin group in the LHS plugins list: "Sink"
+    When Select plugin: "Oracle" from the plugins list as: "Sink"
+    Then Connect plugins: "Oracle" and "Oracle2" to establish connection
+    Then Navigate to the properties page of plugin: "Oracle"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
+    Then Select radio button plugin property: "connectionType" with value: "service"
+    Then Select radio button plugin property: "role" with value: "normal"
+    Then Enter input plugin property: "referenceName" with value: "sourceRef"
+    Then Replace input plugin property: "database" with value: "databaseName"
+    Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
+    Then Click on the Get Schema button
+    Then Verify the Output Schema matches the Expected Schema: "outputDatatypesSchema"
+    Then Validate "Oracle" plugin properties
+    Then Close the Plugin Properties page
+    Then Navigate to the properties page of plugin: "Oracle2"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "database" with value: "databaseName"
+    Then Replace input plugin property: "tableName" with value: "targetTable"
+    Then Replace input plugin property: "dbSchemaName" with value: "schema"
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Enter input plugin property: "referenceName" with value: "targetRef"
+    Then Select radio button plugin property: "connectionType" with value: "service"
+    Then Select radio button plugin property: "role" with value: "normal"
+    Then Click on the Validate button
+    Then Verify that the Plugin is displaying an error message: "blank.HostBlank.message" on the header
+
+  @ORACLE_SOURCE_DATATYPES_TEST @ORACLE_TARGET_DATATYPES_TEST @Oracle_Required
+  Scenario Outline: To verify Oracle sink plugin validation error message for update, upsert operation name and table key
+    Given Open Datafusion Project to configure pipeline
+    When Expand Plugin group in the LHS plugins list: "Source"
+    When Select plugin: "Oracle" from the plugins list as: "Source"
+    When Expand Plugin group in the LHS plugins list: "Sink"
+    When Select plugin: "Oracle" from the plugins list as: "Sink"
+    Then Connect plugins: "Oracle" and "Oracle2" to establish connection
+    Then Navigate to the properties page of plugin: "Oracle"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
+    Then Select radio button plugin property: "connectionType" with value: "service"
+    Then Select radio button plugin property: "role" with value: "normal"
+    Then Enter input plugin property: "referenceName" with value: "sourceRef"
+    Then Replace input plugin property: "database" with value: "databaseName"
+    Then Enter textarea plugin property: "importQuery" with value: "selectQuery"
+    Then Click on the Get Schema button
+    Then Verify the Output Schema matches the Expected Schema: "outputDatatypesSchema"
+    Then Validate "Oracle" plugin properties
+    Then Close the Plugin Properties page
+    Then Navigate to the properties page of plugin: "Oracle2"
+    Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
+    Then Replace input plugin property: "host" with value: "host" for Credentials and Authorization related fields
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
+    Then Select radio button plugin property: "connectionType" with value: "service"
+    Then Select radio button plugin property: "role" with value: "normal"
+    Then Enter input plugin property: "referenceName" with value: "sourceRef"
+    Then Replace input plugin property: "database" with value: "databaseName"
+    Then Replace input plugin property: "tableName" with value: "targetTable"
+    Then Replace input plugin property: "dbSchemaName" with value: "schema"
+    Then Replace input plugin property: "user" with value: "username" for Credentials and Authorization related fields
+    Then Replace input plugin property: "password" with value: "password" for Credentials and Authorization related fields
+    Then Enter input plugin property: "referenceName" with value: "targetRef"
+    Then Select radio button plugin property: "connectionType" with value: "service"
+    Then Select radio button plugin property: "role" with value: "normal"
+    Then Select radio button plugin property: "operationName" with value: "<options>"
+    Then Click on the Validate button
+    Then Verify that the Plugin Property: "operationName" is displaying an in-line error message: "errorMessageUpdateUpsertOperationName"
+    Then Verify that the Plugin Property: "relationTableKey" is displaying an in-line error message: "errorMessageUpdateUpsertOperationName"
+    Examples:
+      | options |
+      | upsert  |
+      | update  |

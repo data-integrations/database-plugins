@@ -19,6 +19,7 @@ package io.cdap.plugin.oracle;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.ColumnType;
+import io.cdap.plugin.db.Operation;
 import io.cdap.plugin.db.SchemaReader;
 
 import java.sql.PreparedStatement;
@@ -31,9 +32,12 @@ import java.util.List;
  */
 public class OracleSinkDBRecord extends OracleSourceDBRecord {
 
-  public OracleSinkDBRecord(StructuredRecord record, List<ColumnType> columnTypes) {
+  public OracleSinkDBRecord(StructuredRecord record, List<ColumnType> columnTypes, Operation operationName,
+      String relationTableKey) {
     this.record = record;
     this.columnTypes = columnTypes;
+    this.operationName = operationName;
+    this.relationTableKey = relationTableKey;
   }
 
   @Override
@@ -47,6 +51,15 @@ public class OracleSinkDBRecord extends OracleSourceDBRecord {
       ColumnType columnType = columnTypes.get(fieldIndex);
       // Get the field from the schema using the column name with ignoring case.
       Schema.Field field = record.getSchema().getField(columnType.getName(), true);
+      writeToDB(stmt, field, fieldIndex);
+    }
+  }
+
+  @Override
+  protected void upsertOperation(PreparedStatement stmt) throws SQLException {
+    for (int fieldIndex = 0; fieldIndex < columnTypes.size(); fieldIndex++) {
+      ColumnType columnType = columnTypes.get(fieldIndex);
+      Schema.Field field = record.getSchema().getField(columnType.getName());
       writeToDB(stmt, field, fieldIndex);
     }
   }
