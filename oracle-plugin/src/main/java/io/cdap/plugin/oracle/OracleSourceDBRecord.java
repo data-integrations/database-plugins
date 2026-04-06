@@ -35,6 +35,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Struct;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDateTime;
@@ -341,6 +342,16 @@ public class OracleSourceDBRecord extends DBRecord {
       case OracleSourceSchemaReader.LONG_RAW:
         recordBuilder.set(field.getName(), resultSet.getBytes(columnIndex));
         break;
+      case Types.STRUCT:
+        Object structObj = resultSet.getObject(columnIndex);
+        if (structObj == null) {
+          recordBuilder.set(field.getName(), null);
+        } else {
+          Struct struct = (Struct) structObj;
+          StructuredRecord nestedRecord = convertStructToRecord(struct, field.getSchema());
+          recordBuilder.set(field.getName(), nestedRecord);
+        }
+        break;
       case Types.DECIMAL:
       case Types.NUMERIC:
         // This is the only way to differentiate FLOAT/REAL columns from other numeric columns, that based on NUMBER.
@@ -376,6 +387,54 @@ public class OracleSourceDBRecord extends DBRecord {
    * */
   private int getScale(Schema schema) {
     return schema.isNullable() ? schema.getNonNullable().getScale() : schema.getScale();
+  }
+
+  /**
+   * Converts a {@link Struct} into a nested {@link StructuredRecord} using the provided RECORD schema.
+   * Attribute values are matched to schema fields by ordinal position.
+   *
+   * @param struct       the SQL Struct to convert
+   * @param recordSchema the CDAP RECORD schema (may be nullable)
+   * @return a StructuredRecord with field values populated from the STRUCT attributes
+   */
+  private StructuredRecord convertStructToRecord(Struct struct, Schema recordSchema) throws SQLException {
+    Schema nonNullSchema = recordSchema.isNullable() ? recordSchema.getNonNullable() : recordSchema;
+    StructuredRecord.Builder builder = StructuredRecord.builder(nonNullSchema);
+    Object[] attributes = struct.getAttributes();
+    List<Schema.Field> fields = nonNullSchema.getFields();
+
+    for (int i = 0; i < fields.size() && i < attributes.length; i++) {
+      Schema.Field field = fields.get(i);
+      Object attrValue = attributes[i];
+
+      if (attrValue == null) {
+        builder.set(field.getName(), null);
+        continue;
+      }
+
+      Schema fieldSchema = field.getSchema().isNullable()
+        ? field.getSchema().getNonNullable() : field.getSchema();
+
+      if (attrValue instanceof Struct) {
+        builder.set(field.getName(), convertStructToRecord((Struct) attrValue, fieldSchema));
+      } else if (attrValue instanceof java.sql.Date) {
+        builder.setDate(field.getName(), ((java.sql.Date) attrValue).toLocalDate());
+      } else if (attrValue instanceof java.sql.Time) {
+        builder.setTime(field.getName(), ((java.sql.Time) attrValue).toLocalTime());
+      } else if (attrValue instanceof Timestamp) {
+        if (Schema.LogicalType.DATETIME.equals(fieldSchema.getLogicalType())) {
+          builder.setDateTime(field.getName(), ((Timestamp) attrValue).toLocalDateTime());
+        } else {
+          builder.setTimestamp(field.getName(),
+                              ((Timestamp) attrValue).toInstant().atZone(java.time.ZoneId.of("UTC")));
+        }
+      } else if (attrValue instanceof BigDecimal) {
+        builder.setDecimal(field.getName(), (BigDecimal) attrValue);
+      } else {
+        builder.set(field.getName(), attrValue);
+      }
+    }
+    return builder.build();
   }
 
   private boolean isLongOrLongRaw(int columnType) {

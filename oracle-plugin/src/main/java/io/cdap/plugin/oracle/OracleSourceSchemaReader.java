@@ -18,14 +18,20 @@ package io.cdap.plugin.oracle;
 
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.plugin.common.db.DBUtils;
 import io.cdap.plugin.db.CommonSchemaReader;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -63,13 +69,17 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     LONG,
     LONG_RAW,
     Types.NUMERIC,
-    Types.DECIMAL
+    Types.DECIMAL,
+    Types.STRUCT
   );
 
   private final String sessionID;
   private final Boolean isTimestampOldBehavior;
   private final Boolean isPrecisionlessNumAsDecimal;
   private final Boolean isTimestampLtzFieldTimestamp;
+
+  // Connection reference set during getSchemaFields() to enable STRUCT schema resolution in getSchema()
+  private Connection connection;
 
   public OracleSourceSchemaReader() {
     this(null, false, false, false);
@@ -136,9 +146,71 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
           }
           return Schema.decimalOf(precision, scale);
         }
+      case Types.STRUCT:
+        if (connection == null) {
+          throw new SQLException("Cannot resolve STRUCT schema without a database connection. "
+            + "Use getSchemaFields(ResultSet) to enable STRUCT type resolution.");
+        }
+        String typeName = metadata.getColumnTypeName(index);
+        String oracleSchemaName = metadata.getSchemaName(index);
+        return getStructSchema(connection, oracleSchemaName, typeName);
       default:
         return super.getSchema(metadata, index);
     }
+  }
+
+  @Override
+  public List<Schema.Field> getSchemaFields(ResultSet resultSet) throws SQLException {
+    this.connection = resultSet.getStatement().getConnection();
+    return super.getSchemaFields(resultSet);
+  }
+
+  /**
+   * Builds a CDAP RECORD schema for an Oracle STRUCT type by querying the database metadata
+   * for the type's attributes.
+   *
+   * @param connection the database connection
+   * @param schemaName the Oracle schema owning the type
+   * @param typeName   the Oracle type name (e.g., "ADDRESS_TYPE")
+   * @return a CDAP RECORD schema with fields corresponding to the STRUCT's attributes
+   */
+  private Schema getStructSchema(Connection connection, String schemaName,
+                                 String typeName) throws SQLException {
+    DatabaseMetaData dbMetaData = connection.getMetaData();
+    List<Schema.Field> fields = new ArrayList<>();
+
+    try (ResultSet attrRs = dbMetaData.getAttributes(null, schemaName, typeName, "%")) {
+      while (attrRs.next()) {
+        String attrName = attrRs.getString("ATTR_NAME");
+        int attrType = attrRs.getInt("DATA_TYPE");
+        String attrTypeName = attrRs.getString("ATTR_TYPE_NAME");
+        int attrSize = attrRs.getInt("ATTR_SIZE");
+        int attrScale = attrRs.getInt("DECIMAL_DIGITS");
+        int nullable = attrRs.getInt("NULLABLE");
+
+        Schema attrSchema;
+        if (attrType == Types.STRUCT) {
+          // Nested STRUCT — recurse
+          attrSchema = getStructSchema(connection, schemaName, attrTypeName);
+        } else {
+          attrSchema = DBUtils.getSchema(attrTypeName, attrType, attrSize, attrScale,
+                                         attrName, true, true);
+        }
+
+        if (nullable == DatabaseMetaData.attributeNullable) {
+          attrSchema = Schema.nullableOf(attrSchema);
+        }
+        fields.add(Schema.Field.of(attrName, attrSchema));
+      }
+    }
+
+    if (fields.isEmpty()) {
+      throw new SQLException(String.format(
+        "No attributes found for Oracle STRUCT type '%s.%s'. " +
+          "Ensure the type exists and is accessible.", schemaName, typeName));
+    }
+
+    return Schema.recordOf(typeName, fields);
   }
 
   private @NotNull Schema getTimestampLtzSchema() {

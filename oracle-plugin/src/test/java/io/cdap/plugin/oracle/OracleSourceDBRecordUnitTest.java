@@ -22,11 +22,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.Struct;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.ZonedDateTime;
@@ -233,5 +235,88 @@ public class OracleSourceDBRecordUnitTest {
 
     StructuredRecord record = builder.build();
     Assert.assertNull(record.get("field1"));
+  }
+
+  @Test
+  public void validateStructTypeHandling() throws Exception {
+    Schema addressSchema = Schema.recordOf("ADDRESS_TYPE",
+      Schema.Field.of("STREET", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("CITY", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("ZIP", Schema.nullableOf(Schema.of(Schema.Type.INT)))
+    );
+    Schema.Field field1 = Schema.Field.of("address", addressSchema);
+    Schema schema = Schema.recordOf("dbRecord", field1);
+
+    Struct mockStruct = Mockito.mock(Struct.class);
+    when(mockStruct.getSQLTypeName()).thenReturn("ADDRESS_TYPE");
+    when(mockStruct.getAttributes()).thenReturn(new Object[]{"123 Main St", "Springfield", 62704});
+    when(resultSet.getObject(eq(1))).thenReturn(mockStruct);
+
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+    dbRecord.handleField(resultSet, builder, field1, 1, Types.STRUCT, 0, 0);
+
+    StructuredRecord record = builder.build();
+    StructuredRecord addressRecord = record.get("address");
+    Assert.assertNotNull(addressRecord);
+    Assert.assertEquals("123 Main St", addressRecord.get("STREET"));
+    Assert.assertEquals("Springfield", addressRecord.get("CITY"));
+    Assert.assertEquals(62704, (int) addressRecord.get("ZIP"));
+  }
+
+  @Test
+  public void validateStructTypeNullHandling() throws Exception {
+    Schema addressSchema = Schema.recordOf("ADDRESS_TYPE",
+      Schema.Field.of("STREET", Schema.nullableOf(Schema.of(Schema.Type.STRING)))
+    );
+    Schema.Field field1 = Schema.Field.of("address",
+                                           Schema.nullableOf(addressSchema));
+    Schema schema = Schema.recordOf("dbRecord", field1);
+
+    when(resultSet.getObject(eq(1))).thenReturn(null);
+
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+    dbRecord.handleField(resultSet, builder, field1, 1, Types.STRUCT, 0, 0);
+
+    StructuredRecord record = builder.build();
+    Assert.assertNull(record.get("address"));
+  }
+
+  @Test
+  public void validateNestedStructTypeHandling() throws Exception {
+    Schema innerSchema = Schema.recordOf("ADDRESS_TYPE",
+      Schema.Field.of("STREET", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("CITY", Schema.nullableOf(Schema.of(Schema.Type.STRING)))
+    );
+    Schema outerSchema = Schema.recordOf("PERSON_TYPE",
+      Schema.Field.of("NAME", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("HOME_ADDRESS", Schema.nullableOf(innerSchema))
+    );
+    Schema.Field field1 = Schema.Field.of("person", outerSchema);
+    Schema schema = Schema.recordOf("dbRecord", field1);
+
+    Struct innerStruct = Mockito.mock(Struct.class);
+    when(innerStruct.getSQLTypeName()).thenReturn("ADDRESS_TYPE");
+    when(innerStruct.getAttributes()).thenReturn(new Object[]{"123 Main St", "Springfield"});
+
+    Struct outerStruct = Mockito.mock(Struct.class);
+    when(outerStruct.getSQLTypeName()).thenReturn("PERSON_TYPE");
+    when(outerStruct.getAttributes()).thenReturn(new Object[]{"John", innerStruct});
+    when(resultSet.getObject(eq(1))).thenReturn(outerStruct);
+
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+    dbRecord.handleField(resultSet, builder, field1, 1, Types.STRUCT, 0, 0);
+
+    StructuredRecord record = builder.build();
+    StructuredRecord personRecord = record.get("person");
+    Assert.assertNotNull(personRecord);
+    Assert.assertEquals("John", personRecord.get("NAME"));
+
+    StructuredRecord addressRecord = personRecord.get("HOME_ADDRESS");
+    Assert.assertNotNull(addressRecord);
+    Assert.assertEquals("123 Main St", addressRecord.get("STREET"));
+    Assert.assertEquals("Springfield", addressRecord.get("CITY"));
   }
 }
