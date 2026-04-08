@@ -44,6 +44,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   public static final int BINARY_DOUBLE = 101;
   public static final int BFILE = -13;
   public static final int LONG = -1;
+  public static final int XML = 2009;
   public static final int LONG_RAW = -4;
 
   /**
@@ -61,6 +62,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     BINARY_DOUBLE,
     BFILE,
     LONG,
+    XML,
     LONG_RAW,
     Types.NUMERIC,
     Types.DECIMAL
@@ -102,6 +104,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
         return Schema.of(Schema.Type.BYTES);
       case INTERVAL_DS:
       case INTERVAL_YM:
+      case XML:
       case LONG:
         return Schema.of(Schema.Type.STRING);
       case Types.NUMERIC:
