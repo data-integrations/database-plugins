@@ -265,6 +265,7 @@ public class OracleSourceDBRecord extends DBRecord {
     switch (sqlType) {
       case OracleSourceSchemaReader.INTERVAL_YM:
       case OracleSourceSchemaReader.INTERVAL_DS:
+      case OracleSourceSchemaReader.XML:
       case OracleSourceSchemaReader.LONG:
       case Types.NCLOB:
         recordBuilder.set(field.getName(), resultSet.getString(columnIndex));
