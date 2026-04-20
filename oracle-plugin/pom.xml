@@ -168,8 +168,10 @@
                 io.cdap.plugin.db.sink.*;
                 org.apache.commons.lang;
                 org.apache.commons.logging.*;
-                org.codehaus.jackson.*
-                com.oracle.database.*
+                org.codehaus.jackson.*;
+                oracle.xdb.*;
+                oracle.jdbc.*;
+                oracle.jdbc.internal.*
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
