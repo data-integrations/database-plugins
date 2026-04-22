@@ -119,12 +119,6 @@
       <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.jetbrains</groupId>
-      <artifactId>annotations</artifactId>
-      <version>RELEASE</version>
-      <scope>compile</scope>
-    </dependency>
     <!-- https://mvnrepository.com/artifact/com.google.cloud.sql/postgres-socket-factory -->
     <dependency>
       <groupId>com.google.cloud.sql</groupId>

@@ -19,7 +19,6 @@ package io.cdap.plugin.oracle;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.CommonSchemaReader;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,7 +140,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     }
   }
 
-  private @NotNull Schema getTimestampLtzSchema() {
+  private Schema getTimestampLtzSchema() {
     return isTimestampOldBehavior || isTimestampLtzFieldTimestamp
       ? Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)
       : Schema.of(Schema.LogicalType.DATETIME);
