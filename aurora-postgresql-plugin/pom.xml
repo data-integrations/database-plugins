@@ -78,12 +78,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.jetbrains</groupId>
-      <artifactId>annotations</artifactId>
-      <version>RELEASE</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>io.cdap.plugin</groupId>
       <artifactId>postgresql-plugin</artifactId>
       <version>${project.version}</version>
