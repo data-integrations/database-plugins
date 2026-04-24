@@ -61,6 +61,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     BINARY_DOUBLE,
     BFILE,
     LONG,
+    Types.SQLXML,
     LONG_RAW,
     Types.NUMERIC,
     Types.DECIMAL
@@ -70,16 +71,19 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   private final Boolean isTimestampOldBehavior;
   private final Boolean isPrecisionlessNumAsDecimal;
   private final Boolean isTimestampLtzFieldTimestamp;
+  private final Boolean isXmlTypeEnabled;
 
   public OracleSourceSchemaReader() {
-    this(null, false, false, false);
+    this(null, false, false, false, false);
   }
   public OracleSourceSchemaReader(@Nullable String sessionID, boolean isTimestampOldBehavior,
-                                  boolean isPrecisionlessNumAsDecimal, boolean isTimestampLtzFieldTimestamp) {
+                                  boolean isPrecisionlessNumAsDecimal, boolean isTimestampLtzFieldTimestamp,
+                                  boolean isXmlTypeEnabled) {
     this.sessionID = sessionID;
     this.isTimestampOldBehavior = isTimestampOldBehavior;
     this.isPrecisionlessNumAsDecimal = isPrecisionlessNumAsDecimal;
     this.isTimestampLtzFieldTimestamp = isTimestampLtzFieldTimestamp;
+    this.isXmlTypeEnabled = isXmlTypeEnabled;
   }
 
   @Override
@@ -104,6 +108,9 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
       case INTERVAL_YM:
       case LONG:
         return Schema.of(Schema.Type.STRING);
+      case Types.SQLXML:
+        // Enabling XML type support for DTS connectors only as it is not in working state in CDAP plugin.
+        return isXmlTypeEnabled ? Schema.of(Schema.Type.STRING) : super.getSchema(metadata, index);
       case Types.NUMERIC:
       case Types.DECIMAL:
         // FLOAT and REAL are returned as java.sql.Types.NUMERIC but with value that is a java.lang.Double
