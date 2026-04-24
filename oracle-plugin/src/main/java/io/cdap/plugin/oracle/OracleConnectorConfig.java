@@ -42,14 +42,15 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                                String connectionArguments, String connectionType, String database) {
     this(host, port, user, password, jdbcPluginName, connectionArguments, connectionType, database, null, null, null,
-         null, null);
+         null, null, null);
   }
 
   public OracleConnectorConfig(String host, int port, String user, String password, String jdbcPluginName,
                                String connectionArguments, String connectionType, String database,
                                String role, Boolean useSSL, @Nullable Boolean treatAsOldTimestamp,
                                @Nullable Boolean treatPrecisionlessNumAsDeci,
-                               @Nullable Boolean treatTimestampLTZAsTimestamp) {
+                               @Nullable Boolean treatTimestampLTZAsTimestamp,
+                               @Nullable Boolean enableXmlType) {
 
     this.host = host;
     this.port = port;
@@ -64,6 +65,7 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
     this.treatAsOldTimestamp = treatAsOldTimestamp;
     this.treatPrecisionlessNumAsDeci = treatPrecisionlessNumAsDeci;
     this.treatTimestampLTZAsTimestamp = treatTimestampLTZAsTimestamp;
+    this.enableXmlType = enableXmlType;
   }
 
   @Override
@@ -101,9 +103,15 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
   public Boolean treatPrecisionlessNumAsDeci;
 
   @Name(OracleConstants.TREAT_TIMESTAMP_LTZ_AS_TIMESTAMP)
-  @Description("A hidden field to handle mapping of Oracle Timestamp_LTZ data type to BQ Timestamp.")
+  @Description("A hidden field to handle mapping of Oracle Timestamp_LTZ data type.")
   @Nullable
   public Boolean treatTimestampLTZAsTimestamp;
+
+  @Name(OracleConstants.ENABLE_XML_TYPE)
+  @Description("A hidden field to handle mapping of Oracle XML type.")
+  @Nullable
+  public Boolean enableXmlType;
+
 
   @Override
   protected int getDefaultPort() {
@@ -137,6 +145,10 @@ public class OracleConnectorConfig extends AbstractDBSpecificConnectorConfig {
 
   public Boolean getTreatTimestampLTZAsTimestamp() {
     return Boolean.TRUE.equals(treatTimestampLTZAsTimestamp);
+  }
+
+  public Boolean getXmlTypeEnabled() {
+    return Boolean.TRUE.equals(enableXmlType);
   }
 
   @Override
