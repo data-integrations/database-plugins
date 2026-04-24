@@ -68,9 +68,10 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
     boolean treatAsOldTimestamp = oracleSourceConfig.getConnection().getTreatAsOldTimestamp();
     boolean treatPrecisionlessNumAsDeci = oracleSourceConfig.getConnection().getTreatPrecisionlessNumAsDeci();
     boolean treatTimestampLTZAsTimestamp = oracleSourceConfig.getConnection().getTreatTimestampLTZAsTimestamp();
+    boolean enableXmlType = oracleSourceConfig.getConnection().getXmlTypeEnabled();
 
     return new OracleSourceSchemaReader(null, treatAsOldTimestamp, treatPrecisionlessNumAsDeci,
-                                        treatTimestampLTZAsTimestamp);
+                                        treatTimestampLTZAsTimestamp, enableXmlType);
   }
 
   @Override
@@ -125,10 +126,12 @@ public class OracleSource extends AbstractDBSource<OracleSource.OracleSourceConf
                               int defaultBatchValue, int defaultRowPrefetch,
                               String importQuery, Integer numSplits, int fetchSize,
                               String boundingQuery, String splitBy, Boolean useSSL, Boolean treatAsOldTimestamp,
-                              Boolean treatPrecisionlessNumAsDeci, Boolean treatTimestampLTZAsTimestamp) {
+                              Boolean treatPrecisionlessNumAsDeci, Boolean treatTimestampLTZAsTimestamp,
+                              Boolean enableXmlType) {
       this.connection = new OracleConnectorConfig(host, port, user, password, jdbcPluginName, connectionArguments,
                                                   connectionType, database, role, useSSL, treatAsOldTimestamp,
-                                                  treatPrecisionlessNumAsDeci, treatTimestampLTZAsTimestamp);
+                                                  treatPrecisionlessNumAsDeci, treatTimestampLTZAsTimestamp,
+                                                  enableXmlType);
       this.defaultBatchValue = defaultBatchValue;
       this.defaultRowPrefetch = defaultRowPrefetch;
       this.fetchSize = fetchSize;
