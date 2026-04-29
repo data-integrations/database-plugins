@@ -18,7 +18,6 @@ package io.cdap.plugin.oracle;
 
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.exception.ProgramFailureException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -113,7 +112,7 @@ public class OracleSchemaReaderTest {
   }
 
   @Test
-  public void getSchema_xmlFieldDisabled_throwsProgramFailureException() throws SQLException {
+  public void getSchema_xmlFieldDisabled_throwsSqlException() throws SQLException {
     OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader(null,
             false, false, false, false);
     ResultSet resultSet = Mockito.mock(ResultSet.class);
@@ -123,7 +122,7 @@ public class OracleSchemaReaderTest {
     Mockito.when(metadata.getColumnType(1)).thenReturn(Types.SQLXML);
     Mockito.when(metadata.getColumnName(1)).thenReturn("xmlData");
 
-    Assert.assertThrows(ProgramFailureException.class, () -> schemaReader.getSchemaFields(resultSet));
+    Assert.assertThrows(SQLException.class, () -> schemaReader.getSchemaFields(resultSet));
 
   }
 }
