@@ -20,7 +20,7 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.11.12</version>
+    <version>1.11.13-SNAPSHOT</version>
   </parent>
 
   <name>Aurora DB PostgreSQL plugin</name>

@@ -178,6 +178,25 @@
           }
         },
         {
+          "widget-type": "hidden",
+          "label": "Enable Xml Type",
+          "name": "enableXmlType",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "false",
+            "options": [
+              {
+                "id": "true",
+                "label": "true"
+              },
+              {
+                "id": "false",
+                "label": "false"
+              }
+            ]
+          }
+        },
+        {
           "name": "connectionType",
           "label": "Connection Type",
           "widget-type": "radio-group",

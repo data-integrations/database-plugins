@@ -27,13 +27,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.List;
 
 public class OracleSchemaReaderTest {
 
   @Test
   public void getSchema_timestampLTZFieldTrue_returnTimestamp() throws SQLException {
-    OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader(null, false, false, true);
+    OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader(null, false, false, true, false);
 
     ResultSet resultSet = Mockito.mock(ResultSet.class);
     ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
@@ -64,7 +65,7 @@ public class OracleSchemaReaderTest {
 
   @Test
   public void getSchema_timestampLTZFieldFalse_returnDatetime() throws SQLException {
-    OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader(null, false, false, false);
+    OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader(null, false, false, false, false);
 
     ResultSet resultSet = Mockito.mock(ResultSet.class);
     ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
@@ -90,5 +91,38 @@ public class OracleSchemaReaderTest {
     Assert.assertEquals(expectedSchemaFields.get(0).getSchema(), actualSchemaFields.get(0).getSchema());
     Assert.assertEquals(expectedSchemaFields.get(1).getName(), actualSchemaFields.get(1).getName());
     Assert.assertEquals(expectedSchemaFields.get(1).getSchema(), actualSchemaFields.get(1).getSchema());
+  }
+
+  @Test
+  public void getSchema_xmlField_returnString() throws SQLException {
+    OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader(null, false, false, false, true);
+    ResultSet resultSet = Mockito.mock(ResultSet.class);
+    ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
+    Mockito.when(resultSet.getMetaData()).thenReturn(metadata);
+    Mockito.when(metadata.getColumnCount()).thenReturn(1);
+    Mockito.when(metadata.getColumnType(1)).thenReturn(Types.SQLXML);
+    Mockito.when(metadata.getColumnName(1)).thenReturn("xmlData");
+
+    List<Schema.Field> actualSchemaFields = schemaReader.getSchemaFields(resultSet);
+
+    List<Schema.Field> expectedSchemaFields = Lists.newArrayList();
+    expectedSchemaFields.add(Schema.Field.of("xmlData", Schema.of(Schema.Type.STRING)));
+    Assert.assertEquals(expectedSchemaFields.get(0).getName(), actualSchemaFields.get(0).getName());
+    Assert.assertEquals(expectedSchemaFields.get(0).getSchema(), actualSchemaFields.get(0).getSchema());
+  }
+
+  @Test
+  public void getSchema_xmlFieldDisabled_throwsSqlException() throws SQLException {
+    OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader(null,
+            false, false, false, false);
+    ResultSet resultSet = Mockito.mock(ResultSet.class);
+    ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
+    Mockito.when(resultSet.getMetaData()).thenReturn(metadata);
+    Mockito.when(metadata.getColumnCount()).thenReturn(1);
+    Mockito.when(metadata.getColumnType(1)).thenReturn(Types.SQLXML);
+    Mockito.when(metadata.getColumnName(1)).thenReturn("xmlData");
+
+    Assert.assertThrows(SQLException.class, () -> schemaReader.getSchemaFields(resultSet));
+
   }
 }
