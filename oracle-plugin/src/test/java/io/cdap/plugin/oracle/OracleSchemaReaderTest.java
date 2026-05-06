@@ -24,9 +24,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.List;
 
 public class OracleSchemaReaderTest {
@@ -37,6 +41,12 @@ public class OracleSchemaReaderTest {
 
     ResultSet resultSet = Mockito.mock(ResultSet.class);
     ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
+    Statement statement = Mockito.mock(Statement.class);
+    Connection connection = Mockito.mock(Connection.class);
+
+    Mockito.when(resultSet.getMetaData()).thenReturn(metadata);
+    Mockito.when(resultSet.getStatement()).thenReturn(statement);
+    Mockito.when(statement.getConnection()).thenReturn(connection);
 
     Mockito.when(resultSet.getMetaData()).thenReturn(metadata);
 
@@ -68,9 +78,12 @@ public class OracleSchemaReaderTest {
 
     ResultSet resultSet = Mockito.mock(ResultSet.class);
     ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
+    Statement statement = Mockito.mock(Statement.class);
+    Connection connection = Mockito.mock(Connection.class);
 
     Mockito.when(resultSet.getMetaData()).thenReturn(metadata);
-
+    Mockito.when(resultSet.getStatement()).thenReturn(statement);
+    Mockito.when(statement.getConnection()).thenReturn(connection);
     Mockito.when(metadata.getColumnCount()).thenReturn(2);
     // -101 is for TIMESTAMP_TZ
     Mockito.when(metadata.getColumnType(1)).thenReturn(-101);
@@ -90,5 +103,53 @@ public class OracleSchemaReaderTest {
     Assert.assertEquals(expectedSchemaFields.get(0).getSchema(), actualSchemaFields.get(0).getSchema());
     Assert.assertEquals(expectedSchemaFields.get(1).getName(), actualSchemaFields.get(1).getName());
     Assert.assertEquals(expectedSchemaFields.get(1).getSchema(), actualSchemaFields.get(1).getSchema());
+  }
+
+  @Test
+  public void getSchemaFields_structType_returnRecord() throws SQLException {
+    OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader();
+
+    ResultSet resultSet = Mockito.mock(ResultSet.class);
+    ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
+    Statement statement = Mockito.mock(Statement.class);
+    Connection connection = Mockito.mock(Connection.class);
+    PreparedStatement stmt = Mockito.mock(PreparedStatement.class);
+    ResultSet attrRs = Mockito.mock(ResultSet.class);
+
+    Mockito.when(resultSet.getMetaData()).thenReturn(metadata);
+    Mockito.when(resultSet.getStatement()).thenReturn(statement);
+    Mockito.when(statement.getConnection()).thenReturn(connection);
+    Mockito.when(connection.prepareStatement(Mockito.anyString())).thenReturn(stmt);
+    Mockito.when(stmt.executeQuery()).thenReturn(attrRs);
+
+    // One STRUCT column
+    Mockito.when(metadata.getColumnCount()).thenReturn(1);
+    Mockito.when(metadata.getColumnType(1)).thenReturn(Types.STRUCT);
+    Mockito.when(metadata.getColumnName(1)).thenReturn("address");
+    Mockito.when(metadata.getColumnTypeName(1)).thenReturn("ADDRESS_TYPE");
+    Mockito.when(metadata.getSchemaName(1)).thenReturn("TEST_SCHEMA");
+
+    // Mock ALL_TYPE_ATTRS for ADDRESS_TYPE with two VARCHAR2 attributes
+    Mockito.when(attrRs.next()).thenReturn(true, true, false);
+    Mockito.when(attrRs.getString("ATTR_NAME")).thenReturn("STREET", "CITY");
+    Mockito.when(attrRs.getString("ATTR_TYPE_NAME")).thenReturn("VARCHAR2", "VARCHAR2");
+    Mockito.when(attrRs.getInt("PRECISION")).thenReturn(0, 0);
+    Mockito.when(attrRs.getInt("SCALE")).thenReturn(0, 0);
+
+    List<Schema.Field> actualFields = schemaReader.getSchemaFields(resultSet);
+
+    Assert.assertEquals(1, actualFields.size());
+    Schema.Field addressField = actualFields.get(0);
+    Assert.assertEquals("address", addressField.getName());
+
+    Schema addressSchema = addressField.getSchema().isNullable()
+            ? addressField.getSchema().getNonNullable() : addressField.getSchema();
+    Assert.assertEquals(Schema.Type.RECORD, addressSchema.getType());
+    Assert.assertEquals("ADDRESS_TYPE", addressSchema.getRecordName());
+
+    List<Schema.Field> structFields = addressSchema.getFields();
+    Assert.assertEquals(2, structFields.size());
+    Assert.assertEquals("STREET", structFields.get(0).getName());
+    Assert.assertEquals("CITY", structFields.get(1).getName());
   }
 }

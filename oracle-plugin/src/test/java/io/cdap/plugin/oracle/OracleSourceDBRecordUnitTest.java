@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
@@ -233,5 +234,120 @@ public class OracleSourceDBRecordUnitTest {
 
     StructuredRecord record = builder.build();
     Assert.assertNull(record.get("field1"));
+  }
+
+  @Test
+  public void validateStructHandling() throws Exception {
+    Schema streetFieldSchema = Schema.of(Schema.Type.STRING);
+    Schema cityFieldSchema = Schema.of(Schema.Type.STRING);
+    Schema addressStructSchema = Schema.recordOf("ADDRESS_TYPE",
+        Schema.Field.of("STREET", streetFieldSchema),
+        Schema.Field.of("CITY", cityFieldSchema)
+    );
+    Schema.Field addressField = Schema.Field.of("address", addressStructSchema);
+    Schema schema = Schema.recordOf("dbRecord", addressField);
+    java.sql.Struct structMock = org.mockito.Mockito.mock(java.sql.Struct.class);
+    Object[] attributes = new Object[] { "123 Main St", "San Jose" };
+
+    when(structMock.getAttributes()).thenReturn(attributes);
+    java.sql.Statement statementMock = org.mockito.Mockito.mock(java.sql.Statement.class);
+    java.sql.Connection connectionMock = org.mockito.Mockito.mock(java.sql.Connection.class);
+    when(resultSet.getStatement()).thenReturn(statementMock);
+    when(statementMock.getConnection()).thenReturn(connectionMock);
+    when(resultSet.getObject(eq(1))).thenReturn(structMock);
+
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+    dbRecord.handleField(resultSet, builder, addressField, 1, Types.STRUCT, 0, 0);
+    StructuredRecord record = builder.build();
+    StructuredRecord addressRecord = record.get("address");
+    
+    Assert.assertNotNull(addressRecord);
+    Assert.assertEquals("123 Main St", addressRecord.get("STREET"));
+    Assert.assertEquals("San Jose", addressRecord.get("CITY"));
+  }
+
+  @Test
+  public void validateNestedStructHandling() throws Exception {
+    Schema streetFieldSchema = Schema.of(Schema.Type.STRING);
+    Schema cityFieldSchema = Schema.of(Schema.Type.STRING);
+    Schema addressStructSchema = Schema.recordOf("ADDRESS_TYPE",
+        Schema.Field.of("STREET", streetFieldSchema),
+        Schema.Field.of("CITY", cityFieldSchema)
+    );
+    Schema personStructSchema = Schema.recordOf("PERSON_TYPE",
+        Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("ADDRESS", addressStructSchema)
+    );
+    Schema.Field personField = Schema.Field.of("person", personStructSchema);
+    Schema schema = Schema.recordOf("dbRecord", personField);
+
+    java.sql.Struct addressStructMock = org.mockito.Mockito.mock(java.sql.Struct.class);
+    Object[] addressAttrs = new Object[] { "123 Main St", "San Jose" };
+    when(addressStructMock.getAttributes()).thenReturn(addressAttrs);
+    java.sql.Struct personStructMock = org.mockito.Mockito.mock(java.sql.Struct.class);
+    Object[] personAttrs = new Object[] { "John Doe", addressStructMock };
+    when(personStructMock.getAttributes()).thenReturn(personAttrs);
+
+    java.sql.Statement statementMock = org.mockito.Mockito.mock(java.sql.Statement.class);
+    java.sql.Connection connectionMock = org.mockito.Mockito.mock(java.sql.Connection.class);
+    when(resultSet.getStatement()).thenReturn(statementMock);
+    when(statementMock.getConnection()).thenReturn(connectionMock);
+    when(resultSet.getObject(eq(1))).thenReturn(personStructMock);
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+    dbRecord.handleField(resultSet, builder, personField, 1, Types.STRUCT, 0, 0);
+    StructuredRecord record = builder.build();
+    StructuredRecord personRecord = record.get("person");
+    
+    Assert.assertNotNull(personRecord);
+    Assert.assertEquals("John Doe", personRecord.get("NAME"));
+    StructuredRecord addressRecord = personRecord.get("ADDRESS");
+    Assert.assertNotNull(addressRecord);
+    Assert.assertEquals("123 Main St", addressRecord.get("STREET"));
+    Assert.assertEquals("San Jose", addressRecord.get("CITY"));
+  }
+
+  @Test
+  public void validatePrimitiveTypesInStruct() throws Exception {
+    Schema mixStructSchema = Schema.recordOf("MIX_TYPE",
+        Schema.Field.of("INT_VAL", Schema.of(Schema.Type.INT)),
+        Schema.Field.of("DECIMAL_VAL", Schema.decimalOf(10, 2)),
+        Schema.Field.of("DATE_VAL", Schema.of(Schema.LogicalType.DATE)),
+        Schema.Field.of("DATETIME_VAL", Schema.of(Schema.LogicalType.DATETIME)),
+        Schema.Field.of("BYTES_VAL", Schema.of(Schema.Type.BYTES))
+    );
+    
+    Schema.Field mixField = Schema.Field.of("mix", mixStructSchema);
+    Schema schema = Schema.recordOf("dbRecord", mixField);
+    java.sql.Timestamp timestamp = java.sql.Timestamp.valueOf("2026-05-06 10:30:00");
+    java.sql.Date sqlDate = java.sql.Date.valueOf("2026-05-06");
+    byte[] bytes = new byte[] { 1, 2, 3 };
+    java.sql.Struct mixStructMock = org.mockito.Mockito.mock(java.sql.Struct.class);
+    Object[] mixAttrs = new Object[] {
+        123,
+        new BigDecimal("45.67"),
+        sqlDate,
+        timestamp,
+        bytes
+    };
+    when(mixStructMock.getAttributes()).thenReturn(mixAttrs);
+    java.sql.Statement statementMock = org.mockito.Mockito.mock(java.sql.Statement.class);
+    java.sql.Connection connectionMock = org.mockito.Mockito.mock(java.sql.Connection.class);
+    when(resultSet.getStatement()).thenReturn(statementMock);
+    when(statementMock.getConnection()).thenReturn(connectionMock);
+    when(resultSet.getObject(eq(1))).thenReturn(mixStructMock);
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+    dbRecord.handleField(resultSet, builder, mixField, 1, Types.STRUCT, 0, 0);
+    StructuredRecord record = builder.build();
+    StructuredRecord mixRecord = record.get("mix");
+    
+    Assert.assertNotNull(mixRecord);
+    Assert.assertEquals(Integer.valueOf(123), mixRecord.get("INT_VAL"));
+    Assert.assertEquals(new BigDecimal("45.67"), mixRecord.getDecimal("DECIMAL_VAL"));
+    Assert.assertEquals(sqlDate.toLocalDate(), mixRecord.getDate("DATE_VAL"));
+    Assert.assertEquals(timestamp.toLocalDateTime(), mixRecord.getDateTime("DATETIME_VAL"));
+    Assert.assertArrayEquals(bytes, mixRecord.get("BYTES_VAL"));
   }
 }

@@ -35,6 +35,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Struct;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDateTime;
@@ -106,7 +107,7 @@ public class OracleSourceDBRecord extends DBRecord {
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                              int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
-    if (OracleSourceSchemaReader.ORACLE_TYPES.contains(sqlType) || sqlType == Types.NCLOB) {
+    if (OracleSourceSchemaReader.ORACLE_TYPES.contains(sqlType) || sqlType == Types.NCLOB || sqlType == Types.STRUCT) {
       handleOracleSpecificType(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     } else {
       setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
@@ -341,6 +342,13 @@ public class OracleSourceDBRecord extends DBRecord {
       case OracleSourceSchemaReader.LONG_RAW:
         recordBuilder.set(field.getName(), resultSet.getBytes(columnIndex));
         break;
+      case Types.STRUCT:
+        java.sql.Struct structValue = (java.sql.Struct) resultSet.getObject(columnIndex);
+        if (structValue != null) {
+          recordBuilder.set(field.getName(), convertStructToRecord(structValue, nonNullSchema,
+              resultSet.getStatement().getConnection()));
+        }
+        break;
       case Types.DECIMAL:
       case Types.NUMERIC:
         // This is the only way to differentiate FLOAT/REAL columns from other numeric columns, that based on NUMBER.
@@ -369,6 +377,46 @@ public class OracleSourceDBRecord extends DBRecord {
           }
         }
     }
+  }
+
+  private StructuredRecord convertStructToRecord(java.sql.Struct struct, Schema schema,
+                                                 Connection connection) throws SQLException {
+    Object[] attributes = struct.getAttributes();
+    List<Schema.Field> fields = schema.getFields();
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+
+    for (int i = 0; i < fields.size() && i < attributes.length; i++) {
+      Schema.Field field = fields.get(i);
+      Object attrValue = attributes[i];
+
+      if (attrValue == null) {
+        builder.set(field.getName(), null);
+        continue;
+      }
+
+      Schema fieldSchema = field.getSchema().isNullable()
+              ? field.getSchema().getNonNullable() : field.getSchema();
+
+      if (attrValue instanceof Struct) {
+        builder.set(field.getName(), convertStructToRecord((Struct) attrValue, fieldSchema, connection));
+      } else if (attrValue instanceof java.sql.Date) {
+        builder.setDate(field.getName(), ((java.sql.Date) attrValue).toLocalDate());
+      } else if (attrValue instanceof java.sql.Time) {
+        builder.setTime(field.getName(), ((java.sql.Time) attrValue).toLocalTime());
+      } else if (attrValue instanceof Timestamp) {
+        if (Schema.LogicalType.DATETIME.equals(fieldSchema.getLogicalType())) {
+          builder.setDateTime(field.getName(), ((Timestamp) attrValue).toLocalDateTime());
+        } else {
+          builder.setTimestamp(field.getName(),
+                  ((Timestamp) attrValue).toInstant().atZone(java.time.ZoneId.of("UTC")));
+        }
+      } else if (attrValue instanceof BigDecimal) {
+        builder.setDecimal(field.getName(), (BigDecimal) attrValue);
+      } else {
+        builder.set(field.getName(), attrValue);
+      }
+    }
+    return builder.build();
   }
 
   /**
