@@ -148,8 +148,8 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
                   + "Use getSchemaFields(ResultSet) to enable STRUCT type resolution.");
         }
         String typeName = metadata.getColumnTypeName(index);
-        String oracleSchemaName = metadata.getSchemaName(index);
-        return getStructSchema(connection, oracleSchemaName, typeName);
+        String owner = typeName.substring(0, typeName.lastIndexOf('.'));
+        return getStructSchema(connection, typeName, owner);
       default:
         return super.getSchema(metadata, index);
     }
@@ -162,22 +162,22 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   }
 
   /**
-   * Builds a CDAP RECORD schema for an Oracle STRUCT type by querying the database metadata
+   * Builds a CDAP RECORD schema for an Oracle STRUCT type by querying the
+   * database metadata
    * for the type's attributes.
    *
    * @param connection the database connection
-   * @param schemaName the Oracle schema owning the type
    * @param typeName   the Oracle type name (e.g., "ADDRESS_TYPE")
-   * @return a CDAP RECORD schema with fields corresponding to the STRUCT's attributes
+   * @return a CDAP RECORD schema with fields corresponding to the STRUCT's
+   *         attributes
    */
-  private Schema getStructSchema(Connection connection, String schemaName,
-                                 String typeName) throws SQLException {
+  private Schema getStructSchema(Connection connection, String typeName, String owner) throws SQLException {
     List<Schema.Field> fields = new ArrayList<>();
-
-    String sql = "SELECT * FROM ALL_TYPE_ATTRS WHERE TYPE_NAME = ? ORDER BY ATTR_NO";
+    String sql = "SELECT * FROM ALL_TYPE_ATTRS WHERE TYPE_NAME = ? AND OWNER = ? ORDER BY ATTR_NO";
 
     try (PreparedStatement stmt = connection.prepareStatement(sql)) {
       stmt.setString(1, typeName.substring(typeName.lastIndexOf('.') + 1));
+      stmt.setString(2, owner);
 
       try (ResultSet attrRs = stmt.executeQuery()) {
         while (attrRs.next()) {
@@ -186,11 +186,12 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
           int attrSize = attrRs.getInt("PRECISION");
           int attrScale = attrRs.getInt("SCALE");
 
-          Schema attrSchema = mapPrimitiveOracleType(attrTypeName, attrSize, attrScale);
+          Schema attrSchema = mapPrimitiveOracleType(attrTypeName, attrSize, attrScale, attrName);
           if (attrSchema != null) {
             fields.add(Schema.Field.of(attrName, attrSchema));
           } else {
-            Schema nestedSchema = getStructSchema(connection, schemaName, attrTypeName);
+            String nestedStructOwner = attrRs.getString("ATTR_TYPE_OWNER");
+            Schema nestedSchema = getStructSchema(connection, attrTypeName, nestedStructOwner);
             fields.add(Schema.Field.of(attrName, nestedSchema));
           }
         }
@@ -198,72 +199,17 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     }
     if (fields.isEmpty()) {
       throw new SQLException(String.format(
-              "No attributes found for Oracle STRUCT type '%s.%s'. "
-                      + "Ensure the type exists and is accessible.",
-              schemaName, typeName));
+          "No attributes found for Oracle STRUCT type '%s'. "
+              + "Ensure the type exists and is accessible.",
+          typeName));
     }
 
     return Schema.recordOf(typeName, fields);
   }
 
-  private Schema mapPrimitiveOracleType(String typeName, int precision, int scale) {
-    switch (typeName) {
-      case "TIMESTAMP WITH TZ":
-        return isTimestampOldBehavior ? Schema.of(Schema.Type.STRING) : Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
-      case "TIMESTAMP WITH LTZ":
-        return getTimestampLtzSchema();
-      case "TIMESTAMP":
-        return Schema.of(Schema.LogicalType.DATETIME);
-      case "DATE" :
-        return Schema.of(Schema.LogicalType.DATE);
-      case "BINARY FLOAT":
-      case "FLOAT":
-        return Schema.of(Schema.Type.FLOAT);
-      case "BINARY DOUBLE":
-      case "DOUBLE":
-        return Schema.of(Schema.Type.DOUBLE);
-      case "BFILE":
-      case "RAW":
-      case "LONG RAW":
-        return Schema.of(Schema.Type.BYTES);
-      case "INTERVAL DAY TO SECOND":
-      case "INTERVAL YEAR TO MONTH":
-      case "VARCHAR2":
-      case "VARCHAR":
-      case "CHAR":
-      case "CLOB":
-      case "BLOB":
-      case "LONG":
-        return Schema.of(Schema.Type.STRING);
-      case "INTEGER":
-        return Schema.of(Schema.Type.INT);
-      case "NUMBER":
-      case "DECIMAL":
-        // FLOAT and REAL are returned as java.sql.Types.NUMERIC but with value that is a java.lang.Double
-        if (Double.class.getTypeName().equals(typeName)) {
-          return Schema.of(Schema.Type.DOUBLE);
-        } else {
-          if (precision == 0) {
-            if (isPrecisionlessNumAsDecimal) {
-              precision = 38;
-              scale = 0;
-              LOG.warn(String.format("%s type with undefined precision and scale is detected, "
-                      + "there may be a precision loss while running the pipeline. "
-                      + "Please define an output precision and scale for field to avoid "
-                      + "precision loss.", typeName));
-              return Schema.decimalOf(precision, scale);
-            } else {
-              LOG.warn(String.format("%s type without precision and scale, "
-                              + "converting into STRING type to avoid any precision loss.",
-                      typeName));
-              return Schema.of(Schema.Type.STRING);
-            }
-          }
-          return Schema.decimalOf(precision, scale);
-        }
-      default:
-        return null;
-    }
+  private Schema mapPrimitiveOracleType(String typeName, int precision, int scale, String columnName) {
+    return OracleUserTypeSchemaMapping.mapPrimitiveOracleType(isTimestampOldBehavior, getTimestampLtzSchema(),
+            isPrecisionlessNumAsDecimal, typeName, precision, scale, columnName);
   }
 
   private @NotNull Schema getTimestampLtzSchema() {

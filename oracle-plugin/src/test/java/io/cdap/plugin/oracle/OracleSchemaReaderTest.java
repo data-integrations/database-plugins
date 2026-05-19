@@ -20,9 +20,7 @@ import com.google.common.collect.Lists;
 import io.cdap.cdap.api.data.schema.Schema;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -108,28 +106,22 @@ public class OracleSchemaReaderTest {
   @Test
   public void getSchemaFields_structType_returnRecord() throws SQLException {
     OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader();
-
     ResultSet resultSet = Mockito.mock(ResultSet.class);
     ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
     Statement statement = Mockito.mock(Statement.class);
     Connection connection = Mockito.mock(Connection.class);
     PreparedStatement stmt = Mockito.mock(PreparedStatement.class);
     ResultSet attrRs = Mockito.mock(ResultSet.class);
-
     Mockito.when(resultSet.getMetaData()).thenReturn(metadata);
     Mockito.when(resultSet.getStatement()).thenReturn(statement);
     Mockito.when(statement.getConnection()).thenReturn(connection);
     Mockito.when(connection.prepareStatement(Mockito.anyString())).thenReturn(stmt);
     Mockito.when(stmt.executeQuery()).thenReturn(attrRs);
-
-    // One STRUCT column
     Mockito.when(metadata.getColumnCount()).thenReturn(1);
     Mockito.when(metadata.getColumnType(1)).thenReturn(Types.STRUCT);
     Mockito.when(metadata.getColumnName(1)).thenReturn("address");
-    Mockito.when(metadata.getColumnTypeName(1)).thenReturn("ADDRESS_TYPE");
+    Mockito.when(metadata.getColumnTypeName(1)).thenReturn("CS_ITN.ADDRESS_TYPE");
     Mockito.when(metadata.getSchemaName(1)).thenReturn("TEST_SCHEMA");
-
-    // Mock ALL_TYPE_ATTRS for ADDRESS_TYPE with two VARCHAR2 attributes
     Mockito.when(attrRs.next()).thenReturn(true, true, false);
     Mockito.when(attrRs.getString("ATTR_NAME")).thenReturn("STREET", "CITY");
     Mockito.when(attrRs.getString("ATTR_TYPE_NAME")).thenReturn("VARCHAR2", "VARCHAR2");
@@ -138,16 +130,14 @@ public class OracleSchemaReaderTest {
 
     List<Schema.Field> actualFields = schemaReader.getSchemaFields(resultSet);
 
-    Assert.assertEquals(1, actualFields.size());
     Schema.Field addressField = actualFields.get(0);
-    Assert.assertEquals("address", addressField.getName());
-
     Schema addressSchema = addressField.getSchema().isNullable()
             ? addressField.getSchema().getNonNullable() : addressField.getSchema();
-    Assert.assertEquals(Schema.Type.RECORD, addressSchema.getType());
-    Assert.assertEquals("ADDRESS_TYPE", addressSchema.getRecordName());
-
     List<Schema.Field> structFields = addressSchema.getFields();
+    Assert.assertEquals(1, actualFields.size());
+    Assert.assertEquals("address", addressField.getName());
+    Assert.assertEquals(Schema.Type.RECORD, addressSchema.getType());
+    Assert.assertEquals("CS_ITN.ADDRESS_TYPE", addressSchema.getRecordName());
     Assert.assertEquals(2, structFields.size());
     Assert.assertEquals("STREET", structFields.get(0).getName());
     Assert.assertEquals("CITY", structFields.get(1).getName());

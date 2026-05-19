@@ -30,6 +30,8 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -258,6 +260,31 @@ public class OracleSourceDBRecord extends DBRecord {
     }
   }
 
+  private byte[] getBfileBytes(Object bfile) throws SQLException {
+    if (bfile == null) {
+      return null;
+    }
+    try {
+      ClassLoader classLoader = bfile.getClass().getClassLoader();
+      Class<?> oracleBfileClass = classLoader.loadClass("oracle.jdbc.OracleBfile");
+      boolean isFileExist = (boolean) oracleBfileClass.getMethod("fileExists").invoke(bfile);
+      if (!isFileExist) {
+        return null;
+      }
+
+      oracleBfileClass.getMethod("openFile").invoke(bfile);
+      InputStream binaryStream = (InputStream) oracleBfileClass.getMethod("getBinaryStream").invoke(bfile);
+      byte[] bytes = ByteStreams.toByteArray(binaryStream);
+      oracleBfileClass.getMethod("closeFile").invoke(bfile);
+      return bytes;
+    } catch (ClassNotFoundException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+      throw new InvalidStageException("Field is of type 'BFILE', which is not supported " +
+              "with this version of the JDBC driver.", e);
+    } catch (IOException e) {
+      throw new InvalidStageException("Error reading the contents of the BFILE.", e);
+    }
+  }
+
   private void handleOracleSpecificType(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                                         int columnIndex, int sqlType, int precision, int scale)
     throws SQLException {
@@ -343,10 +370,9 @@ public class OracleSourceDBRecord extends DBRecord {
         recordBuilder.set(field.getName(), resultSet.getBytes(columnIndex));
         break;
       case Types.STRUCT:
-        java.sql.Struct structValue = (java.sql.Struct) resultSet.getObject(columnIndex);
+        Struct structValue = (Struct) resultSet.getObject(columnIndex);
         if (structValue != null) {
-          recordBuilder.set(field.getName(), convertStructToRecord(structValue, nonNullSchema,
-              resultSet.getStatement().getConnection()));
+          recordBuilder.set(field.getName(), convertStructToRecord(structValue, nonNullSchema, resultSet));
         }
         break;
       case Types.DECIMAL:
@@ -379,42 +405,32 @@ public class OracleSourceDBRecord extends DBRecord {
     }
   }
 
-  private StructuredRecord convertStructToRecord(java.sql.Struct struct, Schema schema,
-                                                 Connection connection) throws SQLException {
+  private StructuredRecord convertStructToRecord(Struct struct, Schema schema, ResultSet resultSet)
+      throws SQLException {
     Object[] attributes = struct.getAttributes();
     List<Schema.Field> fields = schema.getFields();
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
 
-    for (int i = 0; i < fields.size() && i < attributes.length; i++) {
-      Schema.Field field = fields.get(i);
-      Object attrValue = attributes[i];
+    for (int index = 0; index < attributes.length; index++) {
+      Schema.Field field = fields.get(index);
+      Object attrValue = attributes[index];
 
       if (attrValue == null) {
         builder.set(field.getName(), null);
         continue;
       }
-
-      Schema fieldSchema = field.getSchema().isNullable()
-              ? field.getSchema().getNonNullable() : field.getSchema();
-
+      // If it is an internal nested STRUCT, recurse down
       if (attrValue instanceof Struct) {
-        builder.set(field.getName(), convertStructToRecord((Struct) attrValue, fieldSchema, connection));
-      } else if (attrValue instanceof java.sql.Date) {
-        builder.setDate(field.getName(), ((java.sql.Date) attrValue).toLocalDate());
-      } else if (attrValue instanceof java.sql.Time) {
-        builder.setTime(field.getName(), ((java.sql.Time) attrValue).toLocalTime());
-      } else if (attrValue instanceof Timestamp) {
-        if (Schema.LogicalType.DATETIME.equals(fieldSchema.getLogicalType())) {
-          builder.setDateTime(field.getName(), ((Timestamp) attrValue).toLocalDateTime());
-        } else {
-          builder.setTimestamp(field.getName(),
-                  ((Timestamp) attrValue).toInstant().atZone(java.time.ZoneId.of("UTC")));
-        }
-      } else if (attrValue instanceof BigDecimal) {
-        builder.setDecimal(field.getName(), (BigDecimal) attrValue);
-      } else {
-        builder.set(field.getName(), attrValue);
+        Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+        builder.set(field.getName(), convertStructToRecord((Struct) attrValue, fieldSchema, resultSet));
+        continue;
       }
+
+      String attrClassName = attrValue.getClass().getName();
+      Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+
+      OracleStructAttributeConverters.convertValue(builder, field, fieldSchema, attrValue, attrClassName,
+              this::getBfileBytes);
     }
     return builder.build();
   }
