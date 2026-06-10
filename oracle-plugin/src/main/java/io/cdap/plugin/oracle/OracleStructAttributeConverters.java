@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.SQLException;
+import java.sql.SQLXML;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -154,7 +155,13 @@ public final class OracleStructAttributeConverters {
   private static class OracleBfileConverter implements AttributeConverter {
     @Override
     public boolean canConvert(Object attrValue, String attrClassName) {
-      return "oracle.jdbc.OracleBfile".equals(attrClassName);
+      try {
+        ClassLoader oracleLoader = attrValue.getClass().getClassLoader();
+        Class<?> bfileInterface = oracleLoader.loadClass("oracle.jdbc.OracleBfile");
+        return bfileInterface.isInstance(attrValue);
+      } catch (Exception e) {
+        return false;
+      }
     }
 
     @Override
@@ -190,6 +197,26 @@ public final class OracleStructAttributeConverters {
     }
   }
 
+  private static class SqlXmlConverter implements AttributeConverter {
+
+    @Override
+    public boolean canConvert(Object attrValue, String attrClassName) {
+      return attrValue instanceof SQLXML;
+    }
+
+    @Override
+    public void convert(
+            StructuredRecord.Builder builder,
+            Schema.Field field,
+            Schema fieldSchema,
+            Object attrValue,
+            BfileBytesResolver resolver) throws SQLException {
+
+      SQLXML xml = (SQLXML) attrValue;
+      builder.set(field.getName(), xml.getString());
+    }
+  }
+
   private static class DefaultConverter implements AttributeConverter {
     @Override
     public boolean canConvert(Object attrValue, String attrClassName) {
@@ -212,6 +239,7 @@ public final class OracleStructAttributeConverters {
       new OracleBfileConverter(),
       new ByteArrayConverter(),
       new OracleIntervalConverter(),
+      new SqlXmlConverter(),
       new DefaultConverter()
   );
 

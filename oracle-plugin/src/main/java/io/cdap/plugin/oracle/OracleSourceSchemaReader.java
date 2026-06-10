@@ -19,7 +19,6 @@ package io.cdap.plugin.oracle;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.db.CommonSchemaReader;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -198,6 +197,10 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
             fields.add(Schema.Field.of(attrName, attrSchema));
           } else {
             String nestedStructOwner = attrRs.getString("ATTR_TYPE_OWNER");
+            if (nestedStructOwner == null || nestedStructOwner.isEmpty()) {
+              throw new SQLException(String.format("Attribute '%s' is not a primitive type, but it lacks a type " +
+                      "owner. Therefore, it cannot be resolved as a STRUCT type. ", attrName));
+            }
             Schema nestedSchema = getStructSchema(connection, attrTypeName, nestedStructOwner);
             fields.add(Schema.Field.of(attrName, nestedSchema));
           }
@@ -215,11 +218,11 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   }
 
   private Schema mapPrimitiveOracleType(String typeName, int precision, int scale, String columnName) {
-    return OracleUserTypeSchemaMapping.mapPrimitiveOracleType(isTimestampOldBehavior, getTimestampLtzSchema(),
+    return OracleStructTypeSchemaMapping.mapPrimitiveOracleType(isTimestampOldBehavior, getTimestampLtzSchema(),
             isPrecisionlessNumAsDecimal, typeName, precision, scale, columnName);
   }
 
-  private @NotNull Schema getTimestampLtzSchema() {
+  private Schema getTimestampLtzSchema() {
     return isTimestampOldBehavior || isTimestampLtzFieldTimestamp
       ? Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)
       : Schema.of(Schema.LogicalType.DATETIME);

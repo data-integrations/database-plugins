@@ -29,8 +29,8 @@ import java.util.Map;
 /**
  * Registry containing schema type mappers for Oracle specific datatypes.
  */
-public final class OracleUserTypeSchemaMapping {
-  private static final Logger LOG = LoggerFactory.getLogger(OracleUserTypeSchemaMapping.class);
+public final class OracleStructTypeSchemaMapping {
+  private static final Logger LOG = LoggerFactory.getLogger(OracleStructTypeSchemaMapping.class);
 
   private interface TypeMapper {
     Schema map(boolean isTimestampOldBehavior, Schema timestampLtzSchema,
@@ -41,12 +41,12 @@ public final class OracleUserTypeSchemaMapping {
 
   static {
     TypeMapper floatMapper = (isOld, ltzS, precD, typeName, p, s, col) -> Schema.of(Schema.Type.FLOAT);
-    TYPE_MAPPERS.put("BINARY FLOAT", floatMapper);
+    TYPE_MAPPERS.put("BINARY_FLOAT", floatMapper);
     TYPE_MAPPERS.put("REAL", floatMapper);
     TYPE_MAPPERS.put("FLOAT", floatMapper);
 
     TypeMapper doubleMapper = (isOld, ltzS, precD, typeName, p, s, col) -> Schema.of(Schema.Type.DOUBLE);
-    TYPE_MAPPERS.put("BINARY DOUBLE", doubleMapper);
+    TYPE_MAPPERS.put("BINARY_DOUBLE", doubleMapper);
     TYPE_MAPPERS.put("DOUBLE", doubleMapper);
 
     // Bytes types
@@ -64,27 +64,40 @@ public final class OracleUserTypeSchemaMapping {
     TYPE_MAPPERS.put("VARCHAR", stringMapper);
     TYPE_MAPPERS.put("CHAR", stringMapper);
     TYPE_MAPPERS.put("CHAR2", stringMapper);
+    TYPE_MAPPERS.put("NCHAR", stringMapper);
+    TYPE_MAPPERS.put("NVARCHAR2", stringMapper);
     TYPE_MAPPERS.put("CLOB", stringMapper);
     TYPE_MAPPERS.put("NCLOB", stringMapper);
     TYPE_MAPPERS.put("LONG", stringMapper);
+    TYPE_MAPPERS.put("ROWID", stringMapper);
+    TYPE_MAPPERS.put("UROWID", stringMapper);
 
-    // Specific types
+    // Date and Time types
     TYPE_MAPPERS.put("TIMESTAMP WITH TZ", (isOld, ltzS, precD, typeName, p, s, col) ->
             isOld ? Schema.of(Schema.Type.STRING) : Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)
     );
-    TYPE_MAPPERS.put("TIMESTAMP WITH LTZ", (isOld, ltzS, precD, typeName, p, s, col) -> ltzS);
+    TYPE_MAPPERS.put("TIMESTAMP WITH LOCAL TZ", (isOld, ltzS, precD, typeName, p, s, col) -> ltzS);
     TYPE_MAPPERS.put("TIMESTAMP", (isOld, ltzS, precD, typeName, p, s, col) ->
             isOld ? Schema.of(Schema.LogicalType.TIMESTAMP_MICROS) : Schema.of(Schema.LogicalType.DATETIME)
     );
     TYPE_MAPPERS.put("DATE", (isOld, ltzS, precD, typeName, p, s, col) -> Schema.of(Schema.LogicalType.DATE));
     TYPE_MAPPERS.put("TIME", (isOld, ltzS, precD, typeName, p, s, col) -> Schema.of(Schema.LogicalType.TIME_MICROS));
-    TYPE_MAPPERS.put("INTEGER", (isOld, ltzS, precD, typeName, p, s, col) -> Schema.of(Schema.Type.INT));
 
-    TYPE_MAPPERS.put("NUMBER", OracleUserTypeSchemaMapping::mapNumberOrDecimal);
-    TYPE_MAPPERS.put("DECIMAL", OracleUserTypeSchemaMapping::mapNumberOrDecimal);
+    // Numeric types
+    TYPE_MAPPERS.put("INTEGER", (isOld, ltzS, precD, typeName, p, s, col) -> Schema.of(Schema.Type.INT));
+    TYPE_MAPPERS.put("NUMBER", OracleStructTypeSchemaMapping::mapNumberOrDecimal);
+    TYPE_MAPPERS.put("DECIMAL", OracleStructTypeSchemaMapping::mapNumberOrDecimal);
+
+    // XML type
+    TYPE_MAPPERS.put("XMLTYPE", (isOld, ltzS, precD, typeName, p, s, col) -> Schema.of(Schema.Type.STRING));
 
     // Unsupported types that throw error
     TYPE_MAPPERS.put("ARRAY", (isOld, ltzS, precD, typeName, p, s, col) -> {
+      String errorMessage = String.format("Column %s has unsupported SQL type of %s.", col, typeName);
+      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN),
+              errorMessage, errorMessage, ErrorType.SYSTEM, true, null);
+    });
+    TYPE_MAPPERS.put("ANYDATA", (isOld, ltzS, precD, typeName, p, s, col) -> {
       String errorMessage = String.format("Column %s has unsupported SQL type of %s.", col, typeName);
       throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN),
               errorMessage, errorMessage, ErrorType.SYSTEM, true, null);
@@ -94,14 +107,9 @@ public final class OracleUserTypeSchemaMapping {
       throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN),
               errorMessage, errorMessage, ErrorType.SYSTEM, true, null);
     });
-    TYPE_MAPPERS.put("XML", (isOld, ltzS, precD, typeName, p, s, col) -> {
-      String errorMessage = String.format("Column %s has unsupported SQL type of %s.", col, typeName);
-      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN),
-              errorMessage, errorMessage, ErrorType.SYSTEM, true, null);
-    });
   }
 
-  private OracleUserTypeSchemaMapping() {
+  private OracleStructTypeSchemaMapping() {
     // Private constructor to prevent instantiation of utility class.
   }
 
