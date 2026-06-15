@@ -95,8 +95,25 @@
 
   <repositories>
     <repository>
+      <id>central</id>
+      <name>Maven Central</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+    <repository>
       <id>sonatype-snapshots</id>
       <url>https://central.sonatype.com/repository/maven-snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </repository>
   </repositories>
 
@@ -721,7 +738,7 @@
         <dependency>
           <groupId>io.cdap.tests.e2e</groupId>
           <artifactId>cdap-e2e-framework</artifactId>
-          <version>0.4.0</version>
+          <version>0.4.2</version>
           <scope>test</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
