@@ -153,6 +153,11 @@ public class CloudSQLPostgreSQLSource
     @Description("The existing connection to use.")
     private CloudSQLPostgreSQLConnectorConfig connection;
 
+    @Name(TRANSACTION_ISOLATION_LEVEL)
+    @Description("Transaction isolation level for queries run by this source.")
+    @Nullable
+    private String transactionIsolationLevel;
+
     @Override
     protected Map<String, String> getDBSpecificArguments() {
       return Collections.emptyMap();
@@ -167,6 +172,11 @@ public class CloudSQLPostgreSQLSource
     @Override
     protected CloudSQLPostgreSQLConnectorConfig getConnection() {
       return connection;
+    }
+
+    @Override
+    public String getTransactionIsolationLevel() {
+      return transactionIsolationLevel;
     }
 
     @Override

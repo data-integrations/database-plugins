@@ -42,7 +42,13 @@ Can be found in the instance overview page.
 
 **Password:** Password to use to connect to the specified database.
 
-**Transaction Isolation Level:** Transaction isolation level for queries run by this sink. 
+**Transaction Isolation Level** The transaction isolation level of the database connection
+- TRANSACTION_READ_COMMITTED: No dirty reads. Non-repeatable reads and phantom reads are possible.
+- TRANSACTION_SERIALIZABLE: No dirty reads. Non-repeatable and phantom reads are prevented.
+- TRANSACTION_REPEATABLE_READ: No dirty reads. Prevents non-repeatable reads, but phantom reads are still possible.
+- TRANSACTION_READ_UNCOMMITTED: Allows dirty reads (reading uncommitted changes from other transactions). Non-repeatable reads and phantom reads are possible.
+
+For more details on the Transaction Isolation Levels supported in CloudSQL MySQL, refer to the  [CloudSQL MySQL documentation](https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html)
 
 **Connection Timeout:** The timeout value (in seconds) used for socket connect operations. If connecting to the server 
 takes longer than this value, the connection is broken. A value of 0 means that it is disabled.

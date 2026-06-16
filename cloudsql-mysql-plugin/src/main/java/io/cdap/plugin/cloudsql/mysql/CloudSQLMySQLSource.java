@@ -152,6 +152,11 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
     @Description("The existing connection to use.")
     private CloudSQLMySQLConnectorConfig connection;
 
+    @Name(TRANSACTION_ISOLATION_LEVEL)
+    @Description("Transaction isolation level for queries run by this source.")
+    @Nullable
+    public String transactionIsolationLevel;
+
     @Override
     protected Map<String, String> getDBSpecificArguments() {
       if (getFetchSize() == null || getFetchSize() <= 0) {
@@ -162,6 +167,11 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
       // statement will use cursor-based fetching to retrieve rows
       arguments.put("useCursorFetch", "true");
       return arguments;
+    }
+
+    @Override
+    public String getTransactionIsolationLevel() {
+      return transactionIsolationLevel;
     }
 
     @Override
