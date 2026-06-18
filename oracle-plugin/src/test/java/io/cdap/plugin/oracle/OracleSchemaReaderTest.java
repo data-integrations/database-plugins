@@ -151,10 +151,14 @@ public class OracleSchemaReaderTest {
     OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader(null, false, false, false, true);
     ResultSet resultSet = Mockito.mock(ResultSet.class);
     ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
+    Connection connection = Mockito.mock(Connection.class);
+    Statement statement = Mockito.mock(Statement.class);
     Mockito.when(resultSet.getMetaData()).thenReturn(metadata);
     Mockito.when(metadata.getColumnCount()).thenReturn(1);
     Mockito.when(metadata.getColumnType(1)).thenReturn(Types.SQLXML);
     Mockito.when(metadata.getColumnName(1)).thenReturn("xmlData");
+    Mockito.when(resultSet.getStatement()).thenReturn(statement);
+    Mockito.when(statement.getConnection()).thenReturn(connection);
 
     List<Schema.Field> actualSchemaFields = schemaReader.getSchemaFields(resultSet);
 
@@ -170,10 +174,43 @@ public class OracleSchemaReaderTest {
             false, false, false, false);
     ResultSet resultSet = Mockito.mock(ResultSet.class);
     ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
+    Connection connection = Mockito.mock(Connection.class);
+    Statement statement = Mockito.mock(Statement.class);
     Mockito.when(resultSet.getMetaData()).thenReturn(metadata);
     Mockito.when(metadata.getColumnCount()).thenReturn(1);
     Mockito.when(metadata.getColumnType(1)).thenReturn(Types.SQLXML);
     Mockito.when(metadata.getColumnName(1)).thenReturn("xmlData");
+    Mockito.when(resultSet.getStatement()).thenReturn(statement);
+    Mockito.when(statement.getConnection()).thenReturn(connection);
+
+    Assert.assertThrows(ProgramFailureException.class, () -> schemaReader.getSchemaFields(resultSet));
+
+  }
+
+  @Test
+  public void getSchemaFields_structWithUnsupportedAttributeType_throwsException() throws SQLException {
+    OracleSourceSchemaReader schemaReader = new OracleSourceSchemaReader();
+    ResultSet resultSet = Mockito.mock(ResultSet.class);
+    ResultSetMetaData metadata = Mockito.mock(ResultSetMetaData.class);
+    Statement statement = Mockito.mock(Statement.class);
+    Connection connection = Mockito.mock(Connection.class);
+    PreparedStatement stmt = Mockito.mock(PreparedStatement.class);
+    ResultSet attrRs = Mockito.mock(ResultSet.class);
+    Mockito.when(resultSet.getMetaData()).thenReturn(metadata);
+    Mockito.when(resultSet.getStatement()).thenReturn(statement);
+    Mockito.when(statement.getConnection()).thenReturn(connection);
+    Mockito.when(connection.prepareStatement(Mockito.anyString())).thenReturn(stmt);
+    Mockito.when(stmt.executeQuery()).thenReturn(attrRs);
+    Mockito.when(metadata.getColumnCount()).thenReturn(1);
+    Mockito.when(metadata.getColumnType(1)).thenReturn(Types.STRUCT);
+    Mockito.when(metadata.getColumnName(1)).thenReturn("complex_payload");
+    Mockito.when(metadata.getColumnTypeName(1)).thenReturn("CS_ITN.ANYDATA_TYPE");
+    Mockito.when(metadata.getSchemaName(1)).thenReturn("TEST_SCHEMA");
+    Mockito.when(attrRs.next()).thenReturn(true, true, false);
+    Mockito.when(attrRs.getString("ATTR_NAME")).thenReturn("VALID_ID", "UNSUPPORTED_DATA");
+    Mockito.when(attrRs.getString("ATTR_TYPE_NAME")).thenReturn("NUMBER", "ANYDATA");
+    Mockito.when(attrRs.getInt("PRECISION")).thenReturn(10, 0);
+    Mockito.when(attrRs.getInt("SCALE")).thenReturn(0, 0);
 
     Assert.assertThrows(ProgramFailureException.class, () -> schemaReader.getSchemaFields(resultSet));
 

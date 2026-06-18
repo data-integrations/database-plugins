@@ -235,32 +235,10 @@ public class OracleSourceDBRecord extends DBRecord {
    */
   private byte[] getBfileBytes(ResultSet resultSet, String columnName) throws SQLException {
     Object bfile = resultSet.getObject(columnName);
-    if (bfile == null) {
-      return null;
-    }
-    try {
-      ClassLoader classLoader = resultSet.getClass().getClassLoader();
-      Class<?> oracleBfileClass = classLoader.loadClass("oracle.jdbc.OracleBfile");
-      boolean isFileExist = (boolean) oracleBfileClass.getMethod("fileExists").invoke(bfile);
-      if (!isFileExist) {
-        return null;
-      }
-
-      oracleBfileClass.getMethod("openFile").invoke(bfile);
-      InputStream binaryStream = (InputStream) oracleBfileClass.getMethod("getBinaryStream").invoke(bfile);
-      byte[] bytes = ByteStreams.toByteArray(binaryStream);
-      oracleBfileClass.getMethod("closeFile").invoke(bfile);
-      return bytes;
-    } catch (ClassNotFoundException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-      throw new InvalidStageException(String.format("Column '%s' is of type 'BFILE', which is not supported with " +
-                                                      "this version of the JDBC driver.", columnName), e);
-    } catch (IOException e) {
-      throw new InvalidStageException(String.format("Error reading the contents of the BFILE at column '%s'.",
-                                                    columnName), e);
-    }
+    return getBfileBytes(bfile, columnName);
   }
 
-  private byte[] getBfileBytes(Object bfile) throws SQLException {
+  public static byte[] getBfileBytes(Object bfile, String columnName) {
     if (bfile == null) {
       return null;
     }
@@ -278,10 +256,11 @@ public class OracleSourceDBRecord extends DBRecord {
       oracleBfileClass.getMethod("closeFile").invoke(bfile);
       return bytes;
     } catch (ClassNotFoundException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-      throw new InvalidStageException("Field is of type 'BFILE', which is not supported " +
-              "with this version of the JDBC driver.", e);
+      throw new InvalidStageException(String.format("Column '%s' is of type 'BFILE', which is not supported with " +
+                                                      "this version of the JDBC driver.", columnName), e);
     } catch (IOException e) {
-      throw new InvalidStageException("Error reading the contents of the BFILE.", e);
+      throw new InvalidStageException(String.format("Error reading the contents of the BFILE at column '%s'.",
+                                                    columnName), e);
     }
   }
 
@@ -429,8 +408,7 @@ public class OracleSourceDBRecord extends DBRecord {
       String attrClassName = attrValue.getClass().getName();
       Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
 
-      OracleStructAttributeConverters.convertValue(builder, field, fieldSchema, attrValue, attrClassName,
-              this::getBfileBytes);
+      OracleStructAttributeConverters.convertValue(builder, field, fieldSchema, attrValue, attrClassName);
     }
     return builder.build();
   }

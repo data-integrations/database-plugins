@@ -25,7 +25,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
@@ -235,5 +234,4 @@ public class OracleSourceDBRecordUnitTest {
     StructuredRecord record = builder.build();
     Assert.assertNull(record.get("field1"));
   }
-
 }
