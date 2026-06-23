@@ -251,7 +251,6 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Close the Plugin Properties page
     Then Navigate to the properties page of plugin: "Oracle2"
     Then Select dropdown plugin property: "select-jdbcPluginName" with option value: "driverName"
-    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
     Then Replace input plugin property: "database" with value: "databaseName"
     Then Replace input plugin property: "tableName" with value: "targetTable"
     Then Replace input plugin property: "dbSchemaName" with value: "schema"
@@ -259,6 +258,7 @@ Feature: Oracle sink- Verify Oracle sink plugin design time validation scenarios
     Then Enter input plugin property: "referenceName" with value: "targetRef"
     Then Select radio button plugin property: "connectionType" with value: "service"
     Then Select radio button plugin property: "role" with value: "normal"
+    Then Replace input plugin property: "port" with value: "port" for Credentials and Authorization related fields
     Then Click on the Validate button
     Then Verify that the Plugin is displaying an error message: "blank.HostBlank.message" on the header
 
