@@ -117,6 +117,115 @@ public class OracleSourceDBRecord extends DBRecord {
   }
 
   @Override
+  protected void setFieldValue(StructuredRecord.Builder recordBuilder, Schema.Field field, Object attrValue)
+          throws SQLException {
+    if (attrValue == null) {
+      recordBuilder.set(field.getName(), null);
+      return;
+    }
+
+    Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+    String attrClassName = attrValue.getClass().getName();
+
+    // Handle Nested Structs Recursively
+    if (attrValue instanceof Struct) {
+      recordBuilder.set(field.getName(), convertStructToRecord((Struct) attrValue, fieldSchema, null));
+      return;
+    }
+
+    // Handle Oracle UDTs (Clobs, Blobs, SQLXML, INTERVALS)
+    if (attrValue instanceof Clob) {
+      Clob clob = (Clob) attrValue;
+      recordBuilder.set(field.getName(), clob.getSubString(1, (int) clob.length()));
+      return;
+    }
+
+    if (attrValue instanceof Blob) {
+      Blob blob = (Blob) attrValue;
+      recordBuilder.set(field.getName(), blob.getBytes(1, (int) blob.length()));
+      return;
+    }
+
+    if (attrValue instanceof java.sql.SQLXML) {
+      recordBuilder.set(field.getName(), ((java.sql.SQLXML) attrValue).getString());
+      return;
+    }
+
+    if ("oracle.sql.INTERVALDS".equals(attrClassName) || "oracle.sql.INTERVALYM".equals(attrClassName)) {
+      recordBuilder.set(field.getName(), attrValue.toString());
+      return;
+    }
+
+    // Handle Oracle's lazy BigDecimals and downcast them
+    if (attrValue instanceof BigDecimal) {
+      BigDecimal bigDecimal = (BigDecimal) attrValue;
+      if (Schema.LogicalType.DECIMAL.equals(fieldSchema.getLogicalType())) {
+        recordBuilder.setDecimal(field.getName(), bigDecimal.setScale(fieldSchema.getScale(),
+                java.math.RoundingMode.HALF_UP));
+      } else {
+        switch (fieldSchema.getType()) {
+          case DOUBLE: recordBuilder.set(field.getName(), bigDecimal.doubleValue()); break;
+          case FLOAT: recordBuilder.set(field.getName(), bigDecimal.floatValue()); break;
+          case INT: recordBuilder.set(field.getName(), bigDecimal.intValue()); break;
+          case LONG: recordBuilder.set(field.getName(), bigDecimal.longValue()); break;
+          case STRING: recordBuilder.set(field.getName(), bigDecimal.toString()); break;
+          default: recordBuilder.set(field.getName(), bigDecimal);
+        }
+      }
+      return;
+    }
+
+    // 4. Handle Oracle Timestamps to ensure DATETIME schema compatibility
+    if (attrValue instanceof Timestamp) {
+      Timestamp timestamp = (Timestamp) attrValue;
+      if (Schema.LogicalType.DATETIME.equals(fieldSchema.getLogicalType())) {
+        recordBuilder.setDateTime(field.getName(), timestamp.toLocalDateTime());
+      } else if (Schema.LogicalType.DATE.equals(fieldSchema.getLogicalType())) {
+        recordBuilder.setDate(field.getName(), timestamp.toLocalDateTime().toLocalDate());
+      } else if (fieldSchema.getLogicalType() == null && Schema.Type.STRING.equals(fieldSchema.getType())) {
+        // Only stringify if the CDAP schema strictly demands a String
+        recordBuilder.set(field.getName(), attrValue.toString());
+      } else {
+        // HAND IT BACK TO THE PARENT! This restores the exact behavior of your old build.
+        super.setFieldValue(recordBuilder, field, attrValue);
+      }
+      return;
+    }
+
+    // Handle Timezone shifting
+    if (attrValue instanceof OffsetDateTime || attrValue instanceof ZonedDateTime) {
+      ZonedDateTime zonedDateTime = (attrValue instanceof OffsetDateTime)
+              ? ((OffsetDateTime) attrValue).atZoneSameInstant(ZoneId.of("UTC"))
+              : ((ZonedDateTime) attrValue).withZoneSameInstant(ZoneId.of("UTC"));
+
+      if (fieldSchema.getLogicalType() != null &&
+              (Schema.LogicalType.TIMESTAMP_MICROS.equals(fieldSchema.getLogicalType()) ||
+                      Schema.LogicalType.TIMESTAMP_MILLIS.equals(fieldSchema.getLogicalType()))) {
+        recordBuilder.setTimestamp(field.getName(), zonedDateTime);
+      } else if (Schema.Type.LONG.equals(fieldSchema.getType())) {
+        recordBuilder.set(field.getName(), zonedDateTime.toInstant().toEpochMilli());
+      } else {
+        recordBuilder.set(field.getName(), zonedDateTime.toString());
+      }
+      return;
+    }
+
+    // Handle BFILE
+    try {
+      ClassLoader oracleLoader = attrValue.getClass().getClassLoader();
+      if (oracleLoader != null && oracleLoader.loadClass("oracle.jdbc.OracleBfile").isInstance(attrValue)) {
+        recordBuilder.set(field.getName(), getBfileBytes(attrValue, field.getName()));
+        return;
+      }
+    } catch (Exception e) {
+      // Not a BFile, let it fall through
+    }
+
+    // Parent DBRecord handles the standard types
+    super.setFieldValue(recordBuilder, field, attrValue);
+  }
+
+  @Override
   protected void writeNonNullToDB(PreparedStatement stmt, Schema fieldSchema,
                                   String fieldName, int fieldIndex) throws SQLException {
     int sqlIndex = fieldIndex + 1;
@@ -394,21 +503,7 @@ public class OracleSourceDBRecord extends DBRecord {
       Schema.Field field = fields.get(index);
       Object attrValue = attributes[index];
 
-      if (attrValue == null) {
-        builder.set(field.getName(), null);
-        continue;
-      }
-      // If it is an internal nested STRUCT, recurse down
-      if (attrValue instanceof Struct) {
-        Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-        builder.set(field.getName(), convertStructToRecord((Struct) attrValue, fieldSchema, resultSet));
-        continue;
-      }
-
-      String attrClassName = attrValue.getClass().getName();
-      Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
-
-      OracleStructAttributeConverters.convertValue(builder, field, fieldSchema, attrValue, attrClassName);
+      setFieldValue(builder, field, attrValue);
     }
     return builder.build();
   }

@@ -188,7 +188,14 @@ public class DBRecord implements Writable, DBWritable, Configurable {
   protected void setField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                           int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
     Object o = DBUtils.transformValue(sqlType, sqlPrecision, sqlScale, resultSet, columnIndex);
-    if (o instanceof Date) {
+    setFieldValue(recordBuilder, field, o);
+  }
+
+  protected void setFieldValue(StructuredRecord.Builder recordBuilder, Schema.Field field, Object o)
+          throws SQLException {
+    if (o == null) {
+      recordBuilder.set(field.getName(), null);
+    } else if (o instanceof Date) {
       recordBuilder.setDate(field.getName(), ((Date) o).toLocalDate());
     } else if (o instanceof Time) {
       recordBuilder.setTime(field.getName(), ((Time) o).toLocalTime());
