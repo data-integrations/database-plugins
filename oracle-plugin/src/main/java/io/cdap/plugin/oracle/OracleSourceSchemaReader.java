@@ -60,11 +60,10 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     DATA_TYPE_MAP.put("TIMESTAMP WITH LOCAL TZ", TIMESTAMP_LTZ);
     DATA_TYPE_MAP.put("TIMESTAMP WITH TZ", TIMESTAMP_TZ);
     DATA_TYPE_MAP.put("TIMESTAMP", Types.TIMESTAMP);
-    DATA_TYPE_MAP.put("DATE", Types.DATE);
-    DATA_TYPE_MAP.put("TIME", Types.TIME);
-    DATA_TYPE_MAP.put("FLOAT", Types.FLOAT);
+    DATA_TYPE_MAP.put("DATE", Types.TIMESTAMP);
+    DATA_TYPE_MAP.put("FLOAT", Types.DOUBLE);
     DATA_TYPE_MAP.put("BINARY_FLOAT", BINARY_FLOAT);
-    DATA_TYPE_MAP.put("REAL", Types.REAL);
+    DATA_TYPE_MAP.put("REAL", Types.DOUBLE);
     DATA_TYPE_MAP.put("BINARY_DOUBLE", BINARY_DOUBLE);
     DATA_TYPE_MAP.put("DOUBLE", Types.DOUBLE);
     DATA_TYPE_MAP.put("BFILE", BFILE);

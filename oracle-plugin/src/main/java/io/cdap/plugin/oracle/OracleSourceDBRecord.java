@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.sql.Blob;
 import java.sql.Clob;
@@ -37,6 +38,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLXML;
 import java.sql.Struct;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -124,105 +126,84 @@ public class OracleSourceDBRecord extends DBRecord {
       return;
     }
 
-    Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
+    Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable()
+            : field.getSchema();
     String attrClassName = attrValue.getClass().getName();
-
-    // Handle Nested Structs Recursively
     if (attrValue instanceof Struct) {
-      recordBuilder.set(field.getName(), convertStructToRecord((Struct) attrValue, fieldSchema, null));
+      recordBuilder.set(field.getName(), convertStructToRecord((Struct) attrValue, fieldSchema));
       return;
     }
-
-    // Handle Oracle UDTs (Clobs, Blobs, SQLXML, INTERVALS)
     if (attrValue instanceof Clob) {
       Clob clob = (Clob) attrValue;
       recordBuilder.set(field.getName(), clob.getSubString(1, (int) clob.length()));
       return;
     }
-
     if (attrValue instanceof Blob) {
       Blob blob = (Blob) attrValue;
       recordBuilder.set(field.getName(), blob.getBytes(1, (int) blob.length()));
       return;
     }
-
-    if (attrValue instanceof java.sql.SQLXML) {
-      recordBuilder.set(field.getName(), ((java.sql.SQLXML) attrValue).getString());
+    if (attrValue instanceof SQLXML) {
+      recordBuilder.set(field.getName(), ((SQLXML) attrValue).getString());
       return;
     }
-
     if ("oracle.sql.INTERVALDS".equals(attrClassName) || "oracle.sql.INTERVALYM".equals(attrClassName)) {
       recordBuilder.set(field.getName(), attrValue.toString());
       return;
     }
-
-    // Handle Oracle's lazy BigDecimals and downcast them
+    if ("oracle.sql.NCLOB".equals(attrClassName)) {
+      recordBuilder.set(field.getName(), attrValue.toString());
+      return;
+    }
     if (attrValue instanceof BigDecimal) {
       BigDecimal bigDecimal = (BigDecimal) attrValue;
       if (Schema.LogicalType.DECIMAL.equals(fieldSchema.getLogicalType())) {
-        recordBuilder.setDecimal(field.getName(), bigDecimal.setScale(fieldSchema.getScale(),
-                java.math.RoundingMode.HALF_UP));
-      } else {
-        switch (fieldSchema.getType()) {
-          case DOUBLE: recordBuilder.set(field.getName(), bigDecimal.doubleValue()); break;
-          case FLOAT: recordBuilder.set(field.getName(), bigDecimal.floatValue()); break;
-          case INT: recordBuilder.set(field.getName(), bigDecimal.intValue()); break;
-          case LONG: recordBuilder.set(field.getName(), bigDecimal.longValue()); break;
-          case STRING: recordBuilder.set(field.getName(), bigDecimal.toString()); break;
-          default: recordBuilder.set(field.getName(), bigDecimal);
-        }
+        recordBuilder.setDecimal(field.getName(), bigDecimal.setScale(fieldSchema.getScale(), RoundingMode.HALF_UP));
+        return;
+      }
+      switch (fieldSchema.getType()) {
+        case DOUBLE: recordBuilder.set(field.getName(), bigDecimal.doubleValue()); break;
+        case FLOAT: recordBuilder.set(field.getName(), bigDecimal.floatValue()); break;
+        case INT: recordBuilder.set(field.getName(), bigDecimal.intValue()); break;
+        case LONG: recordBuilder.set(field.getName(), bigDecimal.longValue()); break;
+        case STRING: recordBuilder.set(field.getName(), bigDecimal.toString()); break;
+        default: recordBuilder.set(field.getName(), bigDecimal);
       }
       return;
     }
 
-    // 4. Handle Oracle Timestamps to ensure DATETIME schema compatibility
     if (attrValue instanceof Timestamp) {
       Timestamp timestamp = (Timestamp) attrValue;
       if (Schema.LogicalType.DATETIME.equals(fieldSchema.getLogicalType())) {
         recordBuilder.setDateTime(field.getName(), timestamp.toLocalDateTime());
-      } else if (Schema.LogicalType.DATE.equals(fieldSchema.getLogicalType())) {
-        recordBuilder.setDate(field.getName(), timestamp.toLocalDateTime().toLocalDate());
-      } else if (fieldSchema.getLogicalType() == null && Schema.Type.STRING.equals(fieldSchema.getType())) {
-        // Only stringify if the CDAP schema strictly demands a String
-        recordBuilder.set(field.getName(), attrValue.toString());
       } else {
-        // HAND IT BACK TO THE PARENT! This restores the exact behavior of your old build.
         super.setFieldValue(recordBuilder, field, attrValue);
       }
       return;
     }
-
-    // Handle Timezone shifting
-    if (attrValue instanceof OffsetDateTime || attrValue instanceof ZonedDateTime) {
-      ZonedDateTime zonedDateTime = (attrValue instanceof OffsetDateTime)
-              ? ((OffsetDateTime) attrValue).atZoneSameInstant(ZoneId.of("UTC"))
-              : ((ZonedDateTime) attrValue).withZoneSameInstant(ZoneId.of("UTC"));
+    if (attrValue instanceof OffsetDateTime) {
+      ZonedDateTime zonedDateTime = ((OffsetDateTime) attrValue).atZoneSameInstant(ZoneId.of("UTC"));
 
       if (fieldSchema.getLogicalType() != null &&
               (Schema.LogicalType.TIMESTAMP_MICROS.equals(fieldSchema.getLogicalType()) ||
                       Schema.LogicalType.TIMESTAMP_MILLIS.equals(fieldSchema.getLogicalType()))) {
         recordBuilder.setTimestamp(field.getName(), zonedDateTime);
-      } else if (Schema.Type.LONG.equals(fieldSchema.getType())) {
-        recordBuilder.set(field.getName(), zonedDateTime.toInstant().toEpochMilli());
       } else {
         recordBuilder.set(field.getName(), zonedDateTime.toString());
       }
       return;
     }
 
-    // Handle BFILE
-    try {
-      ClassLoader oracleLoader = attrValue.getClass().getClassLoader();
-      if (oracleLoader != null && oracleLoader.loadClass("oracle.jdbc.OracleBfile").isInstance(attrValue)) {
-        recordBuilder.set(field.getName(), getBfileBytes(attrValue, field.getName()));
-        return;
+    ClassLoader oracleLoader = attrValue.getClass().getClassLoader();
+      try {
+          if (oracleLoader != null && oracleLoader.loadClass("oracle.jdbc.OracleBfile").isInstance(attrValue)) {
+            recordBuilder.set(field.getName(), getBfileBytes(attrValue, field.getName()));
+            return;
+          }
+      } catch (ClassNotFoundException e) {
+          throw new RuntimeException(e);
       }
-    } catch (Exception e) {
-      // Not a BFile, let it fall through
-    }
-
-    // Parent DBRecord handles the standard types
-    super.setFieldValue(recordBuilder, field, attrValue);
+      super.setFieldValue(recordBuilder, field, attrValue);
   }
 
   @Override
@@ -347,7 +328,7 @@ public class OracleSourceDBRecord extends DBRecord {
     return getBfileBytes(bfile, columnName);
   }
 
-  public static byte[] getBfileBytes(Object bfile, String columnName) {
+  public byte[] getBfileBytes(Object bfile, String columnName) {
     if (bfile == null) {
       return null;
     }
@@ -460,7 +441,7 @@ public class OracleSourceDBRecord extends DBRecord {
       case Types.STRUCT:
         Struct structValue = (Struct) resultSet.getObject(columnIndex);
         if (structValue != null) {
-          recordBuilder.set(field.getName(), convertStructToRecord(structValue, nonNullSchema, resultSet));
+          recordBuilder.set(field.getName(), convertStructToRecord(structValue, nonNullSchema));
         }
         break;
       case Types.DECIMAL:
@@ -493,7 +474,7 @@ public class OracleSourceDBRecord extends DBRecord {
     }
   }
 
-  private StructuredRecord convertStructToRecord(Struct struct, Schema schema, ResultSet resultSet)
+  protected StructuredRecord convertStructToRecord(Struct struct, Schema schema)
       throws SQLException {
     Object[] attributes = struct.getAttributes();
     List<Schema.Field> fields = schema.getFields();
@@ -502,7 +483,6 @@ public class OracleSourceDBRecord extends DBRecord {
     for (int index = 0; index < attributes.length; index++) {
       Schema.Field field = fields.get(index);
       Object attrValue = attributes[index];
-
       setFieldValue(builder, field, attrValue);
     }
     return builder.build();
