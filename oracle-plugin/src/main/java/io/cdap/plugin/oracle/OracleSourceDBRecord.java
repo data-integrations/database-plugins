@@ -48,6 +48,8 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Oracle Source implementation {@link org.apache.hadoop.mapreduce.lib.db.DBWritable} and
@@ -151,24 +153,8 @@ public class OracleSourceDBRecord extends DBRecord {
       recordBuilder.set(field.getName(), attrValue.toString());
       return;
     }
-    if ("oracle.sql.NCLOB".equals(attrClassName)) {
-      recordBuilder.set(field.getName(), attrValue.toString());
-      return;
-    }
     if (attrValue instanceof BigDecimal) {
-      BigDecimal bigDecimal = (BigDecimal) attrValue;
-      if (Schema.LogicalType.DECIMAL.equals(fieldSchema.getLogicalType())) {
-        recordBuilder.setDecimal(field.getName(), bigDecimal.setScale(fieldSchema.getScale(), RoundingMode.HALF_UP));
-        return;
-      }
-      switch (fieldSchema.getType()) {
-        case DOUBLE: recordBuilder.set(field.getName(), bigDecimal.doubleValue()); break;
-        case FLOAT: recordBuilder.set(field.getName(), bigDecimal.floatValue()); break;
-        case INT: recordBuilder.set(field.getName(), bigDecimal.intValue()); break;
-        case LONG: recordBuilder.set(field.getName(), bigDecimal.longValue()); break;
-        case STRING: recordBuilder.set(field.getName(), bigDecimal.toString()); break;
-        default: recordBuilder.set(field.getName(), bigDecimal);
-      }
+      populateDecimalValue(attrValue, fieldSchema, recordBuilder, field);
       return;
     }
 
@@ -259,6 +245,34 @@ public class OracleSourceDBRecord extends DBRecord {
       }
     } else {
       super.writeNonNullToDB(stmt, fieldSchema, fieldName, fieldIndex);
+    }
+  }
+
+  private void populateDecimalValue(Object attrValue, Schema fieldSchema,
+      StructuredRecord.Builder recordBuilder, Schema.Field field) {
+    BigDecimal bigDecimal = (BigDecimal) attrValue;
+    if (Schema.LogicalType.DECIMAL.equals(fieldSchema.getLogicalType())) {
+      recordBuilder.setDecimal(field.getName(), bigDecimal.setScale(fieldSchema.getScale(), RoundingMode.HALF_UP));
+      return;
+    }
+    switch (fieldSchema.getType()) {
+      case DOUBLE:
+        recordBuilder.set(field.getName(), bigDecimal.doubleValue());
+        break;
+      case FLOAT:
+        recordBuilder.set(field.getName(), bigDecimal.floatValue());
+        break;
+      case INT:
+        recordBuilder.set(field.getName(), bigDecimal.intValue());
+        break;
+      case LONG:
+        recordBuilder.set(field.getName(), bigDecimal.longValue());
+        break;
+      case STRING:
+        recordBuilder.set(field.getName(), bigDecimal.toString());
+        break;
+      default:
+        recordBuilder.set(field.getName(), bigDecimal);
     }
   }
 
@@ -474,18 +488,55 @@ public class OracleSourceDBRecord extends DBRecord {
     }
   }
 
+  /**
+   * Converts a JDBC {@link Struct} into a {@link StructuredRecord} based on the provided schema.
+   *
+   * @param struct the SQL structured type containing the source data attributes
+   * @param schema the target record schema defining the fields to map
+   * @return a populated {@code StructuredRecord} instance
+   * @throws SQLException if an error occurs reading the struct attributes or metadata
+   */
   protected StructuredRecord convertStructToRecord(Struct struct, Schema schema)
       throws SQLException {
-    Object[] attributes = struct.getAttributes();
-    List<Schema.Field> fields = schema.getFields();
+    Map<String, Object> attributeMap = getAttributeMap(struct, schema);
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
 
-    for (int index = 0; index < attributes.length; index++) {
-      Schema.Field field = fields.get(index);
-      Object attrValue = attributes[index];
+    for (Schema.Field field : schema.getFields()) {
+      Object attrValue = attributeMap.get(field.getName());
       setFieldValue(builder, field, attrValue);
     }
     return builder.build();
+  }
+
+  /**
+   * Extracts attributes from a {@link Struct} into a case-insensitive map indexed by column name.
+   * Uses reflection to extract underlying metadata (e.g., from Oracle StructDescriptor).
+   *
+   * @param struct the source SQL structured type
+   * @param schema the target schema used for context in error messages
+   * @return a case-insensitive {@code Map} linking column names to their attribute values
+   * @throws SQLException if metadata extraction fails or driver-specific methods are inaccessible
+   */
+  private Map<String, Object> getAttributeMap(Struct struct, Schema schema) throws SQLException {
+    Map<String, Object> attributeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    Object[] attributes = struct.getAttributes();
+
+    try {
+      Object descriptor = struct.getClass().getMethod("getDescriptor").invoke(struct);
+      ResultSetMetaData metaData =
+          (ResultSetMetaData) descriptor.getClass().getMethod("getMetaData").invoke(descriptor);
+      for (int i = 1; i <= metaData.getColumnCount() && (i - 1) < attributes.length; i++) {
+        attributeMap.put(metaData.getColumnName(i), attributes[i - 1]);
+      }
+    } catch (SQLException | NoSuchMethodException e) {
+      throw new SQLException(String.format("Failed to retrieve attribute metadata for Oracle STRUCT schema '%s': %s",
+              schema.getRecordName(), e.getMessage()), e);
+    } catch (InvocationTargetException  | IllegalAccessException e) {
+        throw new SQLException(String.format("Unable to retrieve attribute metadata for Oracle STRUCT schema '%s'. "
+              + "Ensure the Oracle JDBC driver supports JDBC StructDescriptor metadata.",
+              schema.getRecordName()), e);
+    }
+      return attributeMap;
   }
 
   /**
