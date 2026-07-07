@@ -68,8 +68,6 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     DATA_TYPE_MAP.put("DOUBLE", Types.DOUBLE);
     DATA_TYPE_MAP.put("BFILE", BFILE);
     DATA_TYPE_MAP.put("RAW", LONG_RAW);
-    DATA_TYPE_MAP.put("LONG RAW", LONG_RAW);
-    DATA_TYPE_MAP.put("LONG", LONG);
     DATA_TYPE_MAP.put("INTERVAL DAY TO SECOND", INTERVAL_DS);
     DATA_TYPE_MAP.put("INTERVAL YEAR TO MONTH", INTERVAL_YM);
     DATA_TYPE_MAP.put("XMLTYPE", Types.SQLXML);
@@ -77,9 +75,9 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     DATA_TYPE_MAP.put("ANYDATA", Types.JAVA_OBJECT);
     DATA_TYPE_MAP.put("OTHER", Types.OTHER);
     DATA_TYPE_MAP.put("NUMBER", Types.NUMERIC);
+    DATA_TYPE_MAP.put("SMALLINT", Types.DECIMAL);
     DATA_TYPE_MAP.put("DECIMAL", Types.DECIMAL);
-    DATA_TYPE_MAP.put("INTEGER", Types.INTEGER);
-    DATA_TYPE_MAP.put("ROWID", Types.ROWID);
+    DATA_TYPE_MAP.put("INTEGER", Types.DECIMAL);
     DATA_TYPE_MAP.put("UROWID", Types.ROWID);
     DATA_TYPE_MAP.put("BLOB", Types.BLOB);
     DATA_TYPE_MAP.put("CLOB", Types.CLOB);
@@ -120,6 +118,12 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   private final Boolean isXmlTypeEnabled;
   private Connection connection;
 
+  private static final String COLUMN_ATTR_NAME = "ATTR_NAME";
+  private static final String COLUMN_ATTR_TYPE_NAME = "ATTR_TYPE_NAME";
+  private static final String COLUMN_PRECISION = "PRECISION";
+  private static final String COLUMN_SCALE = "SCALE";
+  private static final String COLUMN_ATTR_TYPE_OWNER = "ATTR_TYPE_OWNER";
+
   public OracleSourceSchemaReader() {
     this(null, false, false, false, false);
   }
@@ -136,18 +140,29 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
   @Override
   public Schema getSchema(ResultSetMetaData metadata, int index) throws SQLException {
     int sqlType = metadata.getColumnType(index);
-    String owner = (metadata.getColumnTypeName(index) != null
-            && metadata.getColumnTypeName(index).contains(".")) ? metadata.getColumnTypeName(index)
-            .substring(0, metadata.getColumnTypeName(index).lastIndexOf('.')) : null;
-
-    return getSchemaMapping(sqlType, metadata.getColumnClassName(index), metadata.getPrecision(index),
-            metadata.getScale(index), metadata.getColumnName(index), metadata.getColumnTypeName(index),
-            metadata.isSigned(index), owner, 0);
+    String columnTypeName = metadata.getColumnTypeName(index);
+    String owner = extractOwnerName(columnTypeName);
+    ColumnMetadata columnMetadata = new ColumnMetadata(sqlType, metadata.getColumnClassName(index),
+            metadata.getPrecision(index), metadata.getScale(index), metadata.getColumnName(index),
+            columnTypeName, metadata.isSigned(index), owner, 0);
+    return getSchemaMapping(columnMetadata);
   }
 
-  public Schema getSchemaMapping(int sqlType, String columnClassName, int columnPrecision,
-                                 int columnScale, String columnName, String columnTypeName,
-                                 boolean isSigned, String owner, int nestingLevel) throws SQLException {
+  private String extractOwnerName(String columnTypeName) {
+    if (columnTypeName != null && columnTypeName.contains(".")) {
+      return columnTypeName.substring(0, columnTypeName.lastIndexOf('.'));
+    }
+    return null;
+  }
+
+  public Schema getSchemaMapping(ColumnMetadata metadata) throws SQLException {
+    int sqlType = metadata.getSqlType();
+    int columnPrecision = metadata.getColumnPrecision();
+    int columnScale = metadata.getColumnScale();
+    String columnName = metadata.getColumnName();
+    String columnTypeName = metadata.getColumnTypeName();
+    Integer nestingLevel = metadata.getNestingLevel();
+    Boolean isSigned = metadata.isSigned();
 
     switch (sqlType) {
       case TIMESTAMP_TZ:
@@ -156,7 +171,8 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
         return getTimestampLtzSchema();
       case Types.TIMESTAMP:
         return isTimestampOldBehavior ? super.getSchema(columnTypeName, sqlType,
-                columnPrecision, columnScale, columnName, isSigned) : Schema.of(Schema.LogicalType.DATETIME);
+                columnPrecision, columnScale, columnName, isSigned)
+                : Schema.of(Schema.LogicalType.DATETIME);
       case BINARY_FLOAT:
         return Schema.of(Schema.Type.FLOAT);
       case BINARY_DOUBLE:
@@ -175,7 +191,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
       case Types.NUMERIC:
       case Types.DECIMAL:
         // FLOAT and REAL are returned as java.sql.Types.NUMERIC but with value that is a java.lang.Double
-        if (Double.class.getTypeName().equals(columnClassName)) {
+        if (Double.class.getTypeName().equals(metadata.getColumnClassName())) {
           return Schema.of(Schema.Type.DOUBLE);
         } else {
           int precision = columnPrecision; // total number of digits
@@ -202,17 +218,15 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
           return Schema.decimalOf(precision, scale);
         }
       case Types.STRUCT:
-        if (connection == null) {
-          throw new SQLException("Cannot resolve STRUCT schema without a database connection. "
-                  + "Use getSchemaFields(ResultSet) to enable STRUCT type resolution.");
-        }
         if (nestingLevel >= 4) {
-          throw new IllegalArgumentException(String.format("Cannot resolve STRUCT schema for attribute %s with " +
-                  "nested structure depth more than 4.", columnName));
+          throw new IllegalArgumentException(String.format("Cannot resolve STRUCT schema for attribute"
+                  + " %s with nested structure depth more than 4.", columnName));
         }
-        return getStructSchema(connection, columnTypeName, owner, nestingLevel);
+        return getStructSchema(connection, columnTypeName, metadata.getOwner(),
+                columnName, nestingLevel);
       default:
-        return super.getSchema(columnTypeName, sqlType, columnPrecision, columnScale, columnName, isSigned);
+        return super.getSchema(columnTypeName, sqlType, columnPrecision, columnScale,
+                columnName, isSigned);
     }
   }
 
@@ -230,39 +244,46 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
    * @param connection the database connection
    * @param typeName   the Oracle type name (e.g., "ADDRESS_TYPE")
    * @param owner   the Owner of the user-defined data type
+   * @param recordName name of the UDT column
    * @param level the level of nesting of the user-defined data type
    * @return a CDAP RECORD schema with fields corresponding to the STRUCT's
    *         attributes
    */
-  private Schema getStructSchema(Connection connection, String typeName, String owner, int level) throws SQLException {
+  private Schema getStructSchema(Connection connection, String typeName, String owner, String recordName, int level)
+          throws SQLException {
     List<Schema.Field> fields = new ArrayList<>();
     String sql = "SELECT * FROM ALL_TYPE_ATTRS WHERE TYPE_NAME = ? AND OWNER = ? ORDER BY ATTR_NO";
 
-    try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-      stmt.setString(1, typeName.substring(typeName.lastIndexOf('.') + 1));
-      stmt.setString(2, owner);
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+      statement.setString(1, typeName.substring(typeName.lastIndexOf('.') + 1));
+      statement.setString(2, owner);
 
-      try (ResultSet attrRs = stmt.executeQuery()) {
-        while (attrRs.next()) {
-          String attrName = attrRs.getString("ATTR_NAME");
-          String attrTypeName = attrRs.getString("ATTR_TYPE_NAME");
-          int attrSize = attrRs.getInt("PRECISION");
-          int attrScale = attrRs.getInt("SCALE");
-          Integer sqlType = DATA_TYPE_MAP.getOrDefault(attrTypeName, null);
+      try (ResultSet attributeResultSet = statement.executeQuery()) {
+        while (attributeResultSet.next()) {
+          String attributeName = attributeResultSet.getString(COLUMN_ATTR_NAME);
+          String attributeTypeName = attributeResultSet.getString(COLUMN_ATTR_TYPE_NAME);
+          int attributePrecision = attributeResultSet.getInt(COLUMN_PRECISION);
+          int attributeScale = attributeResultSet.getInt(COLUMN_SCALE);
+          Integer sqlType = DATA_TYPE_MAP.getOrDefault(attributeTypeName, null);
 
           int nextLevel = level;
+          String attributeOwner = owner;
           if (sqlType == null) {
-            owner = attrRs.getString("ATTR_TYPE_OWNER");
-            if (owner == null || owner.isEmpty()) {
+            attributeOwner = attributeResultSet.getString(COLUMN_ATTR_TYPE_OWNER);
+            if (attributeOwner == null || attributeOwner.isEmpty()) {
               throw new SQLException(String.format("Attribute '%s' is not a primitive type, but it lacks a type " +
-                      "owner. Therefore, it cannot be resolved as a STRUCT type. ", attrName));
+                      "owner. Therefore, it cannot be resolved as a STRUCT type. ", attributeName));
             }
             sqlType = Types.STRUCT;
             nextLevel = level + 1;
           }
-          Schema attrSchema = getSchemaMapping(sqlType, null, attrSize,
-                  attrScale, attrName, attrTypeName, true, owner, nextLevel);
-          fields.add(Schema.Field.of(attrName, attrSchema));
+          ColumnMetadata columnMetadata = new ColumnMetadata(sqlType, null, attributePrecision,
+                  attributeScale, attributeName, attributeTypeName, true, attributeOwner, nextLevel);
+          Schema attributeSchema = getSchemaMapping(columnMetadata);
+          if (!attributeSchema.isNullable()) {
+            attributeSchema = Schema.nullableOf(attributeSchema);
+          }
+          fields.add(Schema.Field.of(attributeName, attributeSchema));
         }
       }
     }
@@ -274,7 +295,7 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
           typeName));
     }
 
-    return Schema.recordOf(typeName, fields);
+    return Schema.recordOf(recordName, fields);
   }
 
   private Schema getTimestampLtzSchema() {
@@ -290,5 +311,70 @@ public class OracleSourceSchemaReader extends CommonSchemaReader {
     }
     return metadata.getColumnName(index).equals("c_" + sessionID) ||
       metadata.getColumnName(index).equals("s_" + sessionID);
+  }
+
+  /**
+   * Helper class encapsulating column metadata parameters for schema mapping.
+   */
+  public static class ColumnMetadata {
+    private final int sqlType;
+    private final String columnClassName;
+    private final int columnPrecision;
+    private final int columnScale;
+    private final String columnName;
+    private final String columnTypeName;
+    private final boolean isSigned;
+    private final String owner;
+    private final int nestingLevel;
+
+    public ColumnMetadata(int sqlType, String columnClassName, int columnPrecision,
+                          int columnScale, String columnName, String columnTypeName,
+                          boolean isSigned, String owner, int nestingLevel) {
+      this.sqlType = sqlType;
+      this.columnClassName = columnClassName;
+      this.columnPrecision = columnPrecision;
+      this.columnScale = columnScale;
+      this.columnName = columnName;
+      this.columnTypeName = columnTypeName;
+      this.isSigned = isSigned;
+      this.owner = owner;
+      this.nestingLevel = nestingLevel;
+    }
+
+    public int getSqlType() {
+      return sqlType;
+    }
+
+    public String getColumnClassName() {
+      return columnClassName;
+    }
+
+    public int getColumnPrecision() {
+      return columnPrecision;
+    }
+
+    public int getColumnScale() {
+      return columnScale;
+    }
+
+    public String getColumnName() {
+      return columnName;
+    }
+
+    public String getColumnTypeName() {
+      return columnTypeName;
+    }
+
+    public boolean isSigned() {
+      return isSigned;
+    }
+
+    public String getOwner() {
+      return owner;
+    }
+
+    public int getNestingLevel() {
+      return nestingLevel;
+    }
   }
 }
