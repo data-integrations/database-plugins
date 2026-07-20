@@ -49,6 +49,7 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
   public static final String DATABASE = "database";
   public static final String FETCH_SIZE = "fetchSize";
   public static final String DEFAULT_FETCH_SIZE = "1000";
+  public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
 
   @Name(Constants.Reference.REFERENCE_NAME)
   @Description(Constants.Reference.REFERENCE_NAME_DESCRIPTION)
