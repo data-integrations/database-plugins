@@ -104,8 +104,12 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     String tableQuery = getTableQuery(path.getDatabase(), path.getSchema(), path.getTable(), request.getLimit(),
       request.getProperties().get("sampleType"), request.getProperties().get("strata"), sessionID);
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
-      tableQuery, null, false);
+      tableQuery, null, isAutoCommitEnabled());
     connectionConfigAccessor.setConnectionArguments(Maps.fromProperties(config.getConnectionArgumentsProperties()));
+    String isolationLevel = getTransactionIsolationLevel();
+    if (isolationLevel != null) {
+      connectionConfigAccessor.setTransactionIsolationLevel(isolationLevel);
+    }
     connectionConfigAccessor.getConfiguration().setInt(MRJobConfig.NUM_MAPS, 1);
     Map<String, String> additionalArguments = config.getAdditionalArguments();
     for (Map.Entry<String, String> argument : additionalArguments.entrySet()) {
@@ -220,5 +224,20 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
 
   protected String generateSessionID() {
     return UUID.randomUUID().toString().replace('-', '_');
+  }
+
+  /**
+   * Returns whether auto-commit should be enabled for this connector.
+   * By default, it is false.
+   */
+  protected boolean isAutoCommitEnabled() {
+    return false;
+  }
+  /**
+   * Returns the default transaction isolation level for this connector.
+   * If null, it falls back to the database driver's default or serializable.
+   */
+  protected String getTransactionIsolationLevel() {
+    return null;
   }
 }
