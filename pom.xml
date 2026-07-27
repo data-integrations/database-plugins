@@ -45,6 +45,7 @@
     <module>teradata-plugin</module>
     <module>generic-db-argument-setter</module>
     <module>amazon-redshift-plugin</module>
+    <module>databricks-plugin</module>
   </modules>
 
   <licenses>
