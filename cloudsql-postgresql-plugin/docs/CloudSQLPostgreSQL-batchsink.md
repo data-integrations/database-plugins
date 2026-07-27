@@ -42,7 +42,7 @@ Can be found in the instance overview page.
 
 **Password:** Password to use to connect to the specified database.
 
-**Transaction Isolation Level:** Transaction isolation level for queries run by this sink. 
+**Transaction Isolation Level:** Transaction isolation level for queries run by this sink.
 
 **Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
 will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.

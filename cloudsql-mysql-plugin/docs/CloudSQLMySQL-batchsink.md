@@ -42,7 +42,7 @@ Can be found in the instance overview page.
 
 **Password:** Password to use to connect to the specified database.
 
-**Transaction Isolation Level:** Transaction isolation level for queries run by this sink. 
+**Transaction Isolation Level:** Transaction isolation level for queries run by this sink.
 
 **Connection Timeout:** The timeout value (in seconds) used for socket connect operations. If connecting to the server 
 takes longer than this value, the connection is broken. A value of 0 means that it is disabled.
