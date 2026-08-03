@@ -22,15 +22,16 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.Timestamp;
+import java.sql.Statement;
+import java.sql.Struct;
 import java.sql.Types;
-import java.time.ZonedDateTime;
-
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +48,26 @@ public class OracleSourceDBRecordUnitTest {
 
   @Mock
   ResultSetMetaData resultSetMetaData;
+
+  @Mock
+  Statement statement;
+
+  @Mock
+  Connection connection;
+
+  /**
+   * Mock interface for Oracle Struct containing getDescriptor method.
+   */
+  public interface MockOracleStruct extends Struct {
+    Object getDescriptor() throws Exception;
+  }
+
+  /**
+   * Mock interface for Oracle StructDescriptor containing getMetaData method.
+   */
+  public interface MockStructDescriptor {
+    ResultSetMetaData getMetaData() throws Exception;
+  }
 
   /**
    * Validate the precision less Numbers handling against following use cases.
@@ -233,5 +254,111 @@ public class OracleSourceDBRecordUnitTest {
 
     StructuredRecord record = builder.build();
     Assert.assertNull(record.get("field1"));
+  }
+
+  @Test
+  public void populateStructField_nullValue_setsFieldToNull() throws Exception {
+    Schema addressSchema = Schema.recordOf(
+      "ADDRESS_TYPE",
+      Schema.Field.of("STREET", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("CITY", Schema.of(Schema.Type.STRING))
+    );
+    Schema.Field addressField = Schema.Field.of("address", Schema.nullableOf(addressSchema));
+    Schema schema = Schema.recordOf("dbRecord", addressField);
+    when(resultSet.getObject(eq(1))).thenReturn(null);
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+
+    dbRecord.handleField(resultSet, builder, addressField, 1, Types.STRUCT, DEFAULT_PRECISION, 0);
+
+    StructuredRecord record = builder.build();
+    Assert.assertNull(record.get("address"));
+  }
+
+  @Test
+  public void populateStructField_nonNullValue_setsFieldCorrectly() throws Exception {
+    Schema addressSchema = Schema.recordOf(
+      "ADDRESS_TYPE",
+      Schema.Field.of("STREET", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("CITY", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("ZIPCODE", Schema.of(Schema.Type.INT))
+    );
+    Schema.Field addressField = Schema.Field.of("address", addressSchema);
+    Schema schema = Schema.recordOf("dbRecord", addressField);
+    MockOracleStruct structMock = Mockito.mock(MockOracleStruct.class);
+    MockStructDescriptor descriptorMock = Mockito.mock(MockStructDescriptor.class);
+    ResultSetMetaData structMetaData = Mockito.mock(ResultSetMetaData.class);
+    when(resultSet.getObject(eq(1))).thenReturn(structMock);
+    when(resultSet.getStatement()).thenReturn(statement);
+    when(statement.getConnection()).thenReturn(connection);
+    when(structMock.getAttributes()).thenReturn(new Object[]{ "123 Main St", "San Francisco", 94105 });
+    when(structMock.getDescriptor()).thenReturn(descriptorMock);
+    when(descriptorMock.getMetaData()).thenReturn(structMetaData);
+    when(structMetaData.getColumnCount()).thenReturn(3);
+    when(structMetaData.getColumnName(eq(1))).thenReturn("STREET");
+    when(structMetaData.getColumnName(eq(2))).thenReturn("CITY");
+    when(structMetaData.getColumnName(eq(3))).thenReturn("ZIPCODE");
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+
+    dbRecord.handleField(resultSet, builder, addressField, 1, Types.STRUCT, DEFAULT_PRECISION, 0);
+
+    StructuredRecord record = builder.build();
+    StructuredRecord addressRecord = record.get("address");
+    Assert.assertNotNull(addressRecord);
+    Assert.assertEquals("123 Main St", addressRecord.get("STREET"));
+    Assert.assertEquals("San Francisco", addressRecord.get("CITY"));
+    Assert.assertEquals(Integer.valueOf(94105), addressRecord.get("ZIPCODE"));
+  }
+
+  @Test
+  public void populateStructField_nestedStructure_setsFieldCorrectly() throws Exception {
+    Schema locationSchema = Schema.recordOf(
+      "LOCATION_TYPE",
+      Schema.Field.of("LATITUDE", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("LONGITUDE", Schema.of(Schema.Type.DOUBLE))
+    );
+    Schema addressSchema = Schema.recordOf(
+      "ADDRESS_TYPE",
+      Schema.Field.of("STREET", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("LOCATION", locationSchema)
+    );
+    Schema.Field addressField = Schema.Field.of("address", addressSchema);
+    Schema schema = Schema.recordOf("dbRecord", addressField);
+    MockOracleStruct addressStructMock = Mockito.mock(MockOracleStruct.class);
+    MockOracleStruct locationStructMock = Mockito.mock(MockOracleStruct.class);
+    MockStructDescriptor addressDescriptorMock = Mockito.mock(MockStructDescriptor.class);
+    MockStructDescriptor locationDescriptorMock = Mockito.mock(MockStructDescriptor.class);
+    ResultSetMetaData addressMetaData = Mockito.mock(ResultSetMetaData.class);
+    ResultSetMetaData locationMetaData = Mockito.mock(ResultSetMetaData.class);
+    when(resultSet.getObject(eq(1))).thenReturn(addressStructMock);
+    when(resultSet.getStatement()).thenReturn(statement);
+    when(statement.getConnection()).thenReturn(connection);
+    when(addressStructMock.getAttributes()).thenReturn(new Object[]{ "123 Main St", locationStructMock });
+    when(addressStructMock.getDescriptor()).thenReturn(addressDescriptorMock);
+    when(addressDescriptorMock.getMetaData()).thenReturn(addressMetaData);
+    when(addressMetaData.getColumnCount()).thenReturn(2);
+    when(addressMetaData.getColumnName(eq(1))).thenReturn("STREET");
+    when(addressMetaData.getColumnName(eq(2))).thenReturn("LOCATION");
+    when(locationStructMock.getAttributes())
+      .thenReturn(new Object[]{ Double.valueOf(37.7749), Double.valueOf(-122.4194) });
+    when(locationStructMock.getDescriptor()).thenReturn(locationDescriptorMock);
+    when(locationDescriptorMock.getMetaData()).thenReturn(locationMetaData);
+    when(locationMetaData.getColumnCount()).thenReturn(2);
+    when(locationMetaData.getColumnName(eq(1))).thenReturn("LATITUDE");
+    when(locationMetaData.getColumnName(eq(2))).thenReturn("LONGITUDE");
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    OracleSourceDBRecord dbRecord = new OracleSourceDBRecord(null, null);
+
+    dbRecord.handleField(resultSet, builder, addressField, 1, Types.STRUCT, DEFAULT_PRECISION, 0);
+
+    StructuredRecord record = builder.build();
+    StructuredRecord addressRecord = record.get("address");
+    Assert.assertNotNull(addressRecord);
+    Assert.assertEquals("123 Main St", addressRecord.get("STREET"));
+    StructuredRecord locationRecord = addressRecord.get("LOCATION");
+    Assert.assertNotNull(locationRecord);
+    Assert.assertEquals(Double.valueOf(37.7749), locationRecord.get("LATITUDE"));
+    Assert.assertEquals(Double.valueOf(-122.4194), locationRecord.get("LONGITUDE"));
   }
 }

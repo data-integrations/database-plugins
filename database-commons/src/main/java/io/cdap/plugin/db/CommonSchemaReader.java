@@ -57,6 +57,11 @@ public class CommonSchemaReader implements SchemaReader {
                              metadata.isSigned(index), true);
   }
 
+  public Schema getSchema(String typeName, int sqlType, int precision, int scale, String columnName,
+                          boolean isSigned) throws SQLException {
+    return DBUtils.getSchema(typeName, sqlType, precision, scale, columnName, isSigned, true);
+  }
+
   @Override
   public boolean shouldIgnoreColumn(ResultSetMetaData metadata, int index) throws SQLException {
     return false;

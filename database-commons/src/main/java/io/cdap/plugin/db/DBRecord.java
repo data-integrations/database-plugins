@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -187,7 +188,22 @@ public class DBRecord implements Writable, DBWritable, Configurable {
 
   protected void setField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                           int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
-    Object o = DBUtils.transformValue(sqlType, sqlPrecision, sqlScale, resultSet, columnIndex);
+    Object fieldValue = DBUtils.transformValue(sqlType, sqlPrecision, sqlScale, resultSet, columnIndex);
+    populateRecordField(resultSet.getStatement().getConnection(), recordBuilder, field, fieldValue);
+  }
+
+  /**
+   * Populates the value of a field in the {@link StructuredRecord.Builder}.
+   *
+   * @param connection the SQL connection, provided for subclass overrides that require database connection
+   * @param recordBuilder the builder for constructing the {@link StructuredRecord}
+   * @param field the field to set in the record
+   * @param o the object value read from the database
+   * @throws SQLException if an error occurs while setting the field value
+   */
+  protected void populateRecordField(Connection connection, StructuredRecord.Builder recordBuilder,
+                                     Schema.Field field, Object o)
+          throws SQLException {
     if (o instanceof Date) {
       recordBuilder.setDate(field.getName(), ((Date) o).toLocalDate());
     } else if (o instanceof Time) {
