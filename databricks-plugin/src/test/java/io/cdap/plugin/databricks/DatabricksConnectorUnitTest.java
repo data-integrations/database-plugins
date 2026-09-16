@@ -56,7 +56,7 @@ public class DatabricksConnectorUnitTest {
       "token", "secret", "jdbc", "", "dbc-xxx.cloud.databricks.com",
       "sql/1.0/warehouses/xxx", "main", 443);
     Assert.assertEquals(
-      "jdbc:databricks://dbc-xxx.cloud.databricks.com:443/main;HttpPath=sql/1.0/warehouses/xxx;",
+      "jdbc:databricks://dbc-xxx.cloud.databricks.com:443;ConnCatalog=main;HttpPath=sql/1.0/warehouses/xxx;",
       config.getConnectionString());
 
     DatabricksConnectorConfig configNoDb = new DatabricksConnectorConfig(

@@ -41,6 +41,9 @@ public class DatabricksSchemaReaderTest {
           int index = (Integer) args[0];
           return columnNames.get(index);
         }
+        if ("getColumnType".equals(method.getName())) {
+          return 0;
+        }
         return null;
       }
     );
@@ -59,18 +62,36 @@ public class DatabricksSchemaReaderTest {
     typeNames.put(7, "STRUCT");
     typeNames.put(8, "ARRAY");
     typeNames.put(9, "MAP");
+    typeNames.put(10, "SMALLINT");
+    typeNames.put(11, "TINYINT");
+    typeNames.put(12, "TIME");
+    typeNames.put(13, "INTERVAL");
+    typeNames.put(14, "VOID");
+    typeNames.put(15, "GEOGRAPHY");
+    typeNames.put(16, "GEOMETRY");
+    typeNames.put(17, "FILE");
+    typeNames.put(18, "OBJECT");
 
     ResultSetMetaData metadata = createMockMetadata(typeNames, java.util.Collections.emptyMap());
 
     Assert.assertEquals(Schema.of(Schema.Type.INT), schemaReader.getSchema(metadata, 1));
     Assert.assertEquals(Schema.of(Schema.Type.LONG), schemaReader.getSchema(metadata, 2));
-    Assert.assertEquals(Schema.of(Schema.LogicalType.DATETIME), schemaReader.getSchema(metadata, 3));
+    Assert.assertEquals(Schema.of(Schema.LogicalType.TIMESTAMP_MICROS), schemaReader.getSchema(metadata, 3));
     Assert.assertEquals(Schema.of(Schema.LogicalType.DATETIME), schemaReader.getSchema(metadata, 4));
     Assert.assertEquals(Schema.of(Schema.LogicalType.DATE), schemaReader.getSchema(metadata, 5));
     Assert.assertEquals(Schema.of(Schema.Type.STRING), schemaReader.getSchema(metadata, 6));
     Assert.assertEquals(Schema.of(Schema.Type.STRING), schemaReader.getSchema(metadata, 7));
     Assert.assertEquals(Schema.of(Schema.Type.STRING), schemaReader.getSchema(metadata, 8));
     Assert.assertEquals(Schema.of(Schema.Type.STRING), schemaReader.getSchema(metadata, 9));
+    Assert.assertEquals(Schema.of(Schema.Type.INT), schemaReader.getSchema(metadata, 10));
+    Assert.assertEquals(Schema.of(Schema.Type.INT), schemaReader.getSchema(metadata, 11));
+    Assert.assertEquals(Schema.of(Schema.LogicalType.TIME_MICROS), schemaReader.getSchema(metadata, 12));
+    Assert.assertEquals(Schema.of(Schema.Type.STRING), schemaReader.getSchema(metadata, 13));
+    Assert.assertEquals(Schema.of(Schema.Type.STRING), schemaReader.getSchema(metadata, 14));
+    Assert.assertEquals(Schema.of(Schema.Type.STRING), schemaReader.getSchema(metadata, 15));
+    Assert.assertEquals(Schema.of(Schema.Type.STRING), schemaReader.getSchema(metadata, 16));
+    Assert.assertEquals(Schema.of(Schema.Type.STRING), schemaReader.getSchema(metadata, 17));
+    Assert.assertEquals(Schema.of(Schema.Type.STRING), schemaReader.getSchema(metadata, 18));
   }
 
   @Test

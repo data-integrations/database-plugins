@@ -27,5 +27,5 @@ public final class DatabricksConstants {
   public static final String DATABRICKS_CONNECTION_STRING_FORMAT =
     "jdbc:databricks://%s:%d;HttpPath=%s;";
   public static final String DATABRICKS_DB_CONNECTION_STRING_FORMAT =
-    "jdbc:databricks://%s:%d/%s;HttpPath=%s;";
+    "jdbc:databricks://%s:%d;ConnCatalog=%s;HttpPath=%s;";
 }

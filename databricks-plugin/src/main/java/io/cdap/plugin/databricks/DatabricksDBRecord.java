@@ -24,6 +24,12 @@ import io.cdap.plugin.db.SchemaReader;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 /**
  * Writable class for Databricks Source
@@ -48,14 +54,62 @@ public class DatabricksDBRecord extends DBRecord {
     ResultSetMetaData metadata = resultSet.getMetaData();
     String columnTypeName = metadata.getColumnTypeName(columnIndex);
 
+    if (sqlType == Types.NULL || (columnTypeName != null &&
+        (columnTypeName.equalsIgnoreCase("VOID") || columnTypeName.equalsIgnoreCase("NULL")))) {
+      recordBuilder.set(field.getName(), null);
+      return;
+    }
+
     if (columnTypeName != null && (columnTypeName.equalsIgnoreCase("VARIANT") ||
         columnTypeName.equalsIgnoreCase("ARRAY") || columnTypeName.equalsIgnoreCase("MAP") ||
-        columnTypeName.equalsIgnoreCase("STRUCT") || columnTypeName.equalsIgnoreCase("JSON"))) {
+        columnTypeName.equalsIgnoreCase("STRUCT") || columnTypeName.equalsIgnoreCase("JSON") ||
+        columnTypeName.equalsIgnoreCase("OBJECT") || columnTypeName.equalsIgnoreCase("FILE") ||
+        columnTypeName.equalsIgnoreCase("INTERVAL") || columnTypeName.equalsIgnoreCase("GEOGRAPHY") ||
+        columnTypeName.equalsIgnoreCase("GEOMETRY"))) {
       Object value = resultSet.getObject(columnIndex);
       if (value != null) {
         recordBuilder.set(field.getName(), value.toString());
       } else {
         recordBuilder.set(field.getName(), null);
+      }
+      return;
+    }
+
+    if (sqlType == Types.TIME || (columnTypeName != null && columnTypeName.equalsIgnoreCase("TIME"))) {
+      Object timeObj = resultSet.getObject(columnIndex);
+      if (timeObj == null) {
+        recordBuilder.set(field.getName(), null);
+        return;
+      }
+      LocalTime localTime;
+      if (timeObj instanceof Time) {
+        localTime = ((Time) timeObj).toLocalTime();
+      } else if (timeObj instanceof LocalTime) {
+        localTime = (LocalTime) timeObj;
+      } else {
+        localTime = LocalTime.parse(timeObj.toString());
+      }
+      recordBuilder.setTime(field.getName(), localTime);
+      return;
+    }
+
+    if (sqlType == Types.TIMESTAMP || (columnTypeName != null &&
+        (columnTypeName.equalsIgnoreCase("TIMESTAMP") ||
+         columnTypeName.equalsIgnoreCase("TIMESTAMP_NTZ") ||
+         columnTypeName.equalsIgnoreCase("TIMESTAMPTZ")))) {
+      Timestamp timestamp = resultSet.getTimestamp(columnIndex);
+      if (timestamp == null) {
+        recordBuilder.set(field.getName(), null);
+        return;
+      }
+      Schema nonNullableSchema = field.getSchema().isNullable() ?
+        field.getSchema().getNonNullable() : field.getSchema();
+      Schema.LogicalType logicalType = nonNullableSchema.getLogicalType();
+      if (Schema.LogicalType.DATETIME.equals(logicalType)) {
+        recordBuilder.setDateTime(field.getName(), timestamp.toLocalDateTime());
+      } else {
+        ZonedDateTime zonedDateTime = timestamp.toInstant().atZone(ZoneId.of("UTC"));
+        recordBuilder.setTimestamp(field.getName(), zonedDateTime);
       }
       return;
     }
