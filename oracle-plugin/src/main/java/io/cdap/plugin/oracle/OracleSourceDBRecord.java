@@ -35,6 +35,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Struct;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDateTime;
@@ -43,6 +44,8 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Oracle Source implementation {@link org.apache.hadoop.mapreduce.lib.db.DBWritable} and
@@ -106,11 +109,17 @@ public class OracleSourceDBRecord extends DBRecord {
   @Override
   protected void handleField(ResultSet resultSet, StructuredRecord.Builder recordBuilder, Schema.Field field,
                              int columnIndex, int sqlType, int sqlPrecision, int sqlScale) throws SQLException {
-    if (OracleSourceSchemaReader.ORACLE_TYPES.contains(sqlType) || sqlType == Types.NCLOB) {
+    if (isOracleSpecificType(sqlType)) {
       handleOracleSpecificType(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     } else {
       setField(resultSet, recordBuilder, field, columnIndex, sqlType, sqlPrecision, sqlScale);
     }
+  }
+
+  protected boolean isOracleSpecificType(int sqlType) {
+    return OracleSourceSchemaReader.ORACLE_TYPES.contains(sqlType)
+        || sqlType == Types.NCLOB
+        || sqlType == Types.STRUCT;
   }
 
   @Override
@@ -232,11 +241,15 @@ public class OracleSourceDBRecord extends DBRecord {
    */
   private byte[] getBfileBytes(ResultSet resultSet, String columnName) throws SQLException {
     Object bfile = resultSet.getObject(columnName);
+    return getBfileBytes(bfile, columnName);
+  }
+
+  public byte[] getBfileBytes(Object bfile, String columnName) {
     if (bfile == null) {
       return null;
     }
     try {
-      ClassLoader classLoader = resultSet.getClass().getClassLoader();
+      ClassLoader classLoader = bfile.getClass().getClassLoader();
       Class<?> oracleBfileClass = classLoader.loadClass("oracle.jdbc.OracleBfile");
       boolean isFileExist = (boolean) oracleBfileClass.getMethod("fileExists").invoke(bfile);
       if (!isFileExist) {
@@ -341,6 +354,15 @@ public class OracleSourceDBRecord extends DBRecord {
       case OracleSourceSchemaReader.LONG_RAW:
         recordBuilder.set(field.getName(), resultSet.getBytes(columnIndex));
         break;
+      case Types.STRUCT:
+        Struct structValue = (Struct) resultSet.getObject(columnIndex);
+        if (structValue != null) {
+          recordBuilder.set(field.getName(), convertStructToRecord(structValue, nonNullSchema,
+                  resultSet.getStatement().getConnection()));
+        } else {
+          recordBuilder.set(field.getName(), null);
+        }
+        break;
       case Types.DECIMAL:
       case Types.NUMERIC:
         // This is the only way to differentiate FLOAT/REAL columns from other numeric columns, that based on NUMBER.
@@ -369,6 +391,57 @@ public class OracleSourceDBRecord extends DBRecord {
           }
         }
     }
+  }
+
+  /**
+   * Converts a JDBC {@link Struct} into a {@link StructuredRecord} based on the provided schema.
+   *
+   * @param struct the SQL structured type containing the source data attributes
+   * @param schema the target record schema defining the fields to map
+   * @param connection the database connection
+   * @return a populated {@code StructuredRecord} instance
+   * @throws SQLException if an error occurs reading the struct attributes or metadata
+   */
+  protected StructuredRecord convertStructToRecord(Struct struct, Schema schema, Connection connection)
+      throws SQLException {
+    Map<String, Object> attributeMap = getAttributeMap(struct, schema, connection);
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+
+    for (Schema.Field field : schema.getFields()) {
+      Object attrValue = attributeMap.get(field.getName());
+      OracleStructUtil.populateRecordField(this, connection, builder, field, attrValue);
+    }
+    return builder.build();
+  }
+
+  /**
+   * Extracts attributes from a {@link Struct} into a case-insensitive map indexed by column name.
+   * Uses reflection to extract underlying metadata (e.g., from Oracle StructDescriptor).
+   *
+   * @param struct the source SQL structured type
+   * @param schema the target schema used for context in error messages
+   * @param connection the database connection
+   * @return a case-insensitive {@code Map} linking column names to their attribute values
+   * @throws SQLException if metadata extraction fails or driver-specific methods are inaccessible
+   */
+  protected Map<String, Object> getAttributeMap(Struct struct, Schema schema, Connection connection)
+          throws SQLException {
+    Map<String, Object> attributeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    Object[] attributes = struct.getAttributes();
+    if (attributes != null) {
+      try {
+        Object descriptor = struct.getClass().getMethod("getDescriptor").invoke(struct);
+        ResultSetMetaData metaData =
+                (ResultSetMetaData) descriptor.getClass().getMethod("getMetaData").invoke(descriptor);
+        for (int i = 1; i <= metaData.getColumnCount() && (i - 1) < attributes.length; i++) {
+          attributeMap.put(metaData.getColumnName(i), attributes[i - 1]);
+        }
+      } catch (Exception e) {
+        throw new SQLException(String.format("Failed to retrieve attribute metadata for Oracle STRUCT schema '%s': %s",
+                schema.getRecordName(), e.getMessage()));
+      }
+    }
+    return attributeMap;
   }
 
   /**
