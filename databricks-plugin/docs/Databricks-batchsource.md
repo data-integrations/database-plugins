@@ -13,3 +13,4 @@ Properties
 * **Reference Name**: Name used to identify this source for lineage.
 * **Database / Catalog**: Optional catalog or database name.
 * **Import Query**: SQL query to execute against Databricks.
+* **Transaction Isolation Level**: Select `TRANSACTION_READ_UNCOMMITTED` when using Databricks JDBC 2.6.40, or `TRANSACTION_REPEATABLE_READ` when using Databricks JDBC 3.4.3. The 3.4.3 driver requires Java 11 or later.

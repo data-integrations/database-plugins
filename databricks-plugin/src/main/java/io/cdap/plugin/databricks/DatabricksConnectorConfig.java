@@ -24,8 +24,6 @@ import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
 
@@ -131,15 +129,6 @@ public class DatabricksConnectorConfig extends AbstractDBConnectorConfig {
     return Strings.isNullOrEmpty(transactionIsolationLevel)
       ? TransactionIsolationLevel.Level.TRANSACTION_REPEATABLE_READ.name()
       : transactionIsolationLevel;
-  }
-
-  @Override
-  public Map<String, String> getAdditionalArguments() {
-    Map<String, String> additionalArguments = new HashMap<>();
-    if (getTransactionIsolationLevel() != null) {
-      additionalArguments.put(TransactionIsolationLevel.CONF_KEY, getTransactionIsolationLevel());
-    }
-    return additionalArguments;
   }
 
   @Override
