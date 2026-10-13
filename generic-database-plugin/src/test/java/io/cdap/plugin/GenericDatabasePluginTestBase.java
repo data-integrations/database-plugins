@@ -232,7 +232,7 @@ public abstract class GenericDatabasePluginTestBase extends DatabasePluginTestBa
 
   @AfterClass
   public static void tearDownDB() throws SQLException {
-    if (!tearDown) {
+    if (!tearDown || hsqlDBServer == null) {
       return;
     }
 
