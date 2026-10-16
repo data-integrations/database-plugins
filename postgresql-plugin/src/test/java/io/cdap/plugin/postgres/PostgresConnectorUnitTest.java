@@ -20,6 +20,12 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Unit tests for {@link PostgresConnector}
@@ -72,5 +78,19 @@ public class PostgresConnectorUnitTest {
   @Test(expected = IllegalArgumentException.class)
   public void getStratifiedQueryRejectsNulInStrataTest() {
     CONNECTOR.getStratifiedQuery("\"schema\".\"table\"", 100, "col\0name", "s");
+  }
+
+  @Test
+  public void validateTablePassesNullCatalogTest() throws SQLException {
+    Connection connection = Mockito.mock(Connection.class);
+    DatabaseMetaData metaData = Mockito.mock(DatabaseMetaData.class);
+    ResultSet tables = Mockito.mock(ResultSet.class);
+    Mockito.when(connection.getMetaData()).thenReturn(metaData);
+    Mockito.when(metaData.getTables(null, "schema", "table", null)).thenReturn(tables);
+    Mockito.when(tables.next()).thenReturn(true);
+
+    CONNECTOR.validateTable(connection, "db", "schema", "table");
+
+    Mockito.verify(metaData).getTables(null, "schema", "table", null);
   }
 }

@@ -40,6 +40,7 @@ import io.cdap.plugin.util.SqlIdentifierUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -132,6 +133,12 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
     }
     return OracleConstants.getConnectionString(config.getConnectionType(),
         config.getHost(), config.getPort(), database, config.getSSlMode());
+  }
+
+  @Override
+  protected void validateTable(Connection connection, @Nullable String database, @Nullable String schema,
+                               String table) throws SQLException {
+    super.validateTable(connection, null, schema, table);
   }
 
   @Override

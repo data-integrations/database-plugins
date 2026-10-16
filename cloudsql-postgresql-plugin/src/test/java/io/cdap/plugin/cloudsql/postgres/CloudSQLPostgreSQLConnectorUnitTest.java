@@ -18,6 +18,12 @@ package io.cdap.plugin.cloudsql.postgres;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Unit tests for {@link CloudSQLPostgreSQLConnector}.
@@ -42,5 +48,19 @@ public class CloudSQLPostgreSQLConnectorUnitTest {
   @Test(expected = IllegalArgumentException.class)
   public void getTableNameRejectsNulTest() {
     CONNECTOR.getTableName("db", "schema", "ta\0ble");
+  }
+
+  @Test
+  public void validateTablePassesNullCatalogTest() throws SQLException {
+    Connection connection = Mockito.mock(Connection.class);
+    DatabaseMetaData metaData = Mockito.mock(DatabaseMetaData.class);
+    ResultSet tables = Mockito.mock(ResultSet.class);
+    Mockito.when(connection.getMetaData()).thenReturn(metaData);
+    Mockito.when(metaData.getTables(null, "schema", "table", null)).thenReturn(tables);
+    Mockito.when(tables.next()).thenReturn(true);
+
+    CONNECTOR.validateTable(connection, "db", "schema", "table");
+
+    Mockito.verify(metaData).getTables(null, "schema", "table", null);
   }
 }

@@ -40,8 +40,11 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A Postgre SQL Database Connector that connects to PostgreSQL database via JDBC.
@@ -114,6 +117,12 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
   @Override
   public StructuredRecord transform(LongWritable longWritable, PostgresDBRecord record) {
     return record.getRecord();
+  }
+
+  @Override
+  protected void validateTable(Connection connection, @Nullable String database, @Nullable String schema,
+                               String table) throws SQLException {
+    super.validateTable(connection, null, schema, table);
   }
 
   @Override

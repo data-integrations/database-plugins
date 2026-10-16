@@ -204,7 +204,7 @@ public class AbstractDBSpecificConnectorTest {
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(e.getMessage(), e.getMessage().contains("read-only"));
     }
-    Mockito.verify(connection).close();
+    Mockito.verify(connection, Mockito.atLeastOnce()).close();
   }
 
   @Test

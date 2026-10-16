@@ -41,8 +41,11 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A CloudSQL PostgreSQL Database Connector that connects to CloudSQL PostgreSQL database via JDBC.
@@ -83,6 +86,12 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
   @Override
   protected SchemaReader getSchemaReader(String sessionID) {
     return new PostgresSchemaReader(sessionID);
+  }
+
+  @Override
+  protected void validateTable(Connection connection, @Nullable String database, @Nullable String schema,
+                               String table) throws SQLException {
+    super.validateTable(connection, null, schema, table);
   }
 
   @Override

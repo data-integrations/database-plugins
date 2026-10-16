@@ -162,6 +162,13 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     try {
       return ReadOnlyConnection.wrap(connection);
     } catch (SQLException e) {
+      if (connection != null) {
+        try {
+          connection.close();
+        } catch (SQLException closeEx) {
+          e.addSuppressed(closeEx);
+        }
+      }
       throw new IllegalArgumentException(String.format(
         "Failed to open a read-only connection to database via connection string: %s. Error: %s.",
         connectionString, ExceptionUtils.getRootCauseMessage(e)), e);
