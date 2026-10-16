@@ -37,6 +37,7 @@ import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import io.cdap.plugin.mysql.MysqlDBRecord;
 import io.cdap.plugin.mysql.MysqlSchemaReader;
+import io.cdap.plugin.util.SqlIdentifierUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
@@ -82,7 +83,7 @@ public class CloudSQLMySQLConnector extends AbstractDBSpecificConnector<MysqlDBR
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("`%s`.`%s`", database, table);
+    return SqlIdentifierUtils.quoteMySqlIdentifier(database) + "." + SqlIdentifierUtils.quoteMySqlIdentifier(table);
   }
 
   @Override

@@ -36,6 +36,7 @@ import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import io.cdap.plugin.postgres.PostgresDBRecord;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
+import io.cdap.plugin.util.SqlIdentifierUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
@@ -86,7 +87,7 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("\"%s\".\"%s\"", schema, table);
+    return SqlIdentifierUtils.quoteAnsiIdentifier(schema) + "." + SqlIdentifierUtils.quoteAnsiIdentifier(table);
   }
 
   @Override

@@ -35,6 +35,7 @@ import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.common.db.DBPath;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
+import io.cdap.plugin.util.SqlIdentifierUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
@@ -117,7 +118,7 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("\"%s\".\"%s\"", schema, table);
+    return SqlIdentifierUtils.quoteAnsiIdentifier(schema) + "." + SqlIdentifierUtils.quoteAnsiIdentifier(table);
   }
 
   @Override
@@ -129,6 +130,8 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
 
   @Override
   protected String getStratifiedQuery(String tableName, int limit, String strata, String sessionID) {
+    // the strata column is user input: quote it so it can only ever be interpreted as a column identifier
+    String strataColumn = SqlIdentifierUtils.quoteAnsiIdentifier(strata);
     // this query times out on larger datasets; would benefit from optimization
     return String.format("WITH t_%s AS (\n" +
                            "    SELECT *,\n" +
@@ -140,8 +143,8 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
                            "WHERE mod(sqn_%s, GREATEST(1, CAST(c_%s / %d AS bigint))) = 1\n" +
                            "ORDER BY %s\n" +
                            "LIMIT %d",
-                         sessionID, strata, sessionID, sessionID, tableName, sessionID, sessionID, sessionID,
-                         limit, strata, limit);
+                         sessionID, strataColumn, sessionID, sessionID, tableName, sessionID, sessionID, sessionID,
+                         limit, strataColumn, limit);
   }
 
   @Override

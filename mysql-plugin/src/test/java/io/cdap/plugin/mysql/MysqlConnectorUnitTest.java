@@ -40,6 +40,8 @@ public class MysqlConnectorUnitTest {
   public void getTableNameTest() {
     Assert.assertEquals("`db`.`table`",
                         CONNECTOR.getTableName("db", "schema", "table"));
+    Assert.assertEquals("`d``b`.`ta``ble`",
+                        CONNECTOR.getTableName("d`b", "schema", "ta`ble"));
   }
 
   /**
@@ -54,5 +56,9 @@ public class MysqlConnectorUnitTest {
                                         "WHERE rand() < %d.0 / (SELECT COUNT(*) FROM %s)",
                                       tableName, 100, tableName),
                         CONNECTOR.getRandomQuery(tableName, 100));
+
+    // stratified query quotes and escapes strata column with backticks
+    String stratifiedQuery = CONNECTOR.getStratifiedQuery(tableName, 100, "col`1", "s");
+    Assert.assertTrue(stratifiedQuery.contains("ORDER BY `col``1`, RAND()"));
   }
 }

@@ -39,6 +39,8 @@ public class RedshiftConnectorUnitTest {
   public void getTableNameTest() {
     Assert.assertEquals("\"schema\".\"table\"",
                         CONNECTOR.getTableName("db", "schema", "table"));
+    Assert.assertEquals("\"sch\"\"ema\".\"ta\"\"ble\"",
+                        CONNECTOR.getTableName("db", "sch\"ema", "ta\"ble"));
   }
 
   @Test

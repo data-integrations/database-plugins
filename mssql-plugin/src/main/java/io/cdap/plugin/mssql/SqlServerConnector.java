@@ -36,6 +36,7 @@ import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
+import io.cdap.plugin.util.SqlIdentifierUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
@@ -117,7 +118,8 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("\"%s\".\"%s\".\"%s\"", database, schema, table);
+    return SqlIdentifierUtils.quoteAnsiIdentifier(database) + "." + SqlIdentifierUtils.quoteAnsiIdentifier(schema)
+      + "." + SqlIdentifierUtils.quoteAnsiIdentifier(table);
   }
 
   @Override
@@ -137,6 +139,8 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
 
   @Override
   protected String getStratifiedQuery(String tableName, int limit, String strata, String sessionID) {
+    // the strata column is user input: quote it so it can only ever be interpreted as a column identifier
+    String strataColumn = SqlIdentifierUtils.quoteAnsiIdentifier(strata);
     return String.format("WITH t_%s AS (\n" +
                            "    SELECT *,\n" +
                            "    ROW_NUMBER() OVER (ORDER BY %s, RAND()) AS sqn_%s,\n" +
@@ -146,8 +150,8 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
                            "SELECT TOP %d * FROM t_%s\n" +
                            "WHERE sqn_%s %% CAST(0.5 * ((c_%s / %d + 1) + ABS(c_%s / %d - 1)) AS bigint) = 1\n" +
                            "ORDER BY %s",
-                         sessionID, strata, sessionID, sessionID, tableName, limit, sessionID, sessionID, sessionID,
-                         limit, sessionID, limit, strata);
+                         sessionID, strataColumn, sessionID, sessionID, tableName, limit, sessionID, sessionID,
+                         sessionID, limit, sessionID, limit, strataColumn);
   }
 
   @Override

@@ -110,6 +110,10 @@ public class DBSpecificPath implements DBConnectorPath {
       throw new IllegalArgumentException(
         String.format("%s should not be empty.", property));
     }
+    if (name.indexOf('\0') >= 0) {
+      throw new IllegalArgumentException(
+        String.format("%s should not contain NUL characters.", property));
+    }
   }
 
   @Override

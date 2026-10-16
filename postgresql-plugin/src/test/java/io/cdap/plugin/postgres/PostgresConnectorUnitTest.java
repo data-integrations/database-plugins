@@ -39,6 +39,16 @@ public class PostgresConnectorUnitTest {
   public void getTableNameTest() {
     Assert.assertEquals("\"schema\".\"table\"",
                         CONNECTOR.getTableName("db", "schema", "table"));
+    Assert.assertEquals("\"sch\"\"ema\".\"ta\"\"ble\"",
+                        CONNECTOR.getTableName("db", "sch\"ema", "ta\"ble"));
+    Assert.assertEquals("\"pg_catalog\".\"pg_class\"\" LIMIT 0; UPDATE pg_catalog.pg_class SET relname = 'x'; --\"",
+                        CONNECTOR.getTableName(
+                          "db", "pg_catalog", "pg_class\" LIMIT 0; UPDATE pg_catalog.pg_class SET relname = 'x'; --"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void getTableNameRejectsNulTest() {
+    CONNECTOR.getTableName("db", "schema", "ta\0ble");
   }
 
   /**
@@ -53,5 +63,14 @@ public class PostgresConnectorUnitTest {
                                         "TABLESAMPLE BERNOULLI (100.0 * %d / (SELECT COUNT(*) FROM %s))",
                                       tableName, 100, tableName),
                         CONNECTOR.getRandomQuery(tableName, 100));
+
+    // stratified query quotes and escapes strata column
+    String stratifiedQuery = CONNECTOR.getStratifiedQuery(tableName, 100, "col\"1; DROP TABLE x; --", "s");
+    Assert.assertTrue(stratifiedQuery.contains("ORDER BY \"col\"\"1; DROP TABLE x; --\", random()"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void getStratifiedQueryRejectsNulInStrataTest() {
+    CONNECTOR.getStratifiedQuery("\"schema\".\"table\"", 100, "col\0name", "s");
   }
 }

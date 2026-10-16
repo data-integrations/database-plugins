@@ -35,6 +35,7 @@ import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.common.db.DBErrorDetailsProvider;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
+import io.cdap.plugin.util.SqlIdentifierUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
@@ -98,7 +99,7 @@ public class MysqlConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("`%s`.`%s`", database, table);
+    return SqlIdentifierUtils.quoteMySqlIdentifier(database) + "." + SqlIdentifierUtils.quoteMySqlIdentifier(table);
   }
 
   @Override
@@ -112,6 +113,8 @@ public class MysqlConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
 
   @Override
   protected String getStratifiedQuery(String tableName, int limit, String strata, String sessionID) {
+    // the strata column is user input: quote it so it can only ever be interpreted as a column identifier
+    String strataColumn = SqlIdentifierUtils.quoteMySqlIdentifier(strata);
     return String.format("WITH t_%s AS (\n" +
         "    SELECT *,\n" +
         "    ROW_NUMBER() OVER (ORDER BY %s, RAND()) AS sqn_%s,\n" +
@@ -122,8 +125,8 @@ public class MysqlConnector extends AbstractDBSpecificConnector<MysqlDBRecord> {
         "WHERE MOD(sqn_%s, GREATEST(1, CAST(c_%s / %d AS UNSIGNED))) = 1\n" +
         "ORDER BY %s\n" +
         "LIMIT %d",
-      sessionID, strata, sessionID, sessionID, tableName, sessionID, sessionID, sessionID,
-      limit, strata, limit);
+      sessionID, strataColumn, sessionID, sessionID, tableName, sessionID, sessionID, sessionID,
+      limit, strataColumn, limit);
   }
 
   @Override

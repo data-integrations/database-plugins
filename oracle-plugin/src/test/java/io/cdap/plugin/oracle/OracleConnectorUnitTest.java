@@ -35,6 +35,8 @@ public class OracleConnectorUnitTest {
   public void getTableNameTest() {
     Assert.assertEquals("\"schema\".\"table\"",
                         CONNECTOR.getTableName("db", "schema", "table"));
+    Assert.assertEquals("\"sch\"\"ema\".\"ta\"\"ble\"",
+                        CONNECTOR.getTableName("db", "sch\"ema", "ta\"ble"));
   }
 
   /**
@@ -56,5 +58,9 @@ public class OracleConnectorUnitTest {
                                         "WHERE rownum <= %d",
                                       tableName, 100),
                         CONNECTOR.getRandomQuery(tableName, 100));
+
+    // stratified query quotes and escapes strata column
+    String stratifiedQuery = CONNECTOR.getStratifiedQuery(tableName, 100, "col\"1", "s");
+    Assert.assertTrue(stratifiedQuery.contains("ORDER BY \"col\"\"1\", dbms_random.random"));
   }
 }
