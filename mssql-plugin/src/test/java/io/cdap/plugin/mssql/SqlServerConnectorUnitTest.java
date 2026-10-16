@@ -34,6 +34,14 @@ public class SqlServerConnectorUnitTest {
 
   // private static final SqlServerConnector CONNECTOR = new SqlServerConnector(new SqlServerConnectorConfig());
 
+  @Test
+  public void getTableNameTest() {
+    Assert.assertEquals("\"db\".\"schema\".\"table\"",
+                        CONNECTOR.getTableName("db", "schema", "table"));
+    Assert.assertEquals("\"d\"\"b\".\"sch\"\"ema\".\"ta\"\"ble\"",
+                        CONNECTOR.getTableName("d\"b", "sch\"ema", "ta\"ble"));
+  }
+
   /**
    * Unit tests for getTableQuery()
    */
@@ -53,5 +61,9 @@ public class SqlServerConnectorUnitTest {
                                         "< %d / (SELECT COUNT(*) FROM %s)",
                                       tableName, limit * 100, tableName),
                         CONNECTOR.getRandomQuery(tableName, limit));
+
+    // stratified query quotes and escapes strata column
+    String stratifiedQuery = CONNECTOR.getStratifiedQuery(tableName, limit, "col\"1", "s");
+    Assert.assertTrue(stratifiedQuery.contains("ORDER BY \"col\"\"1\", RAND()"));
   }
 }

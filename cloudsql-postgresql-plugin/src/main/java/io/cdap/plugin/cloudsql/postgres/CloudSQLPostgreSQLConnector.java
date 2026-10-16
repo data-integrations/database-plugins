@@ -36,12 +36,16 @@ import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnector;
 import io.cdap.plugin.postgres.PostgresDBRecord;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
+import io.cdap.plugin.util.SqlIdentifierUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A CloudSQL PostgreSQL Database Connector that connects to CloudSQL PostgreSQL database via JDBC.
@@ -85,8 +89,14 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
   }
 
   @Override
+  protected void validateTable(Connection connection, @Nullable String database, @Nullable String schema,
+                               String table) throws SQLException {
+    super.validateTable(connection, null, schema, table);
+  }
+
+  @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("\"%s\".\"%s\"", schema, table);
+    return SqlIdentifierUtils.quoteAnsiIdentifier(schema) + "." + SqlIdentifierUtils.quoteAnsiIdentifier(table);
   }
 
   @Override

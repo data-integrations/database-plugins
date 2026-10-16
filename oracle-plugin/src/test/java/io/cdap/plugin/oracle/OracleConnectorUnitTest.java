@@ -20,6 +20,12 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class OracleConnectorUnitTest {
   @Rule
@@ -35,6 +41,8 @@ public class OracleConnectorUnitTest {
   public void getTableNameTest() {
     Assert.assertEquals("\"schema\".\"table\"",
                         CONNECTOR.getTableName("db", "schema", "table"));
+    Assert.assertEquals("\"sch\"\"ema\".\"ta\"\"ble\"",
+                        CONNECTOR.getTableName("db", "sch\"ema", "ta\"ble"));
   }
 
   /**
@@ -56,5 +64,23 @@ public class OracleConnectorUnitTest {
                                         "WHERE rownum <= %d",
                                       tableName, 100),
                         CONNECTOR.getRandomQuery(tableName, 100));
+
+    // stratified query quotes and escapes strata column
+    String stratifiedQuery = CONNECTOR.getStratifiedQuery(tableName, 100, "col\"1", "s");
+    Assert.assertTrue(stratifiedQuery.contains("ORDER BY \"col\"\"1\", dbms_random.random"));
+  }
+
+  @Test
+  public void validateTablePassesNullCatalogTest() throws SQLException {
+    Connection connection = Mockito.mock(Connection.class);
+    DatabaseMetaData metaData = Mockito.mock(DatabaseMetaData.class);
+    ResultSet tables = Mockito.mock(ResultSet.class);
+    Mockito.when(connection.getMetaData()).thenReturn(metaData);
+    Mockito.when(metaData.getTables(null, "schema", "table", null)).thenReturn(tables);
+    Mockito.when(tables.next()).thenReturn(true);
+
+    CONNECTOR.validateTable(connection, "db", "schema", "table");
+
+    Mockito.verify(metaData).getTables(null, "schema", "table", null);
   }
 }

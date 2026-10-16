@@ -38,6 +38,7 @@ public class ConnectionConfigAccessor {
   public static final String FETCH_SIZE = "io.cdap.plugin.db.fetch.size";
   public static final String OPERATION_NAME = "io.cdap.plugin.db.operation.name";
   public static final String RELATION_TABLE_KEY = "io.cdap.plugin.db.relation.table.key";
+  public static final String READ_ONLY = "io.cdap.plugin.db.connection.readonly";
 
   private static final Gson GSON = new Gson();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
@@ -99,6 +100,18 @@ public class ConnectionConfigAccessor {
 
   public boolean isAutoCommitEnabled() {
     return configuration.getBoolean(AUTO_COMMIT_ENABLED, false);
+  }
+
+  /**
+   * Marks the connection opened by the input format as read-only. Used for data sampling, where no statement may
+   * ever modify the database.
+   */
+  public void setReadOnly(boolean readOnly) {
+    configuration.setBoolean(READ_ONLY, readOnly);
+  }
+
+  public boolean isReadOnly() {
+    return configuration.getBoolean(READ_ONLY, false);
   }
 
   public void setFetchSize(Integer fetchSize) {
