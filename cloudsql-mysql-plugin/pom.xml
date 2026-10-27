@@ -82,6 +82,11 @@
       <artifactId>mysql-plugin</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
 
     <!-- test dependencies -->
     <dependency>
@@ -121,6 +126,12 @@
       <artifactId>mysql-socket-factory-connector-j-8</artifactId>
       <version>1.0.10</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
     <dependency>
@@ -133,20 +144,6 @@
   
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <configuration>
-          <instructions>
-            <_exportcontents>
-              io.cdap.plugin.*
-            </_exportcontents>
-            <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
-            <Embed-Transitive>true</Embed-Transitive>
-            <Embed-Directory>lib</Embed-Directory>
-          </instructions>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>io.cdap</groupId>
         <artifactId>cdap-maven-plugin</artifactId>

@@ -35,6 +35,9 @@
     <repository>
       <id>redshift</id>
       <url>http://redshift-maven-repository.s3-website-us-east-1.amazonaws.com/release</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </repository>
   </repositories>
 

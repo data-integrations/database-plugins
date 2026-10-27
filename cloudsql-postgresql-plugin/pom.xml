@@ -85,7 +85,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>31.0.1-jre</version>
+      <version>${guava.version}</version>
     </dependency>
     <!-- test dependencies -->
     <dependency>
@@ -125,6 +125,12 @@
       <artifactId>postgres-socket-factory</artifactId>
       <version>1.4.0</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
     <dependency>
@@ -138,20 +144,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <configuration>
-          <instructions>
-            <_exportcontents>
-              io.cdap.plugin.*
-            </_exportcontents>
-            <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
-            <Embed-Transitive>true</Embed-Transitive>
-            <Embed-Directory>lib</Embed-Directory>
-          </instructions>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>io.cdap</groupId>
         <artifactId>cdap-maven-plugin</artifactId>

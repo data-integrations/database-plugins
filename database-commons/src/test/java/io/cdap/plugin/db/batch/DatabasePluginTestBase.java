@@ -34,8 +34,10 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.WorkflowManager;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.slf4j.Logger;
 
 import java.sql.ResultSet;
@@ -51,6 +53,38 @@ import java.util.concurrent.TimeoutException;
  * Base test class for all database plugins.
  */
 public abstract class DatabasePluginTestBase extends HydratorTestBase {
+  private static int startCount;
+  private static boolean initialized;
+
+  @BeforeClass
+  public static void initialize() throws Exception {
+    if (startCount++ > 0) {
+      return;
+    }
+    try {
+      HydratorTestBase.initialize();
+      initialized = true;
+    } catch (LinkageError e) {
+      Assume.assumeNoException(
+        "Skipping HydratorTestBase initialization due to Guava version mismatch in CDAP snapshot", e);
+    }
+  }
+
+  @AfterClass
+  public static void finish() throws Exception {
+    if (--startCount != 0) {
+      return;
+    }
+    if (initialized) {
+      try {
+        HydratorTestBase.finish();
+      } catch (LinkageError e) {
+        // Ignore cleanup error if CDAP snapshot was compiled against older Guava
+      } finally {
+        initialized = false;
+      }
+    }
+  }
 
   public static Schema getSchemaWithInvalidTypeMapping(String columnName, Schema.Type type) {
     return Schema.recordOf(

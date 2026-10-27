@@ -93,6 +93,7 @@
           <instructions>
             <_exportcontents>
               io.cdap.plugin.auroradb.mysql.*;
+              io.cdap.plugin.db.*;
               io.cdap.plugin.db.source.*;
               io.cdap.plugin.db.sink.*;
               org.apache.commons.lang;
