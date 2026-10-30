@@ -82,6 +82,11 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
   }
 
   @Override
+  protected boolean useSquareBracketQuotes() {
+    return true;
+  }
+
+  @Override
   protected DBErrorDetailsProvider getErrorDetailsProvider() {
     if (dbErrorDetailsProvider == null) {
       dbErrorDetailsProvider = new SqlServerErrorDetailsProvider();

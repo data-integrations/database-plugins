@@ -86,7 +86,7 @@ public class CloudSQLPostgreSQLConnector extends AbstractDBSpecificConnector<Pos
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("\"%s\".\"%s\"", schema, table);
+    return quoteIdentifier(schema, '"') + "." + quoteIdentifier(table, '"');
   }
 
   @Override

@@ -43,6 +43,25 @@ public class MysqlConnectorUnitTest {
   }
 
   /**
+   * Unit test for getTableName() with identifiers containing backticks
+   */
+  @Test
+  public void getTableNameEscapesBackticksTest() {
+    Assert.assertEquals("`my``db`.`t``; DELETE FROM x; --`",
+                        CONNECTOR.getTableName("my`db", "schema", "t`; DELETE FROM x; --"));
+  }
+
+  /**
+   * Unit test for getStratifiedQuery() with a strata column containing backticks
+   */
+  @Test
+  public void getStratifiedQueryEscapesStrataTest() {
+    String query = CONNECTOR.getStratifiedQuery("`db`.`table`", 10, "id`; DROP TABLE t; --", "s1");
+    Assert.assertTrue(query.contains("ORDER BY `id``; DROP TABLE t; --`, RAND()"));
+    Assert.assertTrue(query.contains("ORDER BY `id``; DROP TABLE t; --`\n"));
+  }
+
+  /**
    * Unit tests for getTableQuery()
    */
   @Test

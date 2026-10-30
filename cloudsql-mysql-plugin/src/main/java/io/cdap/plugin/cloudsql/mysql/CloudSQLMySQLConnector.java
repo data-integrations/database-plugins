@@ -82,7 +82,7 @@ public class CloudSQLMySQLConnector extends AbstractDBSpecificConnector<MysqlDBR
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("`%s`.`%s`", database, table);
+    return quoteIdentifier(database, '`') + "." + quoteIdentifier(table, '`');
   }
 
   @Override

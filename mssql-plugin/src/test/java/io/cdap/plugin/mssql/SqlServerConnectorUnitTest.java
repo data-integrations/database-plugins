@@ -35,6 +35,27 @@ public class SqlServerConnectorUnitTest {
   // private static final SqlServerConnector CONNECTOR = new SqlServerConnector(new SqlServerConnectorConfig());
 
   /**
+   * Unit test for getTableName() with identifiers containing double quotes
+   */
+  @Test
+  public void getTableNameEscapesQuotesTest() {
+    Assert.assertEquals("\"db\".\"dbo\".\"t\"\"; DELETE FROM x; --\"",
+                        CONNECTOR.getTableName("db", "dbo", "t\"; DELETE FROM x; --"));
+    Assert.assertEquals("\"my\"\"db\".\"my\"\"schema\".\"my\"\"table\"",
+                        CONNECTOR.getTableName("my\"db", "my\"schema", "my\"table"));
+  }
+
+  /**
+   * Unit test for getStratifiedQuery() with a strata column containing double quotes
+   */
+  @Test
+  public void getStratifiedQueryEscapesStrataTest() {
+    String query = CONNECTOR.getStratifiedQuery("\"db\".\"dbo\".\"table\"", 10, "id\"; DROP TABLE t; --", "s1");
+    Assert.assertTrue(query.contains("ORDER BY \"id\"\"; DROP TABLE t; --\", RAND()"));
+    Assert.assertTrue(query.endsWith("ORDER BY \"id\"\"; DROP TABLE t; --\""));
+  }
+
+  /**
    * Unit tests for getTableQuery()
    */
   @Test

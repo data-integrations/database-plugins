@@ -52,6 +52,7 @@ import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
 import io.cdap.plugin.util.RetryPolicyUtil;
 import io.cdap.plugin.util.RetryUtils;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
@@ -106,6 +107,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector collector = stageConfigurer.getFailureCollector();
     sourceConfig.validate(collector);
+    boolean queriesValid = validateQueries(collector);
     if (sourceConfig.getSchema() != null) {
       stageConfigurer.setOutputSchema(sourceConfig.getSchema());
       return;
@@ -119,7 +121,8 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     Class<? extends Driver> driverClass = DBUtils.getDriverClass(
       pipelineConfigurer, sourceConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
 
-    if (sourceConfig.canConnect()) {
+    // never run a query that failed the read-only validation, not even to fetch its schema
+    if (sourceConfig.canConnect() && queriesValid) {
       try {
         stageConfigurer.setOutputSchema(getSchema(driverClass));
       } catch (IllegalAccessException | InstantiationException e) {
@@ -229,6 +232,43 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
   }
 
   /**
+   * Returns whether square brackets quote identifiers in the database's SQL dialect, as in SQL Server.
+   * Override this method to allow such identifiers in the import and bounding queries.
+   */
+  protected boolean useSquareBracketQuotes() {
+    return false;
+  }
+
+  /**
+   * Validates that the import and bounding queries are single read-only SELECT statements, since they are executed
+   * with the credential of the connection. Queries that are macros are validated at runtime, once they are evaluated.
+   *
+   * @return true if the queries are valid or cannot be validated yet
+   */
+  private boolean validateQueries(FailureCollector collector) {
+    boolean importQueryValid = validateQuery(DBSourceConfig.IMPORT_QUERY, "Import Query",
+                                             sourceConfig.getImportQuery(), collector);
+    boolean boundingQueryValid = validateQuery(DBSourceConfig.BOUNDING_QUERY, "Bounding Query",
+                                               sourceConfig.getBoundingQuery(), collector);
+    return importQueryValid && boundingQueryValid;
+  }
+
+  private boolean validateQuery(String property, String label, @Nullable String query, FailureCollector collector) {
+    if (sourceConfig.containsMacro(property) || Strings.isNullOrEmpty(query)) {
+      return true;
+    }
+    try {
+      SelectQueryValidator.validate(query, useSquareBracketQuotes());
+      return true;
+    } catch (IllegalArgumentException e) {
+      collector.addFailure(String.format("Invalid %s: %s", label, e.getMessage()),
+                           "Provide a single SELECT statement that only reads data.")
+        .withConfigProperty(property);
+      return false;
+    }
+  }
+
+  /**
    * Returns the DBErrorDetailsProvider instance.
    * Override this method to provide a custom DBErrorDetailsProvider instance.
    *
@@ -272,6 +312,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
   public void prepareRun(BatchSourceContext context) throws Exception {
     FailureCollector collector = context.getFailureCollector();
     sourceConfig.validate(collector);
+    validateQueries(collector);
     collector.getOrThrowException();
 
     LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +

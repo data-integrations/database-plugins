@@ -42,6 +42,28 @@ public class PostgresConnectorUnitTest {
   }
 
   /**
+   * Unit test for getTableName() with identifiers containing double quotes
+   */
+  @Test
+  public void getTableNameEscapesQuotesTest() {
+    Assert.assertEquals("\"pg_catalog\".\"pg_class\"\" LIMIT 0; UPDATE t SET v='x'; SELECT * FROM \"\"pg_class\"",
+                        CONNECTOR.getTableName("db", "pg_catalog",
+                                               "pg_class\" LIMIT 0; UPDATE t SET v='x'; SELECT * FROM \"pg_class"));
+    Assert.assertEquals("\"my\"\"schema\".\"my\"\"table\"",
+                        CONNECTOR.getTableName("db", "my\"schema", "my\"table"));
+  }
+
+  /**
+   * Unit test for getStratifiedQuery() with a strata column containing double quotes
+   */
+  @Test
+  public void getStratifiedQueryEscapesStrataTest() {
+    String query = CONNECTOR.getStratifiedQuery("\"schema\".\"table\"", 10, "id\"; DROP TABLE t; --", "s1");
+    Assert.assertTrue(query.contains("ORDER BY \"id\"\"; DROP TABLE t; --\", random()"));
+    Assert.assertTrue(query.contains("ORDER BY \"id\"\"; DROP TABLE t; --\"\n"));
+  }
+
+  /**
    * Unit tests for getTableQuery()
    */
   @Test

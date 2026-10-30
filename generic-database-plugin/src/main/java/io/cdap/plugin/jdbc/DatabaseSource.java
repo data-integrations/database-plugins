@@ -46,6 +46,14 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
     return databaseSourceConfig.connectionString;
   }
 
+  @Override
+  protected boolean useSquareBracketQuotes() {
+    // SQL Server quotes identifiers with square brackets
+    String connectionString = databaseSourceConfig.connectionString;
+    return connectionString != null && (connectionString.toLowerCase().startsWith("jdbc:sqlserver:")
+      || connectionString.toLowerCase().startsWith("jdbc:jtds:sqlserver:"));
+  }
+
   /**
    * Generic database source configuration.
    */

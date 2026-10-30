@@ -38,6 +38,25 @@ public class OracleConnectorUnitTest {
   }
 
   /**
+   * Unit test for getTableName() with identifiers containing double quotes
+   */
+  @Test
+  public void getTableNameEscapesQuotesTest() {
+    Assert.assertEquals("\"MY\"\"SCHEMA\".\"T\"\" WHERE 1=1 --\"",
+                        CONNECTOR.getTableName("db", "MY\"SCHEMA", "T\" WHERE 1=1 --"));
+  }
+
+  /**
+   * Unit test for getStratifiedQuery() with a strata column containing double quotes
+   */
+  @Test
+  public void getStratifiedQueryEscapesStrataTest() {
+    String query = CONNECTOR.getStratifiedQuery("\"SCHEMA\".\"TABLE\"", 10, "ID\", 1) --", "s1");
+    Assert.assertTrue(query.contains("ORDER BY \"ID\"\", 1) --\", dbms_random.random"));
+    Assert.assertTrue(query.contains("ORDER BY \"ID\"\", 1) --\"  )"));
+  }
+
+  /**
    * Unit tests for getTableQuery()
    */
   @Test
