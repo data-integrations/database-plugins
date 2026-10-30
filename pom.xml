@@ -310,6 +310,12 @@
         <artifactId>failsafe</artifactId>
         <version>3.3.2</version>
       </dependency>
+      <!-- SQL parser used to check that user provided source queries are read-only. 4.9 is the last Java 8 release. -->
+      <dependency>
+        <groupId>com.github.jsqlparser</groupId>
+        <artifactId>jsqlparser</artifactId>
+        <version>4.9</version>
+      </dependency>
       <dependency>
         <groupId>org.hsqldb</groupId>
         <artifactId>hsqldb</artifactId>
