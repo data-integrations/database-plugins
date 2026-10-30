@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 
+import java.util.Locale;
 import javax.annotation.Nullable;
 
 /**
@@ -44,6 +45,18 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
   @Override
   protected String createConnectionString() {
     return databaseSourceConfig.connectionString;
+  }
+
+  @Override
+  protected boolean useSquareBracketQuotes() {
+    // SQL Server quotes identifiers with square brackets
+    String connectionString = databaseSourceConfig.connectionString;
+    if (connectionString == null) {
+      return false;
+    }
+    String lowerCaseConnectionString = connectionString.toLowerCase(Locale.ROOT);
+    return lowerCaseConnectionString.startsWith("jdbc:sqlserver:")
+      || lowerCaseConnectionString.startsWith("jdbc:jtds:sqlserver:");
   }
 
   /**

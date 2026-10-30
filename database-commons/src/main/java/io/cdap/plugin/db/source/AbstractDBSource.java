@@ -52,6 +52,7 @@ import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
 import io.cdap.plugin.util.RetryPolicyUtil;
 import io.cdap.plugin.util.RetryUtils;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
@@ -169,10 +170,16 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
   }
 
   private Schema loadSchemaFromDB(Connection connection, String query) throws SQLException {
+    String finalQuery = query.contains("$CONDITIONS") ? removeConditionsClause(query) : query;
+    // never send a query that is not a single read-only SELECT to the database
+    try {
+      SelectQueryValidator.validate(finalQuery, useSquareBracketQuotes());
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Invalid Import Query: " + e.getMessage(), e);
+    }
     try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
       getErrorDetailsProvider())) {
       statement.setMaxRows(1);
-      String finalQuery = query.contains("$CONDITIONS") ? removeConditionsClause(query) : query;
       ResultSet resultSet = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement,
         finalQuery, getErrorDetailsProvider());
       return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
@@ -229,6 +236,36 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
   }
 
   /**
+   * Returns whether square brackets quote identifiers in the database's SQL dialect, as in SQL Server.
+   * Override this method to allow such identifiers in the import and bounding queries.
+   */
+  protected boolean useSquareBracketQuotes() {
+    return false;
+  }
+
+  /**
+   * Validates that the import and bounding queries are single read-only SELECT statements before the pipeline runs,
+   * since they are executed with the credential of the connection.
+   */
+  private void validateQueries(FailureCollector collector) {
+    validateQuery(DBSourceConfig.IMPORT_QUERY, "Import Query", sourceConfig.getImportQuery(), collector);
+    validateQuery(DBSourceConfig.BOUNDING_QUERY, "Bounding Query", sourceConfig.getBoundingQuery(), collector);
+  }
+
+  private void validateQuery(String property, String label, @Nullable String query, FailureCollector collector) {
+    if (Strings.isNullOrEmpty(query)) {
+      return;
+    }
+    try {
+      SelectQueryValidator.validate(query, useSquareBracketQuotes());
+    } catch (IllegalArgumentException e) {
+      collector.addFailure(String.format("Invalid %s: %s", label, e.getMessage()),
+                           "Provide a single SELECT statement that only reads data.")
+        .withConfigProperty(property);
+    }
+  }
+
+  /**
    * Returns the DBErrorDetailsProvider instance.
    * Override this method to provide a custom DBErrorDetailsProvider instance.
    *
@@ -272,6 +309,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
   public void prepareRun(BatchSourceContext context) throws Exception {
     FailureCollector collector = context.getFailureCollector();
     sourceConfig.validate(collector);
+    validateQueries(collector);
     collector.getOrThrowException();
 
     LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +

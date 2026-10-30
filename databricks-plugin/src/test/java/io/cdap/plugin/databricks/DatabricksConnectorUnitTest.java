@@ -39,6 +39,21 @@ public class DatabricksConnectorUnitTest {
   }
 
   @Test
+  public void testGetTableNameEscapesBackticks() {
+    Assert.assertEquals("`main`.`default`.`t``; DELETE FROM x; --`",
+                        CONNECTOR.getTableName("main", "default", "t`; DELETE FROM x; --"));
+    Assert.assertEquals("`my``schema`.`my``table`",
+                        CONNECTOR.getTableName(null, "my`schema", "my`table"));
+  }
+
+  @Test
+  public void testGetStratifiedQueryEscapesStrata() {
+    String query = CONNECTOR.getStratifiedQuery("`main`.`default`.`my_table`", 10, "id`; DROP TABLE t; --", "s1");
+    Assert.assertTrue(query.contains("ORDER BY `id``; DROP TABLE t; --`, RAND()"));
+    Assert.assertTrue(query.contains("ORDER BY `id``; DROP TABLE t; --`\n"));
+  }
+
+  @Test
   public void testGetRandomQuery() {
     Assert.assertEquals("SELECT * FROM `main`.`default`.`my_table`\n" +
                           "WHERE rand() < 10.0 / GREATEST(1, (SELECT COUNT(*) FROM `main`.`default`.`my_table`))",
@@ -49,13 +64,13 @@ public class DatabricksConnectorUnitTest {
   public void testGetStratifiedQuery() {
     Assert.assertEquals("WITH t_s1 AS (\n" +
                           "    SELECT *,\n" +
-                          "    ROW_NUMBER() OVER (ORDER BY id, RAND()) AS sqn_s1,\n" +
+                          "    ROW_NUMBER() OVER (ORDER BY `id`, RAND()) AS sqn_s1,\n" +
                           "    COUNT(*) OVER () AS c_s1\n" +
                           "    FROM `main`.`default`.`my_table`\n" +
                           "  )\n" +
                           "SELECT * FROM t_s1\n" +
                           "WHERE MOD(sqn_s1, GREATEST(1, CAST(c_s1 / 10 AS BIGINT))) = 1\n" +
-                          "ORDER BY id\n" +
+                          "ORDER BY `id`\n" +
                           "LIMIT 10",
                         CONNECTOR.getStratifiedQuery("`main`.`default`.`my_table`", 10, "id", "s1"));
   }
