@@ -135,7 +135,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("\"%s\".\"%s\"", schema, table);
+    return quoteIdentifier(schema, '"') + "." + quoteIdentifier(table, '"');
   }
 
   @Override
@@ -157,6 +157,7 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
 
   @Override
   protected String getStratifiedQuery(String tableName, int limit, String strata, String sessionID) {
+    String strataColumn = quoteIdentifier(strata, '"');
     return String.format("WITH t_%s AS (\n" +
         "    SELECT %s.*,\n" +
         "    ROW_NUMBER() OVER (ORDER BY %s, dbms_random.random) AS s_%s,\n" +
@@ -166,8 +167,8 @@ public class OracleConnector extends AbstractDBSpecificConnector<OracleSourceDBR
         "  )\n" +
         "SELECT * FROM t_%s\n" +
         "WHERE MOD(s_%s, GREATEST(1, CAST(c_%s / %d AS INTEGER))) = 1 AND ROWNUM <= %d",
-      sessionID, tableName, strata, sessionID, tableName, sessionID, tableName,
-      strata, sessionID, sessionID, sessionID, limit, limit);
+      sessionID, tableName, strataColumn, sessionID, tableName, sessionID, tableName,
+      strataColumn, sessionID, sessionID, sessionID, limit, limit);
   }
 
   @Override

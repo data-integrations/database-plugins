@@ -117,7 +117,7 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("\"%s\".\"%s\"", schema, table);
+    return quoteIdentifier(schema, '"') + "." + quoteIdentifier(table, '"');
   }
 
   @Override
@@ -129,6 +129,7 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
 
   @Override
   protected String getStratifiedQuery(String tableName, int limit, String strata, String sessionID) {
+    String strataColumn = quoteIdentifier(strata, '"');
     // this query times out on larger datasets; would benefit from optimization
     return String.format("WITH t_%s AS (\n" +
                            "    SELECT *,\n" +
@@ -140,8 +141,8 @@ public class PostgresConnector extends AbstractDBSpecificConnector<PostgresDBRec
                            "WHERE mod(sqn_%s, GREATEST(1, CAST(c_%s / %d AS bigint))) = 1\n" +
                            "ORDER BY %s\n" +
                            "LIMIT %d",
-                         sessionID, strata, sessionID, sessionID, tableName, sessionID, sessionID, sessionID,
-                         limit, strata, limit);
+                         sessionID, strataColumn, sessionID, sessionID, tableName, sessionID, sessionID, sessionID,
+                         limit, strataColumn, limit);
   }
 
   @Override

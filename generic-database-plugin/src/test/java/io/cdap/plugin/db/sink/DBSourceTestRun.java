@@ -20,16 +20,19 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.datapipeline.SmartWorkflow;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.plugin.GenericDatabasePluginTestBase;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.ConnectionConfig;
@@ -41,7 +44,11 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.nio.ByteBuffer;
+import java.sql.Connection;
 import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -52,6 +59,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test for ETL using databases.
@@ -327,6 +335,61 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
       .build();
     appRequest = new AppRequest<>(DATAPIPELINE_ARTIFACT, etlConfig);
     deployApplication(appId, appRequest);
+  }
+
+  @Test
+  public void testNonSelectImportQueryFailsDeployment() throws Exception {
+    int rowCount = countRows("my_table");
+    String importQuery = "SELECT * FROM \"my_table\" WHERE $CONDITIONS; DELETE FROM \"my_table\"";
+    ETLPlugin sourceConfig = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
+        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, "SELECT MIN(ID),MAX(ID) from \"my_table\"")
+        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, "ID")
+        .put(Constants.Reference.REFERENCE_NAME, "DBNonSelectQueryTest")
+        .build(),
+      null);
+    ETLBatchConfig etlConfig = getETLBatchConfig(sourceConfig, MockSink.getPlugin("nonSelectQueryOutput"));
+    assertDeploymentFailure(NamespaceId.DEFAULT.app("dbSourceNonSelectQueryTest"), etlConfig, DATAPIPELINE_ARTIFACT,
+                            "Deploying DB Source with a non SELECT import query should have failed.");
+    Assert.assertEquals(rowCount, countRows("my_table"));
+  }
+
+  @Test
+  public void testNonSelectImportQueryMacroFailsRun() throws Exception {
+    int rowCount = countRows("my_table");
+    ETLPlugin sourceConfig = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, "${importQuery}")
+        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, "SELECT MIN(ID),MAX(ID) from \"my_table\"")
+        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, "ID")
+        .put(Constants.Reference.REFERENCE_NAME, "DBNonSelectQueryMacroTest")
+        .build(),
+      null);
+    ApplicationManager appManager = deployETL(sourceConfig, MockSink.getPlugin("nonSelectQueryMacroOutput"),
+                                              DATAPIPELINE_ARTIFACT, "dbSourceNonSelectQueryMacroTest");
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start(ImmutableMap.of(
+      "importQuery", "SELECT * FROM \"my_table\" WHERE $CONDITIONS; DELETE FROM \"my_table\""));
+    workflowManager.waitForRun(ProgramRunStatus.FAILED, 5, TimeUnit.MINUTES);
+    Assert.assertEquals(rowCount, countRows("my_table"));
+  }
+
+  private int countRows(String table) throws SQLException {
+    try (Connection connection = getConnection();
+         Statement statement = connection.createStatement();
+         ResultSet resultSet = statement.executeQuery(String.format("SELECT COUNT(*) FROM \"%s\"", table))) {
+      resultSet.next();
+      return resultSet.getInt(1);
+    }
   }
 
   @Test
