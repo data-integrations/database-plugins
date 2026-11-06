@@ -31,6 +31,15 @@ Can be found in the instance overview page.
 
 **Password:** Password to use to connect to the specified database.
 
+**Authentication Type:** How to authenticate to the database. `Basic` uses the Username and Password.
+`IAM` uses Cloud SQL IAM database authentication as the principal in Service Account Email, and the Username
+and Password are not used. For setup steps, see the IAM Database Authentication section of the
+CloudSQL MySQL connection documentation.
+
+**Service Account Email:** The IAM principal to log in as when Authentication Type is `IAM`. The database
+username is derived from this email. For a public instance, this is the service account that Data Fusion
+impersonates. For a private instance, this is the identity the Cloud SQL Auth Proxy runs as.
+
 **Connection Timeout:** The timeout value (in seconds) used for socket connect operations. If connecting to the server 
 takes longer than this value, the connection is broken. A value of 0 means that it is disabled.
 
@@ -77,8 +86,8 @@ export MYSQL_CONN=[mysql-instance-connection-name]
 gcloud beta compute --project=${PROJECT_ID} instances create ${INSTANCE_NAME}
 --zone=${ZONE} --machine-type=g1-small --subnet=${SUBNE} --no-address
 --metadata=startup-script="docker run -d -p 0.0.0.0:3306:3306
-gcr.io/cloudsql-docker/gce-proxy:1.16 /cloud_sql_proxy
--instances=${MYSQL_CONNECTION_NAME}=tcp:0.0.0.0:3306" --maintenance-policy=MIGRATE
+gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1 --address 0.0.0.0 --port 3306
+--private-ip ${MYSQL_CONN}" --maintenance-policy=MIGRATE
 --scopes=https://www.googleapis.com/auth/cloud-platform
 --image=cos-69-10895-385-0 --image-project=cos-cloud
 ```

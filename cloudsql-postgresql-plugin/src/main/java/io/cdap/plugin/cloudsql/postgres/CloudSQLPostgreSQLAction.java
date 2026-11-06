@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.cloudsql.postgres;
 
-import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -29,6 +28,7 @@ import io.cdap.plugin.db.action.AbstractDBAction;
 import io.cdap.plugin.db.action.QueryConfig;
 import io.cdap.plugin.util.CloudSQLUtil;
 
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -58,6 +58,7 @@ public class CloudSQLPostgreSQLAction extends AbstractDBAction {
           cloudsqlPostgresqlActionConfig.connectionName,
           CloudSQLUtil.CLOUDSQL_POSTGRESQL);
     }
+    cloudsqlPostgresqlActionConfig.validateAuthentication(failureCollector);
     
     super.configurePipeline(pipelineConfigurer);
   }
@@ -101,6 +102,20 @@ public class CloudSQLPostgreSQLAction extends AbstractDBAction {
     @Nullable
     public String instanceType;
 
+    @Name(CloudSQLUtil.AUTHENTICATION_TYPE)
+    @Description("How to authenticate to the database. 'basic' uses the username and password. 'iam' uses Cloud "
+        + "SQL IAM database authentication as the service account in Service Account Email.")
+    @Nullable
+    public String authenticationType;
+
+    @Name(CloudSQLUtil.SERVICE_ACCOUNT_EMAIL)
+    @Description("Email of the IAM principal to log in as when the authentication type is 'iam'. For a public "
+        + "instance, this is the service account that Data Fusion impersonates. For a private instance, this is "
+        + "the identity the Cloud SQL Auth Proxy runs as. The database username is derived from this email.")
+    @Macro
+    @Nullable
+    public String serviceAccountEmail;
+
     @Override
     public String getConnectionString() {
       if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(instanceType)) {
@@ -123,13 +138,42 @@ public class CloudSQLPostgreSQLAction extends AbstractDBAction {
 
     @Override
     public Map<String, String> getDBSpecificArguments() {
-      return ImmutableMap.of(
-          CloudSQLPostgreSQLConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
+      Map<String, String> arguments = new HashMap<>();
+      arguments.put(CloudSQLPostgreSQLConstants.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout));
+      if (isIamAuthentication()) {
+        arguments.putAll(CloudSQLUtil.getIamConnectionArguments(instanceType, serviceAccountEmail));
+      }
+      return arguments;
+    }
+
+    public boolean isIamAuthentication() {
+      return CloudSQLUtil.isIamAuthentication(authenticationType);
+    }
+
+    @Override
+    public String getUser() {
+      return isIamAuthentication()
+          ? CloudSQLUtil.getIamDatabaseUser(serviceAccountEmail, CloudSQLUtil.CLOUDSQL_POSTGRESQL) : super.getUser();
+    }
+
+    @Override
+    public String getPassword() {
+      return isIamAuthentication() ? CloudSQLUtil.getIamPassword(instanceType) : super.getPassword();
+    }
+
+    /**
+     * Validates the authentication properties.
+     *
+     * @param collector failure collector
+     */
+    public void validateAuthentication(FailureCollector collector) {
+      CloudSQLUtil.validateAuthentication(collector, authenticationType, instanceType, serviceAccountEmail,
+                                          containsMacro(CloudSQLUtil.SERVICE_ACCOUNT_EMAIL));
     }
 
     public boolean canConnect() {
       return !containsMacro(CloudSQLUtil.CONNECTION_NAME) && !containsMacro(ConnectionConfig.PORT) &&
-          !containsMacro(DATABASE);
+          !containsMacro(DATABASE) && !containsMacro(CloudSQLUtil.SERVICE_ACCOUNT_EMAIL);
     }
   }
 }

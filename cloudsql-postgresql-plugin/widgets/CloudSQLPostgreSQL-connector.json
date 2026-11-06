@@ -74,6 +74,25 @@
       "label": "Credentials",
       "properties": [
         {
+          "widget-type": "radio-group",
+          "label": "Authentication Type",
+          "name": "authenticationType",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "basic",
+            "options": [
+              {
+                "id": "basic",
+                "label": "Basic"
+              },
+              {
+                "id": "iam",
+                "label": "IAM"
+              }
+            ]
+          }
+        },
+        {
           "widget-type": "textbox",
           "label": "Username",
           "name": "user",
@@ -87,6 +106,14 @@
           "name": "password",
           "widget-attributes": {
             "placeholder": "The password to use to connect to the CloudSQL database"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Service Account Email",
+          "name": "serviceAccountEmail",
+          "widget-attributes": {
+            "placeholder": "name@project-id.iam.gserviceaccount.com"
           }
         }
       ]
@@ -151,6 +178,34 @@
         {
           "type": "property",
           "name": "port"
+        }
+      ]
+    },
+    {
+      "name": "showBasicAuthProperties",
+      "condition": {
+        "expression": "authenticationType != 'iam'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "user"
+        },
+        {
+          "type": "property",
+          "name": "password"
+        }
+      ]
+    },
+    {
+      "name": "showIamAuthProperties",
+      "condition": {
+        "expression": "authenticationType == 'iam'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "serviceAccountEmail"
         }
       ]
     }

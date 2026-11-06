@@ -74,6 +74,9 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
         cloudsqlMysqlSourceConfig.connection.getConnectionName(),
         CloudSQLUtil.CLOUDSQL_MYSQL);
     }
+    if (cloudsqlMysqlSourceConfig.connection != null) {
+      cloudsqlMysqlSourceConfig.connection.validateAuthentication(failureCollector);
+    }
 
     super.configurePipeline(pipelineConfigurer);
   }

@@ -75,6 +75,25 @@
           }
         },
         {
+          "widget-type": "radio-group",
+          "label": "Authentication Type",
+          "name": "authenticationType",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "basic",
+            "options": [
+              {
+                "id": "basic",
+                "label": "Basic"
+              },
+              {
+                "id": "iam",
+                "label": "IAM"
+              }
+            ]
+          }
+        },
+        {
           "widget-type": "textbox",
           "label": "Username",
           "name": "user"
@@ -83,6 +102,14 @@
           "widget-type": "password",
           "label": "Password",
           "name": "password"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Service Account Email",
+          "name": "serviceAccountEmail",
+          "widget-attributes": {
+            "placeholder": "name@project-id.iam.gserviceaccount.com"
+          }
         },
         {
           "widget-type": "select",
@@ -269,6 +296,14 @@
         },
         {
           "type": "property",
+          "name": "authenticationType"
+        },
+        {
+          "type": "property",
+          "name": "serviceAccountEmail"
+        },
+        {
+          "type": "property",
           "name": "connectionArguments"
         }
       ]
@@ -294,6 +329,34 @@
         {
           "type": "property",
           "name": "port"
+        }
+      ]
+    },
+    {
+      "name": "showBasicAuthProperties",
+      "condition": {
+        "expression": "authenticationType != 'iam'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "user"
+        },
+        {
+          "type": "property",
+          "name": "password"
+        }
+      ]
+    },
+    {
+      "name": "showIamAuthProperties",
+      "condition": {
+        "expression": "authenticationType == 'iam'"
+      },
+      "show": [
+        {
+          "type": "property",
+          "name": "serviceAccountEmail"
         }
       ]
     }

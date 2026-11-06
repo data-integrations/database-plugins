@@ -22,12 +22,15 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.connector.Connector;
+import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.PluginSpec;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.common.ReferenceNames;
 import io.cdap.plugin.common.db.DBConnectorPath;
@@ -58,6 +61,14 @@ public class CloudSQLMySQLConnector extends AbstractDBSpecificConnector<MysqlDBR
   public CloudSQLMySQLConnector(CloudSQLMySQLConnectorConfig config) {
     super(config);
     this.config = config;
+  }
+
+  @Override
+  public void test(ConnectorContext context) throws ValidationException {
+    FailureCollector collector = context.getFailureCollector();
+    config.validateAuthentication(collector);
+    collector.getOrThrowException();
+    super.test(context);
   }
 
   @Override

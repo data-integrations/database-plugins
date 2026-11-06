@@ -30,12 +30,16 @@ import java.io.IOException;
  * -DconnectionName -- The CloudSQL instance to connect to. For a public instance, the connection string should be in
  * the format <PROJECT_ID>:<REGION>:<INSTANCE_NAME> which can be found in the instance overview page.
  * For a private instance, enter the internal IP address of the Compute Engine VM cloudsql proxy is running on.
+ * -DauthenticationType -- 'basic' (default) or 'iam' for Cloud SQL IAM database authentication
+ * -DserviceAccountEmail -- The service account to log in as when authenticationType is 'iam'
  */
 public class CloudSQLPostgreSQLConnectorTest extends DBSpecificConnectorBaseTest {
 
   private static final String JDBC_DRIVER_CLASS_NAME = "com.google.cloud.sql.postgres.SocketFactory";
   private static String instanceType;
   private static String connectionName;
+  private static String authenticationType;
+  private static String serviceAccountEmail;
 
   @BeforeClass
   public static void doSetup() {
@@ -46,6 +50,8 @@ public class CloudSQLPostgreSQLConnectorTest extends DBSpecificConnectorBaseTest
       instanceType = "public";
     }
     connectionName = System.getProperty("connectionName");
+    authenticationType = System.getProperty("authenticationType");
+    serviceAccountEmail = System.getProperty("serviceAccountEmail");
     Assume.assumeFalse(String.format(messageTemplate, "connectionName"), connectionName == null);
   }
 
@@ -54,7 +60,7 @@ public class CloudSQLPostgreSQLConnectorTest extends DBSpecificConnectorBaseTest
     test(
       new CloudSQLPostgreSQLConnector(
         new CloudSQLPostgreSQLConnectorConfig(username, password, JDBC_PLUGIN_NAME, connectionArguments, instanceType,
-                                              connectionName, database, null)
+                                              connectionName, database, null, authenticationType, serviceAccountEmail)
       ),
       JDBC_DRIVER_CLASS_NAME,
       CloudSQLPostgreSQLConstants.PLUGIN_NAME

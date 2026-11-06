@@ -110,7 +110,7 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
 
   @Override
   public Properties getConnectionArgumentsProperties() {
-    return getConnectionArgumentsProperties(connectionArguments, user, password);
+    return getConnectionArgumentsProperties(connectionArguments, getUser(), getPassword());
   }
 
   @Override

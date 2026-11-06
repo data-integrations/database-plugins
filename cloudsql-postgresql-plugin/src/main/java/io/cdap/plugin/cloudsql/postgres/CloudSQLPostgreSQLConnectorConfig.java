@@ -19,10 +19,12 @@ package io.cdap.plugin.cloudsql.postgres;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
 import io.cdap.plugin.util.CloudSQLUtil;
 
+import java.util.Properties;
 import javax.annotation.Nullable;
 
 /**
@@ -53,6 +55,20 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
   @Description("Whether the CloudSQL instance to connect to is private or public.")
   private String instanceType;
 
+  @Name(CloudSQLUtil.AUTHENTICATION_TYPE)
+  @Description("How to authenticate to the database. 'basic' uses the username and password. 'iam' uses Cloud SQL "
+    + "IAM database authentication as the service account in Service Account Email.")
+  @Nullable
+  private String authenticationType;
+
+  @Name(CloudSQLUtil.SERVICE_ACCOUNT_EMAIL)
+  @Description("Email of the IAM principal to log in as when the authentication type is 'iam'. For a public "
+    + "instance, this is the service account that Data Fusion impersonates. For a private instance, this is the "
+    + "identity the Cloud SQL Auth Proxy runs as. The database username is derived from this email.")
+  @Macro
+  @Nullable
+  private String serviceAccountEmail;
+
   public CloudSQLPostgreSQLConnectorConfig(String username, String password, String jdbcPluginName,
                                            String connectionArguments, String instanceType,
                                            String connectionName, String database, @Nullable Integer port) {
@@ -66,6 +82,15 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
     this.port = port;
   }
 
+  public CloudSQLPostgreSQLConnectorConfig(String username, String password, String jdbcPluginName,
+                                           String connectionArguments, String instanceType,
+                                           String connectionName, String database, @Nullable Integer port,
+                                           @Nullable String authenticationType, @Nullable String serviceAccountEmail) {
+    this(username, password, jdbcPluginName, connectionArguments, instanceType, connectionName, database, port);
+    this.authenticationType = authenticationType;
+    this.serviceAccountEmail = serviceAccountEmail;
+  }
+
   public String getDatabase() {
     return database;
   }
@@ -76,6 +101,43 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
 
   public String getConnectionName() {
     return connectionName;
+  }
+
+  @Nullable
+  public String getAuthenticationType() {
+    return authenticationType;
+  }
+
+  @Nullable
+  public String getServiceAccountEmail() {
+    return serviceAccountEmail;
+  }
+
+  public boolean isIamAuthentication() {
+    return CloudSQLUtil.isIamAuthentication(authenticationType);
+  }
+
+  @Nullable
+  @Override
+  public String getUser() {
+    return isIamAuthentication()
+      ? CloudSQLUtil.getIamDatabaseUser(serviceAccountEmail, CloudSQLUtil.CLOUDSQL_POSTGRESQL) : super.getUser();
+  }
+
+  @Nullable
+  @Override
+  public String getPassword() {
+    return isIamAuthentication() ? CloudSQLUtil.getIamPassword(instanceType) : super.getPassword();
+  }
+
+  /**
+   * Validates the authentication properties.
+   *
+   * @param collector failure collector
+   */
+  public void validateAuthentication(FailureCollector collector) {
+    CloudSQLUtil.validateAuthentication(collector, authenticationType, instanceType, serviceAccountEmail,
+                                        containsMacro(CloudSQLUtil.SERVICE_ACCOUNT_EMAIL));
   }
 
   public int getPort() {
@@ -99,8 +161,18 @@ public class CloudSQLPostgreSQLConnectorConfig extends AbstractDBConnectorConfig
   }
 
   @Override
+  public Properties getConnectionArgumentsProperties() {
+    Properties properties = super.getConnectionArgumentsProperties();
+    if (isIamAuthentication()) {
+      properties.putAll(CloudSQLUtil.getIamConnectionArguments(instanceType, serviceAccountEmail));
+    }
+    return properties;
+  }
+
+  @Override
   public boolean canConnect() {
     return super.canConnect() && !containsMacro(CloudSQLUtil.CONNECTION_NAME) &&
-        !containsMacro(ConnectionConfig.PORT) && !containsMacro(ConnectionConfig.DATABASE);
+        !containsMacro(ConnectionConfig.PORT) && !containsMacro(ConnectionConfig.DATABASE) &&
+        !containsMacro(CloudSQLUtil.SERVICE_ACCOUNT_EMAIL);
   }
 }

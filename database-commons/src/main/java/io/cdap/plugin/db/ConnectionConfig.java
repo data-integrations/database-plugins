@@ -112,7 +112,7 @@ public abstract class ConnectionConfig extends PluginConfig implements DatabaseC
    * @return a {@link Map} of connection arguments, parsed from the config.
    */
   public Map<String, String> getConnectionArguments() {
-    Map<String, String> arguments = getConnectionArguments(connectionArguments, user, password);
+    Map<String, String> arguments = getConnectionArguments(connectionArguments, getUser(), getPassword());
     arguments.putAll(getDBSpecificArguments());
     return arguments;
   }
@@ -146,7 +146,10 @@ public abstract class ConnectionConfig extends PluginConfig implements DatabaseC
 
     if (user != null) {
       connectionArgumentsMap.put("user", user);
-      connectionArgumentsMap.put("password", password);
+      // Properties does not accept null values, so a user without a password must not add a null entry.
+      if (password != null) {
+        connectionArgumentsMap.put("password", password);
+      }
     }
 
     return connectionArgumentsMap;

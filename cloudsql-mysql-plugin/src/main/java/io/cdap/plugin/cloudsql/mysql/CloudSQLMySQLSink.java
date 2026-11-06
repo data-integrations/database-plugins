@@ -78,6 +78,9 @@ public class CloudSQLMySQLSink extends AbstractDBSink<CloudSQLMySQLSink.CloudSQL
         cloudsqlMysqlSinkConfig.connection.getConnectionName(),
         CloudSQLUtil.CLOUDSQL_MYSQL);
     }
+    if (cloudsqlMysqlSinkConfig.connection != null) {
+      cloudsqlMysqlSinkConfig.connection.validateAuthentication(failureCollector);
+    }
     
     super.configurePipeline(pipelineConfigurer);
   }

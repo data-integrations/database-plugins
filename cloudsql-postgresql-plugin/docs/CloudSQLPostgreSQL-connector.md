@@ -27,6 +27,14 @@ authentication. Optional for databases that do not require authentication.
 
 **Password:** Password to use to connect to the specified database.
 
+**Authentication Type:** How to authenticate to the database. `Basic` uses the Username and Password.
+`IAM` uses Cloud SQL IAM database authentication as the principal in Service Account Email, and the Username
+and Password are not used. See **IAM Database Authentication** below for the setup steps.
+
+**Service Account Email:** The IAM principal to log in as when Authentication Type is `IAM`. The database
+username is derived from this email. For a public instance, this is the service account that Data Fusion
+impersonates. For a private instance, this is the identity the Cloud SQL Auth Proxy runs as.
+
 **Transaction Isolation Level:** The transaction isolation level of the database connection.
 - TRANSACTION_READ_COMMITTED: No dirty reads. Non-repeatable reads and phantom reads are possible.
 - TRANSACTION_SERIALIZABLE: No dirty reads. Non-repeatable and phantom reads are prevented.
@@ -55,6 +63,28 @@ property is required in the request body. It can be in the following form :
 
 3. `/`
    This path indicates the root. A root cannot be sampled. Browse on this path to get all the schemas visible through this connection.
+
+IAM Database Authentication
+---------------------------
+Set **Authentication Type** to `IAM` to log in with Cloud SQL IAM database authentication instead of a database
+password. The database username is derived from **Service Account Email**: for CloudSQL PostgreSQL it is
+the email without the `.gserviceaccount.com` suffix. For example, `my-sa@my-project.iam.gserviceaccount.com`
+logs in as `my-sa@my-project.iam`.
+
+For both instance types:
+1. Enable IAM database authentication on the Cloud SQL instance and add the service account as an IAM database user.
+2. Grant the service account the `Cloud SQL Client` and `Cloud SQL Instance User` roles, and grant it privileges in
+   the database. A new IAM database user has no privileges.
+
+**Public instance:** Data Fusion impersonates the service account, so the same database user is used at design time
+and at runtime. In addition to the steps above:
+- Grant the Data Fusion service agent (`service-<project-number>@gcp-sa-datafusion.iam.gserviceaccount.com`) and
+  the Dataproc service account used to run pipelines the `Service Account Token Creator` role on the service account.
+- Use a JDBC driver built from Cloud SQL socket factory version 1.14.0 or later.
+
+**Private instance:** the Cloud SQL Auth Proxy performs the IAM login. Start the proxy (version 2) with the
+`--auto-iam-authn` flag, running as the service account in Service Account Email (for example, the VM's service
+account, or `--impersonate-service-account`).
 
 Examples
 --------
@@ -93,9 +123,9 @@ export POSTGRESQL_CONN=[postgresql-instance-connection-name]
 # Create a Compute Engine VM
 gcloud beta compute --project=${PROJECT_ID} instances create ${INSTANCE_NAME}
 --zone=${ZONE} --machine-type=g1-small --subnet=${SUBNE} --no-address
---metadata=startup-script="docker run -d -p 0.0.0.0:3306:3306
-gcr.io/cloudsql-docker/gce-proxy:1.16 /cloud_sql_proxy
--instances=${POSTGRESQL_CONNECTION_NAME}=tcp:0.0.0.0:3306" --maintenance-policy=MIGRATE
+--metadata=startup-script="docker run -d -p 0.0.0.0:5432:5432
+gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1 --address 0.0.0.0 --port 5432
+--private-ip ${POSTGRESQL_CONN}" --maintenance-policy=MIGRATE
 --scopes=https://www.googleapis.com/auth/cloud-platform
 --image=cos-69-10895-385-0 --image-project=cos-cloud  
 ```

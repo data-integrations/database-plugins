@@ -74,6 +74,9 @@ public class CloudSQLPostgreSQLSource
         cloudsqlPostgresqlSourceConfig.connection.getConnectionName(),
         CloudSQLUtil.CLOUDSQL_POSTGRESQL);
     }
+    if (cloudsqlPostgresqlSourceConfig.connection != null) {
+      cloudsqlPostgresqlSourceConfig.connection.validateAuthentication(failureCollector);
+    }
     
     super.configurePipeline(pipelineConfigurer);
   }
