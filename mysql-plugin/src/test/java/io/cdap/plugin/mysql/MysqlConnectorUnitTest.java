@@ -57,8 +57,8 @@ public class MysqlConnectorUnitTest {
   @Test
   public void getStratifiedQueryEscapesStrataTest() {
     String query = CONNECTOR.getStratifiedQuery("`db`.`table`", 10, "id`; DROP TABLE t; --", "s1");
-    Assert.assertTrue(query.contains("ORDER BY `id``; DROP TABLE t; --`, RAND()"));
-    Assert.assertTrue(query.contains("ORDER BY `id``; DROP TABLE t; --`\n"));
+    Assert.assertTrue(query, query.contains("ORDER BY `id``; DROP TABLE t; --`, RAND()"));
+    Assert.assertTrue(query, query.contains("ORDER BY `id``; DROP TABLE t; --`\n"));
   }
 
   /**

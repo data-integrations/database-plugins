@@ -107,6 +107,10 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector collector = stageConfigurer.getFailureCollector();
     sourceConfig.validate(collector);
+    // The import query is executed at configure time (schema fetch) and the split-by is embedded in generated SQL,
+    // so both are validated here. The bounding query is only used at runtime and is validated in prepareRun.
+    validateQuery(DBSourceConfig.IMPORT_QUERY, "Import Query", sourceConfig.getImportQuery(), collector);
+    validateSplitBy(collector);
     if (sourceConfig.getSchema() != null) {
       stageConfigurer.setOutputSchema(sourceConfig.getSchema());
       return;
@@ -120,7 +124,8 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     Class<? extends Driver> driverClass = DBUtils.getDriverClass(
       pipelineConfigurer, sourceConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
 
-    if (sourceConfig.canConnect()) {
+    // Do not open a connection or run init queries if the import/bounding/split-by validation already failed.
+    if (sourceConfig.canConnect() && collector.getValidationFailures().isEmpty()) {
       try {
         stageConfigurer.setOutputSchema(getSchema(driverClass));
       } catch (IllegalAccessException | InstantiationException e) {
@@ -162,6 +167,9 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
    *                      3. Error while running the import query.
    */
   public Schema getSchema() throws SQLException {
+    // Validate the import query before opening a connection or running init queries, so a non-SELECT query never
+    // reaches the database and init queries do not run for a query that will be rejected.
+    validateImportQuery(sourceConfig.getImportQuery());
     try (Connection connection = getConnection()) {
       executeInitQueries(connection, sourceConfig.getInitQueries());
       String query = sourceConfig.getImportQuery();
@@ -169,14 +177,19 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     }
   }
 
-  private Schema loadSchemaFromDB(Connection connection, String query) throws SQLException {
-    String finalQuery = query.contains("$CONDITIONS") ? removeConditionsClause(query) : query;
-    // never send a query that is not a single read-only SELECT to the database
+  private void validateImportQuery(String query) {
+    String finalQuery = query != null && query.contains("$CONDITIONS") ? removeConditionsClause(query) : query;
     try {
-      SelectQueryValidator.validate(finalQuery, useSquareBracketQuotes());
+      SelectQueryValidator.validate(finalQuery, useSquareBracketQuotes(), useBackslashEscapes());
     } catch (IllegalArgumentException e) {
       throw new IllegalArgumentException("Invalid Import Query: " + e.getMessage(), e);
     }
+  }
+
+  private Schema loadSchemaFromDB(Connection connection, String query) throws SQLException {
+    String finalQuery = query.contains("$CONDITIONS") ? removeConditionsClause(query) : query;
+    // never send a query that is not a single read-only SELECT to the database
+    validateImportQuery(query);
     try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
       getErrorDetailsProvider())) {
       statement.setMaxRows(1);
@@ -250,19 +263,55 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
   private void validateQueries(FailureCollector collector) {
     validateQuery(DBSourceConfig.IMPORT_QUERY, "Import Query", sourceConfig.getImportQuery(), collector);
     validateQuery(DBSourceConfig.BOUNDING_QUERY, "Bounding Query", sourceConfig.getBoundingQuery(), collector);
+    validateSplitBy(collector);
   }
 
   private void validateQuery(String property, String label, @Nullable String query, FailureCollector collector) {
-    if (Strings.isNullOrEmpty(query)) {
+    // A macro is not resolved at configure time; it is validated at runtime once it holds a concrete value.
+    if (sourceConfig.containsMacro(property) || Strings.isNullOrEmpty(query)) {
       return;
     }
     try {
-      SelectQueryValidator.validate(query, useSquareBracketQuotes());
+      SelectQueryValidator.validate(query, useSquareBracketQuotes(), useBackslashEscapes());
     } catch (IllegalArgumentException e) {
       collector.addFailure(String.format("Invalid %s: %s", label, e.getMessage()),
                            "Provide a single SELECT statement that only reads data.")
         .withConfigProperty(property);
     }
+  }
+
+  /**
+   * Validates that the split-by field is a single column name. When numSplits is not 1, the split-by value is
+   * concatenated into the generated split bound clauses at runtime (via {@code $CONDITIONS} substitution) and
+   * executed with the connection credential, so it must not be able to carry extra SQL.
+   */
+  private void validateSplitBy(FailureCollector collector) {
+    if (sourceConfig.containsMacro(DBSourceConfig.SPLIT_BY) || sourceConfig.containsMacro(DBSourceConfig.NUM_SPLITS)) {
+      return;
+    }
+    Integer numSplits = sourceConfig.getNumSplits();
+    String splitBy = sourceConfig.getSplitBy();
+    if ((numSplits != null && numSplits == 1) || Strings.isNullOrEmpty(splitBy)) {
+      return;
+    }
+    try {
+      SelectQueryValidator.validateColumnReference(splitBy, "Split-By Field Name", useSquareBracketQuotes());
+    } catch (IllegalArgumentException e) {
+      collector.addFailure(String.format("Invalid Split-By Field Name: %s", e.getMessage()),
+                           "Provide a single column name.")
+        .withConfigProperty(DBSourceConfig.SPLIT_BY);
+    }
+  }
+
+  /**
+   * Returns whether a backslash escapes a quote inside a string literal in the database's dialect, so that source
+   * queries are parsed the way the database driver parses them. Returns {@code null} when the dialect is unknown,
+   * in which case the query must be valid under both interpretations. MySQL/MariaDB/SingleStore/Databricks sources
+   * override this to return {@code true}.
+   */
+  @Nullable
+  protected Boolean useBackslashEscapes() {
+    return null;
   }
 
   /**

@@ -45,6 +45,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Databricks Database Connector that connects to Databricks database via JDBC.
@@ -115,16 +118,10 @@ public class DatabricksConnector extends AbstractDBSpecificConnector<DatabricksD
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    if (database == null && schema == null) {
-      return quoteIdentifier(table, '`');
-    }
-    if (database == null) {
-      return quoteIdentifier(schema, '`') + "." + quoteIdentifier(table, '`');
-    }
-    if (schema == null) {
-      return quoteIdentifier(database, '`') + "." + quoteIdentifier(table, '`');
-    }
-    return quoteIdentifier(database, '`') + "." + quoteIdentifier(schema, '`') + "." + quoteIdentifier(table, '`');
+    return Stream.of(database, schema, table)
+      .filter(Objects::nonNull)
+      .map(part -> quoteIdentifier(part, '`'))
+      .collect(Collectors.joining("."));
   }
 
   @Override

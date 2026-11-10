@@ -50,4 +50,10 @@ public class MemsqlSource extends AbstractDBSource<MemsqlSourceConfig> {
     return String.format(MemsqlConstants.MEMSQL_CONNECTION_STRING_FORMAT,
                          memsqlSourceConfig.host, memsqlSourceConfig.port, memsqlSourceConfig.database);
   }
+
+  @Override
+  protected Boolean useBackslashEscapes() {
+    // In MySQL/MariaDB/SingleStore/Databricks a backslash escapes a quote inside a string literal.
+    return Boolean.TRUE;
+  }
 }

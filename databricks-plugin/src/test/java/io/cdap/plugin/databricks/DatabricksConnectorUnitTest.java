@@ -49,8 +49,8 @@ public class DatabricksConnectorUnitTest {
   @Test
   public void testGetStratifiedQueryEscapesStrata() {
     String query = CONNECTOR.getStratifiedQuery("`main`.`default`.`my_table`", 10, "id`; DROP TABLE t; --", "s1");
-    Assert.assertTrue(query.contains("ORDER BY `id``; DROP TABLE t; --`, RAND()"));
-    Assert.assertTrue(query.contains("ORDER BY `id``; DROP TABLE t; --`\n"));
+    Assert.assertTrue(query, query.contains("ORDER BY `id``; DROP TABLE t; --`, RAND()"));
+    Assert.assertTrue(query, query.contains("ORDER BY `id``; DROP TABLE t; --`\n"));
   }
 
   @Test

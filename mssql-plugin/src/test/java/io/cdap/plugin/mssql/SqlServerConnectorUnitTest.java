@@ -51,8 +51,8 @@ public class SqlServerConnectorUnitTest {
   @Test
   public void getStratifiedQueryEscapesStrataTest() {
     String query = CONNECTOR.getStratifiedQuery("\"db\".\"dbo\".\"table\"", 10, "id\"; DROP TABLE t; --", "s1");
-    Assert.assertTrue(query.contains("ORDER BY \"id\"\"; DROP TABLE t; --\", RAND()"));
-    Assert.assertTrue(query.endsWith("ORDER BY \"id\"\"; DROP TABLE t; --\""));
+    Assert.assertTrue(query, query.contains("ORDER BY \"id\"\"; DROP TABLE t; --\", RAND()"));
+    Assert.assertTrue(query, query.endsWith("ORDER BY \"id\"\"; DROP TABLE t; --\""));
   }
 
   /**

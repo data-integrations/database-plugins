@@ -383,6 +383,56 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
     Assert.assertEquals(rowCount, countRows("my_table"));
   }
 
+  @Test
+  public void testNonSelectBoundingQueryFailsRun() throws Exception {
+    // The bounding query is only used at runtime, so a non-SELECT bounding query is rejected in prepareRun and the
+    // pipeline run fails (deployment succeeds). The injected DELETE must never run.
+    int rowCount = countRows("my_table");
+    ETLPlugin sourceConfig = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, "SELECT * FROM \"my_table\" WHERE $CONDITIONS")
+        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY,
+             "SELECT MIN(ID), MAX(ID) FROM \"my_table\"; DELETE FROM \"my_table\"")
+        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, "ID")
+        .put(AbstractDBSource.DBSourceConfig.NUM_SPLITS, "2")
+        .put(Constants.Reference.REFERENCE_NAME, "DBNonSelectBoundingQueryTest")
+        .build(),
+      null);
+    ApplicationManager appManager = deployETL(sourceConfig, MockSink.getPlugin("nonSelectBoundingOutput"),
+                                              DATAPIPELINE_ARTIFACT, "dbSourceNonSelectBoundingQueryTest");
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForRun(ProgramRunStatus.FAILED, 5, TimeUnit.MINUTES);
+    Assert.assertEquals(rowCount, countRows("my_table"));
+  }
+
+  @Test
+  public void testInjectionSplitByFailsDeployment() throws Exception {
+    int rowCount = countRows("my_table");
+    String splitBy = "ID); UPDATE \"my_table\" SET NAME='INJECTED' WHERE (1=1";
+    ETLPlugin sourceConfig = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, "SELECT * FROM \"my_table\" WHERE $CONDITIONS")
+        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, "SELECT MIN(ID),MAX(ID) FROM \"my_table\"")
+        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
+        .put(AbstractDBSource.DBSourceConfig.NUM_SPLITS, "2")
+        .put(Constants.Reference.REFERENCE_NAME, "DBInjectionSplitByTest")
+        .build(),
+      null);
+    ETLBatchConfig etlConfig = getETLBatchConfig(sourceConfig, MockSink.getPlugin("injectionSplitByOutput"));
+    assertDeploymentFailure(NamespaceId.DEFAULT.app("dbSourceInjectionSplitByTest"), etlConfig,
+                            DATAPIPELINE_ARTIFACT, "Deploying DB Source with an injection in split-by must fail.");
+    Assert.assertEquals(rowCount, countRows("my_table"));
+  }
+
   private int countRows(String table) throws SQLException {
     try (Connection connection = getConnection();
          Statement statement = connection.createStatement();

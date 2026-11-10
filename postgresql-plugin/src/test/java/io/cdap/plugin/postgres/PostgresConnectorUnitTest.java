@@ -59,8 +59,8 @@ public class PostgresConnectorUnitTest {
   @Test
   public void getStratifiedQueryEscapesStrataTest() {
     String query = CONNECTOR.getStratifiedQuery("\"schema\".\"table\"", 10, "id\"; DROP TABLE t; --", "s1");
-    Assert.assertTrue(query.contains("ORDER BY \"id\"\"; DROP TABLE t; --\", random()"));
-    Assert.assertTrue(query.contains("ORDER BY \"id\"\"; DROP TABLE t; --\"\n"));
+    Assert.assertTrue(query, query.contains("ORDER BY \"id\"\"; DROP TABLE t; --\", random()"));
+    Assert.assertTrue(query, query.contains("ORDER BY \"id\"\"; DROP TABLE t; --\"\n"));
   }
 
   /**

@@ -48,6 +48,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -158,7 +159,8 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
    * Wraps the given identifier in the given quote character, doubling any embedded quote characters so that a
    * user supplied database, schema, table or column name can never break out of the quoted identifier.
    */
-  public static String quoteIdentifier(String identifier, char quote) {
+  protected static String quoteIdentifier(String identifier, char quote) {
+    Objects.requireNonNull(identifier, "identifier to quote must not be null");
     String quoteString = String.valueOf(quote);
     return quoteString + identifier.replace(quoteString, quoteString + quoteString) + quoteString;
   }

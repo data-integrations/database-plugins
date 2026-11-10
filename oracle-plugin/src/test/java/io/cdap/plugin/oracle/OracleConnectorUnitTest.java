@@ -52,8 +52,8 @@ public class OracleConnectorUnitTest {
   @Test
   public void getStratifiedQueryEscapesStrataTest() {
     String query = CONNECTOR.getStratifiedQuery("\"SCHEMA\".\"TABLE\"", 10, "ID\", 1) --", "s1");
-    Assert.assertTrue(query.contains("ORDER BY \"ID\"\", 1) --\", dbms_random.random"));
-    Assert.assertTrue(query.contains("ORDER BY \"ID\"\", 1) --\"  )"));
+    Assert.assertTrue(query, query.contains("ORDER BY \"ID\"\", 1) --\", dbms_random.random"));
+    Assert.assertTrue(query, query.contains("ORDER BY \"ID\"\", 1) --\"  )"));
   }
 
   /**

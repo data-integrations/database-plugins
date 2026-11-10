@@ -49,6 +49,12 @@ public class AuroraMysqlSource extends AbstractDBSource<AuroraMysqlSource.Aurora
                          auroraMysqlSourceConfig.host, auroraMysqlSourceConfig.port, auroraMysqlSourceConfig.database);
   }
 
+  @Override
+  protected Boolean useBackslashEscapes() {
+    // In MySQL/MariaDB/SingleStore/Databricks a backslash escapes a quote inside a string literal.
+    return Boolean.TRUE;
+  }
+
   /**
    * Aurora DB MySQL source config.
    */
