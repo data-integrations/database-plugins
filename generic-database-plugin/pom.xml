@@ -92,6 +92,7 @@
           <instructions>
             <_exportcontents>
                 io.cdap.plugin.jdbc.*;
+                io.cdap.plugin.db.*;
                 io.cdap.plugin.db.source.*;
                 io.cdap.plugin.db.sink.*;
             </_exportcontents>

@@ -80,7 +80,7 @@
     <!-- version properties -->
     <cdap.version>6.11.0</cdap.version>
     <cdap.plugin.version>2.13.1</cdap.plugin.version>
-    <guava.version>13.0.1</guava.version>
+    <guava.version>33.7.2-jre</guava.version>
     <hadoop.version>3.3.6</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
     <junit.version>4.13</junit.version>
@@ -123,6 +123,12 @@
         <artifactId>cdap-api</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
@@ -135,35 +141,71 @@
         <artifactId>cdap-etl-proto</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-etl-api</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-data-pipeline3_2.12</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.cdap.cdap</groupId>
         <artifactId>hydrator-test</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.cdap.plugin</groupId>
         <artifactId>hydrator-common</artifactId>
         <version>${cdap.plugin.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-test</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.cdap.cdap</groupId>
@@ -174,6 +216,10 @@
           <exclusion>
             <groupId>asm</groupId>
             <artifactId>asm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -614,7 +660,7 @@
       <properties>
         <testSourceLocation>src/e2e-test/java</testSourceLocation>
         <TEST_RUNNER>TestRunner.java</TEST_RUNNER>
-        <guava.version>32.1.2-jre</guava.version>
+        <guava.version>33.7.2-jre</guava.version>
       </properties>
       <build>
         <testResources>
@@ -714,7 +760,7 @@
           <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.1-jre</version>
+            <version>${guava.version}</version>
           </dependency>
         </dependencies>
       </dependencyManagement>
