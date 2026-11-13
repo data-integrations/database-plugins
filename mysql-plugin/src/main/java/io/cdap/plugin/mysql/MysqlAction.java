@@ -115,7 +115,8 @@ public class MysqlAction extends AbstractDBAction {
         initQueries.add(MysqlConstants.ANSI_QUOTES_QUERY);
       }
       if (!Strings.isNullOrEmpty(sqlMode)) {
-        initQueries.add(String.format(MysqlConstants.SET_SQL_MODE_QUERY_FORMAT, sqlMode));
+        initQueries.add(
+            String.format(MysqlConstants.SET_SQL_MODE_QUERY_FORMAT, sqlMode.replace("\\", "\\\\").replace("'", "''")));
       }
       return initQueries;
     }

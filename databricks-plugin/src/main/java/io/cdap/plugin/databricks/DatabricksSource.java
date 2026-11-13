@@ -79,6 +79,12 @@ public class DatabricksSource extends AbstractDBSource<DatabricksSource.Databric
   }
 
   @Override
+  protected Boolean useBackslashEscapes() {
+    // In MySQL/MariaDB/SingleStore/Databricks a backslash escapes a quote inside a string literal.
+    return Boolean.TRUE;
+  }
+
+  @Override
   protected LineageRecorder getLineageRecorder(BatchSourceContext context) {
     DatabricksConnectorConfig connection = databricksSourceConfig.getConnection();
     String host = connection == null ? null : connection.getHost();

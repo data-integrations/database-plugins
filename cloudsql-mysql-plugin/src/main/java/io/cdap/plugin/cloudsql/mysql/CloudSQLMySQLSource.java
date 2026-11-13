@@ -84,6 +84,12 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
   }
 
   @Override
+  protected Boolean useBackslashEscapes() {
+    // In MySQL a backslash escapes a quote inside a string literal.
+    return Boolean.TRUE;
+  }
+
+  @Override
   protected String createConnectionString() {
     if (CloudSQLUtil.PRIVATE_INSTANCE.equalsIgnoreCase(
         cloudsqlMysqlSourceConfig.connection.getInstanceType())) {

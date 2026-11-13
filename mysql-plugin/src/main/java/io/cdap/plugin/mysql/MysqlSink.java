@@ -217,7 +217,8 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
     @Override
     public List<String> getInitQueries() {
       if (!Strings.isNullOrEmpty(sqlMode)) {
-        return Collections.singletonList(String.format(MysqlConstants.SET_SQL_MODE_QUERY_FORMAT, sqlMode));
+        return Collections.singletonList(
+            String.format(MysqlConstants.SET_SQL_MODE_QUERY_FORMAT, sqlMode.replace("\\", "\\\\").replace("'", "''")));
       }
       return Collections.emptyList();
     }

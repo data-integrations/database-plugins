@@ -65,6 +65,12 @@ public class MariadbSource extends AbstractDBSource<MariadbSource.MariadbSourceC
   }
 
   @Override
+  protected Boolean useBackslashEscapes() {
+    // In MySQL/MariaDB/SingleStore/Databricks a backslash escapes a quote inside a string literal.
+    return Boolean.TRUE;
+  }
+
+  @Override
   protected Class<? extends DBWritable> getDBRecordType() {
     return MariadbDBRecord.class;
   }

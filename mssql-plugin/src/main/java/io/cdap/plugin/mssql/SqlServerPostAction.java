@@ -125,7 +125,8 @@ public class SqlServerPostAction extends AbstractQueryAction {
     @Override
     public List<String> getInitQueries() {
       if (!Strings.isNullOrEmpty(currentLanguage)) {
-        return Collections.singletonList(String.format(SqlServerConstants.SET_LANGUAGE_QUERY_FORMAT, currentLanguage));
+        return Collections.singletonList(
+            String.format(SqlServerConstants.SET_LANGUAGE_QUERY_FORMAT, currentLanguage.replace("'", "''")));
       }
 
       return Collections.emptyList();
