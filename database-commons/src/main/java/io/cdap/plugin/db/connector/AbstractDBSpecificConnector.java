@@ -35,6 +35,7 @@ import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.source.DataDrivenETLDBInputFormat;
+import io.cdap.plugin.util.JdbcConnectionValidator;
 import io.cdap.plugin.util.RetryPolicyUtil;
 import io.cdap.plugin.util.RetryUtils;
 import org.apache.hadoop.io.LongWritable;
@@ -48,6 +49,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -93,25 +95,29 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     }
 
     ConnectionConfigAccessor connectionConfigAccessor = new ConnectionConfigAccessor();
+    String connectionString = getConnectionString(path.getDatabase());
+    Properties connectionArgumentsProperties = config.getConnectionArgumentsProperties();
+    JdbcConnectionValidator.validateJdbcConnection(connectionString, connectionArgumentsProperties);
     if (config.getUser() == null && config.getPassword() == null) {
       DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(),
-                                  getConnectionString(path.getDatabase()));
+                                  connectionString);
     } else {
       DBConfiguration.configureDB(connectionConfigAccessor.getConfiguration(), driverClass.getName(),
-                                  getConnectionString(path.getDatabase()), config.getUser(), config.getPassword());
+                                  connectionString, config.getUser(), config.getPassword());
     }
     String sessionID = generateSessionID();
     String tableQuery = getTableQuery(path.getDatabase(), path.getSchema(), path.getTable(), request.getLimit(),
       request.getProperties().get("sampleType"), request.getProperties().get("strata"), sessionID);
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
       tableQuery, null, isAutoCommitEnabled());
-    connectionConfigAccessor.setConnectionArguments(Maps.fromProperties(config.getConnectionArgumentsProperties()));
+    connectionConfigAccessor.setConnectionArguments(Maps.fromProperties(connectionArgumentsProperties));
     String isolationLevel = getTransactionIsolationLevel();
     if (isolationLevel != null) {
       connectionConfigAccessor.setTransactionIsolationLevel(isolationLevel);
     }
     connectionConfigAccessor.getConfiguration().setInt(MRJobConfig.NUM_MAPS, 1);
     Map<String, String> additionalArguments = config.getAdditionalArguments();
+    JdbcConnectionValidator.validateConnectionArgumentsMap(additionalArguments);
     for (Map.Entry<String, String> argument : additionalArguments.entrySet()) {
       connectionConfigAccessor.getConfiguration().set(argument.getKey(), argument.getValue());
     }
@@ -141,8 +147,18 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     return dbErrorDetailsProvider;
   }
 
+  @Override
   protected Connection getConnection(DBConnectorPath path) {
-    return getConnection(getConnectionString(path.getDatabase()), config.getConnectionArgumentsProperties());
+    String connectionString = getConnectionString(path.getDatabase());
+    Properties connectionArguments = config.getConnectionArgumentsProperties();
+    JdbcConnectionValidator.validateJdbcConnection(connectionString, connectionArguments);
+    return getConnection(connectionString, connectionArguments);
+  }
+
+  @Override
+  protected Connection getConnection(String connectionString, Properties connectionArguments) {
+    JdbcConnectionValidator.validateJdbcConnection(connectionString, connectionArguments);
+    return super.getConnection(connectionString, connectionArguments);
   }
 
   protected String getConnectionString(String database) {

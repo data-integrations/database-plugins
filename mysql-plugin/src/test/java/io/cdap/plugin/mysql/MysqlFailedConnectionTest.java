@@ -53,4 +53,13 @@ public class MysqlFailedConnectionTest extends DBSpecificFailedConnectionTest {
       "ConnectException: Connection refused (Connection refused).");
   }
 
+  @Test
+  public void testDisallowedAllowLoadLocalInfilePropertyRejected() throws ClassNotFoundException, IOException {
+    MysqlConnector connector = new MysqlConnector(
+      new MysqlConnectorConfig("localhost", 3306, "username", "password", "jdbc",
+                               "allowLoadLocalInfile=true"));
+
+    super.test(JDBC_DRIVER_CLASS_NAME, connector, "Disallowed JDBC connection property: 'allowLoadLocalInfile'.");
+  }
+
 }

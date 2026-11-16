@@ -43,6 +43,7 @@ public final class RetryUtils {
 
     public static Connection createConnectionWithRetry(RetryPolicy<Connection> retryPolicy, String connectionString,
       Properties connectionProperties, DBErrorDetailsProvider dbErrorDetailsProvider) {
+        JdbcConnectionValidator.validateJdbcConnection(connectionString, connectionProperties);
         try {
             return Failsafe.with(retryPolicy).get(() -> DriverManager
               .getConnection(connectionString, connectionProperties)

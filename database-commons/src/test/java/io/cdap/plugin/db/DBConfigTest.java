@@ -41,6 +41,13 @@ public class DBConfigTest {
     Assert.assertEquals("", config.query);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testDisallowedConnectionArgumentsRejected() {
+    TestDBConfig config = new TestDBConfig("select * from table");
+    config.connectionArguments = "allowLoadLocalInfile=true";
+    config.getConnectionArguments();
+  }
+
   /**
    * Test config.
    */

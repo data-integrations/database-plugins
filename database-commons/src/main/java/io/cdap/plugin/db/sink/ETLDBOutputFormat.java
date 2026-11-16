@@ -24,6 +24,7 @@ import io.cdap.plugin.db.NoOpCommitConnection;
 import io.cdap.plugin.db.Operation;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.JdbcConnectionValidator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -244,6 +245,7 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
     Connection connection;
     try {
       String url = conf.get(DBConfiguration.URL_PROPERTY);
+      JdbcConnectionValidator.validateUrl(url);
       try {
         // throws SQLException if no suitable driver is found
         DriverManager.getDriver(url);
@@ -270,6 +272,7 @@ public class ETLDBOutputFormat<K extends DBWritable, V> extends DBOutputFormat<K
       Map<String, String> connectionArgs = connectionConfigAccessor.getConnectionArguments();
       Properties properties = new Properties();
       properties.putAll(connectionArgs);
+      JdbcConnectionValidator.validateJdbcConnection(url, properties);
       connection = DriverManager.getConnection(url, properties);
 
       boolean autoCommitEnabled = connectionConfigAccessor.isAutoCommitEnabled();

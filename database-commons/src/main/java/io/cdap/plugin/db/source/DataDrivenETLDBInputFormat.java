@@ -25,6 +25,7 @@ import io.cdap.plugin.db.JDBCDriverShim;
 import io.cdap.plugin.db.NoOpCommitConnection;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.JdbcConnectionValidator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -127,6 +128,7 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
       ConnectionConfigAccessor connectionConfigAccessor = new ConnectionConfigAccessor(getConf());
       try {
         String url = connectionConfigAccessor.getConfiguration().get(DBConfiguration.URL_PROPERTY);
+        JdbcConnectionValidator.validateUrl(url);
         try {
           // throws SQLException if no suitable driver is found
           DriverManager.getDriver(url);
@@ -152,6 +154,7 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
 
         Properties properties = new Properties();
         properties.putAll(connectionConfigAccessor.getConnectionArguments());
+        JdbcConnectionValidator.validateJdbcConnection(url, properties);
         connection = DriverManager.getConnection(url, properties);
 
         if (connectionConfigAccessor.isAutoCommitEnabled()) {
