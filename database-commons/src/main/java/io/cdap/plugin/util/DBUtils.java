@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.util;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -105,6 +106,7 @@ public final class DBUtils {
   public static DriverCleanup ensureJDBCDriverIsAvailable(Class<? extends Driver> jdbcDriverClass,
                                                           String connectionString, String jdbcPluginName)
     throws IllegalAccessException, InstantiationException, SQLException {
+    JdbcConnectionValidator.validateUrl(connectionString);
 
     try {
       DriverManager.getDriver(connectionString);
@@ -195,6 +197,27 @@ public final class DBUtils {
       Objects.isNull(config.getUser()) && Objects.nonNull(config.getPassword())) {
       collector.addFailure("Username is required when password is given.", null)
         .withConfigProperty(ConnectionConfig.USER);
+    }
+
+    if (!config.containsMacro(ConnectionConfig.CONNECTION_STRING)) {
+      String connStr = config.getConnectionString();
+      if (!Strings.isNullOrEmpty(connStr)) {
+        try {
+          JdbcConnectionValidator.validateUrl(connStr);
+        } catch (IllegalArgumentException e) {
+          collector.addFailure(e.getMessage(), null)
+            .withConfigProperty(ConnectionConfig.CONNECTION_STRING);
+        }
+      }
+    }
+
+    if (!config.containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS)) {
+      try {
+        JdbcConnectionValidator.validateConnectionArgumentsMap(config.getConnectionArguments());
+      } catch (IllegalArgumentException e) {
+        collector.addFailure(e.getMessage(), null)
+          .withConfigProperty(ConnectionConfig.CONNECTION_ARGUMENTS);
+      }
     }
 
     // if contains macro for jdbc plugin, just return

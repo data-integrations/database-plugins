@@ -25,6 +25,7 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.KeyValueListParser;
 import io.cdap.plugin.common.db.DBConnectorProperties;
 import io.cdap.plugin.db.ConnectionConfig;
+import io.cdap.plugin.util.JdbcConnectionValidator;
 import io.cdap.plugin.util.RetryUtils;
 
 import java.util.Collections;
@@ -120,11 +121,13 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
 
   @Override
   public String getConnectionArguments() {
+    JdbcConnectionValidator.validateConnectionArgumentsString(connectionArguments);
     return connectionArguments;
   }
 
   protected static Properties getConnectionArgumentsProperties(@Nullable String connectionArguments,
                                                                @Nullable String user, @Nullable String password) {
+    JdbcConnectionValidator.validateConnectionArgumentsString(connectionArguments);
     KeyValueListParser kvParser = new KeyValueListParser("\\s*;\\s*", "=");
 
     Map<String, String> connectionArgumentsMap = new HashMap<>();
@@ -142,6 +145,7 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
     }
     Properties properties = new Properties();
     properties.putAll(connectionArgumentsMap);
+    JdbcConnectionValidator.validateProperties(properties);
     return properties;
   }
 

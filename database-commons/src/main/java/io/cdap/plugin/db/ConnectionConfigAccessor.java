@@ -19,6 +19,7 @@ package io.cdap.plugin.db;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.plugin.util.JdbcConnectionValidator;
 import org.apache.hadoop.conf.Configuration;
 
 import java.lang.reflect.Type;
@@ -64,6 +65,7 @@ public class ConnectionConfigAccessor {
   }
 
   public void setConnectionArguments(Map<String, String> connectionArguments) {
+    JdbcConnectionValidator.validateConnectionArgumentsMap(connectionArguments);
     configuration.set(CONNECTION_ARGUMENTS, GSON.toJson(connectionArguments, STRING_MAP_TYPE));
   }
 
@@ -71,7 +73,9 @@ public class ConnectionConfigAccessor {
     if (Strings.isNullOrEmpty(configuration.get(CONNECTION_ARGUMENTS))) {
       return Collections.emptyMap();
     }
-    return GSON.fromJson(configuration.get(CONNECTION_ARGUMENTS), STRING_MAP_TYPE);
+    Map<String, String> arguments = GSON.fromJson(configuration.get(CONNECTION_ARGUMENTS), STRING_MAP_TYPE);
+    JdbcConnectionValidator.validateConnectionArgumentsMap(arguments);
+    return arguments;
   }
 
   public void setInitQueries(List<String> initQueries) {

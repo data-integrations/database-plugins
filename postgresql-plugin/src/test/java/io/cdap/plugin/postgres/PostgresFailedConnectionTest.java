@@ -35,4 +35,13 @@ public class PostgresFailedConnectionTest extends DBSpecificFailedConnectionTest
                                                     "{user=username}. Error: ConnectException: Connection refused " +
                                                     "(Connection refused).");
   }
+
+  @Test
+  public void testDisallowedSocketFactoryPropertyRejected() throws ClassNotFoundException, IOException {
+    PostgresConnector connector = new PostgresConnector(
+      new PostgresConnectorConfig("localhost", 5432, "username", "password", "jdbc",
+                                  "socketFactory=org.springframework.context.support.ClassPathXmlApplicationContext"));
+
+    super.test(JDBC_DRIVER_CLASS_NAME, connector, "Disallowed JDBC connection property: 'socketFactory'.");
+  }
 }

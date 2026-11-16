@@ -24,6 +24,7 @@ import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.KeyValueListParser;
 import io.cdap.plugin.db.config.DatabaseConnectionConfig;
+import io.cdap.plugin.util.JdbcConnectionValidator;
 import io.cdap.plugin.util.RetryUtils;
 
 import java.util.Collections;
@@ -114,6 +115,7 @@ public abstract class ConnectionConfig extends PluginConfig implements DatabaseC
   public Map<String, String> getConnectionArguments() {
     Map<String, String> arguments = getConnectionArguments(connectionArguments, user, password);
     arguments.putAll(getDBSpecificArguments());
+    JdbcConnectionValidator.validateConnectionArgumentsMap(arguments);
     return arguments;
   }
 
@@ -135,6 +137,7 @@ public abstract class ConnectionConfig extends PluginConfig implements DatabaseC
    */
   protected static Map<String, String> getConnectionArguments(@Nullable String connectionArguments,
                                                               @Nullable String user, @Nullable String password) {
+    JdbcConnectionValidator.validateConnectionArgumentsString(connectionArguments);
     KeyValueListParser kvParser = new KeyValueListParser("\\s*;\\s*", "=");
 
     Map<String, String> connectionArgumentsMap = new HashMap<>();
@@ -149,6 +152,7 @@ public abstract class ConnectionConfig extends PluginConfig implements DatabaseC
       connectionArgumentsMap.put("password", password);
     }
 
+    JdbcConnectionValidator.validateConnectionArgumentsMap(connectionArgumentsMap);
     return connectionArgumentsMap;
   }
 

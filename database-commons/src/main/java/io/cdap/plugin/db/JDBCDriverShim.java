@@ -18,6 +18,7 @@ package io.cdap.plugin.db;
 
 import io.cdap.plugin.db.sink.ETLDBOutputFormat;
 import io.cdap.plugin.db.source.DataDrivenETLDBInputFormat;
+import io.cdap.plugin.util.JdbcConnectionValidator;
 
 import java.sql.Connection;
 import java.sql.Driver;
@@ -52,11 +53,13 @@ public class JDBCDriverShim implements Driver {
 
   @Override
   public boolean acceptsURL(String url) throws SQLException {
+    JdbcConnectionValidator.validateUrl(url);
     return delegate.acceptsURL(url);
   }
 
   @Override
   public Connection connect(String url, Properties info) throws SQLException {
+    JdbcConnectionValidator.validateJdbcConnection(url, info);
     return delegate.connect(url, info);
   }
 

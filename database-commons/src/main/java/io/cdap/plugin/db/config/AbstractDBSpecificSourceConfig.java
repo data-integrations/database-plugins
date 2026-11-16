@@ -28,6 +28,7 @@ import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
+import io.cdap.plugin.util.JdbcConnectionValidator;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -225,6 +226,7 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
     Map<String, String> arguments = new HashMap<>();
     arguments.putAll(Maps.fromProperties(getConnection().getConnectionArgumentsProperties()));
     arguments.putAll(getDBSpecificArguments());
+    JdbcConnectionValidator.validateConnectionArgumentsMap(arguments);
     return arguments;
   }
 

@@ -25,6 +25,7 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.Operation;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
+import io.cdap.plugin.util.JdbcConnectionValidator;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -125,6 +126,7 @@ public abstract class AbstractDBSpecificSinkConfig extends PluginConfig implemen
     Map<String, String> arguments = new HashMap<>();
     arguments.putAll(Maps.fromProperties(getConnection().getConnectionArgumentsProperties()));
     arguments.putAll(getDBSpecificArguments());
+    JdbcConnectionValidator.validateConnectionArgumentsMap(arguments);
     return arguments;
   }
 
