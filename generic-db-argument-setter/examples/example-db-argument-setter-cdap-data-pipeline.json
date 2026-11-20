@@ -1,0 +1,130 @@
+{
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "6.4.0",
+        "scope": "SYSTEM"
+    },
+    "description": "Data Pipeline Application",
+    "name": "example-db-argument-setter",
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "File",
+                "to": "Trash"
+            },
+            {
+                "from": "Database Argument Setter",
+                "to": "File"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": false,
+        "stages": [
+            {
+                "name": "File",
+                "plugin": {
+                    "name": "File",
+                    "type": "batchsource",
+                    "label": "File",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "2.6.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "referenceName": "file_source",
+                        "path": "/${path}/${name}/${timestamp}",
+                        "format": "text",
+                        "skipHeader": "false",
+                        "filenameOnly": "false",
+                        "recursive": "false",
+                        "ignoreNonExistingFolders": "false",
+                        "fileEncoding": "UTF-8"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": ""
+                    }
+                ],
+                "id": "File"
+            },
+            {
+                "name": "Trash",
+                "plugin": {
+                    "name": "Trash",
+                    "type": "batchsink",
+                    "label": "Trash",
+                    "artifact": {
+                        "name": "trash-plugin",
+                        "version": "1.2.0",
+                        "scope": "USER"
+                    },
+                    "properties": {
+                        "referenceName": "Trash"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"fileRecord\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "File",
+                        "schema": ""
+                    }
+                ],
+                "id": "Trash"
+            },
+            {
+                "name": "Database Argument Setter",
+                "plugin": {
+                    "name": "DatabaseArgumentSetter",
+                    "type": "action",
+                    "label": "Database Argument Setter",
+                    "artifact": {
+                        "name": "db-argument-setter",
+                        "version": "1.5.2",
+                        "scope": "USER"
+                    },
+                    "properties": {
+                        "jdbcPluginName": "mysql",
+                        "connectionString": "${connection_string}",
+                        "user": "${username}",
+                        "password": "${password}",
+                        "databaseName": "${database}",
+                        "tableName": "${table}",
+                        "argumentSelectionConditions": "project=test_project;environment=production;location=US",
+                        "argumentsColumns": "timestamp,name,path"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": ""
+                    }
+                ],
+                "id": "Database-Argument-Setter"
+            }
+        ],
+        "schedule": "0 * * * *",
+        "engine": "spark",
+        "numOfRecordsPreview": 100,
+        "description": "Data Pipeline Application",
+        "maxConcurrentRuns": 1
+    }
+}
