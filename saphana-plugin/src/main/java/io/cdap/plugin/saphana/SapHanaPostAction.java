@@ -31,8 +31,11 @@ import io.cdap.plugin.db.config.DBSpecificQueryActionConfig;
 @Description("Runs a SAP HANA query after a pipeline run.")
 public class SapHanaPostAction extends AbstractQueryAction {
 
+  private final SapHanaQueryActionConfig sapHanaQueryActionConfig;
+
   public SapHanaPostAction(SapHanaQueryActionConfig sapHanaQueryActionConfig) {
     super(sapHanaQueryActionConfig, false);
+    this.sapHanaQueryActionConfig = sapHanaQueryActionConfig;
   }
 
   /**

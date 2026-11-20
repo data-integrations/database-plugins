@@ -80,7 +80,6 @@ services:
     sysctls:
       - kernel.shmmax=1073741824
       - net.ipv4.ip_local_port_range=60000 65535
-      - kernel.shmmni=524288
       - kernel.shmall=8388608
     extra_hosts:
       # Alter this if running on non-Linux machine
