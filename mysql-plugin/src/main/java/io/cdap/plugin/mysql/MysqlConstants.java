@@ -56,4 +56,13 @@ public final class MysqlConstants {
    * Query to append 'ANSI_QUOTES' sql mode to the current value of SQL_MODE system variable.
    */
   public static final String ANSI_QUOTES_QUERY = "SET SESSION sql_mode = (CONCAT(@@sql_mode , ',', 'ANSI_QUOTES'));";
+
+  /**
+   * Builds the {@code SET SESSION sql_mode} initialization query, escaping backslashes and single quotes so that a
+   * user-supplied mode value cannot break out of the string literal. Unlike SQL Server, MySQL treats a backslash as
+   * an escape character inside string literals by default, so backslashes are doubled before single quotes are doubled.
+   */
+  public static String buildSetSqlModeQuery(String sqlMode) {
+    return String.format(SET_SQL_MODE_QUERY_FORMAT, sqlMode.replace("\\", "\\\\").replace("'", "''"));
+  }
 }

@@ -41,6 +41,8 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -48,6 +50,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -58,6 +61,8 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends AbstractDBConnector
   implements BatchConnector<LongWritable, T> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractDBSpecificConnector.class);
 
   private final AbstractDBConnectorConfig config;
   private final RetryPolicy<?> retryPolicy;
@@ -105,6 +110,7 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
       request.getProperties().get("sampleType"), request.getProperties().get("strata"), sessionID);
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
       tableQuery, null, isAutoCommitEnabled());
+    connectionConfigAccessor.setReadOnly(true);
     connectionConfigAccessor.setConnectionArguments(Maps.fromProperties(config.getConnectionArgumentsProperties()));
     String isolationLevel = getTransactionIsolationLevel();
     if (isolationLevel != null) {
@@ -115,11 +121,11 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
     for (Map.Entry<String, String> argument : additionalArguments.entrySet()) {
       connectionConfigAccessor.getConfiguration().set(argument.getKey(), argument.getValue());
     }
-    try {
+    try (Connection connection = getConnection(path)) {
       Long timeoutMs = request.getTimeoutMs();
       Integer timeoutSec = timeoutMs != null ? (int) (timeoutMs / 1000) : null;
       connectionConfigAccessor
-        .setSchema(loadTableSchema(getConnection(path), tableQuery, timeoutSec, sessionID).toString());
+        .setSchema(loadTableSchema(connection, tableQuery, timeoutSec, sessionID).toString());
     } catch (SQLException e) {
       throw new IOException(String.format("Failed to get table schema due to: %s.",
         ExceptionUtils.getRootCauseMessage(e)), e);
@@ -150,8 +156,18 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   }
 
   protected String getTableName(String database, String schema, String table) {
-    return schema == null ? String.format("\"%s\".\"%s\"", database, table)
-      : String.format("\"%s\".\"%s\".\"%s\"", database, schema, table);
+    return schema == null ? quoteIdentifier(database, '"') + "." + quoteIdentifier(table, '"')
+      : quoteIdentifier(database, '"') + "." + quoteIdentifier(schema, '"') + "." + quoteIdentifier(table, '"');
+  }
+
+  /**
+   * Wraps the given identifier in the given quote character, doubling any embedded quote characters so that a
+   * user supplied database, schema, table or column name can never break out of the quoted identifier.
+   */
+  protected static String quoteIdentifier(String identifier, char quote) {
+    Objects.requireNonNull(identifier, "identifier to quote must not be null");
+    String quoteString = String.valueOf(quote);
+    return quoteString + identifier.replace(quoteString, quoteString + quoteString) + quoteString;
   }
 
   protected String getTableQuery(String database, String schema, String table) {
@@ -197,15 +213,46 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
 
   protected Schema loadTableSchema(Connection connection, String query, @Nullable Integer timeoutSec, String sessionID)
     throws SQLException {
-      try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
-        getErrorDetailsProvider())) {
-        statement.setMaxRows(1);
-        if (timeoutSec != null) {
-          statement.setQueryTimeout(timeoutSec);
-        }
-        ResultSet resultSet = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement, query,
-          getErrorDetailsProvider());
+    boolean rollbackOnExit = configureReadOnlyTransaction(connection);
+    try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
+      getErrorDetailsProvider())) {
+      statement.setMaxRows(1);
+      if (timeoutSec != null) {
+        statement.setQueryTimeout(timeoutSec);
+      }
+      try (ResultSet resultSet = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement,
+        query, getErrorDetailsProvider())) {
         return Schema.recordOf("outputSchema", getSchemaReader(sessionID).getSchemaFields(resultSet));
+      }
+    } finally {
+      if (rollbackOnExit) {
+        try {
+          connection.rollback();
+        } catch (SQLException e) {
+          LOG.debug("Failed to roll back read-only schema query transaction.", e);
+        }
+      }
+    }
+  }
+
+  private boolean configureReadOnlyTransaction(@Nullable Connection connection) {
+    if (connection == null) {
+      return false;
+    }
+    try {
+      connection.setReadOnly(true);
+    } catch (SQLException e) {
+      LOG.debug("Driver does not support setting connection read-only; continuing.", e);
+    }
+    if (isAutoCommitEnabled()) {
+      return false;
+    }
+    try {
+      connection.setAutoCommit(false);
+      return true;
+    } catch (SQLException e) {
+      LOG.debug("Driver does not support disabling auto-commit; continuing.", e);
+      return false;
     }
   }
 
@@ -218,8 +265,10 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   protected Schema getTableSchema(Connection connection, String database,
                                   String schema, String table) throws SQLException {
     String sessionID = generateSessionID();
-    return loadTableSchema(getConnection(), getTableQuery(database, schema, table),
-      null, sessionID);
+    try (Connection schemaConnection = getConnection()) {
+      return loadTableSchema(schemaConnection, getTableQuery(database, schema, table),
+        null, sessionID);
+    }
   }
 
   protected String generateSessionID() {

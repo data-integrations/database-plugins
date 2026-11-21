@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.JDBCDriverShim;
 import io.cdap.plugin.db.NoOpCommitConnection;
+import io.cdap.plugin.db.RollbackOnCloseConnection;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -154,11 +155,22 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
         properties.putAll(connectionConfigAccessor.getConnectionArguments());
         connection = DriverManager.getConnection(url, properties);
 
+        if (connectionConfigAccessor.isReadOnly()) {
+          try {
+            connection.setReadOnly(true);
+          } catch (SQLException e) {
+            LOG.debug("Driver does not support setting connection read-only; continuing.", e);
+          }
+        }
+
         if (connectionConfigAccessor.isAutoCommitEnabled()) {
           // hack to work around jdbc drivers like the hive driver that throw exceptions on commit
           this.connection = new NoOpCommitConnection(this.connection);
         } else {
           this.connection.setAutoCommit(false);
+          if (connectionConfigAccessor.isReadOnly()) {
+            this.connection = new RollbackOnCloseConnection(this.connection);
+          }
         }
 
         if (connectionConfigAccessor.getFetchSize() > 0) {

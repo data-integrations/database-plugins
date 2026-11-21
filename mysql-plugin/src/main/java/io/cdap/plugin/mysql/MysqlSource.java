@@ -191,7 +191,7 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
         initQueries.add(MysqlConstants.ANSI_QUOTES_QUERY);
       }
       if (!Strings.isNullOrEmpty(sqlMode)) {
-        initQueries.add(String.format(MysqlConstants.SET_SQL_MODE_QUERY_FORMAT, sqlMode));
+        initQueries.add(MysqlConstants.buildSetSqlModeQuery(sqlMode));
       }
       return initQueries;
     }

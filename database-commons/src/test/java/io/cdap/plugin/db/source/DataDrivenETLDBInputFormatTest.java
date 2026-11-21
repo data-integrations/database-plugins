@@ -150,6 +150,7 @@ public class DataDrivenETLDBInputFormatTest {
     Map<String, String> conf = provider.getInputFormatConfiguration();
 
     Assert.assertEquals("false", conf.get(ConnectionConfigAccessor.AUTO_COMMIT_ENABLED));
+    Assert.assertEquals("true", conf.get(ConnectionConfigAccessor.READ_ONLY));
     Assert.assertNull(conf.get(TransactionIsolationLevel.CONF_KEY));
   }
 
@@ -173,6 +174,7 @@ public class DataDrivenETLDBInputFormatTest {
     Map<String, String> conf = provider.getInputFormatConfiguration();
 
     Assert.assertEquals("true", conf.get(ConnectionConfigAccessor.AUTO_COMMIT_ENABLED));
+    Assert.assertEquals("true", conf.get(ConnectionConfigAccessor.READ_ONLY));
     Assert.assertEquals(TransactionIsolationLevel.Level.TRANSACTION_READ_UNCOMMITTED.name(),
                         conf.get(TransactionIsolationLevel.CONF_KEY));
   }

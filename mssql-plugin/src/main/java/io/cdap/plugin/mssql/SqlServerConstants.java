@@ -208,4 +208,13 @@ public final class SqlServerConstants {
    */
   public static final String SET_LANGUAGE_QUERY_FORMAT = "SET LANGUAGE '%s';";
 
+  /**
+   * Builds the {@code SET LANGUAGE} initialization query, doubling any embedded single quotes so that a
+   * user-supplied language value cannot break out of the string literal. Unlike MySQL, SQL Server string literals
+   * treat backslashes as ordinary characters, so only single quotes need to be doubled.
+   */
+  public static String buildSetLanguageQuery(String currentLanguage) {
+    return String.format(SET_LANGUAGE_QUERY_FORMAT, currentLanguage.replace("'", "''"));
+  }
+
 }

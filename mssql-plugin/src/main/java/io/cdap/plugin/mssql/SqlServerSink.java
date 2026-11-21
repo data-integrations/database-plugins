@@ -206,7 +206,7 @@ public class SqlServerSink extends AbstractDBSink<SqlServerSink.SqlServerSinkCon
     @Override
     public List<String> getInitQueries() {
       if (!Strings.isNullOrEmpty(currentLanguage)) {
-        return Collections.singletonList(String.format(SqlServerConstants.SET_LANGUAGE_QUERY_FORMAT, currentLanguage));
+        return Collections.singletonList(SqlServerConstants.buildSetLanguageQuery(currentLanguage));
       }
 
       return Collections.emptyList();
