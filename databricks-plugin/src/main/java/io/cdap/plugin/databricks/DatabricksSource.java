@@ -37,6 +37,7 @@ import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.io.IOException;
@@ -76,6 +77,11 @@ public class DatabricksSource extends AbstractDBSource<DatabricksSource.Databric
   protected String createConnectionString() {
     DatabricksConnectorConfig connection = databricksSourceConfig.getConnection();
     return connection == null ? null : connection.getConnectionString();
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    return SelectQueryValidator.Dialect.DATABRICKS;
   }
 
   @Override

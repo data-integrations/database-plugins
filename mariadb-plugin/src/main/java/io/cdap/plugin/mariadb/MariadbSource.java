@@ -26,10 +26,12 @@ import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.db.DBErrorDetailsProvider;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.HashMap;
@@ -62,6 +64,15 @@ public class MariadbSource extends AbstractDBSource<MariadbSource.MariadbSourceC
   protected String createConnectionString() {
     return String.format(MariadbConstants.MARIADB_CONNECTION_STRING_FORMAT,
                          mariadbSourceConfig.host, mariadbSourceConfig.port, mariadbSourceConfig.database);
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    if (mariadbSourceConfig.containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS)
+      || SelectQueryValidator.Dialect.mayOverrideMysqlSqlMode(mariadbSourceConfig.connectionArguments)) {
+      return SelectQueryValidator.Dialect.MYSQL_AMBIGUOUS_BACKSLASH;
+    }
+    return SelectQueryValidator.Dialect.MYSQL;
   }
 
   @Override

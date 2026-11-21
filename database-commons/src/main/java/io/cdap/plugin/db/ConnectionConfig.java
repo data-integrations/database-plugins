@@ -47,6 +47,7 @@ public abstract class ConnectionConfig extends PluginConfig implements DatabaseC
   public static final String JDBC_PLUGIN_NAME = "jdbcPluginName";
   public static final String JDBC_PLUGIN_TYPE = "jdbc";
   public static final String TRANSACTION_ISOLATION_LEVEL = "transactionIsolationLevel";
+  public static final String DISABLE_QUERY_VALIDATION = "disableQueryValidation";
 
   @Name(JDBC_PLUGIN_NAME)
   @Description("Name of the JDBC driver to use. This is the value of the 'jdbcPluginName' key defined in the JSON " +

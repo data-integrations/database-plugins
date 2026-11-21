@@ -14,3 +14,5 @@ Properties
 * **Password / Token**: Personal Access Token (PAT) or password.
 * **Transaction Isolation Level**: Select `TRANSACTION_READ_UNCOMMITTED` when using Databricks JDBC 2.6.40, or `TRANSACTION_REPEATABLE_READ` when using Databricks JDBC 3.4.3. The 3.4.3 driver requires Java 11 or later.
 * **Connection Arguments**: Arbitrary key-value pairs to pass as connection arguments to the JDBC driver (e.g. `AuthMech=11;Auth_Flow=2`).
+* **Disable Source Query Validation**: Disables read-only `SELECT` validation and read-only session enforcement for source queries using this connection. Enable only for backward compatibility with trusted pipelines whose source queries are rejected by the validator. Defaults to `false`.
+

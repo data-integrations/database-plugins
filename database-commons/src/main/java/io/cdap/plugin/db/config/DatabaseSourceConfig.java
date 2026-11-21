@@ -90,4 +90,11 @@ public interface DatabaseSourceConfig extends DatabaseConnectionConfig {
    * @return the number of rows to fetch at a time per split
    */
   Integer getFetchSize();
+
+  /**
+   * @return true if read-only SELECT validation on source queries is disabled for backward compatibility
+   */
+  default boolean isQueryValidationDisabled() {
+    return false;
+  }
 }

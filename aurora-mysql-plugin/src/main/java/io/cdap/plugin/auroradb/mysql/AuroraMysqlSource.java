@@ -21,8 +21,10 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
+import io.cdap.plugin.util.SelectQueryValidator;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -47,6 +49,15 @@ public class AuroraMysqlSource extends AbstractDBSource<AuroraMysqlSource.Aurora
   protected String createConnectionString() {
     return String.format(AuroraMysqlConstants.AURORA_MYSQL_CONNECTION_STRING_FORMAT,
                          auroraMysqlSourceConfig.host, auroraMysqlSourceConfig.port, auroraMysqlSourceConfig.database);
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    if (auroraMysqlSourceConfig.containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS)
+      || SelectQueryValidator.Dialect.mayOverrideMysqlSqlMode(auroraMysqlSourceConfig.connectionArguments)) {
+      return SelectQueryValidator.Dialect.MYSQL_AMBIGUOUS_BACKSLASH;
+    }
+    return SelectQueryValidator.Dialect.MYSQL;
   }
 
   /**

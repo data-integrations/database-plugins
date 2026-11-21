@@ -32,6 +32,7 @@ import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.db.DBErrorDetailsProvider;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
@@ -39,6 +40,7 @@ import io.cdap.plugin.mysql.MysqlDBRecord;
 import io.cdap.plugin.mysql.MysqlSchemaReader;
 import io.cdap.plugin.util.CloudSQLUtil;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Collections;
@@ -81,6 +83,17 @@ public class CloudSQLMySQLSource extends AbstractDBSource<CloudSQLMySQLSource.Cl
   @Override
   protected Class<? extends DBWritable> getDBRecordType() {
     return MysqlDBRecord.class;
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    CloudSQLMySQLConnectorConfig connection = cloudsqlMysqlSourceConfig.getConnection();
+    if (connection != null
+      && (connection.containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS)
+          || SelectQueryValidator.Dialect.mayOverrideMysqlSqlMode(connection.getConnectionArguments()))) {
+      return SelectQueryValidator.Dialect.MYSQL_AMBIGUOUS_BACKSLASH;
+    }
+    return SelectQueryValidator.Dialect.MYSQL;
   }
 
   @Override

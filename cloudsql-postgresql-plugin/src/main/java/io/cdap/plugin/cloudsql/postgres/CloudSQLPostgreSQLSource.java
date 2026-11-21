@@ -32,6 +32,7 @@ import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.db.DBErrorDetailsProvider;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
@@ -39,6 +40,7 @@ import io.cdap.plugin.postgres.PostgresDBRecord;
 import io.cdap.plugin.postgres.PostgresSchemaReader;
 import io.cdap.plugin.util.CloudSQLUtil;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Collections;
@@ -81,6 +83,16 @@ public class CloudSQLPostgreSQLSource
   @Override
   protected SchemaReader getSchemaReader() {
     return new PostgresSchemaReader();
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    CloudSQLPostgreSQLConnectorConfig connection = cloudsqlPostgresqlSourceConfig.getConnection();
+    if (connection != null && connection.containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS)) {
+      return SelectQueryValidator.Dialect.UNKNOWN;
+    }
+    String args = connection == null ? null : connection.getConnectionArguments();
+    return SelectQueryValidator.Dialect.fromJdbcUrl("jdbc:postgresql:", args);
   }
 
   @Override

@@ -26,16 +26,20 @@ Properties
 
 **Database:** MemSQL database name.
 
-**Import Query:** The SELECT query to use to import data from the specified table.
+**Import Query:** The single read-only `SELECT` query to use to import data from the specified table.
 You can specify an arbitrary number of columns to import, or import all columns using \*. The Query should
 contain the '$CONDITIONS' string. For example, 'SELECT * FROM table WHERE $CONDITIONS'.
 The '$CONDITIONS' string will be replaced by 'splitBy' field limits specified by the bounding query.
 The '$CONDITIONS' string is not required if numSplits is set to one.
+Multi-statement queries, write/DDL/administrative statements, `INTO`, locking clauses (such as `FOR UPDATE`/`SHARE`),
+dollar-quoted or `q'...'` literals, and executable comments are rejected, and the query is executed on a read-only
+connection unless `disableQueryValidation` is set to `true`.
 
-**Bounding Query:** Bounding Query should return the min and max of the values of the 'splitBy' field.
+**Bounding Query:** Single read-only `SELECT` query returning the min and max of the values of the 'splitBy' field.
 For example, 'SELECT MIN(id),MAX(id) FROM table'. Not required if numSplits is set to one.
 
-**Split-By Field Name:** Field Name which will be used to generate splits. Not required if numSplits is set to one.
+**Split-By Field Name:** Single column name (optionally table-qualified and/or quoted) which will be used to generate
+splits. Not required if numSplits is set to one.
 
 **Number of Splits to Generate:** Number of splits to generate.
 

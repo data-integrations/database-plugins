@@ -24,3 +24,8 @@ Properties
 
 **Connection Arguments:** A list of arbitrary string key/value pairs as connection arguments. These arguments
 will be passed to the JDBC driver as connection arguments for JDBC drivers that may need additional configurations.
+
+**Disable Source Query Validation:** Disables read-only `SELECT` validation and read-only session enforcement for
+source queries using this connection. Enable only for backward compatibility with trusted pipelines whose source
+queries are rejected by the validator. Defaults to `false`.
+

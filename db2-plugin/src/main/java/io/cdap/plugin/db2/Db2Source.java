@@ -23,6 +23,7 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 
@@ -56,6 +57,11 @@ public class Db2Source extends AbstractDBSource<Db2Source.Db2SourceConfig> {
   protected String createConnectionString() {
     return String.format(Db2Constants.DB2_CONNECTION_STRING_FORMAT, db2SourceConfig.host, db2SourceConfig.port,
                          db2SourceConfig.database);
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    return SelectQueryValidator.Dialect.ANSI;
   }
 
   /**

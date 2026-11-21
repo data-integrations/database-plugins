@@ -77,6 +77,10 @@
       <groupId>dev.failsafe</groupId>
       <artifactId>failsafe</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.github.jsqlparser</groupId>
+      <artifactId>jsqlparser</artifactId>
+    </dependency>
 
     <!-- test dependencies -->
     <dependency>

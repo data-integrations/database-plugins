@@ -24,6 +24,7 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 /**
@@ -46,6 +47,11 @@ public class SapHanaSource extends AbstractDBSource<SapHanaSource.SapHanaSourceC
   protected String createConnectionString() {
     return String.format(SapHanaConstants.SAPHANA_CONNECTION_STRING_FORMAT, sapHanaSourceConfig.host,
                          sapHanaSourceConfig.port);
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    return SelectQueryValidator.Dialect.ANSI;
   }
 
   @Override

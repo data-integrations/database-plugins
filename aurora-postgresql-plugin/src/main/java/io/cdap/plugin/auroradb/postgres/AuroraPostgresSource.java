@@ -21,9 +21,11 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.DBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Map;
@@ -50,6 +52,15 @@ public class AuroraPostgresSource extends AbstractDBSource<AuroraPostgresSource.
     return String.format(AuroraPostgresConstants.AURORA_POSTGRES_CONNECTION_STRING_FORMAT,
                          auroraPostgresSourceConfig.host, auroraPostgresSourceConfig.port,
                          auroraPostgresSourceConfig.database);
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    if (auroraPostgresSourceConfig.containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS)) {
+      return SelectQueryValidator.Dialect.UNKNOWN;
+    }
+    return SelectQueryValidator.Dialect.fromJdbcUrl("jdbc:postgresql:",
+                                                    auroraPostgresSourceConfig.connectionArguments);
   }
 
   @Override

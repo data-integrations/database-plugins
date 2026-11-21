@@ -106,6 +106,25 @@
             "kv-delimiter": "=",
             "delimiter": ";"
           }
+        },
+        {
+          "widget-type": "radio-group",
+          "label": "Disable Source Query Validation",
+          "name": "disableQueryValidation",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "false",
+            "options": [
+              {
+                "id": "true",
+                "label": "True"
+              },
+              {
+                "id": "false",
+                "label": "False"
+              }
+            ]
+          }
         }
       ]
     },
