@@ -27,8 +27,8 @@ import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DBSpecificFailedConnectionTest {
   private static final String ARGS_PREFIX = " and arguments: {";
@@ -62,15 +62,12 @@ public class DBSpecificFailedConnectionTest {
     }
     int contentStart = argsStart + ARGS_PREFIX.length();
     int argsEnd = errorMsg.indexOf(ARGS_SUFFIX, contentStart);
-    if (argsEnd < 0) {
+    if (argsEnd <= contentStart) {
       return errorMsg;
     }
-    String argsContent = errorMsg.substring(contentStart, argsEnd);
-    if (argsContent.isEmpty()) {
-      return errorMsg;
-    }
-    List<String> entries = Arrays.asList(argsContent.split(", ", -1));
-    Collections.sort(entries);
-    return errorMsg.substring(0, contentStart) + String.join(", ", entries) + errorMsg.substring(argsEnd);
+    String sortedArgs = Arrays.stream(errorMsg.substring(contentStart, argsEnd).split(", ", -1))
+      .sorted()
+      .collect(Collectors.joining(", "));
+    return errorMsg.substring(0, contentStart) + sortedArgs + errorMsg.substring(argsEnd);
   }
 }
