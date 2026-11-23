@@ -23,21 +23,18 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * A {@link ForwardingConnection} for read-only operations that turns {@link #commit()} into {@link #rollback()} and
- * rolls back any active transaction before closing, so Hadoop's {@code DBRecordReader#close()} or an implicit
- * driver commit-on-close can never commit changes.
+ * A {@link NoOpCommitConnection} for read-only operations whose {@link #commit()} is a no-op and whose {@link #close()}
+ * rolls back any active transaction before closing, so Hadoop's {@code DBRecordReader#close()} (which calls
+ * {@code connection.commit(); connection.close();} without a {@code finally} block) or an implicit driver
+ * commit-on-close can never commit changes or skip closing the connection when rollback fails. Callers must disable
+ * auto-commit ({@code setAutoCommit(false)}) on the delegate connection before executing statements.
  */
-public class RollbackOnCloseConnection extends ForwardingConnection {
+public class RollbackOnCloseConnection extends NoOpCommitConnection {
 
   private static final Logger LOG = LoggerFactory.getLogger(RollbackOnCloseConnection.class);
 
   public RollbackOnCloseConnection(Connection delegate) {
     super(delegate);
-  }
-
-  @Override
-  public void commit() throws SQLException {
-    getDelegate().rollback();
   }
 
   @Override
@@ -47,7 +44,8 @@ public class RollbackOnCloseConnection extends ForwardingConnection {
         getDelegate().rollback();
       }
     } catch (SQLException e) {
-      LOG.debug("Failed to roll back read-only connection before close.", e);
+      LOG.warn("Failed to roll back read-only connection ({}) before close.",
+               getDelegate().getClass().getName(), e);
     } finally {
       super.close();
     }

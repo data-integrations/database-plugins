@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.mssql;
 
-import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Metadata;
@@ -42,7 +41,6 @@ import io.cdap.plugin.util.DBUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -205,11 +203,7 @@ public class SqlServerSink extends AbstractDBSink<SqlServerSink.SqlServerSinkCon
 
     @Override
     public List<String> getInitQueries() {
-      if (!Strings.isNullOrEmpty(currentLanguage)) {
-        return Collections.singletonList(SqlServerConstants.buildSetLanguageQuery(currentLanguage));
-      }
-
-      return Collections.emptyList();
+      return SqlServerUtil.composeDbInitQueries(currentLanguage);
     }
 
     @Override

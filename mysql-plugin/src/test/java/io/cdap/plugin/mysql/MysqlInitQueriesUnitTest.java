@@ -101,4 +101,11 @@ public class MysqlInitQueriesUnitTest {
     postActionConfig.sqlMode = payload;
     Assert.assertEquals(Collections.singletonList(expected), postActionConfig.getInitQueries());
   }
+
+  @Test
+  public void buildSetSqlModeQuery_trailingBackslashAndNullHandling() {
+    Assert.assertEquals("SET SESSION sql_mode = 'TRADITIONAL\\\\';",
+                        MysqlUtil.buildSetSqlModeQuery("TRADITIONAL\\"));
+    Assert.assertThrows(NullPointerException.class, () -> MysqlUtil.buildSetSqlModeQuery(null));
+  }
 }

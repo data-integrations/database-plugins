@@ -94,4 +94,10 @@ public class SqlServerInitQueriesUnitTest {
     postActionConfig.currentLanguage = payload;
     Assert.assertEquals(Collections.singletonList(expected), postActionConfig.getInitQueries());
   }
+
+  @Test
+  public void buildSetLanguageQuery_trailingBackslashAndNullHandling() {
+    Assert.assertEquals("SET LANGUAGE 'us_english\\';", SqlServerUtil.buildSetLanguageQuery("us_english\\"));
+    Assert.assertThrows(NullPointerException.class, () -> SqlServerUtil.buildSetLanguageQuery(null));
+  }
 }

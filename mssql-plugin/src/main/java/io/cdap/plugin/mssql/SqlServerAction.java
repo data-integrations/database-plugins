@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.mssql;
 
-import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
@@ -24,7 +23,6 @@ import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.plugin.db.action.AbstractDBAction;
 import io.cdap.plugin.db.config.DBSpecificQueryConfig;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -124,11 +122,7 @@ public class SqlServerAction extends AbstractDBAction {
 
     @Override
     public List<String> getInitQueries() {
-      if (!Strings.isNullOrEmpty(currentLanguage)) {
-        return Collections.singletonList(SqlServerConstants.buildSetLanguageQuery(currentLanguage));
-      }
-
-      return Collections.emptyList();
+      return SqlServerUtil.composeDbInitQueries(currentLanguage);
     }
   }
 }

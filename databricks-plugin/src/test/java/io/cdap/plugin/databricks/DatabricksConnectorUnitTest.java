@@ -32,16 +32,22 @@ public class DatabricksConnectorUnitTest {
   public void testGetTableName() {
     Assert.assertEquals("`main`.`default`.`my_table`",
                         CONNECTOR.getTableName("main", "default", "my_table"));
+    Assert.assertEquals("`main`.`my_table`",
+                        CONNECTOR.getTableName("main", null, "my_table"));
     Assert.assertEquals("`default`.`my_table`",
                         CONNECTOR.getTableName(null, "default", "my_table"));
     Assert.assertEquals("`my_table`",
                         CONNECTOR.getTableName(null, null, "my_table"));
+    Assert.assertThrows(NullPointerException.class,
+                        () -> CONNECTOR.getTableName("main", "default", null));
   }
 
   @Test
   public void testGetTableNameEscapesBackticks() {
     Assert.assertEquals("`main`.`default`.`t``; DELETE FROM x; --`",
                         CONNECTOR.getTableName("main", "default", "t`; DELETE FROM x; --"));
+    Assert.assertEquals("`my``cat`.`my``schema`.`my``table`",
+                        CONNECTOR.getTableName("my`cat", "my`schema", "my`table"));
     Assert.assertEquals("`my``schema`.`my``table`",
                         CONNECTOR.getTableName(null, "my`schema", "my`table"));
   }

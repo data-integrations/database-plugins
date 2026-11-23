@@ -19,7 +19,11 @@ package io.cdap.plugin.mssql;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * SqlServer util methods.
@@ -108,5 +112,25 @@ public final class SqlServerUtil {
    */
   public static String getConnectionString(String host, Integer port, String database) {
     return String.format(SqlServerConstants.SQL_SERVER_CONNECTION_STRING_FORMAT, host, port, database);
+  }
+
+  /**
+   * Builds the {@code SET LANGUAGE} initialization query, doubling any embedded single quotes so that a
+   * user-supplied language value cannot break out of the string literal. Unlike MySQL, SQL Server string literals
+   * treat backslashes as ordinary characters, so only single quotes need to be doubled.
+   */
+  public static String buildSetLanguageQuery(String currentLanguage) {
+    Objects.requireNonNull(currentLanguage, "currentLanguage must not be null");
+    return String.format(SqlServerConstants.SET_LANGUAGE_QUERY_FORMAT, currentLanguage.replace("'", "''"));
+  }
+
+  /**
+   * Composes immutable list of initial queries for a SQL Server session.
+   */
+  public static List<String> composeDbInitQueries(@Nullable String currentLanguage) {
+    if (!Strings.isNullOrEmpty(currentLanguage)) {
+      return Collections.singletonList(buildSetLanguageQuery(currentLanguage));
+    }
+    return Collections.emptyList();
   }
 }

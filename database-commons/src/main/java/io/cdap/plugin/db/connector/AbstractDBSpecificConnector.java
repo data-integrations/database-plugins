@@ -35,6 +35,7 @@ import io.cdap.plugin.db.CommonSchemaReader;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.source.DataDrivenETLDBInputFormat;
+import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.RetryPolicyUtil;
 import io.cdap.plugin.util.RetryUtils;
 import org.apache.hadoop.io.LongWritable;
@@ -48,9 +49,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -161,13 +162,12 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   }
 
   /**
-   * Wraps the given identifier in the given quote character, doubling any embedded quote characters so that a
-   * user supplied database, schema, table or column name can never break out of the quoted identifier.
+   * Wraps the given identifier in the given quote character, doubling any embedded quote characters and rejecting NUL
+   * characters so that a user-supplied database, schema, table, or column name cannot break out of the quoted
+   * identifier.
    */
   protected static String quoteIdentifier(String identifier, char quote) {
-    Objects.requireNonNull(identifier, "identifier to quote must not be null");
-    String quoteString = String.valueOf(quote);
-    return quoteString + identifier.replace(quoteString, quoteString + quoteString) + quoteString;
+    return DBUtils.quoteIdentifier(identifier, quote);
   }
 
   protected String getTableQuery(String database, String schema, String table) {
@@ -213,7 +213,7 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
 
   protected Schema loadTableSchema(Connection connection, String query, @Nullable Integer timeoutSec, String sessionID)
     throws SQLException {
-    boolean rollbackOnExit = configureReadOnlyTransaction(connection);
+    boolean rollbackOnExit = configureReadOnlyTransaction(connection, sessionID);
     try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
       getErrorDetailsProvider())) {
       statement.setMaxRows(1);
@@ -221,38 +221,51 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
         statement.setQueryTimeout(timeoutSec);
       }
       try (ResultSet resultSet = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement,
-        query, getErrorDetailsProvider())) {
+        query, getErrorDetailsProvider(), rollbackOnExit, connection)) {
         return Schema.recordOf("outputSchema", getSchemaReader(sessionID).getSchemaFields(resultSet));
       }
     } finally {
       if (rollbackOnExit) {
-        try {
-          connection.rollback();
-        } catch (SQLException e) {
-          LOG.debug("Failed to roll back read-only schema query transaction.", e);
-        }
+        rollbackQuietly(connection, sessionID);
       }
     }
   }
 
-  private boolean configureReadOnlyTransaction(@Nullable Connection connection) {
+  private boolean configureReadOnlyTransaction(@Nullable Connection connection, String sessionID) {
     if (connection == null) {
       return false;
     }
+    boolean disabledAutoCommit = false;
+    if (!isAutoCommitEnabled()) {
+      try {
+        connection.setAutoCommit(false);
+        disabledAutoCommit = true;
+      } catch (SQLFeatureNotSupportedException e) {
+        LOG.debug("Driver {} does not support disabling auto-commit; continuing.",
+                  connection.getClass().getName(), e);
+      } catch (SQLException e) {
+        LOG.warn("Failed to disable auto-commit on {} for session {}; continuing with auto-commit.",
+                 connection.getClass().getName(), sessionID, e);
+      }
+    }
     try {
       connection.setReadOnly(true);
+    } catch (SQLFeatureNotSupportedException e) {
+      LOG.debug("Driver {} does not support setting connection read-only; continuing.",
+                connection.getClass().getName(), e);
     } catch (SQLException e) {
-      LOG.debug("Driver does not support setting connection read-only; continuing.", e);
+      LOG.warn("Failed to set connection {} read-only for session {}; continuing.",
+               connection.getClass().getName(), sessionID, e);
     }
-    if (isAutoCommitEnabled()) {
-      return false;
-    }
+    return disabledAutoCommit;
+  }
+
+  private static void rollbackQuietly(Connection connection, String sessionID) {
     try {
-      connection.setAutoCommit(false);
-      return true;
+      connection.rollback();
     } catch (SQLException e) {
-      LOG.debug("Driver does not support disabling auto-commit; continuing.", e);
-      return false;
+      LOG.warn("Failed to roll back read-only schema query transaction on {} for session {}.",
+               connection.getClass().getName(), sessionID, e);
     }
   }
 
@@ -265,9 +278,12 @@ public abstract class AbstractDBSpecificConnector<T extends DBWritable> extends 
   protected Schema getTableSchema(Connection connection, String database,
                                   String schema, String table) throws SQLException {
     String sessionID = generateSessionID();
+    String tableQuery = getTableQuery(database, schema, table);
+    if (connection != null) {
+      return loadTableSchema(connection, tableQuery, null, sessionID);
+    }
     try (Connection schemaConnection = getConnection()) {
-      return loadTableSchema(schemaConnection, getTableQuery(database, schema, table),
-        null, sessionID);
+      return loadTableSchema(schemaConnection, tableQuery, null, sessionID);
     }
   }
 

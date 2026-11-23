@@ -19,6 +19,7 @@ package io.cdap.plugin.db.connector;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.exception.ProgramFailureException;
 import io.cdap.cdap.etl.api.connector.ConnectorSpec;
 import io.cdap.cdap.etl.api.connector.ConnectorSpecRequest;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
@@ -27,6 +28,7 @@ import io.cdap.cdap.etl.mock.common.MockConnectorContext;
 import io.cdap.plugin.common.db.DBConnectorPath;
 import io.cdap.plugin.common.db.DBPath;
 import io.cdap.plugin.db.DBRecord;
+import io.cdap.plugin.db.ForwardingConnection;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
@@ -55,6 +57,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLTimeoutException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -68,7 +71,7 @@ import java.util.UUID;
 public class AbstractDBSpecificConnectorReadOnlyTest {
 
   @Test
-  public void loadTableSchema_defaultConnector_setsReadOnlyDisablesAutoCommitAndRollsBack() throws Exception {
+  public void loadTableSchema_defaultConnector_disablesAutoCommitBeforeReadOnlyAndRollsBack() throws Exception {
     Connection connection = Mockito.mock(Connection.class);
     Statement statement = Mockito.mock(Statement.class);
     ResultSet resultSet = Mockito.mock(ResultSet.class);
@@ -89,8 +92,8 @@ public class AbstractDBSpecificConnectorReadOnlyTest {
     Assert.assertNotNull(schema.getField("id"));
 
     InOrder inOrder = Mockito.inOrder(connection, statement, resultSet);
-    inOrder.verify(connection).setReadOnly(true);
     inOrder.verify(connection).setAutoCommit(false);
+    inOrder.verify(connection).setReadOnly(true);
     inOrder.verify(connection).createStatement();
     inOrder.verify(statement).setMaxRows(1);
     inOrder.verify(statement).setQueryTimeout(5);
@@ -110,13 +113,51 @@ public class AbstractDBSpecificConnectorReadOnlyTest {
       .thenThrow(new SQLException("Multiple ResultSets were returned by the query."));
 
     StubConnector connector = new StubConnector(connection, false);
-    Assert.assertThrows(RuntimeException.class,
-                        () -> connector.loadTableSchema(connection, "SELECT * FROM \"db\".\"tbl\"", null, "s1"));
+    ProgramFailureException ex = Assert.assertThrows(
+      ProgramFailureException.class,
+      () -> connector.loadTableSchema(connection, "SELECT * FROM \"db\".\"tbl\"", null, "s1"));
+    Assert.assertTrue(ex.getCause() instanceof SQLException);
 
     InOrder inOrder = Mockito.inOrder(connection, statement);
-    inOrder.verify(connection).setReadOnly(true);
     inOrder.verify(connection).setAutoCommit(false);
+    inOrder.verify(connection).setReadOnly(true);
     inOrder.verify(statement).executeQuery("SELECT * FROM \"db\".\"tbl\"");
+    inOrder.verify(statement).close();
+    inOrder.verify(connection).rollback();
+    Mockito.verify(connection, Mockito.never()).commit();
+  }
+
+  @Test
+  public void loadTableSchema_retryableTimeout_rollsBackAbortedTransactionBeforeRetry() throws Exception {
+    Connection connection = Mockito.mock(Connection.class);
+    Statement statement = Mockito.mock(Statement.class);
+    ResultSet resultSet = Mockito.mock(ResultSet.class);
+    ResultSetMetaData metaData = Mockito.mock(ResultSetMetaData.class);
+
+    Mockito.when(connection.createStatement()).thenReturn(statement);
+    Mockito.when(statement.executeQuery("SELECT * FROM \"db\".\"tbl\""))
+      .thenThrow(new SQLTimeoutException("canceling statement due to statement timeout"))
+      .thenReturn(resultSet);
+    Mockito.when(resultSet.getMetaData()).thenReturn(metaData);
+    Mockito.when(metaData.getColumnCount()).thenReturn(1);
+    Mockito.when(metaData.getColumnName(1)).thenReturn("id");
+    Mockito.when(metaData.getColumnType(1)).thenReturn(Types.INTEGER);
+    Mockito.when(metaData.getColumnTypeName(1)).thenReturn("INTEGER");
+    Mockito.when(metaData.isSigned(1)).thenReturn(true);
+    Mockito.when(metaData.isNullable(1)).thenReturn(ResultSetMetaData.columnNoNulls);
+
+    StubConnector connector = new StubConnector(new StubConnectorConfig("jdbc:stub://localhost:5432/db", 2),
+                                                connection, false);
+    Schema schema = connector.loadTableSchema(connection, "SELECT * FROM \"db\".\"tbl\"", 2, "s1");
+    Assert.assertNotNull(schema.getField("id"));
+
+    InOrder inOrder = Mockito.inOrder(connection, statement, resultSet);
+    inOrder.verify(connection).setAutoCommit(false);
+    inOrder.verify(connection).setReadOnly(true);
+    inOrder.verify(statement).executeQuery("SELECT * FROM \"db\".\"tbl\"");
+    inOrder.verify(connection).rollback();
+    inOrder.verify(statement).executeQuery("SELECT * FROM \"db\".\"tbl\"");
+    inOrder.verify(resultSet).close();
     inOrder.verify(statement).close();
     inOrder.verify(connection).rollback();
     Mockito.verify(connection, Mockito.never()).commit();
@@ -138,7 +179,62 @@ public class AbstractDBSpecificConnectorReadOnlyTest {
   }
 
   @Test
-  public void getInputFormatProvider_andGetTableSchema_closeOpenedConnections() throws Exception {
+  public void loadTableSchema_nonAutoCommitAndSetReadOnlyThrows_stillDisablesAutoCommitAndRollsBack() throws Exception {
+    Connection connection = mockConnectionWithSingleIntColumn();
+    Mockito.doThrow(new SQLException("read-only rejected")).when(connection).setReadOnly(true);
+
+    StubConnector connector = new StubConnector(connection, false);
+    Schema schema = connector.loadTableSchema(connection, "SELECT * FROM \"db\".\"tbl\"", null, "s1");
+    Assert.assertNotNull(schema.getField("id"));
+
+    InOrder inOrder = Mockito.inOrder(connection);
+    inOrder.verify(connection).setAutoCommit(false);
+    inOrder.verify(connection).setReadOnly(true);
+    inOrder.verify(connection).rollback();
+    Mockito.verify(connection, Mockito.never()).commit();
+  }
+
+  @Test
+  public void loadTableSchema_setAutoCommitThrows_stillSetsReadOnlyAndSkipsRollback() throws Exception {
+    for (SQLException failure : new SQLException[]{
+      new SQLFeatureNotSupportedException("autoCommit not supported"),
+      new SQLException("cannot disable autoCommit")
+    }) {
+      Connection connection = mockConnectionWithSingleIntColumn();
+      Mockito.doThrow(failure).when(connection).setAutoCommit(false);
+
+      StubConnector connector = new StubConnector(connection, false);
+      Schema schema = connector.loadTableSchema(connection, "SELECT * FROM \"db\".\"tbl\"", null, "s1");
+      Assert.assertNotNull(schema.getField("id"));
+
+      InOrder inOrder = Mockito.inOrder(connection);
+      inOrder.verify(connection).setAutoCommit(false);
+      inOrder.verify(connection).setReadOnly(true);
+      Mockito.verify(connection, Mockito.never()).rollback();
+      Mockito.verify(connection, Mockito.never()).commit();
+    }
+  }
+
+  @Test
+  public void loadTableSchema_queryAndRollbackBothThrow_preservesPrimaryProgramFailureException() throws Exception {
+    Connection connection = Mockito.mock(Connection.class);
+    Statement statement = Mockito.mock(Statement.class);
+    SQLException queryEx = new SQLException("primary query failure");
+    Mockito.when(connection.createStatement()).thenReturn(statement);
+    Mockito.when(statement.executeQuery(Mockito.anyString())).thenThrow(queryEx);
+    Mockito.doThrow(new SQLException("secondary rollback failure")).when(connection).rollback();
+
+    StubConnector connector = new StubConnector(connection, false);
+    ProgramFailureException thrown = Assert.assertThrows(
+      ProgramFailureException.class,
+      () -> connector.loadTableSchema(connection, "SELECT * FROM \"db\".\"tbl\"", null, "s1"));
+    Assert.assertSame(queryEx, thrown.getCause());
+    Mockito.verify(connection).rollback();
+  }
+
+  @Test
+  public void getInputFormatProvider_andGetTableSchema_reuseCallerConnectionOrCloseOpenedConnections()
+    throws Exception {
     Connection sampleConnection = mockConnectionWithSingleIntColumn();
     StubConnector connector = new StubConnector(sampleConnection, false);
 
@@ -149,12 +245,24 @@ public class AbstractDBSpecificConnectorReadOnlyTest {
     Mockito.verify(sampleConnection).rollback();
     Mockito.verify(sampleConnection).close();
 
-    Connection specConnection = mockConnectionWithSingleIntColumn();
-    StubConnector specConnector = new StubConnector(specConnection, false);
-    Schema schema = specConnector.getTableSchema(null, "db", null, "tbl");
-    Assert.assertNotNull(schema.getField("id"));
-    Mockito.verify(specConnection).rollback();
-    Mockito.verify(specConnection).close();
+    // When generateSpec supplies an open connection, getTableSchema reuses it directly without opening a second
+    // connection or prematurely closing the caller's connection.
+    Connection callerConnection = mockConnectionWithSingleIntColumn();
+    Connection unusedFallbackConnection = Mockito.mock(Connection.class);
+    StubConnector reuseConnector = new StubConnector(unusedFallbackConnection, false);
+    Schema reusedSchema = reuseConnector.getTableSchema(callerConnection, "db", null, "tbl");
+    Assert.assertNotNull(reusedSchema.getField("id"));
+    Mockito.verify(callerConnection).rollback();
+    Mockito.verify(callerConnection, Mockito.never()).close();
+    Mockito.verifyZeroInteractions(unusedFallbackConnection);
+
+    // Fallback path when caller passes null opens and closes its own connection.
+    Connection fallbackConnection = mockConnectionWithSingleIntColumn();
+    StubConnector fallbackConnector = new StubConnector(fallbackConnection, false);
+    Schema fallbackSchema = fallbackConnector.getTableSchema(null, "db", null, "tbl");
+    Assert.assertNotNull(fallbackSchema.getField("id"));
+    Mockito.verify(fallbackConnection).rollback();
+    Mockito.verify(fallbackConnection).close();
   }
 
   @Test
@@ -185,18 +293,41 @@ public class AbstractDBSpecificConnectorReadOnlyTest {
       String injectedPath = "/PUBLIC/target_table\" LIMIT 0; " +
         "UPDATE \"PUBLIC\".\"write_marker\" SET \"val\"='INJECTED_BY_SAMPLE_PATH' WHERE \"id\"=1; " +
         "SELECT * FROM \"PUBLIC\".\"target_table";
-      Assert.assertThrows(RuntimeException.class, () -> connector.generateSpec(
-        context, ConnectorSpecRequest.builder().setPath(injectedPath).setConnection("conn").build()));
-      Assert.assertThrows(RuntimeException.class, () -> connector.getInputFormatProvider(
-        context, SampleRequest.builder(10).setPath(injectedPath).build()));
+      ConnectorSpecRequest injectedSpecRequest =
+        ConnectorSpecRequest.builder().setPath(injectedPath).setConnection("conn").build();
+      SampleRequest injectedSampleRequest = SampleRequest.builder(10).setPath(injectedPath).build();
+      Assert.assertThrows(ProgramFailureException.class,
+                          () -> connector.generateSpec(context, injectedSpecRequest));
+      Assert.assertThrows(ProgramFailureException.class,
+                          () -> connector.getInputFormatProvider(context, injectedSampleRequest));
       Assert.assertEquals("ORIGINAL", readMarker(adminConn));
 
-      // Defense-in-depth: even if a write statement were passed directly to loadTableSchema, the read-only
-      // transaction / rollback backstop prevents any modification from persisting.
+      // Defense-in-depth #1: an unescaped stacked SELECT + UPDATE + SELECT passed directly to loadTableSchema
+      // (which WOULD mutate write_marker in HSQLDB 2.2.4 executeQuery on a writable connection) is blocked by
+      // SQLState 25006 (invalid transaction state: read-only SQL-transaction).
+      String stackedWriteSql = "SELECT * FROM \"PUBLIC\".\"target_table\" LIMIT 0; " +
+        "UPDATE \"PUBLIC\".\"write_marker\" SET \"val\"='INJECTED_DIRECT' WHERE \"id\"=1; " +
+        "SELECT * FROM \"PUBLIC\".\"target_table\"";
       try (Connection connectorConn = DriverManager.getConnection(url, "SA", "")) {
-        String updateSql = "UPDATE \"PUBLIC\".\"write_marker\" SET \"val\"='INJECTED_DIRECT' WHERE \"id\"=1";
-        Assert.assertThrows(RuntimeException.class,
-                            () -> connector.loadTableSchema(connectorConn, updateSql, null, "s1"));
+        ProgramFailureException readOnlyEx = Assert.assertThrows(
+          ProgramFailureException.class,
+          () -> connector.loadTableSchema(connectorConn, stackedWriteSql, null, "s1"));
+        Assert.assertTrue(readOnlyEx.getCause() instanceof SQLException);
+        Assert.assertEquals("25006", ((SQLException) readOnlyEx.getCause()).getSQLState());
+      }
+      Assert.assertEquals("ORIGINAL", readMarker(adminConn));
+
+      // Defense-in-depth #2: even if a JDBC driver ignores setReadOnly(true), setAutoCommit(false) + rollback() in
+      // loadTableSchema rolls back the uncommitted UPDATE so write_marker remains 'ORIGINAL'.
+      try (Connection rawConn = DriverManager.getConnection(url, "SA", "");
+           Connection readOnlyIgnoredConn = new ForwardingConnection(rawConn) {
+             @Override
+             public void setReadOnly(boolean readOnly) {
+               // Simulate a driver where setReadOnly(true) is a no-op.
+             }
+           }) {
+        Schema stackedSchema = connector.loadTableSchema(readOnlyIgnoredConn, stackedWriteSql, null, "s2");
+        Assert.assertNotNull(stackedSchema.getField("id"));
       }
       Assert.assertEquals("ORIGINAL", readMarker(adminConn));
     } finally {
@@ -262,13 +393,19 @@ public class AbstractDBSpecificConnectorReadOnlyTest {
 
   private static class StubConnectorConfig extends AbstractDBConnectorConfig {
     private final String connectionString;
+    private final int maxRetryCount;
 
     StubConnectorConfig() {
-      this("jdbc:stub://localhost:5432/db");
+      this("jdbc:stub://localhost:5432/db", 0);
     }
 
     StubConnectorConfig(String connectionString) {
+      this(connectionString, 0);
+    }
+
+    StubConnectorConfig(String connectionString, int maxRetryCount) {
       this.connectionString = connectionString;
+      this.maxRetryCount = maxRetryCount;
       this.user = "SA";
       this.password = "";
     }
@@ -279,8 +416,18 @@ public class AbstractDBSpecificConnectorReadOnlyTest {
     }
 
     @Override
+    public Integer getInitialRetryDuration() {
+      return 1;
+    }
+
+    @Override
+    public Integer getMaxRetryDuration() {
+      return 2;
+    }
+
+    @Override
     public Integer getMaxRetryCount() {
-      return 0;
+      return maxRetryCount;
     }
   }
 
@@ -289,7 +436,11 @@ public class AbstractDBSpecificConnectorReadOnlyTest {
     private final boolean autoCommitEnabled;
 
     StubConnector(Connection stubConnection, boolean autoCommitEnabled) {
-      super(new StubConnectorConfig());
+      this(new StubConnectorConfig(), stubConnection, autoCommitEnabled);
+    }
+
+    StubConnector(StubConnectorConfig config, Connection stubConnection, boolean autoCommitEnabled) {
+      super(config);
       this.driverClass = Driver.class;
       this.stubConnection = stubConnection;
       this.autoCommitEnabled = autoCommitEnabled;
