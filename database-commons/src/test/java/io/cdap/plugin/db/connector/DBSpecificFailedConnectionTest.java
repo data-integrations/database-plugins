@@ -26,10 +26,13 @@ import org.junit.Assert;
 import org.mockito.Mockito;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class DBSpecificFailedConnectionTest {
-  private static final String JDBC_DRIVER_CLASS_NAME = "oracle.jdbc.OracleDriver";
+  private static final String ARGS_PREFIX = " and arguments: {";
+  private static final String ARGS_SUFFIX = "}. Error: ";
 
   protected void test(String jdbcClassName, AbstractDBSpecificConnector connector, String expectedErrorMsg)
     throws ClassNotFoundException, IOException {
@@ -45,6 +48,29 @@ public class DBSpecificFailedConnectionTest {
     connector.test(context);
     List<ValidationFailure> validationFailures = context.getFailureCollector().getValidationFailures();
     Assert.assertEquals(1, validationFailures.size());
-    Assert.assertEquals(expectedErrorMsg, validationFailures.get(0).getMessage());
+    Assert.assertEquals(normalizeConnectionArguments(expectedErrorMsg),
+                        normalizeConnectionArguments(validationFailures.get(0).getMessage()));
+  }
+
+  static String normalizeConnectionArguments(String errorMsg) {
+    if (errorMsg == null) {
+      return null;
+    }
+    int argsStart = errorMsg.indexOf(ARGS_PREFIX);
+    if (argsStart < 0) {
+      return errorMsg;
+    }
+    int contentStart = argsStart + ARGS_PREFIX.length();
+    int argsEnd = errorMsg.indexOf(ARGS_SUFFIX, contentStart);
+    if (argsEnd < 0) {
+      return errorMsg;
+    }
+    String argsContent = errorMsg.substring(contentStart, argsEnd);
+    if (argsContent.isEmpty()) {
+      return errorMsg;
+    }
+    List<String> entries = Arrays.asList(argsContent.split(", ", -1));
+    Collections.sort(entries);
+    return errorMsg.substring(0, contentStart) + String.join(", ", entries) + errorMsg.substring(argsEnd);
   }
 }
