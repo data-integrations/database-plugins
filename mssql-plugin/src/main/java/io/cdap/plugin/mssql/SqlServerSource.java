@@ -36,6 +36,7 @@ import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.connector.AbstractDBSpecificConnectorConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.List;
@@ -77,6 +78,11 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
   @Override
   protected String getErrorDetailsProviderClassName() {
     return SqlServerErrorDetailsProvider.class.getName();
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    return SelectQueryValidator.Dialect.TSQL;
   }
 
   @Override

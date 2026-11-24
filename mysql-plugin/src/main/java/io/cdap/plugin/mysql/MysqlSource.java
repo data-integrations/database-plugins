@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.mysql;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Metadata;
@@ -31,10 +32,12 @@ import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.db.DBErrorDetailsProvider;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.List;
@@ -61,6 +64,21 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
   @Override
   protected String createConnectionString() {
     return mysqlSourceConfig.getConnectionString();
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    if (!Strings.isNullOrEmpty(mysqlSourceConfig.sqlMode)
+      || mysqlSourceConfig.containsMacro(MysqlConstants.SQL_MODE)) {
+      return SelectQueryValidator.Dialect.MYSQL_AMBIGUOUS_BACKSLASH;
+    }
+    MysqlConnectorConfig connection = mysqlSourceConfig.getConnection();
+    if (connection != null
+      && (connection.containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS)
+          || SelectQueryValidator.Dialect.mayOverrideMysqlSqlMode(connection.getConnectionArguments()))) {
+      return SelectQueryValidator.Dialect.MYSQL_AMBIGUOUS_BACKSLASH;
+    }
+    return SelectQueryValidator.Dialect.MYSQL;
   }
 
   @Override

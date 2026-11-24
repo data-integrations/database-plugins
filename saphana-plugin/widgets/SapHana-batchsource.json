@@ -156,6 +156,14 @@
             "default": 5,
             "minimum": 0
           }
+        },
+        {
+          "widget-type": "hidden",
+          "label": "Disable Source Query Validation",
+          "name": "disableQueryValidation",
+          "widget-attributes": {
+            "default": "false"
+          }
         }
       ]
     }

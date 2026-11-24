@@ -35,6 +35,7 @@ import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.exception.ErrorDetailsProviderSpec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSource;
 import io.cdap.plugin.common.ReferencePluginConfig;
@@ -52,6 +53,7 @@ import io.cdap.plugin.util.DBUtils;
 import io.cdap.plugin.util.DriverCleanup;
 import io.cdap.plugin.util.RetryPolicyUtil;
 import io.cdap.plugin.util.RetryUtils;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
@@ -64,6 +66,7 @@ import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Properties;
@@ -106,6 +109,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector collector = stageConfigurer.getFailureCollector();
     sourceConfig.validate(collector);
+    validateQueries(collector);
     if (sourceConfig.getSchema() != null) {
       stageConfigurer.setOutputSchema(sourceConfig.getSchema());
       return;
@@ -119,9 +123,10 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     Class<? extends Driver> driverClass = DBUtils.getDriverClass(
       pipelineConfigurer, sourceConfig, ConnectionConfig.JDBC_PLUGIN_TYPE);
 
-    if (sourceConfig.canConnect()) {
+    // Do not open a connection or run init queries if source or query validation already failed.
+    if (sourceConfig.canConnect() && collector.getValidationFailures().isEmpty()) {
       try {
-        stageConfigurer.setOutputSchema(getSchema(driverClass));
+        stageConfigurer.setOutputSchema(fetchSchema(driverClass));
       } catch (IllegalAccessException | InstantiationException e) {
         collector.addFailure("Unable to instantiate JDBC driver: " + e.getMessage(), null)
           .withStacktrace(e.getStackTrace());
@@ -137,11 +142,17 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
 
   public Schema getSchema(Class<? extends Driver> driverClass) throws IllegalAccessException,
     SQLException, InstantiationException {
+    validateImportQueryIfEnabled(sourceConfig.getImportQuery());
+    return fetchSchema(driverClass);
+  }
+
+  private Schema fetchSchema(Class<? extends Driver> driverClass) throws IllegalAccessException,
+    SQLException, InstantiationException {
     DriverCleanup driverCleanup;
     try {
       driverCleanup = loadPluginClassAndGetDriver(driverClass);
       try {
-        return getSchema();
+        return fetchSchemaFromConnection();
       } finally {
         driverCleanup.destroy();
       }
@@ -161,21 +172,86 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
    *                      3. Error while running the import query.
    */
   public Schema getSchema() throws SQLException {
+    // Validate the import query before opening a connection or running init queries when called directly.
+    validateImportQueryIfEnabled(sourceConfig.getImportQuery());
+    return fetchSchemaFromConnection();
+  }
+
+  private Schema fetchSchemaFromConnection() throws SQLException {
     try (Connection connection = getConnection()) {
-      executeInitQueries(connection, sourceConfig.getInitQueries());
-      String query = sourceConfig.getImportQuery();
-      return loadSchemaFromDB(connection, query);
+      return executeSchemaQuery(connection);
     }
   }
 
-  private Schema loadSchemaFromDB(Connection connection, String query) throws SQLException {
+  private void validateImportQueryIfEnabled(@Nullable String query) {
+    if (sourceConfig.isQueryValidationDisabled()) {
+      return;
+    }
+    String finalQuery = query != null && query.contains("$CONDITIONS") ? removeConditionsClause(query) : query;
+    try {
+      SelectQueryValidator.validate(finalQuery, getSqlDialect());
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Invalid Import Query: " + e.getMessage(), e);
+    }
+  }
+
+  @VisibleForTesting
+  Schema executeSchemaQuery(Connection connection) throws SQLException {
+    boolean rollbackOnExit = configureReadOnlyTransaction(connection);
+    try {
+      executeInitQueries(connection, sourceConfig.getInitQueries());
+      return loadSchemaFromDB(connection, sourceConfig.getImportQuery(), rollbackOnExit);
+    } finally {
+      if (rollbackOnExit) {
+        try {
+          connection.rollback();
+        } catch (SQLException e) {
+          LOG.warn("Failed to roll back read-only schema query transaction on {}.",
+                   connection.getClass().getName(), e);
+        }
+      }
+    }
+  }
+
+  private boolean configureReadOnlyTransaction(@Nullable Connection connection) {
+    if (connection == null || sourceConfig.isQueryValidationDisabled()) {
+      return false;
+    }
+    boolean disabledAutoCommit = false;
+    if (!"TRANSACTION_NONE".equals(sourceConfig.getTransactionIsolationLevel())) {
+      try {
+        connection.setAutoCommit(false);
+        disabledAutoCommit = true;
+      } catch (SQLFeatureNotSupportedException e) {
+        LOG.debug("Driver {} does not support disabling auto-commit; continuing.",
+                  connection.getClass().getName(), e);
+      } catch (SQLException e) {
+        LOG.warn("Failed to disable auto-commit on {}; continuing with auto-commit.",
+                 connection.getClass().getName(), e);
+      }
+    }
+    try {
+      connection.setReadOnly(true);
+    } catch (SQLFeatureNotSupportedException e) {
+      LOG.debug("Driver {} does not support setting connection read-only; continuing.",
+                connection.getClass().getName(), e);
+    } catch (SQLException e) {
+      LOG.warn("Failed to set connection {} read-only; continuing.",
+               connection.getClass().getName(), e);
+    }
+    return disabledAutoCommit;
+  }
+
+  private Schema loadSchemaFromDB(Connection connection, String query, boolean rollbackBeforeRetry)
+    throws SQLException {
+    String finalQuery = query.contains("$CONDITIONS") ? removeConditionsClause(query) : query;
     try (Statement statement = RetryUtils.createStatementWithRetry((RetryPolicy<Statement>) retryPolicy, connection,
       getErrorDetailsProvider())) {
       statement.setMaxRows(1);
-      String finalQuery = query.contains("$CONDITIONS") ? removeConditionsClause(query) : query;
-      ResultSet resultSet = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement,
-        finalQuery, getErrorDetailsProvider());
-      return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
+      try (ResultSet resultSet = RetryUtils.executeQueryWithRetry((RetryPolicy<ResultSet>) retryPolicy, statement,
+        finalQuery, getErrorDetailsProvider(), rollbackBeforeRetry, connection)) {
+        return Schema.recordOf("outputSchema", getSchemaReader().getSchemaFields(resultSet));
+      }
     }
   }
 
@@ -198,8 +274,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     connectionProperties.putAll(sourceConfig.getConnectionArguments());
     try (Connection connection = RetryUtils.createConnectionWithRetry((RetryPolicy<Connection>) retryPolicy,
       connectionString, connectionProperties, getErrorDetailsProvider())) {
-      executeInitQueries(connection, sourceConfig.getInitQueries());
-      return loadSchemaFromDB(connection, sourceConfig.getImportQuery());
+      return executeSchemaQuery(connection);
     } finally {
       driverCleanup.destroy();
     }
@@ -226,6 +301,67 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
    */
   protected String getErrorDetailsProviderClassName() {
     return null;
+  }
+
+  /**
+   * Returns the SQL dialect used to validate source queries and split-by column references. Subclasses should override
+   * this with their database's {@link SelectQueryValidator.Dialect}. Defaults to
+   * {@link SelectQueryValidator.Dialect#UNKNOWN}, which conservatively requires queries to be valid across dialects.
+   */
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    return SelectQueryValidator.Dialect.UNKNOWN;
+  }
+
+  /**
+   * Validates that the import query, bounding query, and split-by field are single read-only SELECT statements and
+   * column references before any query is executed with the connection's credentials.
+   */
+  private void validateQueries(FailureCollector collector) {
+    // If the connection itself is an unresolved macro at configure time, defer until prepareRun when the connection
+    // (including its disableQueryValidation flag) is resolved; no connection is opened at configure time in that case.
+    if (sourceConfig.isQueryValidationDisabled() || sourceConfig.containsMacro(ConfigUtil.NAME_CONNECTION)) {
+      return;
+    }
+    validateQuery(DBSourceConfig.IMPORT_QUERY, "Import Query", sourceConfig.getImportQuery(), collector);
+    validateQuery(DBSourceConfig.BOUNDING_QUERY, "Bounding Query", sourceConfig.getBoundingQuery(), collector);
+    validateSplitBy(collector);
+  }
+
+  private void validateQuery(String property, String label, @Nullable String query, FailureCollector collector) {
+    // A macro is not resolved at configure time; it is validated at runtime once it holds a concrete value.
+    if (sourceConfig.containsMacro(property) || Strings.isNullOrEmpty(query)) {
+      return;
+    }
+    try {
+      SelectQueryValidator.validate(query, getSqlDialect());
+    } catch (IllegalArgumentException e) {
+      collector.addFailure(String.format("Invalid %s: %s", label, e.getMessage()),
+                           "Provide a single SELECT statement that only reads data.")
+        .withConfigProperty(property);
+    }
+  }
+
+  /**
+   * Validates that the split-by field is a single column name. When numSplits is not 1, the split-by value is
+   * concatenated into the generated split bound clauses at runtime (via {@code $CONDITIONS} substitution) and
+   * executed with the connection credentials, so it must not carry extra SQL.
+   */
+  private void validateSplitBy(FailureCollector collector) {
+    if (sourceConfig.containsMacro(DBSourceConfig.SPLIT_BY) || sourceConfig.containsMacro(DBSourceConfig.NUM_SPLITS)) {
+      return;
+    }
+    Integer numSplits = sourceConfig.getNumSplits();
+    String splitBy = sourceConfig.getSplitBy();
+    if ((numSplits != null && numSplits == 1) || Strings.isNullOrEmpty(splitBy)) {
+      return;
+    }
+    try {
+      SelectQueryValidator.validateColumnReference(splitBy, getSqlDialect());
+    } catch (IllegalArgumentException e) {
+      collector.addFailure(String.format("Invalid Split-By Field Name: %s", e.getMessage()),
+                           "Provide a single column name.")
+        .withConfigProperty(DBSourceConfig.SPLIT_BY);
+    }
   }
 
   /**
@@ -272,6 +408,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
   public void prepareRun(BatchSourceContext context) throws Exception {
     FailureCollector collector = context.getFailureCollector();
     sourceConfig.validate(collector);
+    validateQueries(collector);
     collector.getOrThrowException();
 
     LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
@@ -337,6 +474,9 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     DataDrivenETLDBInputFormat.setInput(connectionConfigAccessor.getConfiguration(), getDBRecordType(),
                                         sourceConfig.getImportQuery(), sourceConfig.getBoundingQuery(),
                                         false);
+    if (!sourceConfig.isQueryValidationDisabled()) {
+      connectionConfigAccessor.setReadOnly(true);
+    }
 
     if (sourceConfig.getTransactionIsolationLevel() != null) {
       connectionConfigAccessor.setTransactionIsolationLevel(sourceConfig.getTransactionIsolationLevel());
@@ -410,17 +550,17 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     public static final String FETCH_SIZE = "fetchSize";
 
     @Name(IMPORT_QUERY)
-    @Description("The SELECT query to use to import data from the specified table. " +
+    @Description("The single read-only SELECT query to use to import data from the specified table. " +
       "You can specify an arbitrary number of columns to import, or import all columns using *. " +
       "The Query should contain the '$CONDITIONS' string unless numSplits is set to one. " +
-      "For example, 'SELECT * FROM table WHERE $CONDITIONS'. The '$CONDITIONS' string" +
+      "For example, 'SELECT * FROM table WHERE $CONDITIONS'. The '$CONDITIONS' string " +
       "will be replaced by 'splitBy' field limits specified by the bounding query.")
     @Macro
     public String importQuery;
 
     @Nullable
     @Name(BOUNDING_QUERY)
-    @Description("Bounding Query should return the min and max of the " +
+    @Description("Single read-only SELECT query that returns the min and max of the " +
       "values of the 'splitBy' field. For example, 'SELECT MIN(id),MAX(id) FROM table'. " +
       "This is required unless numSplits is set to one.")
     @Macro
@@ -428,7 +568,7 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
 
     @Nullable
     @Name(SPLIT_BY)
-    @Description("Field Name which will be used to generate splits. This is required unless numSplits is set to one.")
+    @Description("Single column name used to generate splits. This is required unless numSplits is set to one.")
     @Macro
     public String splitBy;
 
@@ -454,6 +594,12 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
       "with the tradeoff of higher memory usage.")
     private Integer fetchSize;
 
+    @Nullable
+    @Name(ConnectionConfig.DISABLE_QUERY_VALIDATION)
+    @Description("Disables read-only SELECT validation and read-only session enforcement on source queries. " +
+      "Enable only for backward compatibility with trusted existing pipelines. Defaults to false.")
+    public Boolean disableQueryValidation;
+
     public String getImportQuery() {
       return cleanQuery(importQuery);
     }
@@ -470,6 +616,11 @@ public abstract class AbstractDBSource<T extends PluginConfig & DatabaseSourceCo
     @Override
     public String getSplitBy() {
       return splitBy;
+    }
+
+    @Override
+    public boolean isQueryValidationDisabled() {
+      return Boolean.TRUE.equals(disableQueryValidation);
     }
 
     public void validate(FailureCollector collector) {

@@ -22,6 +22,7 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
+import io.cdap.plugin.util.SelectQueryValidator;
 
 import javax.annotation.Nullable;
 
@@ -44,6 +45,16 @@ public class DatabaseSource extends AbstractDBSource<DatabaseSource.DatabaseSour
   @Override
   protected String createConnectionString() {
     return databaseSourceConfig.connectionString;
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    if (databaseSourceConfig.containsMacro(ConnectionConfig.CONNECTION_STRING)) {
+      return SelectQueryValidator.Dialect.UNKNOWN;
+    }
+    String args = databaseSourceConfig.containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS)
+      ? "sessionvariables" : databaseSourceConfig.connectionArguments;
+    return SelectQueryValidator.Dialect.fromJdbcUrl(databaseSourceConfig.connectionString, args);
   }
 
   /**

@@ -25,6 +25,7 @@ import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.teradata.TeradataConstants;
 import io.cdap.plugin.teradata.TeradataDBRecord;
 import io.cdap.plugin.teradata.TeradataSchemaReader;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 /**
@@ -50,6 +51,11 @@ public class TeradataSource extends AbstractDBSource<TeradataSourceConfig> {
   @Override
   protected String createConnectionString() {
     return config.getConnectionString();
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    return SelectQueryValidator.Dialect.ANSI;
   }
 
   @Override

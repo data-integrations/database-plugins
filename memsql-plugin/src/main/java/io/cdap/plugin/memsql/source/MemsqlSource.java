@@ -19,9 +19,11 @@ package io.cdap.plugin.memsql.source;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.memsql.MemsqlConstants;
 import io.cdap.plugin.memsql.MemsqlDBRecord;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 /**
@@ -49,5 +51,14 @@ public class MemsqlSource extends AbstractDBSource<MemsqlSourceConfig> {
   protected String createConnectionString() {
     return String.format(MemsqlConstants.MEMSQL_CONNECTION_STRING_FORMAT,
                          memsqlSourceConfig.host, memsqlSourceConfig.port, memsqlSourceConfig.database);
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    if (memsqlSourceConfig.containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS)
+      || SelectQueryValidator.Dialect.mayOverrideMysqlSqlMode(memsqlSourceConfig.connectionArguments)) {
+      return SelectQueryValidator.Dialect.MYSQL_AMBIGUOUS_BACKSLASH;
+    }
+    return SelectQueryValidator.Dialect.MYSQL;
   }
 }

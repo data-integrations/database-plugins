@@ -19,17 +19,21 @@ package io.cdap.plugin.db.sink;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.datapipeline.SmartWorkflow;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.plugin.GenericDatabasePluginTestBase;
 import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.ConnectionConfig;
@@ -41,7 +45,13 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.nio.ByteBuffer;
+import java.sql.Connection;
 import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -52,6 +62,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test for ETL using databases.
@@ -327,6 +338,309 @@ public class DBSourceTestRun extends GenericDatabasePluginTestBase {
       .build();
     appRequest = new AppRequest<>(DATAPIPELINE_ARTIFACT, etlConfig);
     deployApplication(appId, appRequest);
+  }
+
+  @Test
+  public void testNonSelectImportQueryFailsDeployment() throws Exception {
+    int rowCount = countRows("my_table");
+    String importQuery = "SELECT * FROM \"my_table\" WHERE $CONDITIONS; UPDATE \"my_table\" SET NAME='INJECTED'";
+    ETLPlugin sourceConfig = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
+        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, "SELECT MIN(ID),MAX(ID) from \"my_table\"")
+        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, "ID")
+        .put(Constants.Reference.REFERENCE_NAME, "DBNonSelectQueryTest")
+        .build(),
+      null);
+    ETLBatchConfig etlConfig = getETLBatchConfig(sourceConfig, MockSink.getPlugin("nonSelectQueryOutput"));
+    assertDeploymentFailureContains(NamespaceId.DEFAULT.app("dbSourceNonSelectQueryTest"), etlConfig,
+                                    "Invalid Import Query");
+    Assert.assertEquals(rowCount, countRows("my_table"));
+    Assert.assertEquals(0, countRowsWithName("my_table", "INJECTED"));
+  }
+
+  @Test
+  public void testNonSelectImportQueryWithExplicitSchemaFailsDeployment() throws Exception {
+    // When an explicit schema is configured, configurePipeline returns before opening any DB connection, so only
+    // SelectQueryValidator can fail deployment here.
+    Schema explicitSchema = Schema.recordOf(
+      "explicit",
+      Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)));
+    String importQuery = "SELECT ID, NAME FROM \"my_table\" WHERE $CONDITIONS; UPDATE \"my_table\" SET NAME='INJECTED'";
+    ETLPlugin sourceConfig = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, importQuery)
+        .put(AbstractDBSource.DBSourceConfig.NUM_SPLITS, "1")
+        .put(AbstractDBSource.DBSourceConfig.SCHEMA, explicitSchema.toString())
+        .put(Constants.Reference.REFERENCE_NAME, "DBExplicitSchemaNonSelectTest")
+        .build(),
+      null);
+    ETLBatchConfig etlConfig = getETLBatchConfig(sourceConfig, MockSink.getPlugin("explicitSchemaNonSelectOutput"));
+    assertDeploymentFailureContains(NamespaceId.DEFAULT.app("dbSourceExplicitSchemaNonSelectTest"), etlConfig,
+                                    "Invalid Import Query");
+    Assert.assertEquals(0, countRowsWithName("my_table", "INJECTED"));
+  }
+
+  @Test
+  public void testNonSelectImportQueryMacroFailsRun() throws Exception {
+    int rowCount = countRows("my_table");
+    ETLPlugin sourceConfig = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, "${importQuery}")
+        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, "SELECT MIN(ID),MAX(ID) from \"my_table\"")
+        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, "ID")
+        .put(Constants.Reference.REFERENCE_NAME, "DBNonSelectQueryMacroTest")
+        .build(),
+      null);
+    ApplicationManager appManager = deployETL(sourceConfig, MockSink.getPlugin("nonSelectQueryMacroOutput"),
+                                              DATAPIPELINE_ARTIFACT, "dbSourceNonSelectQueryMacroTest");
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start(ImmutableMap.of(
+      "importQuery",
+      "SELECT * FROM \"my_table\" WHERE $CONDITIONS; DELETE FROM \"my_table\"; UPDATE \"my_table\" SET NAME='INJECTED'"
+    ));
+    workflowManager.waitForRun(ProgramRunStatus.FAILED, 5, TimeUnit.MINUTES);
+    Assert.assertEquals(rowCount, countRows("my_table"));
+    Assert.assertEquals(0, countRowsWithName("my_table", "INJECTED"));
+  }
+
+  @Test
+  public void testNonSelectBoundingQueryFailsDeploymentAndMacroFailsRun() throws Exception {
+    int rowCount = countRows("my_table");
+    ETLPlugin nonMacroBoundingConfig = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, "SELECT * FROM \"my_table\" WHERE $CONDITIONS")
+        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY,
+             "SELECT MIN(ID), MAX(ID) FROM \"my_table\"; DELETE FROM \"my_table\"")
+        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, "ID")
+        .put(AbstractDBSource.DBSourceConfig.NUM_SPLITS, "2")
+        .put(Constants.Reference.REFERENCE_NAME, "DBNonSelectBoundingQueryDeployTest")
+        .build(),
+      null);
+    ETLBatchConfig deployConfig = getETLBatchConfig(nonMacroBoundingConfig,
+                                                    MockSink.getPlugin("nonSelectBoundingDeployOutput"));
+    assertDeploymentFailureContains(NamespaceId.DEFAULT.app("dbSourceNonSelectBoundingDeployTest"), deployConfig,
+                                    "Invalid Bounding Query");
+    Assert.assertEquals(rowCount, countRows("my_table"));
+
+    ETLPlugin macroBoundingConfig = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, "SELECT * FROM \"my_table\" WHERE $CONDITIONS")
+        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, "${boundingQuery}")
+        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, "ID")
+        .put(AbstractDBSource.DBSourceConfig.NUM_SPLITS, "2")
+        .put(Constants.Reference.REFERENCE_NAME, "DBNonSelectBoundingQueryMacroTest")
+        .build(),
+      null);
+    ApplicationManager appManager = deployETL(macroBoundingConfig, MockSink.getPlugin("nonSelectBoundingMacroOutput"),
+                                              DATAPIPELINE_ARTIFACT, "dbSourceNonSelectBoundingMacroTest");
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start(ImmutableMap.of(
+      "boundingQuery",
+      "SELECT MIN(ID), MAX(ID) FROM \"my_table\"; DELETE FROM \"my_table\"; UPDATE \"my_table\" SET NAME='INJECTED'"));
+    workflowManager.waitForRun(ProgramRunStatus.FAILED, 5, TimeUnit.MINUTES);
+    Assert.assertEquals(rowCount, countRows("my_table"));
+    Assert.assertEquals(0, countRowsWithName("my_table", "INJECTED"));
+  }
+
+  @Test
+  public void testInjectionSplitByFailsDeployment() throws Exception {
+    int rowCount = countRows("my_table");
+    String splitBy = "ID); UPDATE \"my_table\" SET NAME='INJECTED' WHERE (1=1";
+    ETLPlugin sourceConfig = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, "SELECT * FROM \"my_table\" WHERE $CONDITIONS")
+        .put(AbstractDBSource.DBSourceConfig.BOUNDING_QUERY, "SELECT MIN(ID),MAX(ID) FROM \"my_table\"")
+        .put(AbstractDBSource.DBSourceConfig.SPLIT_BY, splitBy)
+        .put(AbstractDBSource.DBSourceConfig.NUM_SPLITS, "2")
+        .put(Constants.Reference.REFERENCE_NAME, "DBInjectionSplitByTest")
+        .build(),
+      null);
+    ETLBatchConfig etlConfig = getETLBatchConfig(sourceConfig, MockSink.getPlugin("injectionSplitByOutput"));
+    assertDeploymentFailureContains(NamespaceId.DEFAULT.app("dbSourceInjectionSplitByTest"), etlConfig,
+                                    "Invalid Split-By Field Name");
+    Assert.assertEquals(rowCount, countRows("my_table"));
+    Assert.assertEquals(0, countRowsWithName("my_table", "INJECTED"));
+  }
+
+  private static volatile String sideEffectJdbcUrl;
+
+  public static int writeSideEffect(Connection sessionConn) throws SQLException {
+    if (sessionConn.isReadOnly()) {
+      throw new SQLException("SQL data change not permitted in read-only session", "25006");
+    }
+    String url = sideEffectJdbcUrl;
+    if (url != null) {
+      try (Connection rwConn = DriverManager.getConnection(url, "SA", "");
+           Statement stmt = rwConn.createStatement()) {
+        stmt.executeUpdate("UPDATE \"my_table\" SET NAME = 'INJECTED' WHERE ID = 1");
+      }
+    }
+    return 1;
+  }
+
+  @Test
+  public void testReadOnlyConnectionBlocksWritingFunctionInSelect() throws Exception {
+    sideEffectJdbcUrl = getConnectionURL();
+    try (Connection conn = getConnection();
+         Statement stmt = conn.createStatement()) {
+      stmt.execute("CREATE FUNCTION WRITE_SIDE_EFFECT() RETURNS INT " +
+                     "LANGUAGE JAVA NOT DETERMINISTIC READS SQL DATA " +
+                     "EXTERNAL NAME 'CLASSPATH:io.cdap.plugin.db.sink.DBSourceTestRun.writeSideEffect'");
+    }
+    try {
+      String queryWithWritingFn = "SELECT WRITE_SIDE_EFFECT() AS SIDE_EFFECT, ID FROM \"my_table\" WHERE $CONDITIONS";
+
+      // 1. Configure-time schema fetch opens a read-only connection, blocking the writing function.
+      ETLPlugin deployTimeSource = new ETLPlugin(
+        DatabaseConstants.PLUGIN_NAME,
+        BatchSource.PLUGIN_TYPE,
+        ImmutableMap.<String, String>builder()
+          .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+          .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+          .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, queryWithWritingFn)
+          .put(AbstractDBSource.DBSourceConfig.NUM_SPLITS, "1")
+          .put(Constants.Reference.REFERENCE_NAME, "DBReadOnlyDeployBackstopTest")
+          .build(),
+        null);
+      ETLBatchConfig deployConfig = getETLBatchConfig(deployTimeSource, MockSink.getPlugin("readOnlyDeployOutput"));
+      assertDeploymentFailure(NamespaceId.DEFAULT.app("dbSourceReadOnlyDeployTest"), deployConfig,
+                              DATAPIPELINE_ARTIFACT,
+                              "Read-only connection should have blocked writing function during schema fetch.");
+      Assert.assertEquals(0, countRowsWithName("my_table", "INJECTED"));
+
+      // 2. Even with an explicit schema (skipping configure-time fetch), runtime execution is also read-only.
+      Schema explicitSchema = Schema.recordOf(
+        "explicitFn",
+        Schema.Field.of("SIDE_EFFECT", Schema.of(Schema.Type.INT)),
+        Schema.Field.of("ID", Schema.of(Schema.Type.INT)));
+      ETLPlugin runTimeSource = new ETLPlugin(
+        DatabaseConstants.PLUGIN_NAME,
+        BatchSource.PLUGIN_TYPE,
+        ImmutableMap.<String, String>builder()
+          .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+          .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+          .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, queryWithWritingFn)
+          .put(AbstractDBSource.DBSourceConfig.NUM_SPLITS, "1")
+          .put(AbstractDBSource.DBSourceConfig.SCHEMA, explicitSchema.toString())
+          .put(Constants.Reference.REFERENCE_NAME, "DBReadOnlyRunBackstopTest")
+          .build(),
+        null);
+      ApplicationManager appManager = deployETL(runTimeSource, MockSink.getPlugin("readOnlyRunOutput"),
+                                                DATAPIPELINE_ARTIFACT, "dbSourceReadOnlyRunTest");
+      WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+      workflowManager.start();
+      workflowManager.waitForRun(ProgramRunStatus.FAILED, 5, TimeUnit.MINUTES);
+      Assert.assertEquals(0, countRowsWithName("my_table", "INJECTED"));
+    } finally {
+      sideEffectJdbcUrl = null;
+      try (Connection conn = getConnection();
+           Statement stmt = conn.createStatement()) {
+        stmt.execute("DROP FUNCTION IF EXISTS WRITE_SIDE_EFFECT");
+      }
+    }
+  }
+
+  @Test
+  public void testDisableQueryValidationAllowsTrustedLegacyQuery() throws Exception {
+    // HSQLDB treats '/*M! ... */' as a regular comment, whereas SelectQueryValidator rejects it by default.
+    String legacyQuery = "SELECT ID, NAME FROM \"my_table\" /*M! legacy hint */ WHERE ID = 1 AND $CONDITIONS";
+
+    ETLPlugin defaultSource = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, legacyQuery)
+        .put(AbstractDBSource.DBSourceConfig.NUM_SPLITS, "1")
+        .put(Constants.Reference.REFERENCE_NAME, "DBLegacyRejectedByDefaultTest")
+        .build(),
+      null);
+    ETLBatchConfig rejectedConfig = getETLBatchConfig(defaultSource, MockSink.getPlugin("legacyRejectedOutput"));
+    assertDeploymentFailureContains(NamespaceId.DEFAULT.app("dbSourceLegacyRejectedTest"), rejectedConfig,
+                                    "Invalid Import Query");
+
+    ETLPlugin optOutSource = new ETLPlugin(
+      DatabaseConstants.PLUGIN_NAME,
+      BatchSource.PLUGIN_TYPE,
+      ImmutableMap.<String, String>builder()
+        .put(ConnectionConfig.CONNECTION_STRING, getConnectionURL())
+        .put(ConnectionConfig.JDBC_PLUGIN_NAME, JDBC_DRIVER_NAME)
+        .put(ConnectionConfig.DISABLE_QUERY_VALIDATION, "true")
+        .put(AbstractDBSource.DBSourceConfig.IMPORT_QUERY, legacyQuery)
+        .put(AbstractDBSource.DBSourceConfig.NUM_SPLITS, "1")
+        .put(Constants.Reference.REFERENCE_NAME, "DBLegacyOptOutAllowedTest")
+        .build(),
+      null);
+    ApplicationManager appManager = deployETL(optOutSource, MockSink.getPlugin("legacyOptOutOutput"),
+                                              DATAPIPELINE_ARTIFACT, "dbSourceLegacyOptOutTest");
+    runETLOnce(appManager);
+    DataSetManager<Table> outputManager = getDataset("legacyOptOutOutput");
+    List<StructuredRecord> records = MockSink.readOutput(outputManager);
+    Assert.assertEquals(1, records.size());
+    Assert.assertEquals("user1", records.get(0).get("NAME"));
+  }
+
+  private void assertDeploymentFailureContains(ApplicationId appId, ETLBatchConfig etlConfig,
+                                               String expectedMessageSubstring) throws Exception {
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(DATAPIPELINE_ARTIFACT, etlConfig);
+    try {
+      deployApplication(appId, appRequest);
+      Assert.fail("Expected deployment failure containing: " + expectedMessageSubstring);
+    } catch (Exception e) {
+      String message = e.getMessage() == null ? "" : e.getMessage();
+      Assert.assertTrue(
+        String.format("Expected deployment failure message to contain '%s', but got: '%s'",
+                      expectedMessageSubstring, message),
+        message.contains(expectedMessageSubstring));
+    }
+  }
+
+  private int countRows(String table) throws SQLException {
+    try (Connection connection = getConnection();
+         Statement statement = connection.createStatement();
+         ResultSet resultSet = statement.executeQuery(String.format("SELECT COUNT(*) FROM \"%s\"", table))) {
+      resultSet.next();
+      return resultSet.getInt(1);
+    }
+  }
+
+  private int countRowsWithName(String table, String name) throws SQLException {
+    try (Connection connection = getConnection();
+         PreparedStatement statement = connection.prepareStatement(
+           String.format("SELECT COUNT(*) FROM \"%s\" WHERE NAME = ?", table))) {
+      statement.setString(1, name);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        resultSet.next();
+        return resultSet.getInt(1);
+      }
+    }
   }
 
   @Test

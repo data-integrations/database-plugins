@@ -32,10 +32,12 @@ import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.ConfigUtil;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.db.DBErrorDetailsProvider;
+import io.cdap.plugin.db.ConnectionConfig;
 import io.cdap.plugin.db.SchemaReader;
 import io.cdap.plugin.db.config.AbstractDBSpecificSourceConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
+import io.cdap.plugin.util.SelectQueryValidator;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
 import java.util.Map;
@@ -61,6 +63,16 @@ public class PostgresSource extends AbstractDBSource<PostgresSource.PostgresSour
   @Override
   protected String createConnectionString() {
     return postgresSourceConfig.getConnectionString();
+  }
+
+  @Override
+  protected SelectQueryValidator.Dialect getSqlDialect() {
+    PostgresConnectorConfig connection = postgresSourceConfig.getConnection();
+    if (connection != null && connection.containsMacro(ConnectionConfig.CONNECTION_ARGUMENTS)) {
+      return SelectQueryValidator.Dialect.UNKNOWN;
+    }
+    String args = connection == null ? null : connection.getConnectionArguments();
+    return SelectQueryValidator.Dialect.fromJdbcUrl("jdbc:postgresql:", args);
   }
 
   @Override

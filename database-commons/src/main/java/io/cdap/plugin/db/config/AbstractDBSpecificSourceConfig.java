@@ -28,6 +28,7 @@ import io.cdap.plugin.common.Constants;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.db.connector.AbstractDBConnectorConfig;
 import io.cdap.plugin.db.source.AbstractDBSource;
+import io.cdap.plugin.util.RetryUtils;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -56,17 +57,17 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
   public String referenceName;
 
   @Name(IMPORT_QUERY)
-  @Description("The SELECT query to use to import data from the specified table. " +
+  @Description("The single read-only SELECT query to use to import data from the specified table. " +
     "You can specify an arbitrary number of columns to import, or import all columns using *. " +
     "The Query should contain the '$CONDITIONS' string unless numSplits is set to one. " +
-    "For example, 'SELECT * FROM table WHERE $CONDITIONS'. The '$CONDITIONS' string" +
+    "For example, 'SELECT * FROM table WHERE $CONDITIONS'. The '$CONDITIONS' string " +
     "will be replaced by 'splitBy' field limits specified by the bounding query.")
   @Macro
   protected String importQuery;
 
   @Nullable
   @Name(BOUNDING_QUERY)
-  @Description("Bounding Query should return the min and max of the " +
+  @Description("Single read-only SELECT query that returns the min and max of the " +
     "values of the 'splitBy' field. For example, 'SELECT MIN(id),MAX(id) FROM table'. " +
     "This is required unless numSplits is set to one.")
   @Macro
@@ -74,7 +75,7 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
 
   @Nullable
   @Name(SPLIT_BY)
-  @Description("Field Name which will be used to generate splits. This is required unless numSplits is set to one.")
+  @Description("Single column name used to generate splits. This is required unless numSplits is set to one.")
   @Macro
   protected String splitBy;
 
@@ -261,7 +262,8 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
 
   @Override
   public boolean canConnect() {
-    return !containsMacro(AbstractDBSource.DBSourceConfig.IMPORT_QUERY) && getConnection().canConnect();
+    return !containsMacro(AbstractDBSource.DBSourceConfig.IMPORT_QUERY)
+      && getConnection() != null && getConnection().canConnect();
   }
 
   @Override
@@ -269,16 +271,24 @@ public abstract class AbstractDBSpecificSourceConfig extends PluginConfig implem
     return fetchSize;
   }
 
+  @Override
+  public boolean isQueryValidationDisabled() {
+    return getConnection() != null && getConnection().isQueryValidationDisabled();
+  }
+
   public Integer getInitialRetryDuration() {
-    return getConnection().getInitialRetryDuration();
+    return getConnection() == null
+      ? RetryUtils.DEFAULT_INITIAL_RETRY_DURATION_SECONDS : getConnection().getInitialRetryDuration();
   }
 
   public Integer getMaxRetryDuration() {
-    return getConnection().getMaxRetryDuration();
+    return getConnection() == null
+      ? RetryUtils.DEFAULT_MAX_RETRY_DURATION_SECONDS : getConnection().getMaxRetryDuration();
   }
   
   public Integer getMaxRetryCount() {
-    return getConnection().getMaxRetryCount();
+    return getConnection() == null
+      ? RetryUtils.DEFAULT_MAX_RETRY_COUNT : getConnection().getMaxRetryCount();
   }
 
 }

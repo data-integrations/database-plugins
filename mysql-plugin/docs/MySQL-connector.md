@@ -36,6 +36,10 @@ This is a semicolon-separated list of key-value pairs, where each pair is separa
 the key and value for the argument. For example, 'key1=value1;key2=value' specifies that the connection will be
 given arguments 'key1' mapped to 'value1' and the argument 'key2' mapped to 'value2'.
 
+**Disable Source Query Validation:** Disables read-only `SELECT` validation and read-only session enforcement for
+source queries using this connection. Enable only for backward compatibility with trusted pipelines whose source
+queries are rejected by the validator. Defaults to `false`.
+
 Path of the connection
 ----------------------
 To browse, get a sample from, or get the specification for this connection through

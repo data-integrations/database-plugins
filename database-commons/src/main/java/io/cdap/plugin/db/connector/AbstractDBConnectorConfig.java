@@ -83,6 +83,12 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
   @Macro
   private Integer maxRetryCount;
 
+  @Name(ConnectionConfig.DISABLE_QUERY_VALIDATION)
+  @Description("Disables read-only SELECT validation and read-only session enforcement on batch source queries " +
+    "using this connection. Enable only for backward compatibility with trusted existing pipelines. Defaults to false.")
+  @Nullable
+  protected Boolean disableQueryValidation;
+
 
   @Nullable
   @Override
@@ -106,6 +112,10 @@ public abstract class AbstractDBConnectorConfig extends PluginConfig implements 
   
   public Integer getMaxRetryCount() {
     return maxRetryCount == null ? RetryUtils.DEFAULT_MAX_RETRY_COUNT : maxRetryCount;
+  }
+
+  public boolean isQueryValidationDisabled() {
+    return Boolean.TRUE.equals(disableQueryValidation);
   }
 
   @Override
