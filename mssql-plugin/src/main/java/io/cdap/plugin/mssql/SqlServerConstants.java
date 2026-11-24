@@ -207,5 +207,4 @@ public final class SqlServerConstants {
    * system messages.
    */
   public static final String SET_LANGUAGE_QUERY_FORMAT = "SET LANGUAGE '%s';";
-
 }

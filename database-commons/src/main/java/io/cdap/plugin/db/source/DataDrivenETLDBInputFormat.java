@@ -20,6 +20,7 @@ import com.google.common.base.Throwables;
 import io.cdap.plugin.db.ConnectionConfigAccessor;
 import io.cdap.plugin.db.JDBCDriverShim;
 import io.cdap.plugin.db.NoOpCommitConnection;
+import io.cdap.plugin.db.RollbackOnCloseConnection;
 import io.cdap.plugin.db.TransactionIsolationLevel;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -38,6 +39,7 @@ import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.util.Properties;
 
@@ -66,6 +68,7 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
   public Connection getConnection() {
     if (this.connection == null) {
       ConnectionConfigAccessor connectionConfigAccessor = new ConnectionConfigAccessor(getConf());
+      Connection conn = null;
       try {
         String url = connectionConfigAccessor.getConfiguration().get(DBConfiguration.URL_PROPERTY);
         try {
@@ -93,33 +96,94 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
 
         Properties properties = new Properties();
         properties.putAll(connectionConfigAccessor.getConnectionArguments());
-        connection = DriverManager.getConnection(url, properties);
-
-        if (connectionConfigAccessor.isAutoCommitEnabled()) {
-          // hack to work around jdbc drivers like the hive driver that throw exceptions on commit
-          this.connection = new NoOpCommitConnection(this.connection);
-        } else {
-          this.connection.setAutoCommit(false);
-        }
+        conn = DriverManager.getConnection(url, properties);
+        conn = configureTransactionMode(conn, connectionConfigAccessor);
 
         if (connectionConfigAccessor.getFetchSize() > 0) {
-          this.connection = new ConnectionWithFetchSize(connection, connectionConfigAccessor.getFetchSize());
+          conn = new ConnectionWithFetchSize(conn, connectionConfigAccessor.getFetchSize());
         }
 
         String level = connectionConfigAccessor.getConfiguration().get(TransactionIsolationLevel.CONF_KEY);
         LOG.debug("Transaction isolation level: {}", level);
-        connection.setTransactionIsolation(TransactionIsolationLevel.getLevel(level));
+        conn.setTransactionIsolation(TransactionIsolationLevel.getLevel(level));
         // execute initialization queries if any
         for (String query : connectionConfigAccessor.getInitQueries()) {
-          try (Statement statement = connection.createStatement()) {
+          try (Statement statement = conn.createStatement()) {
             statement.execute(query);
           }
         }
+        this.connection = conn;
       } catch (Exception e) {
+        closeQuietly(conn);
+        deregisterDriverShimQuietly();
         throw Throwables.propagate(e);
       }
     }
     return this.connection;
+  }
+
+  private static Connection configureTransactionMode(Connection conn,
+                                                     ConnectionConfigAccessor accessor) throws SQLException {
+    if (!accessor.isReadOnly()) {
+      if (accessor.isAutoCommitEnabled()) {
+        // hack to work around jdbc drivers like the hive driver that throw exceptions on commit
+        return new NoOpCommitConnection(conn);
+      }
+      conn.setAutoCommit(false);
+      return conn;
+    }
+
+    boolean disabledAutoCommit = false;
+    if (!accessor.isAutoCommitEnabled()) {
+      try {
+        conn.setAutoCommit(false);
+        disabledAutoCommit = true;
+      } catch (SQLFeatureNotSupportedException e) {
+        LOG.debug("Driver {} does not support disabling auto-commit; continuing.",
+                  conn.getClass().getName(), e);
+      } catch (SQLException e) {
+        LOG.warn("Failed to disable auto-commit on {}; continuing with auto-commit.",
+                 conn.getClass().getName(), e);
+      }
+    }
+    setReadOnlyQuietly(conn);
+    return disabledAutoCommit ? new RollbackOnCloseConnection(conn) : new NoOpCommitConnection(conn);
+  }
+
+  private static void setReadOnlyQuietly(Connection conn) {
+    try {
+      conn.setReadOnly(true);
+    } catch (SQLFeatureNotSupportedException e) {
+      LOG.debug("Driver {} does not support setting connection read-only; continuing.",
+                conn.getClass().getName(), e);
+    } catch (SQLException e) {
+      LOG.warn("Failed to set connection {} read-only; continuing.",
+               conn.getClass().getName(), e);
+    }
+  }
+
+  private static void closeQuietly(Connection conn) {
+    if (conn != null) {
+      try {
+        conn.close();
+      } catch (SQLException closeEx) {
+        LOG.warn("Failed to close JDBC connection {} after connection setup failure.",
+                 conn.getClass().getName(), closeEx);
+      }
+    }
+  }
+
+  private void deregisterDriverShimQuietly() {
+    if (driverShim != null) {
+      try {
+        DriverManager.deregisterDriver(driverShim);
+      } catch (SQLException deregisterEx) {
+        LOG.warn("Failed to deregister JDBC driver shim {} after connection setup failure.",
+                 driverShim, deregisterEx);
+      } finally {
+        driverShim = null;
+      }
+    }
   }
 
   // versions > HDP-2.3.4 started using createConnection instead of getConnection,
@@ -159,11 +223,23 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
 
       @Override
       public void close() throws IOException {
-        dbRecordReader.close();
+        Throwable primary = null;
         try {
-          DriverManager.deregisterDriver(driverShim);
-        } catch (SQLException e) {
-          throw new IOException(e);
+          dbRecordReader.close();
+        } catch (Throwable t) {
+          primary = t;
+          throw t;
+        } finally {
+          try {
+            DriverManager.deregisterDriver(driverShim);
+            driverShim = null;
+          } catch (SQLException e) {
+            if (primary != null) {
+              primary.addSuppressed(e);
+            } else {
+              throw new IOException(e);
+            }
+          }
         }
       }
     };
@@ -171,11 +247,23 @@ public class DataDrivenETLDBInputFormat extends DataDrivenDBInputFormat {
 
   @Override
   protected void closeConnection() {
-    super.closeConnection();
+    Throwable primary = null;
     try {
-      DriverManager.deregisterDriver(driverShim);
-    } catch (SQLException e) {
-      throw Throwables.propagate(e);
+      super.closeConnection();
+    } catch (Throwable t) {
+      primary = t;
+      throw t;
+    } finally {
+      try {
+        DriverManager.deregisterDriver(driverShim);
+        driverShim = null;
+      } catch (SQLException e) {
+        if (primary != null) {
+          primary.addSuppressed(e);
+        } else {
+          throw Throwables.propagate(e);
+        }
+      }
     }
   }
 }

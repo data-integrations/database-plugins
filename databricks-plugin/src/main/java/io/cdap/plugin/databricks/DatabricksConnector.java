@@ -45,6 +45,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /**
  * Databricks Database Connector that connects to Databricks database via JDBC.
@@ -114,17 +118,12 @@ public class DatabricksConnector extends AbstractDBSpecificConnector<DatabricksD
   }
 
   @Override
-  protected String getTableName(String database, String schema, String table) {
-    if (database == null && schema == null) {
-      return String.format("`%s`", table);
-    }
-    if (database == null) {
-      return String.format("`%s`.`%s`", schema, table);
-    }
-    if (schema == null) {
-      return String.format("`%s`.`%s`", database, table);
-    }
-    return String.format("`%s`.`%s`.`%s`", database, schema, table);
+  protected String getTableName(@Nullable String database, @Nullable String schema, String table) {
+    Objects.requireNonNull(table, "table to quote must not be null");
+    return Stream.of(database, schema, table)
+      .filter(Objects::nonNull)
+      .map(part -> quoteIdentifier(part, '`'))
+      .collect(Collectors.joining("."));
   }
 
   @Override
@@ -136,6 +135,7 @@ public class DatabricksConnector extends AbstractDBSpecificConnector<DatabricksD
 
   @Override
   protected String getStratifiedQuery(String tableName, int limit, String strata, String sessionID) {
+    String strataColumn = quoteIdentifier(strata, '`');
     return String.format("WITH t_%s AS (\n" +
         "    SELECT *,\n" +
         "    ROW_NUMBER() OVER (ORDER BY %s, RAND()) AS sqn_%s,\n" +
@@ -146,8 +146,8 @@ public class DatabricksConnector extends AbstractDBSpecificConnector<DatabricksD
         "WHERE MOD(sqn_%s, GREATEST(1, CAST(c_%s / %d AS BIGINT))) = 1\n" +
         "ORDER BY %s\n" +
         "LIMIT %d",
-      sessionID, strata, sessionID, sessionID, tableName, sessionID, sessionID, sessionID,
-      limit, strata, limit);
+      sessionID, strataColumn, sessionID, sessionID, tableName, sessionID, sessionID, sessionID,
+      limit, strataColumn, limit);
   }
 
   @Override
