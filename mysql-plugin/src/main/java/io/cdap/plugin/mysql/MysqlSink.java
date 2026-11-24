@@ -17,7 +17,6 @@
 package io.cdap.plugin.mysql;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Metadata;
@@ -216,10 +215,7 @@ public class MysqlSink extends AbstractDBSink<MysqlSink.MysqlSinkConfig> {
 
     @Override
     public List<String> getInitQueries() {
-      if (!Strings.isNullOrEmpty(sqlMode)) {
-        return Collections.singletonList(String.format(MysqlConstants.SET_SQL_MODE_QUERY_FORMAT, sqlMode));
-      }
-      return Collections.emptyList();
+      return MysqlUtil.composeDbInitQueries(null, sqlMode);
     }
 
     @Override

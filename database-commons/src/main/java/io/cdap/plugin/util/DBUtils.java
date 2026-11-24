@@ -294,6 +294,20 @@ public final class DBUtils {
     return String.format("%s://%s:%s/%s.%s", dbType, host, port, db, tableName);
   }
 
+  /**
+   * Wraps the given SQL identifier in the given quote character, doubling any embedded quote characters and rejecting
+   * embedded NUL characters so that a user-supplied database, schema, table, or column name cannot break out of the
+   * quoted identifier or truncate SQL strings.
+   */
+  public static String quoteIdentifier(String identifier, char quote) {
+    Objects.requireNonNull(identifier, "identifier to quote must not be null");
+    if (identifier.indexOf('\0') >= 0) {
+      throw new IllegalArgumentException("SQL identifier must not contain NUL characters.");
+    }
+    String quoteString = String.valueOf(quote);
+    return quoteString + identifier.replace(quoteString, quoteString + quoteString) + quoteString;
+  }
+
   private DBUtils() {
     throw new AssertionError("Should not instantiate static utility class.");
   }

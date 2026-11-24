@@ -20,6 +20,8 @@ import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeException;
 import dev.failsafe.RetryPolicy;
 import io.cdap.plugin.common.db.DBErrorDetailsProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -28,11 +30,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * Utility class for retrieving common methods using {@link dev.failsafe.RetryPolicy}
  */
 public final class RetryUtils {
+
+    private static final Logger LOG = LoggerFactory.getLogger(RetryUtils.class);
 
     public static final String NAME_INITIAL_RETRY_DURATION = "initialRetryDuration";
     public static final String NAME_MAX_RETRY_DURATION = "maxRetryDuration";
@@ -83,6 +88,34 @@ public final class RetryUtils {
       String query, DBErrorDetailsProvider dbErrorDetailsProvider) {
         try {
             return Failsafe.with(retryPolicy).get(() -> statement.executeQuery(query));
+        } catch (Exception e) {
+            throw unwrapFailsafeException(e, dbErrorDetailsProvider);
+        }
+    }
+
+    /**
+     * Executes a query with retry support, rolling back the given connection before each retry attempt when
+     * {@code rollbackBeforeRetry} is {@code true} so that databases with strict transaction state machines (such as
+     * PostgreSQL and Redshift, SQLState {@code 25P02}) clear an aborted transaction before retrying.
+     */
+    public static ResultSet executeQueryWithRetry(RetryPolicy<ResultSet> retryPolicy, Statement statement,
+      String query, DBErrorDetailsProvider dbErrorDetailsProvider, boolean rollbackBeforeRetry,
+      @Nullable Connection connection) {
+        if (!rollbackBeforeRetry || connection == null) {
+            return executeQueryWithRetry(retryPolicy, statement, query, dbErrorDetailsProvider);
+        }
+        try {
+            return Failsafe.with(retryPolicy).get(context -> {
+                if (!context.isFirstAttempt()) {
+                    try {
+                        connection.rollback();
+                    } catch (SQLException rollbackEx) {
+                        LOG.warn("Failed to roll back aborted transaction on {} before retry attempt {}.",
+                                 connection.getClass().getName(), context.getAttemptCount(), rollbackEx);
+                    }
+                }
+                return statement.executeQuery(query);
+            });
         } catch (Exception e) {
             throw unwrapFailsafeException(e, dbErrorDetailsProvider);
         }
