@@ -20,7 +20,7 @@
   <parent>
     <artifactId>database-plugins-parent</artifactId>
     <groupId>io.cdap.plugin</groupId>
-    <version>1.11.15</version>
+    <version>1.11.16-SNAPSHOT</version>
   </parent>
 
   <name>CloudSQL PostgreSQL plugin</name>
@@ -50,7 +50,6 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>31.0.1-jre</version>
     </dependency>
     <!-- test dependencies -->
     <dependency>
@@ -101,20 +100,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <configuration>
-          <instructions>
-            <_exportcontents>
-              io.cdap.plugin.*
-            </_exportcontents>
-            <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
-            <Embed-Transitive>true</Embed-Transitive>
-            <Embed-Directory>lib</Embed-Directory>
-          </instructions>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>io.cdap</groupId>
         <artifactId>cdap-maven-plugin</artifactId>
