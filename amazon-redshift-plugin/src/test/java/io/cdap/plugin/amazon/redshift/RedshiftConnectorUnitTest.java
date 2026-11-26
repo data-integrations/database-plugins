@@ -40,6 +40,15 @@ public class RedshiftConnectorUnitTest {
   }
 
   /**
+   * Unit test for getTableName() with identifiers containing double quotes
+   */
+  @Test
+  public void getTableNameEscapesQuotesTest() {
+    Assert.assertEquals("\"my\"\"schema\".\"t\"\"; DELETE FROM x; --\"",
+                        CONNECTOR.getTableName("db", "my\"schema", "t\"; DELETE FROM x; --"));
+  }
+
+  /**
    * Unit tests for getTableQuery()
    */
   @Test

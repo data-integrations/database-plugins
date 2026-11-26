@@ -16,10 +16,15 @@
 
 package io.cdap.plugin.mysql;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.sql.Types;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * MySQL util methods.
@@ -107,5 +112,30 @@ public final class MysqlUtil {
   public static boolean isZeroDateTimeToNull(Map<String, String> connectionArguments) {
     String argValue = connectionArguments.getOrDefault(MysqlConstants.ZERO_DATE_TIME_BEHAVIOR, "");
     return argValue.equals("CONVERT_TO_NULL") || argValue.equals("convertToNull");
+  }
+
+  /**
+   * Builds the {@code SET SESSION sql_mode} initialization query, escaping backslashes and single quotes so that a
+   * user-supplied mode value cannot break out of the string literal. Unlike SQL Server, MySQL treats a backslash as
+   * an escape character inside string literals by default, so backslashes are doubled before single quotes are doubled.
+   */
+  public static String buildSetSqlModeQuery(String sqlMode) {
+    Objects.requireNonNull(sqlMode, "sqlMode must not be null");
+    return String.format(MysqlConstants.SET_SQL_MODE_QUERY_FORMAT,
+                         sqlMode.replace("\\", "\\\\").replace("'", "''"));
+  }
+
+  /**
+   * Composes immutable list of initial queries for a MySQL session.
+   */
+  public static List<String> composeDbInitQueries(@Nullable Boolean useAnsiQuotes, @Nullable String sqlMode) {
+    ImmutableList.Builder<String> builder = ImmutableList.builder();
+    if (Boolean.TRUE.equals(useAnsiQuotes)) {
+      builder.add(MysqlConstants.ANSI_QUOTES_QUERY);
+    }
+    if (!Strings.isNullOrEmpty(sqlMode)) {
+      builder.add(buildSetSqlModeQuery(sqlMode));
+    }
+    return builder.build();
   }
 }
