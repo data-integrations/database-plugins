@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.mssql;
 
-import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Metadata;
@@ -38,7 +37,6 @@ import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -191,11 +189,7 @@ public class SqlServerSource extends AbstractDBSource<SqlServerSource.SqlServerS
 
     @Override
     public List<String> getInitQueries() {
-      if (!Strings.isNullOrEmpty(currentLanguage)) {
-        return Collections.singletonList(String.format(SqlServerConstants.SET_LANGUAGE_QUERY_FORMAT, currentLanguage));
-      }
-
-      return Collections.emptyList();
+      return SqlServerUtil.composeDbInitQueries(currentLanguage);
     }
 
     @Override

@@ -35,6 +35,7 @@ public class ConnectionConfigAccessor {
   private static final String CONNECTION_ARGUMENTS = "io.cdap.plugin.db.connection.arguments";
   private static final String INIT_QUERIES = "io.cdap.plugin.db.init.queries";
   public static final String AUTO_COMMIT_ENABLED = "io.cdap.plugin.db.output.autocommit.enabled";
+  public static final String READ_ONLY = "io.cdap.plugin.db.readonly";
   public static final String FETCH_SIZE = "io.cdap.plugin.db.fetch.size";
   public static final String OPERATION_NAME = "io.cdap.plugin.db.operation.name";
   public static final String RELATION_TABLE_KEY = "io.cdap.plugin.db.relation.table.key";
@@ -99,6 +100,14 @@ public class ConnectionConfigAccessor {
 
   public boolean isAutoCommitEnabled() {
     return configuration.getBoolean(AUTO_COMMIT_ENABLED, false);
+  }
+
+  public void setReadOnly(boolean readOnly) {
+    configuration.setBoolean(READ_ONLY, readOnly);
+  }
+
+  public boolean isReadOnly() {
+    return configuration.getBoolean(READ_ONLY, false);
   }
 
   public void setFetchSize(Integer fetchSize) {
