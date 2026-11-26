@@ -22,6 +22,10 @@ on:
       types: [ opened, synchronize, reopened, labeled ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   build:
     runs-on: k8s-runner-e2e
@@ -45,11 +49,19 @@ jobs:
 
     steps:
       # Pinned 1.0.0 version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           path: plugin
           submodules: 'recursive'
           ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          overwrite-settings: false
 
       - uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721
         if: github.event_name != 'workflow_dispatch' && github.event_name != 'push'
@@ -61,13 +73,14 @@ jobs:
               - '${{ matrix.module }}/**/e2e-test/**'
 
       - name: Checkout e2e test repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: cdapio/cdap-e2e-tests
           path: e2e
+          persist-credentials: false
 
       - name: Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
@@ -76,7 +89,7 @@ jobs:
 
       - name: Get Secrets from GCP Secret Manager
         id: secrets
-        uses: 'google-github-actions/get-secretmanager-secrets@v0'
+        uses: 'google-github-actions/get-secretmanager-secrets@2b5f97c5a4b9c105e64646762ad4fc3f5128e6f5' # v2
         with:
           secrets: |-
             ORACLE_HOST:cdapio-github-builds/ORACLE_HOST
@@ -104,8 +117,9 @@ jobs:
 
       - name: Run required e2e tests
         if: github.event_name != 'workflow_dispatch' && github.event_name != 'push' && steps.filter.outputs.e2e-test == 'false'
-        run: python3 e2e/src/main/scripts/run_e2e_test.py --module ${{ matrix.module }} --testRunner TestRunnerRequired.java
+        run: python3 e2e/src/main/scripts/run_e2e_test.py --module "${MODULE}" --testRunner TestRunnerRequired.java
         env:
+          MODULE: ${{ matrix.module }}
           ORACLE_HOST: ${{ steps.secrets.outputs.ORACLE_HOST }}
           ORACLE_USERNAME: ${{ steps.secrets.outputs.ORACLE_USERNAME }}
           ORACLE_PASSWORD: ${{ steps.secrets.outputs.ORACLE_PASSWORD }}
@@ -131,8 +145,9 @@ jobs:
 
       - name: Run all e2e tests
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || steps.filter.outputs.e2e-test == 'true'
-        run: python3 e2e/src/main/scripts/run_e2e_test.py --module ${{ matrix.module }}
+        run: python3 e2e/src/main/scripts/run_e2e_test.py --module "${MODULE}"
         env:
+          MODULE: ${{ matrix.module }}
           ORACLE_HOST: ${{ steps.secrets.outputs.ORACLE_HOST }}
           ORACLE_USERNAME: ${{ steps.secrets.outputs.ORACLE_USERNAME }}
           ORACLE_PASSWORD: ${{ steps.secrets.outputs.ORACLE_PASSWORD }}
@@ -157,14 +172,14 @@ jobs:
           CLOUDSQL_MYSQL_CONNECTION_NAME: ${{ steps.secrets.outputs.CLOUDSQL_MYSQL_CONNECTION_NAME }}
 
       - name: Upload debug files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: Debug files - ${{ matrix.module }}
           path: ./**/target/e2e-debug
 
       - name: Upload files to GCS
-        uses: google-github-actions/upload-cloud-storage@v2
+        uses: google-github-actions/upload-cloud-storage@c0f6160ff80057923ff50e5e567695cea181ec23 # v2
         if: always()
         with:
           path: ./plugin
@@ -173,4 +188,8 @@ jobs:
 
       - name: Cucumber Report URL
         if: always()
-        run: echo "https://storage.googleapis.com/e2e-tests-cucumber-reports/${{ github.event.repository.name }}/${{ github.ref }}/plugin/${{ matrix.module }}/target/cucumber-reports/advanced-reports/cucumber-html-reports/overview-features.html"
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          GITHUB_REF: ${{ github.ref }}
+          MODULE: ${{ matrix.module }}
+        run: echo "https://storage.googleapis.com/e2e-tests-cucumber-reports/${REPO_NAME}/${GITHUB_REF}/plugin/${MODULE}/target/cucumber-reports/advanced-reports/cucumber-html-reports/overview-features.html"
