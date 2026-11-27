@@ -116,7 +116,8 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
 
   @Override
   protected String getTableName(String database, String schema, String table) {
-    return String.format("\"%s\".\"%s\".\"%s\"", database, schema, table);
+    return quoteIdentifier(database, '"') + "." + quoteIdentifier(schema, '"') + "."
+      + quoteIdentifier(table, '"');
   }
 
   @Override
@@ -136,6 +137,7 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
 
   @Override
   protected String getStratifiedQuery(String tableName, int limit, String strata, String sessionID) {
+    String strataColumn = quoteIdentifier(strata, '"');
     return String.format("WITH t_%s AS (\n" +
                            "    SELECT *,\n" +
                            "    ROW_NUMBER() OVER (ORDER BY %s, RAND()) AS sqn_%s,\n" +
@@ -145,8 +147,8 @@ public class SqlServerConnector extends AbstractDBSpecificConnector<SqlServerSou
                            "SELECT TOP %d * FROM t_%s\n" +
                            "WHERE sqn_%s %% CAST(0.5 * ((c_%s / %d + 1) + ABS(c_%s / %d - 1)) AS bigint) = 1\n" +
                            "ORDER BY %s",
-                         sessionID, strata, sessionID, sessionID, tableName, limit, sessionID, sessionID, sessionID,
-                         limit, sessionID, limit, strata);
+                         sessionID, strataColumn, sessionID, sessionID, tableName, limit, sessionID, sessionID,
+                         sessionID, limit, sessionID, limit, strataColumn);
   }
 
 }

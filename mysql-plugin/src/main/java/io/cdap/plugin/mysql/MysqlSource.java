@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.mysql;
 
-import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Metadata;
@@ -37,7 +36,6 @@ import io.cdap.plugin.db.source.AbstractDBSource;
 import io.cdap.plugin.util.DBUtils;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -172,14 +170,7 @@ public class MysqlSource extends AbstractDBSource<MysqlSource.MysqlSourceConfig>
 
     @Override
     public List<String> getInitQueries() {
-      List<String> initQueries = new ArrayList<>();
-      if (useAnsiQuotes != null && useAnsiQuotes) {
-        initQueries.add(MysqlConstants.ANSI_QUOTES_QUERY);
-      }
-      if (!Strings.isNullOrEmpty(sqlMode)) {
-        initQueries.add(String.format(MysqlConstants.SET_SQL_MODE_QUERY_FORMAT, sqlMode));
-      }
-      return initQueries;
+      return MysqlUtil.composeDbInitQueries(useAnsiQuotes, sqlMode);
     }
 
     @Override
